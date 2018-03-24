@@ -1,0 +1,2 @@
+docker build -t gcr.io/cloudark-kubeplus/grapher:latest .
+docker run -v /Users/devdatta/go/src/github.com/cloud-ark/kubeplus/grapher:/root gcr.io/cloudark-kubeplus/grapher:latest abc.json /root/

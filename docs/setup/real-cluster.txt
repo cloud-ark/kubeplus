@@ -1,0 +1,72 @@
+1) Create a AWS EC2 instance: t2.xlarge (4vCPUs, 16GB memory, 40 GB disk, Ubuntu 18.04)
+
+2) Update the security group to allow traffic on port range 32000-32767 from 0.0.0.0/0
+
+3) Login
+
+4) Switch user to root:
+
+   ``sudo su -``
+
+5) git clone https://github.com/cloud-ark/kubeplus.git
+
+6) cd kubeplus
+
+7) ./scripts/setup-test-cluster.sh
+
+8) cd $HOME/goworkspace/src/k8s.io/kubernetes
+
+9) Edit hack/local-up-cluster.sh to include following:
+
+   - NODE_PORT_RANGE:"32000-32767"
+
+   - ENABLE_HOSTPATH_PROVISIONER: "true"
+
+10) Start cluster
+
+   - export PATH=$PATH:/usr/local/go/bin
+
+   - export KUBERNETES_PROVIDER=local 
+
+   - nohup hack/local-up-cluster.sh &
+
+11) Start Helm
+
+    - export PATH=$PATH:$HOME/goworkspace/src/k8s.io/kubernetes/cluster
+
+    - pushd ~/kubeplus
+
+    - ./scripts/setup-helm.sh
+
+12) Deploy Kubeplus
+
+    - kubectl.sh apply -f deploy
+
+    - kubectl.sh get pods (wait till all KubePlus containers are READY)
+
+
+13) Update moodle-operator.yaml with value of HOST_IP (public IP). Then,
+- kubectl.sh create -f moodle-operator.yaml
+- kubectl.sh get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle" | python -m json.tool
+- kubectl.sh create -f moodle-mysql.yaml
+- kubectl.sh get pods
+
+14) Once MySQL Pod is running and READY (1/1),
+- kubectl.sh create -f moodle1.yaml
+- kubectl.sh get pods
+
+It may take about 5/6 minutes for Moodle Pod to become ready.
+
+15) Once Moodle Pod is ready,
+- kubectl.sh describe moodle moodle1
+
+Moodle instance status will contain IP address.
+Open it in browser. If the deployment is successful
+you should see Moodle login page.
+Login using username 'admin' and password defined in moodle1.yaml
+Then,
+
+16) Check Moodle composition tree
+
+- kubectl.sh get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1" | python -m json.tool
+

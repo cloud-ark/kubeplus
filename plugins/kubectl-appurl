@@ -1,0 +1,76 @@
+#!/bin/bash
+
+source utils.sh
+
+print_help () {
+    echo "NAME"
+    echo "        kubectl appurl"
+    echo ""
+    echo "SYNOPSIS"
+    echo "        kubectl appurl <Kind> <Instance> <Namespace> -k <Absolute path to kubeconfig>"
+    echo ""
+    echo "DESCRIPTION"
+    echo "        kubectl appurl shows application url. For this it searches for Service object with type NodePort or LoadBalancer in "
+    echo "        the connectivity graph of the input <Kind> <Instance> pair and builds the application url. "
+    exit 0
+}
+
+if (( $# < 5 )); then
+  print_help
+fi
+
+kind=$1
+instance=$2
+namespace=$3
+kubeconfig1=""
+
+shift;
+shift;
+shift;
+
+while getopts ":k:" opt; do
+  case ${opt} in
+    k )
+      kubeconfig1=$OPTARG
+      if [ ! -f $kubeconfig1 ]; then
+        echo "Kubeconfig $kubeconfig1 does not exist."
+        exit 0
+      fi;;
+  esac
+done
+
+kubeconfig="--kubeconfig="$kubeconfig1
+
+#if [ $# = 4 ] && [[ $4 == *"kubeconfig="* ]]; then
+#    kubeconfig=$4
+#fi
+
+check_namespace $namespace $kubeconfig
+
+canonicalKind=$(get_canonical_kind $kind)
+
+if [[ $canonicalKind == *"Unknown"* ]]; then
+	echo "$canonicalKind"
+	exit 0
+fi
+
+resStatus=`kubectl $kubeconfig get $kind $instance -n $namespace -o json 2>&1`
+if [[ $resStatus =~ 'Error' ]]; then
+#  echo "Instance $instance of $kind not deployed properly."
+  echo $resStatus
+  exit 0
+fi
+
+
+python3 /$KUBEPLUS_HOME/plugins/appurl.py connections $canonicalKind $instance $namespace $kubeconfig
+
+#appPort=`python /$KUBEPLUS_HOME/plugins/appurl.py connections $kind $instance $namespace $kubeconfig`
+
+#context=`kubectl config current-context $kubeconfig`
+#if [[ $context == 'minikube' ]]; then
+#  appIP=`minikube ip`
+#  appURL="http://$appIP:$appPort"
+#  echo "$appURL"
+#fi
+
+

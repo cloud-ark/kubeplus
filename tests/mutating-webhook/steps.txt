@@ -1,0 +1,23 @@
+1. Install KubePlus
+   - Check https://github.com/cloud-ark/kubeplus
+
+2. Install Cassandra DataStax Operator 
+   - Check https://github.com/datastax/cass-operator
+
+3. Add resource annotations on the CassandraDatacenter CRD
+   - kubectl annotate crd cassandradatacenters.cassandra.datastax.com resource/annotation-relationship="on:Secret, key:cassandra.datastax.com/watched-by, value:contains(INSTANCE.metadata.name)"
+   - kubectl annotate crd cassandradatacenters.cassandra.datastax.com resource/composition="StatefulSet, Service, PodDisruptionBudget"
+   - kubectl annotate crd cassandradatacenters.cassandra.datastax.com resource/label-relationship="on:PersistentVolumeClaim, key:cassandra.datastax.com/datacenter, value:INSTANCE.metadata.name"
+
+6. Create resources: 
+   - kubectl create -f example1-cassdc-minimal.yaml
+   - kubectl create -f example2-cassdc-minimal.yaml
+   - kubectl create -f example3-cassdc-minimal.yaml
+   - kubectl create -f example4-cassdc-minimal.yaml
+   - kubectl create -f example5-cassdc-minimal.yaml
+   - kubectl create -f example6-cassdc-minimal.yaml
+   - kubectl create -f example7-cassdc-minimal.yaml
+
+7. Visualize workflow:
+   - kubectl connections CassandraDatacenter dc1 default
+   - kubectl connections Service cluster1-dc1-service 

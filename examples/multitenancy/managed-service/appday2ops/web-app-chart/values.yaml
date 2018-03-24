@@ -1,0 +1,11 @@
+# Default value for namespace.
+db:
+  username: name123
+  password: password123
+  host: mysql
+  db_name: usersdb
+  rootpassword: toor
+MYSQL_SERVICE_NAME: mysql
+sql:
+  command: "INSERT INTO users (name) VALUES ('emin');"
+

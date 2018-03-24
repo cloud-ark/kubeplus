@@ -1,0 +1,235 @@
+#!/bin/bash 
+
+source utils.sh
+
+print_help () {
+    echo "NAME"
+    echo "        kubectl connections"
+    echo ""
+    echo "SYNOPSIS"
+    echo "        kubectl connections <Kind> <Instance> <Namespace> [-k <Absolute path to kubeconfig>] [-o json|png|flat|html] [-i <Kind1:Instance1,Kind1:Instance1>] [-n <label|specproperty|envvariable|annotation>]"
+    echo ""
+    echo "DESCRIPTION"
+    echo "        kubectl connections shows how the input resource is connected to other Kubernetes resources through one of the following "
+    echo "        types of relationships: ownerReference, labels, annotations, spec property."
+    echo "OPTIONS"
+    echo "        kubectl connections takes following optional flags as input."
+    echo "        -k <Absolute path to kubeconfig file>"
+    echo "        -o <json|png|flat>"
+    echo "            This flag controls what type of output to generate."
+    echo "        -i <Kind1:Instance1,Kind2:Instance2>" 
+    echo "            This flag defines which Kinds and instances to ignore when traversing the resource graph."
+    echo "            kubectl connections will not discover the sub-graphs starting at such nodes."
+    echo "        -n <label|specproperty|envvariable|annotation>"
+    echo "            This flag defines the relationship types whose details should not be displayed in the graphical output (png)."
+    echo "            You can specify multiple values as comma separated list."
+    exit 0
+}
+
+
+check_docker() {
+  docker ps 2>1 1>/dev/null
+  if [[ $? == 1 ]]; then
+    echo "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?."
+    echo "Docker is needed for creating png and html output."
+    exit 0
+  fi
+}
+
+show_image() {
+  local filePath=$1
+  pythonPath=`which python3`
+  if [[ $? == 0 ]]; then
+    `$pythonPath /$KUBEPLUS_HOME/plugins/imageviewer.py $filePath`
+  fi
+}
+
+gen_html() {
+  local fileName=$1
+  local filePath=$2
+  ostype=`uname -a | awk '{print $1}'`
+  if [[ $ostype == 'Darwin' ]]; then
+    base64 -i $filePath -o $fileName.txt
+  fi
+  if [[ $ostype == 'Linux' ]]; then
+    base64 -i $filePath > $fileName.txt
+  fi
+  mkdir -p ~/.kubeplus/
+  if [ -f ~/.kubeplus/$fileName.html ]; then
+    rm ~/.kubeplus/$fileName.html
+  else
+    touch ~/.kubeplus/$fileName.html
+  fi
+  echo "<html>" >> ~/.kubeplus/$fileName.html
+  echo "<head></head>" >> ~/.kubeplus/$fileName.html
+  echo "<body>" >> ~/.kubeplus/$fileName.html
+  fcontents=`cat $fileName.txt`
+  echo "<img src=\"data:image/png;base64,$fcontents\" style=\"width:800px;height:250px;\">" >> ~/.kubeplus/$fileName.html
+
+  echo "</body>" >> ~/.kubeplus/$fileName.html
+  echo "</html>" >> ~/.kubeplus/$fileName.html
+
+  # Check for EC2
+  # Reference: https://serverfault.com/questions/462903/how-to-know-if-a-machine-is-an-ec2-instance
+  if [ -f /sys/hypervisor/uuid ]; then
+    if [ `head -c 3 /sys/hypervisor/uuid` == "ec2" ]; then
+      ec2ip=`curl http://checkip.amazonaws.com`
+      echo "Output available in: http://$ec2ip:65500/consoles/$fileName.html"
+    fi
+  else
+      echo "Output available in: $HOME/.kubeplus/$fileName.html"
+  fi
+}
+
+if (( $# < 3 )); then
+  print_help
+fi
+
+kind=$1
+instance=$2
+namespace=$3
+output="flat"
+kubeconfig1=""
+if [[ -z "${INSIDE_DOCKER}" ]]; then
+	kubeconfig1="$HOME/.kube/config" #default value
+fi
+ignorelist1=""
+hidedetails=""
+
+shift;
+shift;
+shift;
+
+#echo $@
+while getopts ":k:o:i:n:h" opt; do
+  case ${opt} in
+    k )
+      kubeconfig1=$OPTARG
+      if [ ! -f $kubeconfig1 ]; then
+        echo "Kubeconfig $kubeconfig1 does not exist."
+        exit 0
+      fi;;
+    o )
+      output=$OPTARG
+      if [[ $output != 'png' ]] && [[ $output != 'json' ]] && [[ $output != 'flat' ]] && [[ $output != 'html' ]]; then
+          echo "Invalid output type $output. Valid options: flat, json, png, html."
+          exit 0
+      fi
+      outputString="--output="$output
+      ;;
+    i )
+      ignorelist1=$OPTARG
+      ignorelist="--ignore="$ignorelist1;;
+    n )
+      hidedetails=$OPTARG
+      OLDIFS=$IFS
+      IFS=','
+      read -a hidedetailsarr <<< "$hidedetails"
+      for val in "${hidedetailsarr[@]}";
+      do
+        if [[ $val != "label" ]] && [[ $val != "specproperty" ]] && [[ $val != "envvariable" ]] && [[ $val != "annotation" ]]; then
+          echo "Invalid argument value for -n flag. Allowed values are:"
+          echo "  label, specproperty, envvariable, annotation."
+          echo "  You can specify multiple values as comma separated list."
+          exit 0
+        fi
+      done
+      IFS=$OLDIFS;;
+    #\? ) print_help;;
+    h ) print_help;;
+    ? )
+      echo "Invalid option: ${1} " 1>&2
+      print_help
+      exit 0
+      ;;
+  esac
+done
+
+#echo "---"
+#echo "$kubeconfig1"
+#echo "$output"
+#echo "$ignorelist"
+#echo "$hidedetails"
+
+kubeconfig="--kubeconfig="$kubeconfig1
+check_namespace $namespace $kubeconfig
+
+canonicalKind=$(get_canonical_kind $kind)
+if [[ $canonicalKind =~ 'Unknown Kind' ]]; then
+  echo "$canonicalKind"
+  exit 0
+fi
+
+# Check if the resource was deployed without errors
+resStatus=`kubectl $kubeconfig get $kind $instance -n $namespace -o json 2>&1` 
+#echo "Res Status:$resStatus"
+if [[ $resStatus =~ 'Error' ]]; then
+  echo "Instance $instance of $kind not deployed properly."
+  echo $resStatus
+  exit 0
+fi
+
+resStatus=`kubectl $kubeconfig get $kind $instance -n $namespace -o json | grep helmrelease | grep -v "f:helmrelease"`
+#echo "Res Status:$resStatus"
+if [[ $resStatus =~ 'Error' ]]; then
+  echo "Instance $instance of $kind not deployed properly."
+  echo $resStatus
+  exit 0
+fi
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    if [[ "$output" == "png" ]] || [[ "$output" == "html" ]]; then
+      check_docker
+      /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
+      docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
+      if [[ "$output" == "png" ]]; then
+        echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
+        #show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+      fi
+      if [[ "$output" == "html" ]]; then
+        gen_html connections-op.json.gv $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+      fi
+    else
+      /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace $outputString $kubeconfig $ignorelist
+    fi
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # check if running in consumerui container
+    consumerui_container=`hostname | grep kubeplus-deployment`
+    if [[ $consumerui_container =~ "kubeplus-deployment" ]]; then
+        echo "Running inside consumerui."
+        /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $canonicalKind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
+        # Invoke the grapher
+        python3  /root/grapher.py "connections-op.json" /plugins/ $hidedetails
+        # Generate html
+        gen_html connections-op.json.gv $KUBEPLUS_HOME/root/connections-op.json.gv.png
+    else
+      if [[ "$output" == "png" ]] || [[ "$output" == "html" ]]; then
+        #check_docker
+        /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $canonicalKind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
+
+	if [[ -z "${INSIDE_DOCKER}" ]]; then
+         docker run -v $KUBEPLUS_HOME/plugins/:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root $hidedetails
+	else
+	 # Invoke the grapher
+         python3  /$KUBEPLUS_HOME/plugins/grapher.py "connections-op.json" $KUBEPLUS_HOME/plugins/ $hidedetails
+	fi
+
+        if [[ "$output" == "png" ]]; then
+          echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
+          #show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+        fi
+        if [[ "$output" == "html" ]]; then
+          gen_html connections-op.json.gv $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+        fi
+      else
+        /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $canonicalKind $instance $namespace $outputString $kubeconfig $ignorelist
+      fi
+    fi
+else
+    echo "$OSTYPE not supported."
+fi
+
+#host=`hostname`
+#if [[ "$OSTYPE" == "linux-gnu"* ]] && [[ "$output" == "png" ]]; then
+#  echo "PNG output is available on host in kubeplus plugins folder (...kubeplus/plugins/connections-op.json.gv.png)"
+#fi

@@ -1,0 +1,172 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+  <style type="text/css">
+    label {
+      font: normal 15px Times New Roman;
+    }
+    .myrow {
+      display: flex;
+    }
+    body, html {
+     height: 100%;
+    }
+
+.div_left{ background:#e7eaec; padding:40px;}
+.div_right{ background:#f8f9fa; padding:40px;}
+
+.mvh-100 {
+    min-height: 100vh;   
+}
+
+.top-buffer { margin-top:40px; }
+
+.centralize {text-align: center;}
+
+.mybutton {background-color: #d37f00; border: none; width: 250px; padding: 10px 10px; font-size: 16px;}
+
+.form-popup1 {
+  display: none;
+  bottom: 0;
+  right: 50px;
+  border: 3px solid #f1f1f1;
+  z-index: 9;
+}
+
+.form-popup {
+  display: none;
+}
+
+.form-container1 .btn {
+  background-color: #04AA6D;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom:10px;
+  opacity: 0.8;
+}
+
+.form-container {
+}
+
+.loader {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
+}
+
+  </style>
+
+  <script src=../static/scripts/kubeplus.js></script>
+
+</head>
+<body>
+
+  <div class="container-fluid" style="background-color:transparent !important">
+      <div class="row">
+        <div class="col">
+          <div class="text-left">
+            <img src="{{ url_for('static', filename='images/KubePlus-logo.png') }}" class="rounded mx-auto d-block" style="width:125px;height:50px;float:left">
+          </div>
+        </div>
+        <div class="col text-right">
+          <h4 style="text-align:left;">Consumer Portal</h4>
+
+        </div>
+      </div>
+    </div>
+    
+    <div class="container-fluid">
+      <div class="row mvh-100 flex-column flex-md-row">
+        <div class="col-md-2 div_left">
+          <div class="row">
+                
+                <ul style="list-style:none;padding-left:0">
+                <div><h5>{{service_name}}</h5></div>
+                
+                <div><a style="color:black;text-decoration:underline;text-align:right;" href="#" onclick="get_all_resources('{{ service_name }}')">Home</a></div><br><br>
+
+                <div><h5>Available Instances</h5></div>
+                <div>
+                  <ul style="list-style:none;padding-left:0">
+                    {% for item in resource_list %}
+		    <div id="{{service_name}}-{{item.name}}"><a style="color:black;text-decoration:underline;text-align:right;" href="#" onclick="get_resource('{{item.name}}, {{item.namespace}}, {{service_name}}')">{{ item.name }}</a></div>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </ul>
+
+              <button type="button" onclick="create_resource('{{ service_name }}')" class="btn btn-info mybutton">Create Instance </button>
+
+                <ul style="list-style:none;padding-left:0">
+                  <br>
+                  <p>
+                    <div>
+                      <div><a style="color:black;text-decoration:underline;text-align:right;" href="#" onclick="get_resource_api_doc('{{ service_name }}')">API Doc</a>
+                      </div>
+                    </div>
+                  </p>
+                </ul>
+          </div>
+        </div>
+
+        <div class="col-md-10 flex-grow-1 div_right" style="white-space:pre-wrap;" id="service_information_space">
+
+          <div class="form-popup" id="input-form" style="{{form_display}}">
+            <h3 id="create-status" style="{{create_status_display}}">{{create_status}}</h3>
+            <form action="create_instance" class="form-container" method="post" id="form-details">
+              <input type="hidden" id="{{service_name}}" name="serviceName" value="{{service_name}}">
+            </form>
+          </div>
+
+          <div id="man-page" style="display:none;">
+          </div>
+
+          <div class="row"><h4><span id="consumption_string_id"> {{ consumption_string }}</span></h4>
+            <h5> <span id="num_of_instances">{{ num_of_instances_string }} </span></h5>
+            <table id="metrics-details" class="table table-condensed table-striped table-bordered" style="{{table_display}}">
+              <tr>
+                <th class="centralize">CPU <br> (current) </th>
+                <th class="centralize">Memory <br> (current)  </th>
+                <th class="centralize">Storage <br> (total)  </th>
+                <th class="centralize">Network traffic incoming <br> (current)  </th>
+                <th class="centralize">Network traffic outgoing <br> (current)  </th>
+              </tr>
+            <tr>
+                <td id="total_cpu" class="centralize">{{ total_cpu }} <br> (millicores) </td>
+                <td id="total_memory" class="centralize">{{ total_memory }} <br> (mebibytes) </td>
+                <td id="total_storage" class="centralize" >{{ total_storage }} <br> (Giga bytes) </td>
+                <td id="total_nw_ingress" class="centralize" >{{ total_nw_ingress }} <br> (bytes) </td>
+                <td id="total_nw_egress" class="centralize">{{ total_nw_egress }} <br> (bytes) </td>
+            </tr>
+            </table>
+          </div>
+
+          <div id="connections_op" style="display:none"></div>
+          <div id="app_url" style="display:none"></div>
+          <!--<div id="app_logs_url" style="display:none"></div>-->
+          <div id="app_logs_data" style="display:none"></div>
+	  <div id="app_delete" style="display:none"></div>
+
+        </div>
+      </div>
+    </div>
+
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+  </body>
+</html>

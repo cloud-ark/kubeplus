@@ -1,0 +1,54 @@
+<html>
+<head>
+<style>
+.bodycenter {
+    margin: auto;
+    width: 60%;
+    padding: 10px;
+}
+
+.footer{
+    text-align: center;
+    border: 1px solid #73AD21;
+}
+</style>
+</head>
+<body>
+  <div class="bodycenter">
+ 
+    <form action="register_kubeconfig" method="post">
+      <label for="kubeconfig">Kubeconfig</label><br>
+      <textarea id="kubeconfig" name="kubeconfig" rows="4" cols="50">
+      </textarea>
+      <br><br>
+      <input type="submit" value="Upload Kubeconfig">
+    </form>
+    <hr>
+
+    <form action="create_service_instance" method="post">
+      <label for="service_instance">Service YAML</label><br>
+      <textarea id="service_instance" name="service_instance" rows="4" cols="50">
+      </textarea>
+      <br><br>
+      <input type="submit" value="Create service instance">
+    </form>
+    <hr>
+
+    <form action="get_all_service_instances" method="post">
+      Service:<input type="text" name="service"><br>
+      <input type="submit" value="Get all service instances">
+    </form>
+
+    <form action="get_instance_status" method="post">
+      Service:<input type="text" name="service"><br>
+      Instance:<input type="text" name="instance"><br>
+      Namespace:<input type="text" name="namespace"><br>
+      <input type="submit" value="Get service instance status">
+    </form>
+
+    <p>Status:</p>
+    <div></div>
+    
+  </div>
+</body>
+</html>

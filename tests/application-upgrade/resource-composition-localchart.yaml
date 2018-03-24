@@ -1,0 +1,43 @@
+apiVersion: workflows.kubeplus/v1alpha1
+kind: ResourceComposition
+metadata:
+  name: basic-web-app-service-composition
+spec:
+  newResource:
+    chartName: basicwebapp
+    chartURL: file:///resource-composition-0.0.1.tgz
+    resource:
+      group: platformapi.kubeplus
+      kind: WebAppService
+      plural: webappservices
+      version: v1alpha1
+  resmonitor:
+    apiVersion: workflows.kubeplus/v1alpha1
+    kind: ResourceMonitor
+    metadata:
+      name: web-app-service-monitor
+    spec:
+      monitorRelationships: all
+      resource:
+        group: platformapi.kubeplus
+        kind: WebAppService
+        version: v1alpha1
+  respolicy:
+    apiVersion: workflows.kubeplus/v1alpha1
+    kind: ResourcePolicy
+    metadata:
+      name: web-app-service-policy
+    spec:
+      policy:
+        podconfig:
+          limits:
+            cpu: 200m
+            memory: 2Gi
+          nodeSelector: values.nodeName
+          requests:
+            cpu: 100m
+            memory: 1Gi
+      resource:
+        group: platformapi.kubeplus
+        kind: WebAppService
+        version: v1alpha1

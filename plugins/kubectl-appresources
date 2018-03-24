@@ -1,0 +1,53 @@
+#!/bin/bash
+
+source utils.sh
+
+print_help () {
+    echo "NAME"
+    echo "        kubectl appresources"
+    echo ""
+    echo "SYNOPSIS"
+    echo "        kubectl appresources  <Kind> <Instance> -k <Absolute path to kubeconfig>"
+    echo ""
+    echo "DESCRIPTION"
+    echo "        kubectl appresources shows all resources of an application instance."
+    exit 0
+}
+
+if (( $# < 2 )); then
+  print_help
+fi
+
+kind=$1
+instance=$2
+kubeconfig1=""
+
+shift;
+shift;
+
+while getopts ":k:" opt; do
+  case ${opt} in
+    k )
+      kubeconfig1=$OPTARG
+      if [ ! -f $kubeconfig1 ]; then
+        echo "Kubeconfig $kubeconfig1 does not exist."
+        exit 0
+      fi;;
+    ? )
+      echo "Invalid option: ${1} " 1>&2
+      print_help
+      exit 0
+      ;;
+  esac
+done
+
+kubeconfig="--kubeconfig="$kubeconfig1
+
+canonicalKind=$(get_canonical_kind $kind)
+
+if [[ $canonicalKind == *"Unknown"* ]]; then
+	echo "$canonicalKind"
+	exit 0
+fi
+
+python3 /$KUBEPLUS_HOME/plugins/appresources.py $canonicalKind $instance $kubeconfig 

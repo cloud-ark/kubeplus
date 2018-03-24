@@ -1,0 +1,150 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Welcome to KubePlus documentation &#8212; KubePlus 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="KubePlus Components" href="kubeplus-components.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="kubeplus-components.html" title="KubePlus Components"
+             accesskey="N">next</a></li>
+        <li class="nav-item nav-item-0"><a href="#">KubePlus 1.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Welcome to KubePlus documentation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="welcome-to-kubeplus-documentation">
+<h1>Welcome to KubePlus documentation<a class="headerlink" href="#welcome-to-kubeplus-documentation" title="Permalink to this heading">¶</a></h1>
+<p>KubePlus is a turn-key solution to transform any containerized application into a SaaS. It takes an application Helm chart and delivers it as-a-service by automating multi-tenancy management and day2 operations such as monitoring, troubleshooting and application upgrades. KubePlus consists of a CRD that enables creating new Kubernetes APIs (CRDs) to realize such services. The new CRDs enable creation of a Helm release per tenant with tenant level isolation, monitoring and consumption tracking.</p>
+<img alt="_images/application-stacks-1.png" class="align-center" src="_images/application-stacks-1.png" />
+<p>KubePlus is designed to help software vendors accelerate their journey to SaaS or enterprise platform teams rapidly deliver managed services for any custom applications.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
+<p>KubePlus takes an application Helm chart and delivers it as-a-service by automating multi-tenancy management and day2 operations. KubePlus consists of a CRD that enables creating new Kubernetes APIs (CRDs) to realize such services. Provider of the service has privileged access to the cluster and is able to create these services from Helm charts. Consumer of the service has limited access to the cluster and is able to use newly created service API / CRD and create an instance of the application. Behind the scene the provider is able to upgrade, monitor or govern this service.</p>
+<a class="reference internal image-reference" href="_images/kubeplus-provider-consumer.png"><img alt="_images/kubeplus-provider-consumer.png" class="align-center" src="_images/kubeplus-provider-consumer.png" style="width: 650px; height: 275px;" /></a>
+<ul class="simple">
+<li><p>Create: Create SaaS for any application packaged as Helm chart.</p></li>
+<li><p>Govern: Tenant level policies for isolation and resource utilization.</p></li>
+<li><p>Monitor: Tenant level consumption metrics for CPU, memory, storage, network.</p></li>
+<li><p>Troubleshoot: Tenant level Kubernetes resource relationship graphs.</p></li>
+</ul>
+<p>Next section provides details about KubePlus components.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="kubeplus-components.html">KubePlus Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kubeplus-components.html#kubeplus-kubernetes-operator">KubePlus Kubernetes Operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kubeplus-components.html#kubeplus-kubectl-plugins-for-monitoring-and-troubleshooting">KubePlus kubectl plugins for monitoring and troubleshooting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kubeplus-components.html#resource-relationship-graphs">Resource relationship graphs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kubeplus-components.html#crd-annotations-on-community-operators">CRD annotations on community Operators</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started.html#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="openshift-deployment.html">OpenShift Deployment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openshift-deployment.html#setup">Setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sample-example.html">Sample Example - HelloWorldService</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sample-example.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sample-example.html#cluster-admin-actions">Cluster Admin actions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sample-example.html#provider-action">Provider action</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sample-example.html#consumer-actions">Consumer actions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sample-example.html#provider-actions-cont">Provider actions (cont.)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="operators.html">Kubernetes Operators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="operators.html#operator-maturity-model">Operator Maturity Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="operators.html#operator-analysis">Operator Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="operators.html#operator-faq">Operator FAQ</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="community.html">Community Participation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="community.html#contributions">Contributions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="comparison.html">Comparison</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compile-components.html">Setting up development environment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="compile-components.html#test-sample-examples">Test sample examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compile-components.html#vagrant-vm-access">Vagrant VM access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compile-components.html#work-on-the-code">Work on the code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compile-components.html#code-organization">Code Organization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compile-components.html#build-code">Build code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compile-components.html#deploy-kubeplus">Deploy KubePlus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compile-components.html#build-failure">Build Failure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compile-components.html#check-logs">Check Logs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compile-components.html#delete-kubeplus">Delete KubePlus</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="kubeplus-components.html" title="KubePlus Components"
+             >next</a></li>
+        <li class="nav-item nav-item-0"><a href="#">KubePlus 1.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Welcome to KubePlus documentation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

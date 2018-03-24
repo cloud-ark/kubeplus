@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app-deploy
+  labels:
+    app: web-app-deploy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: basic-web-app
+        image: eminalparslan/basic-web-app:0.3.0
+        imagePullPolicy: Always
+        env:
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-root-credentials-web-app
+              key: username
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-root-credentials-web-app
+              key: password
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: db-conf-web-app
+              key: name
+        - name: MYSQL_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: db-conf-web-app
+              key: host
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-root-credentials-web-app
+data:
+  username: {{ .Values.db.username | b64enc | quote }}
+  password: {{ .Values.db.password | b64enc | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-conf-web-app
+data:
+ host: {{ .Values.db.host }}
+ name: {{ .Values.db.db_name }}
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web-app-deploy-hpa
+spec:
+  maxReplicas: 5
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web-app-deploy
+  targetCPUUtilizationPercentage: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-svc
+spec:
+  selector:
+    app: web-app
+  ports:
+  - port: 5000
+    targetPort: 5000
+  type: LoadBalancer

@@ -1,0 +1,98 @@
+#!/bin/bash
+
+source utils.sh
+
+print_help () {
+    echo "NAME"
+    echo "        kubectl metrics"
+    echo ""
+    echo "SYNOPSIS"
+    echo "        kubectl metrics <Kind> <Instance> <Namespace> -k <Absolute path to kubeconfig> [-o pretty|prometheus|json]"
+ #   echo "        kubectl metrics account <Account name>"
+    echo ""
+    echo "DESCRIPTION"
+    echo "        kubectl metrics collects CPU, Memory, Storage and Network consumption metrics for all the Pods in a Kubernetes application."
+    echo "        Given the input resource (Kind and Instance), kubectl metrics discovers all the Pods that are reachable from that resource and"
+    echo "        aggregates their metrics."
+#    echo "        The starting point of the stack can be name of a Kubernetes resource, name of a Kubernetes Service, name of a Helm release, or name of an 'account'."
+#    echo "        Each of these stack identifications have separate metrics tracking sub-commands as identified above."
+#    echo "        These use kubectl connections behind the scene to discover all the Pods in a stack and then collect above metrics for those Pods."
+    echo "        - Pod cpu and memory data is collected by querying kubelet."
+    echo "        - Pod storage data is collected from the PersistentVolumeClaims of the Pods that are associated with the input resource."
+    echo "        - Pod network consumption data is collected from cAdvisor."
+    exit 0
+}
+
+if (( $# < 5 )); then
+  print_help
+fi
+
+customres=$1
+instance=$2
+namespace="$3"
+output="pretty"
+kubeconfig1=""
+if [[ $HOME != "/root" ]]; then
+        kubeconfig1="$HOME/.kube/config" #default value
+fi
+
+shift;
+shift;
+shift;
+
+while getopts ":k:o:h" opt; do
+  case ${opt} in
+    k )
+      kubeconfig1=$OPTARG
+      if [ ! -f $kubeconfig1 ]; then
+        echo "Kubeconfig $kubeconfig1 does not exist."
+        exit 0
+      fi;;
+    o )
+      output=$OPTARG
+      if [[ $output != 'pretty' ]] && [[ $output != 'prometheus' ]] && [[ $output != 'json' ]]; then
+          echo "Invalid output type $output. Valid options: pretty, prometheus, json."
+          exit 0
+      fi
+      outputString="--output="$output
+      ;;
+    #\? ) print_help;;
+    h ) print_help;;
+    ? )
+      echo "Invalid option: ${1}" 1>&2
+      print_help
+      exit 0
+      ;;
+  esac
+done
+
+kubeconfig="--kubeconfig="$kubeconfig1
+check_namespace $namespace $kubeconfig
+
+check_kind $customres $kubeconfig1
+
+#if [ $# == 5 ]; then
+#    output=$5
+#fi
+
+#if [[ $output != "pretty" && $output != "json" && $output != "prometheus" ]]; then
+#    echo "Unknown output format specified $output. Accepted values: pretty, json, prometheus"
+#    echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
+#    exit 0
+#fi
+
+follow_connections=true
+#connection_flag=$6
+#if [ $# == 6 ]; then
+#   if [[ $connection_flag == "--follow-connections" ]]; then
+#       follow_connections=true
+#   else
+#       echo "Unknown flag specified $connection_flag. Accepted value: --follow-connections"
+#       echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
+#       exit 0
+#   fi
+#fi
+
+#echo $output
+
+python /$KUBEPLUS_HOME/plugins/crmetrics.py "cr" $customres $instance $namespace $output $follow_connections $kubeconfig

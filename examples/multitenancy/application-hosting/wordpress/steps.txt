@@ -1,0 +1,90 @@
+Wordpress as-a-Service
+-------------------
+This example shows delivering Wordpress Helm chart as-a-service using KubePlus.
+
+
+1. Setup:
+   - Install Helm v3
+   - Install minikube
+   - Create minikube cluster
+     $ minikube start 
+
+2. Set Path:
+$ mkdir -p $HOME/go/src/github.com/cloud-ark/
+$ cd $HOME/go/src/github.com/cloud-ark/
+
+Clone KubePlus repo, if not already cloned:
+$ git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
+$ cd kubeplus
+$ export KUBEPLUS_HOME=`pwd`
+$ export PATH=$KUBEPLUS_HOME/plugins:$PATH
+$ kubectl kubeplus commands
+
+3. Get Provider and consumer kubeconfigs:
+   - Extract provider kubeconfig:
+     $ KUBEPLUS_NS=default
+     $ apiserver=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
+     $ python3 provider-kubeconfig.py create  -s $apiserver create $KUBEPLUS_NS
+     $ cp kubeplus-saas-provider.json examples/multitenancy/wordpress/.
+     $ cd examples/multitenancy/wordpress/
+
+4. Install KubePlus Operator:
+   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-4.0.1.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=kubeplus-saas-provider.json
+
+5. Extract consumer kubeconfig:
+   $ kubectl retrieve kubeconfig consumer $KUBEPLUS_NS -s $apiserver > consumer.conf
+   OR
+   $ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
+
+6. Create new consumer API:
+   - Create WordpressService consumer API registering the Wordpress Helm chart with it.
+     - Check wordpress-service-composition.yaml
+     - If required modify the Pod policies in the podconfig section (cpu/memory requests and limits) 
+     $ kubectl create -f wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
+   - Verify WordpressService CRD registered
+     $ until kubectl get crds --kubeconfig=kubeplus-saas-provider.json | grep wordpressservices.platformapi.kubeplus  ; do echo "Waiting for WordpressService CRD to be registered.."; sleep 1; done
+
+7. Create tenant1 Wordpress stack: 
+   - You can use either the kubeplus-saas-provider.json or consumer.conf in below commands.
+
+8. Check the man page for WordpressService to learn about what spec properties are available on the WordpressService resource:
+   $ kubectl man WordpressService -k kubeplus-saas-provider.json
+
+9. Deploy WordPressService for tenant1:
+   $ kubectl create -f tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
+
+10. Verify that WP instance is created:
+    $ kubectl get ns --kubeconfig=kubeplus-saas-provider.json
+      -> verify that wp-tenant1 namespace is created
+    $ kubectl describe wordpressservice wp-tenant1 --kubeconfig=kubeplus-saas-provider.json
+      -> should see the name of the helm release in the status field
+    $ kubectl get pods -n wp-tenant1 --kubeconfig=kubeplus-saas-provider.json
+      -> should see 2 pods getting created
+
+11. Wait till all the wp-tenant1 instance pods are in 'Running' state, then perform following actions:
+    - Get Wordpress URL
+      $ kubectl appurl WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+      $ curl -v <the app url output from above command>
+        - Note that this IP:Port combination will be reachable through your browser only
+          if you have opened up your Kubernetes cluster to traffic from outside world.
+      $ curl -v <value of the Location header from above response>
+        - should see the Wordpress install page details with options for various languages
+
+12. Check created resources:
+    $ kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
+      - should see all the created Kubernetes objects for this application instance
+
+13. Get logs:
+    $ kubectl applogs WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+      - should see logs for all the containers in both the Pods
+
+14. Get metrics:
+    $ kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+
+15. Visualize topology:
+    $ kubectl connections WordpressService wp-tenant1 $KUBEPLUS_NS -o png -k kubeplus-saas-provider.json
+      - Check the generated png file. For reference check wp-service-connections.png
+
+Clean up:
+$ kubectl delete -f tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
+$ kubectl delete -f wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json

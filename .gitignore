@@ -1,0 +1,10 @@
+*~
+venv
+provider-kubeconfig.log
+bak
+vendor
+operator-deployer/artifacts/deployment/operator-deployer
+operator-manager/artifacts/deployment/operator-manager
+operator-manager/operator-manager
+platform-operator/platform-operator
+platform-operator/artifacts/deployment/platform-operator

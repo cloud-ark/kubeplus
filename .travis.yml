@@ -1,0 +1,30 @@
+sudo: required
+
+services:
+- docker
+# This moves Kubernetes specific config files.
+env:
+- CHANGE_MINIKUBE_NONE_USER=true
+
+install:
+    #install nsenter
+    - docker run --rm jpetazzo/nsenter cat /nsenter > /tmp/nsenter 2> /dev/null; sudo cp /tmp/nsenter /usr/local/bin/; sudo chmod +x /usr/local/bin/nsenter; which nsenter
+    #install helm
+    - wget -q https://storage.googleapis.com/kubernetes-helm/helm-v2.12.1-linux-amd64.tar.gz
+    - tar xzfv helm-v2.12.1-linux-amd64.tar.gz
+    - PATH=`pwd`/linux-amd64/:$PATH
+    #install kubectl
+    - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.9.0/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+    # Download minikube.
+    - curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.25.2/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+    - sudo minikube start --vm-driver=none --kubernetes-version=v1.9.0
+    # Fix the kubectl context, as it's often stale.
+    - minikube update-context
+    # Wait for Kubernetes to be up and ready.
+    - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
+    - echo "Spun up kubernetes"!
+
+script: bash scripts/run_test.sh
+
+notifications:
+  email: true

@@ -1,0 +1,107 @@
+Self-service Custom MySQL
+--------------------------
+Suppose as a Platform Engineering team, you want to provide MySQL service to your product teams.
+You want to use a well-tested Helm chart, such as Bitnami's MySQL chart as the basis for this service.
+Here are the steps that you can follow to offer such a Custom MySQL as-a-Service.
+
+
+Platform Engineering team 
+--------------------------
+
+1. Download MySQL helm chart from Bitnami:
+   $ helm repo add bitnami https://charts.bitnami.com/bitnami
+   $ helm pull bitnami/mysql
+
+2. Create a Custom chart with Bitnami's chart as a sub-chart. In the values.yaml of the custom chart
+   add only those fields from the underlying chart that you want your product teams to modify.
+
+3. Install KubePlus and setup KubePlus kubectl plugins (skip this step if KubePlus is already installed):
+   - Create provider kubeconfig:
+     - Minikube:
+       $ server=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
+       $ python ../../../provider-kubeconfig.py create default
+     - GKE:
+       $ export PROJECT_ID=<your-gcp-project>
+       $ export CLOUDSDK_COMPUTE_ZONE=<gcp-zone-of-your-cluster>
+       $ export KUBECONFIG=<location-to-store-admin-kubeconfig-file>
+       $ gcloud container clusters get-credentials <cluster-name>
+       $ server=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
+       $ python ../../../provider-kubeconfig.py create default -s $server
+   - Install KubePlus
+
+     $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-4.0.1.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json 
+   - Wait till KubePlus Pod is Running
+     $ kubectl get pods -A
+
+4. Create CustomMysqlService API wrapping the Helm chart:
+   - Check custom-mysql-service-composition-localchart.yaml. Notice that we are specifying our custom mysql chart
+     from a file system based path.
+     So first we have to upload this chart to KubePlus Pod.
+   $ kubectl upload chart custom-mysql-1.0-10.1.0.tgz kubeplus-saas-provider.json 
+   $ kubectl create -f custom-mysql-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json 
+   $ kubectl get crds --kubeconfig=kubeplus-saas-provider.json
+     - verify that custommysqlservice crd has been created
+   $ kubectl describe crd custommysqlservices.platformapi.kubeplus --kubeconfig=kubeplus-saas-provider.json
+     - check that OpenAPISchema has been defined on the CRD corresponding to the attributes in the values.yaml of the CustomMysql Helm chart. 
+
+5. Download the consumer kubeconfig file:
+     $ kubectl retrieve kubeconfig consumer default -s $server -k kubeplus-saas-provider.json > consumer.conf
+
+   You can share consumer.conf with your product teams.
+
+
+Product team
+-------------
+
+1. Setup kubeplus kubectl plugins:
+
+   $ wget https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-kubectl-plugins.tar.gz
+   $ gunzip kubeplus-kubectl-plugins.tar.gz
+   $ tar -xvf kubeplus-kubectl-plugins
+   $ export KUBEPLUS_HOME=`pwd`
+   $ export PATH=$KUBEPLUS_HOME/plugins:$PATH
+
+2. Check details of CustomMysqlService API:
+   $ kubectl explain CustomMysqlService --kubeconfig=consumer.conf
+   $ kubectl explain CustomMysqlService.spec.mysql.auth --kubeconfig=consumer.conf
+
+3. Retrieve sample CustomMysqlService resource:
+   $ kubectl man CustomMysqlService -k consumer.conf 
+     - this will show a sample custommysqlservice object in which the spec properties are 
+       attributes in the CustomMysql Helm chart's values.yaml file
+   $ kubectl man CustomMysqlService -k consumer.conf > sample-custom-mysql.yaml
+
+4. Create Custom MySQL instance:
+   - Open sample-custom-mysql.yaml and change the name to "prod-mysql"
+   - Open sample-custom-mysql.yaml and update the username and password.
+   $ kubectl create -f sample-custom-mysql.yaml --kubeconfig=consumer.conf
+     - verify that the MySQL Pod is created in a new namespace (kubectl get pods -A)
+
+5. Check the created resources:
+   $ kubectl appresources CustomMysqlService prod-mysql -k consumer.conf 
+     - this will show all the resources that KubePlus has created for the custom mysql instance
+
+6. Check logs:
+    $ kubectl applogs CustomMysqlService prod-mysql default -k consumer.conf 
+
+7. Check metrics:
+    $ kubectl metrics CustomMysqlService prod-mysql default -k consumer.conf
+    $ kubectl metrics CustomMysqlService prod-mysql default -k consumer.conf -o prometheus
+
+
+Clean up:
+---------
+Product team:
+$ kubectl delete -f sample-custom-mysql.yaml --kubeconfig=consumer.conf
+
+Platform Engineering team:
+$ kubectl delete -f custom-mysql-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json
+
+
+Key Takeaways:
+--------------
+As Platform Engineering team, you don't want to share Helm charts with your product teams as then you won't
+have any control on how the Helm chart values will be modified.
+Wrapping an API around your Helm chart, and sharing this API with the product teams solves this problem.
+
+

@@ -1,0 +1,222 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: resourceevents.workflows.kubeplus
+spec:
+  group: workflows.kubeplus
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                eventName:
+                  type: string
+  names:
+    kind: ResourceEvent
+    plural: resourceevents
+  scope: Namespaced 
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: resourcemonitors.workflows.kubeplus
+spec:
+  group: workflows.kubeplus
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                resource:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                    group:
+                      type: string
+                    version:
+                      type: string
+                monitorRelationships:
+                  type: string
+  names:
+    kind: ResourceMonitor
+    plural: resourcemonitors
+  scope: Namespaced 
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: resourcecompositions.workflows.kubeplus
+spec:
+  group: workflows.kubeplus
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                newResource:
+                  type: object
+                  properties:
+                    resource:
+                      type: object
+                      properties:
+                        kind:
+                          type: string
+                        group:
+                          type: string
+                        version:
+                          type: string
+                        plural:
+                          type: string
+                    chartURL:
+                      type: string
+                    chartName:
+                      type: string
+                respolicy:
+                  type: object
+                  properties:
+                    apiVersion:
+                      type: string
+                    kind:
+                      type: string
+                    metadata:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                    spec:
+                      type: object
+                      properties:
+                        resource:
+                          type: object
+                          properties:
+                            kind:
+                              type: string
+                            group:
+                              type: string
+                            version:
+                              type: string
+                        policy:
+                          type: object
+                          properties:
+                            podconfig:
+                              type: object
+                              properties:
+                                limits:
+                                  type: object
+                                  properties:
+                                    cpu:
+                                      type: string
+                                    memory:
+                                      type: string
+                                requests:
+                                  type: object
+                                  properties:
+                                    cpu:
+                                      type: string
+                                    memory:
+                                      type: string
+                                nodeSelector:
+                                  type: string
+                resmonitor:
+                  type: object
+                  properties:
+                    apiVersion:
+                      type: string
+                    kind:
+                      type: string
+                    metadata:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                    spec:
+                      type: object
+                      properties:
+                        resource:
+                          type: object
+                          properties:
+                            kind:
+                              type: string
+                            group:
+                              type: string
+                            version:
+                              type: string
+                        monitorRelationships:
+                          type: string
+  names:
+    kind: ResourceComposition 
+    plural: resourcecompositions 
+  scope: Namespaced 
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: resourcepolicies.workflows.kubeplus
+spec:
+  group: workflows.kubeplus
+  versions: 
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                resource:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                    group:
+                      type: string
+                    version:
+                      type: string
+                policy:
+                  type: object
+                  properties:
+                    podconfig:
+                      type: object
+                      properties:
+                        limits:
+                          type: object
+                          properties:
+                            cpu:
+                              type: string
+                            memory:
+                              type: string
+                        requests:
+                          type: object
+                          properties:
+                            cpu:
+                              type: string
+                            memory:
+                              type: string
+                        nodeSelector:
+                          type: string
+  names:
+    kind: ResourcePolicy 
+    plural: resourcepolicies 
+  scope: Namespaced 
+---

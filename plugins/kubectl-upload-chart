@@ -1,0 +1,15 @@
+#!/bin/bash
+
+source utils.sh
+
+if (( $# < 2 )); then
+    echo "kubectl upload chart <full path to chart tgz> <kubeconfig-file>"
+    exit 0
+fi
+
+charttgz=$1
+kubeconfig=$2
+kubeplusNamespace=`kubectl get pods -A --kubeconfig=$kubeconfig | grep kubeplus-deployment | awk '{print $1}'`
+kubeplusPod=`kubectl get pods -A --kubeconfig=$kubeconfig | grep kubeplus-deployment | awk '{print $2}'`
+kubectl cp $charttgz $kubeplusNamespace/$kubeplusPod:/. -c helmer --kubeconfig=$kubeconfig
+kubectl cp $charttgz $kubeplusNamespace/$kubeplusPod:/. -c kubeconfiggenerator --kubeconfig=$kubeconfig

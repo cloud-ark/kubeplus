@@ -1,0 +1,265 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Setting up development environment &#8212; KubePlus 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Comparison" href="comparison.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="comparison.html" title="Comparison"
+             accesskey="P">previous</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">KubePlus 1.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Setting up development environment</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="setting-up-development-environment">
+<h1>Setting up development environment<a class="headerlink" href="#setting-up-development-environment" title="Permalink to this heading">¶</a></h1>
+<p>In order to develop KubePlus you need following tools:
+<code class="docutils literal notranslate"><span class="pre">Golang</span> <span class="pre">(1.14.5),</span> <span class="pre">Python</span> <span class="pre">3,</span> <span class="pre">Docker</span> <span class="pre">(latest),</span> <span class="pre">Minikube</span> <span class="pre">(latest),</span> <span class="pre">kubectl</span> <span class="pre">(latest),</span> <span class="pre">helm</span> <span class="pre">(latest).</span></code></p>
+<p>We provide a Vagrantfile that installs all these tools as part of provisioning the Vagrant VM. You can also install these tools locally if that is more convenient for you.</p>
+<p>If you want to use Vagrant based environment, follow these steps.</p>
+<ul class="simple">
+<li><p>Install Vagrant (latest)</p></li>
+<li><p>Install VirtualBox (latest)</p></li>
+<li><p>Install Git Bash (for Windows)</p></li>
+</ul>
+<p>If you are on Windows host then open a git bash terminal and perform
+the following steps through that terminal.
+Note that adding the box and spinning up the Vagrant VM can take some
+time for the first time. On Windows hosts we have noticed that the
+git bash terminal can become stuck. In such a case open another git bash
+terminal and ssh into the Vagrant VM.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span>https://github.com/cloud-ark/kubeplus.git
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>kubeplus
+$<span class="w"> </span>vagrant<span class="w"> </span>box<span class="w"> </span>add<span class="w"> </span>bento/ubuntu-18.04
+$<span class="w"> </span>vagrant<span class="w"> </span>up
+</pre></div>
+</div>
+<p>Once Vagrant VM has started</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>vagrant<span class="w"> </span>ssh
+$<span class="w"> </span>sudo<span class="w"> </span>usermod<span class="w"> </span>-aG<span class="w"> </span>docker<span class="w"> </span><span class="nv">$USER</span>
+$<span class="w"> </span><span class="nb">exit</span>
+$<span class="w"> </span>vagrant<span class="w"> </span>ssh
+$<span class="w"> </span>docker<span class="w"> </span>ps
+$<span class="w"> </span>docker<span class="w"> </span>version
+$<span class="w"> </span>minikube<span class="w"> </span>version
+$<span class="w"> </span>kubectl<span class="w"> </span>version
+$<span class="w"> </span>helm<span class="w"> </span>version
+</pre></div>
+</div>
+<p>In case any of the above commands fail, manually install the tools inside the Vagrant VM.</p>
+<p>Note that the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder on your host machine is mapped under <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> directory inside the Vagrant VM. Any files that you want to copy back from the Vagrant VM to the host, place them in <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> folder. Then access them from your host machine in the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder.</p>
+<section id="test-sample-examples">
+<h2>Test sample examples<a class="headerlink" href="#test-sample-examples" title="Permalink to this heading">¶</a></h2>
+<p>Start the Minikube Kubernetes cluster.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>minikube<span class="w"> </span>start<span class="w"> </span>--driver<span class="o">=</span>docker
+$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-A
+</pre></div>
+</div>
+<p>Once Kubernetes cluster is up, try the <code class="docutils literal notranslate"><span class="pre">hello-world</span></code> example by following steps from <a class="reference external" href="https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html">getting started guide</a>.</p>
+</section>
+<section id="vagrant-vm-access">
+<h2>Vagrant VM access<a class="headerlink" href="#vagrant-vm-access" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Vagrant VM IP: <code class="docutils literal notranslate"><span class="pre">192.168.33.10</span></code></p></li>
+<li><p>Access consumer ui on Vagrant VM (example of HelloWorldService): <code class="docutils literal notranslate"><span class="pre">http://192.168.33.10:5000/service/HelloWorldService#</span></code></p></li>
+<li><p>SSH into Vagrant VM: <code class="docutils literal notranslate"><span class="pre">vagrant</span> <span class="pre">ssh</span></code></p></li>
+<li><p>Copy files from Vagrant VM to the Host. Example</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>connections<span class="w"> </span>Pod<span class="w"> </span>kubeplus-deployment-fddd-ddd<span class="w"> </span>default<span class="w"> </span>-o<span class="w"> </span>png
+$<span class="w"> </span>Output<span class="w"> </span>available<span class="w"> </span><span class="k">in</span>:<span class="w"> </span>/home/vagrant/plugins/connections-op.json.gv.png
+$<span class="w"> </span>cp<span class="w"> </span>plugins/connections-op.json.gv.png<span class="w"> </span>/vagrant/.
+</pre></div>
+</div>
+<p>On the Host go to the directory where you have cloned kubeplus. The copied
+file will be available there.</p>
+</section>
+<section id="work-on-the-code">
+<h2>Work on the code<a class="headerlink" href="#work-on-the-code" title="Permalink to this heading">¶</a></h2>
+<p>Make sure that Golang is installed correctly on the Vagrant VM.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/local/go/bin
+$<span class="w"> </span>go<span class="w"> </span>version
+</pre></div>
+</div>
+<p>ADD PATH=$PATH:/usr/local/go/bin to ~/.profile</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>vi<span class="w"> </span>~/.profile
+$<span class="w"> </span><span class="nb">source</span><span class="w"> </span>~/.profile
+</pre></div>
+</div>
+<p>In case Golang is not properly installed, here is the command to install it.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>wget<span class="w"> </span>-c<span class="w"> </span>https://dl.google.com/go/go1.14.5.linux-amd64.tar.gz<span class="w"> </span>-O<span class="w"> </span>-<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tar<span class="w"> </span>-xz<span class="w"> </span>-C<span class="w"> </span>/usr/local
+</pre></div>
+</div>
+<p>In order to work on the code, you can clone a fresh copy kubeplus and place it in the path where Golang compiler expects it (which is, <code class="docutils literal notranslate"><span class="pre">~/go/src/github.com/cloud-ark</span></code>).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>~/
+$<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>go/src/github.com/cloud-ark
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>go/src/github.com/cloud-ark/
+$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span>https://github.com/cloud-ark/kubeplus.git
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>kubeplus
+$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">KUBEPLUS_HOME</span><span class="o">=</span>/home/vagrant/go/src/github.com/cloud-ark/kubeplus/
+</pre></div>
+</div>
+<p>If you don’t want to re-clone kubeplus then create a symbolic link from <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> to
+<code class="docutils literal notranslate"><span class="pre">~/go/src/github.com/cloud-ark</span></code>. As noted above, the <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> folder from inside your Vagrant VM is the mapped <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder on the host.</p>
+<p>Download gnostic library separately. It is a dependency of one of the k8s projects, but it has been removed from the googleapis project. kubeplus build fails as it depends on several k8s projects. We go around this issue by downloading it separately.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>go<span class="w"> </span>get<span class="w"> </span>github.com/googleapis/gnostic@v0.4.0
+</pre></div>
+</div>
+<p>Connect the Docker cli in the VM to the Docker daemon that is part of Minikube.
+We need to do this to use the locally built images when testing code changes.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">eval</span><span class="w"> </span><span class="k">$(</span>minikube<span class="w"> </span>docker-env<span class="k">)</span>
+</pre></div>
+</div>
+<p>Now we are ready to work on the code.</p>
+</section>
+<section id="code-organization">
+<h2>Code Organization<a class="headerlink" href="#code-organization" title="Permalink to this heading">¶</a></h2>
+<p>KubePlus is made up of following components:</p>
+<ul class="simple">
+<li><p>an init container that sets up required KubePlus artifacts such as ServiceAccounts, CRDs, etc. (available in <code class="docutils literal notranslate"><span class="pre">$KUBEPLUS_HOME/deploy/</span></code> folder)</p></li>
+<li><p>the mutating webhook (available in <code class="docutils literal notranslate"><span class="pre">$KUBEPLUS_HOME/mutating-webhook</span></code> folder)</p></li>
+<li><p>a mutating webhook helper (available in <code class="docutils literal notranslate"><span class="pre">$KUBEPLUS_HOME/mutating-webhook-helper</span></code> folder)</p></li>
+<li><p>the platform operator (available in <code class="docutils literal notranslate"><span class="pre">$KUBEPLUS_HOME/platform-operator</span></code> folder)</p></li>
+<li><p>the helmer container (available in <code class="docutils literal notranslate"><span class="pre">$KUBEPLUS_HOME/platform-operator/helm-pod</span></code> folder)</p></li>
+<li><p>consumerui (available in <code class="docutils literal notranslate"><span class="pre">$KUBEPLUS_HOME/consumerui</span></code> folder)</p></li>
+</ul>
+<p>Use vi/emacs to modify any part of the code.
+In order to test the changes, you will need to build the code, deploy KubePlus,
+and run some example (<code class="docutils literal notranslate"><span class="pre">hello-world</span></code> is a good example for testing purposes).</p>
+</section>
+<section id="build-code">
+<h2>Build code<a class="headerlink" href="#build-code" title="Permalink to this heading">¶</a></h2>
+<p>In each of the above component folders a build script is provided (<code class="docutils literal notranslate"><span class="pre">./build-artifact.sh</span></code>). Use it as follows to build the code:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>./build-artifact.sh<span class="w"> </span>latest
+</pre></div>
+</div>
+<p>Following components are written in Golang. If you run into any issues with building them then use the following commands to separately try the build steps to debug the issue.</p>
+<p><em>Init container</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>deploy
+$<span class="w"> </span>./build-artifact.sh<span class="w"> </span>latest
+$<span class="w"> </span>go<span class="w"> </span>build<span class="w"> </span>.
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
+</pre></div>
+</div>
+<p><em>Platform Operator</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>platform-operator
+$<span class="w"> </span>./build-artifact.sh<span class="w"> </span>latest
+$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">GO111MODULE</span><span class="o">=</span>off
+$<span class="w"> </span>go<span class="w"> </span>build<span class="w"> </span>.
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
+</pre></div>
+</div>
+<p><em>Helm Pod</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>platform-operator/helm-pod
+$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">GO111MODULE</span><span class="o">=</span>on
+$<span class="w"> </span>go<span class="w"> </span>build<span class="w"> </span>.
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>../../
+</pre></div>
+</div>
+<p><em>Mutating Webhook</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>mutating-webhook
+$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">GO111MODULE</span><span class="o">=</span>on
+$<span class="w"> </span>go<span class="w"> </span>build<span class="w"> </span>.
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
+</pre></div>
+</div>
+<p><em>Mutating Webhook Helper</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>mutating-webhook-helper
+$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">GO111MODULE</span><span class="o">=</span>on
+$<span class="w"> </span>go<span class="w"> </span>build<span class="w"> </span>.
+$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>..
+</pre></div>
+</div>
+</section>
+<section id="deploy-kubeplus">
+<h2>Deploy KubePlus<a class="headerlink" href="#deploy-kubeplus" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$KUBEPLUS_HOME</span>/deploy
+$<span class="w"> </span>kubectl<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>kubeplus-components-minikube.yaml
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">kubeplus-components-minikube.yaml</span></code> refers to the latest tags for each of the components. Also, the <code class="docutils literal notranslate"><span class="pre">imagePullPolicy</span></code> is set to <code class="docutils literal notranslate"><span class="pre">Never</span></code>. If you want to test a particular component tag available on CloudARK’s public GCR then don’t forget to change the imagePullPolicy to either <code class="docutils literal notranslate"><span class="pre">IfNotPresent</span></code> or <code class="docutils literal notranslate"><span class="pre">Always</span></code>.</p>
+</section>
+<section id="build-failure">
+<h2>Build Failure<a class="headerlink" href="#build-failure" title="Permalink to this heading">¶</a></h2>
+<p>If you see <code class="docutils literal notranslate"><span class="pre">ErrImageNeverPull</span></code> or <code class="docutils literal notranslate"><span class="pre">CrashLoopBackOff</span></code> then it means that you have not compiled all the components mentioned above. Go to each component directory and compile each component. Then delete KubePlus deployment and try again.</p>
+</section>
+<section id="check-logs">
+<h2>Check Logs<a class="headerlink" href="#check-logs" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$KUBEPLUS_HOME</span>/deploy
+$<span class="w"> </span>./kubeplus-logs.sh<span class="w"> </span>&lt;namespace<span class="w"> </span><span class="k">in</span><span class="w"> </span>which<span class="w"> </span>KubePlus<span class="w"> </span>is<span class="w"> </span>deployed&gt;
+</pre></div>
+</div>
+</section>
+<section id="delete-kubeplus">
+<h2>Delete KubePlus<a class="headerlink" href="#delete-kubeplus" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$KUBEPLUS_HOME</span>/deploy
+$<span class="w"> </span>./delete-kubeplus-components.sh
+</pre></div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="comparison.html" title="Comparison"
+             >previous</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">KubePlus 1.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Setting up development environment</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

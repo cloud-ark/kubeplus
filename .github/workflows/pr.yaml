@@ -1,0 +1,158 @@
+name: CI
+on:
+  workflow_dispatch:
+          #  pull_request:
+  push:
+    branches:
+    - master
+env:
+  ACTIONS_RUNNER_DEBUG: true
+  KUBEPLUS_TEST_OUTPUT: yes
+  KUBEPLUS_CI: true
+jobs:
+  job1:
+    runs-on: ubuntu-20.04
+    name: Test kubeplus deployment on kind
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Create k8s Kind Cluster
+      uses: helm/kind-action@v1
+
+    - name: Verify Cluster
+      run: |
+        kubectl get pods -A
+        echo "CLUSTER_NAME=chart-testing" >> $GITHUB_ENV
+
+    - name: Install Helm, Python3 LXML and Golang
+      run: |
+        sudo apt-get install python3-lxml
+        echo "Installing Helm..."
+        wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz
+        gunzip helm-v3.12.1-linux-amd64.tar.gz
+        tar -xvf helm-v3.12.1-linux-amd64.tar
+        sudo mv linux-amd64/helm /usr/local/bin/.
+        echo "Installing Golang..."
+        rm -rf /usr/local/go
+        wget https://go.dev/dl/go1.22.4.linux-amd64.tar.gz
+        sudo tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
+        export PATH=$PATH:/usr/local/go/bin
+        go version
+
+    - name: Prepare KubePlus Environment
+      run: |
+        echo "Setting up KubePlus environment..."
+        echo "Current directory:`pwd`"
+        mkdir -p $HOME/go/src/github.com/cloud-ark
+        cd ..
+        echo "Current directory:`pwd`"
+        kubeplus_folder="$(basename `pwd`)"
+        echo "KubePlus folder name:$kubeplus_folder"
+        cp -R $kubeplus_folder $HOME/go/src/github.com/cloud-ark/kubeplus
+        cd $HOME/go/src/github.com/cloud-ark/kubeplus
+        export KUBEPLUS_NS=default
+        echo "KUBEPLUS_NS=default" >> $GITHUB_ENV
+        export KUBEPLUS_HOME=`pwd`
+        echo "KUBEPLUS_HOME=$KUBEPLUS_HOME" >> $GITHUB_ENV
+        export PATH=$KUBEPLUS_HOME/plugins:$PATH
+        echo "PATH=$PATH" >> $GITHUB_ENV
+
+    - name: Build Mutating Webhook
+      run: |
+        echo "KUBEPLUS_HOME:$KUBEPLUS_HOME"
+        cd $KUBEPLUS_HOME/mutating-webhook
+        export GO111MODULE=on
+        go get github.com/googleapis/gnostic@v0.4.0
+        ./build-artifact.sh latest
+
+    - name: Build Helmer
+      run: |
+        cd $KUBEPLUS_HOME/platform-operator/helm-pod/
+        go mod vendor
+        ./build-artifact.sh latest
+
+    - name: Build Platform Operator
+      run: |
+        cd $KUBEPLUS_HOME/platform-operator
+        ./build-artifact.sh latest
+
+    - name: Build KubeConfig Generator
+      run: |
+        cd $KUBEPLUS_HOME/deploy
+        ./build-artifact-kubeconfiggenerator.sh latest
+
+    - name: Load Docker Images to Kind cluster
+      run: |
+        for image in $(docker images --format '{{.Repository}}:{{.Tag}}' | grep '^gcr.io/cloudark-kubeplus'); do
+          kind load docker-image "$image" --name $CLUSTER_NAME
+        done
+        docker exec $CLUSTER_NAME-control-plane crictl images
+
+    - name: Deploy KubePlus and Kubeplus plugin
+      run: |
+        ./install.sh --kubeplus-plugin --kubeplus $KUBEPLUS_NS
+
+    - name: Verify KubePlus Installation
+      run: |
+        echo "Verifying KubePlus installation..."
+        kubectl get pods -n $KUBEPLUS_NS | grep kubeplus
+
+    - name: Retrieve KubePlus Pod Logs
+      run: |
+        kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`
+        echo "Helmer logs..."
+        kubectl logs $kubeplus_pod -c helmer
+        echo "Platform Operator logs..."
+        kubectl logs $kubeplus_pod -c platform-operator
+        echo "CRD Hook logs..."
+        kubectl logs $kubeplus_pod -c crd-hook
+
+    - name: Upload Example Chart
+      run: kubectl upload chart ./examples/multitenancy/application-hosting/wordpress/wordpress-chart-0.0.3.tgz kubeplus-saas-provider.json
+
+    - name: Sleep Before Continuing
+      run: sleep 10
+
+    - name: Deploy WordPress Service Composition
+      run: |
+        kubectl create -f ./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json
+
+    - name: Wait for CRD Registration
+      run: |
+        until kubectl get crds | grep wordpressservices.platformapi.kubeplus; do
+          echo "Waiting for CRD to be registered..."
+          sleep 1
+        done
+
+    - name: Deploy Tenant Example
+      run: |
+        kubectl create -f ./examples/multitenancy/application-hosting/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
+        kubectl get resourcecompositions
+        kubectl describe resourcecomposition wordpress-service-composition
+
+    - name: Wait for Application Pods to Start
+      run: |
+        until kubectl get pods -n wp-tenant1 | grep Running; do
+          echo "Waiting for Application Pods to start..."
+          sleep 1
+        done
+
+    - name: Interact with Deployed Application
+      run: |
+        kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
+        kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+
+    - name: Cleanup Deployed Resources
+      run: |
+        kubectl delete wordpressservice wp-tenant1 --kubeconfig=kubeplus-saas-provider.json
+        kubectl delete resourcecomposition wordpress-service-composition --kubeconfig=kubeplus-saas-provider.json
+
+    - name: Run Unit Tests
+      run: |
+        cd tests
+        python3 -m venv venv
+        source venv/bin/activate
+        pip3 install -r requirements.txt
+        python3 -m unittest -v tests
+        deactivate
