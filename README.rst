@@ -4,21 +4,17 @@ KubePlus
 
 Kubernetes provides ability to extend a cluster's functionality by adding Custom Resource Controllers.
 
-Such a extended Kubernetes cluster essentially represents a purpose-built application platform
-which may consist of several custom resource controllers.
+Such a extended Kubernetes cluster essentially represents a purpose-built application platform.
 
 *Discoverability* is a key requirement for such platforms.
 
-Kubernetes admins and application developers should be able to self-discover the
-capabilities of such purpose built application platform.
-
 Here we provide generic guidelines for developing Kubernetes Custom Resource Controllers
 to aid discoverability. Any custom resource controller that is written following
-these guidelines will make it easy for Kubernetes admins and application developers to discover
-the capabilities of their purpose built application platform on Kubernetes.
+these guidelines will make it easy for Kubernetes admins and application developers to self-discover
+the capabilities of their purpose built application platforms.
 
 
-**Explicitly identify resource life-cycle actions in Custom Resource Type definition**:
+**1) Explicitly identify resource life-cycle actions in Custom Resource Type definition**:
 
 When definining the type for a custom resource you should explicitly document
 and identify the various life-cycle actions that can be performed on a resource by the
@@ -33,7 +29,7 @@ to write discoverability tools that inspect the type definition and discover
 all the actions that can be done on a custom resource by that controller.
 
 
-**Expose resource's configuration parameters as Controller ConfigMaps**:
+**2) Expose resource's configuration parameters as Controller ConfigMaps**:
 
 A controller should be written such that it takes inputs for underlying resource's
 configuration parameters through ConfigMap(s). For instance, a custom resource controller
@@ -52,7 +48,7 @@ This will enable discoverability tool(s) to inspect the type definition and dete
 the configurable settings of the underlying resource.
 
 
-**Use annotations to pass parameters that modify the behavior of the Custom Resource Controller itself**:
+**3) Use annotations to pass parameters that modify the behavior of the Custom Resource Controller itself**:
 
 Use Kubernetes annotations to customize the behavior of the custom resource controller itself.
 Such annotations should be defined on the resource that is used to register the custom resource type ('kind').
@@ -67,7 +63,7 @@ Using annotations instead of ConfigMap allows discovery tools to inspect
 a single place to understand the configuration options for a controller.
 
 
-**Explicitly identify underlying resources that will be created by the Custom Resource Controller**:
+**4) Explicitly identify underlying resources that will be created by the Custom Resource Controller**:
 
 A controller will typically create one or more Kubernetes resources, such as Pod, Service, Deployment, Secret, Ingress, etc.,
 as part of handling a custom resource. From understandability point-of-view,
