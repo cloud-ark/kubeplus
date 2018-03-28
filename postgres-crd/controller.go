@@ -524,9 +524,9 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, []string
         //Execute PSQL command file against Service IP
         //export PGPASSWORD=mysecretpassword; psql -h <Service IP> -p <Service Port> -U postgres -f file.Name()
 
-        args := strings.Fields("/usr/local/bin/psql -h " + serviceIP + " -p " + nodePort + " -U postgres " + " -f " + file.Name())
+        args := strings.Fields("psql -h " + serviceIP + " -p " + nodePort + " -U postgres " + " -f " + file.Name())
         fmt.Printf("Database setup command: %v\n", args)
-	verifyCmd := strings.Fields("/usr/local/bin/psql -h " + serviceIP + " -p " + nodePort + " -U <user> " + " -d <db-name>")
+	verifyCmd := strings.Fields("psql -h " + serviceIP + " -p " + nodePort + " -U <user> " + " -d <db-name>")
 
 	//fmt.Println("About to get Pods")
 	time.Sleep(time.Second * 5)
