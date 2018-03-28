@@ -77,7 +77,10 @@ Minikube's IP address is hard coded in controller.go
 
 Pre-requisite step:
 -------------------
-Postgres client needs to be installed on the machine:
+1) Install Go's dep dependency management tool:
+   https://github.com/golang/dep
+
+2) Install Postgres client:
 - brew install postgresql
 - sudo apt-get install postgresql-client
 
@@ -94,21 +97,25 @@ Steps that will be run multiple times for multiple customers:
 
 Actual steps (Minikube):
 -------------------------
-0) Clone this repository and put it inside 'src' directory of your GOPATH
+1) Clone this repository and put it inside 'src' directory of your GOPATH
    at following location:
 
    $GOPATH/src/github.com/cloud-ark/kubeplus
 
-1) In one shell window run Postgres custom resource controller
+2) Install dependencies:
+   - cd $GOPATH/src/github.com/cloud-ark/kubeplus
+   - dep ensure
+
+3) In one shell window run Postgres custom resource controller
    - cd $GOPATH/src/github.com/cloud-ark/kubeplus/postgres-crd
    - go run *.go -kubeconfig=$HOME/.kube/config
 
-2) In another shell window register CRD definition for Postgres
+4) In another shell window register CRD definition for Postgres
    - cd $GOPATH/src/github.com/cloud-ark/kubeplus/postgres-crd
    - kubectl create -f artifacts/examples/crd.yaml
    - kubectl get crd
 
-3) In the second window create Postgres custom resource for client1
+5) In the second window create Postgres custom resource for client1
    - kubectl create -f artifacts/examples/client1-postgres.yaml 
    
 Verify:
