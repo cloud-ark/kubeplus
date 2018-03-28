@@ -1,0 +1,11 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: postgreses.postgrescontroller.kubeplus
+spec:
+  group: postgrescontroller.kubeplus
+  version: v1
+  names:
+    kind: Postgres
+    plural: postgreses
+  scope: Namespaced
