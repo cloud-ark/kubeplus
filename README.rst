@@ -5,7 +5,7 @@ KubePlus
 Purpose-built application platforms on Kubernetes.
 
 KubePlus Purpose-built Platforms extend Kubernetes with custom resources to embed customer-specific platform workflows directly in Kubernetes.  
-Example of such extensions can be Postgres, MySQL, Fluentd, Prometheus etc. 
+Example of such extensions can be Postgres, MySQL, Fluentd, Prometheus etc.
 
 
 **Guidelines for consistency across all custom resources**
@@ -24,3 +24,9 @@ to easily consume new custom resources directly from your Kubernetes cluster. Ku
 - Provides information on workflow actions that can be performed during the lifecycle of custom resource
 
 - Provides information of composition of custom resources in terms on native Kubernetes resources (e.g. pods, services etc.)
+
+
+**Example CRDs**
+
+1) Postgres
+   - Check postgres-crd/README.rst for details of this CRD
