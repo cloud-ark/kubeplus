@@ -25,9 +25,13 @@ Based on our study of existing Kubernetes custom controllers/extensions, we have
 
 *4) Improved usability of Kubernetes custom resources*
 KubePlus installs an additional software component, named KubeARK, on your Kubernetes cluster to improve usablity of new custom resources. 
-KubeARk provides following information:
+
+KubeARK provides following information:
+
 - Resource specific configurable parameters exposed by the controller (e.g. MySQL configurable parameters)
+
 - Lifecycle actions that can be performed on a custom resource   (e.g. You can add/remove users to an instance of MySQL resource.)
+
 - Composition of custom resources in terms on native Kubernetes resources (e.g. If you create an instance of a MySQL custom resource, it internally would create a pod and a service.)
 
 
@@ -42,20 +46,15 @@ They have following high level requirements for their application platform:
 
 This application requires following platform elements with the ability perform their lifecycle operations.
 
-- Nginx:
-Sample lifecycle operations- Add/Remove endpoints, Set routes, Set SSL etc.
+- Nginx: (Sample lifecycle operations- Add/Remove endpoints, Set routes, Set SSL etc.)
 
-- Postgres:
-Sample lifecycle operations- Create db, Add/remove users and passwords.
+- Postgres: (Sample lifecycle operations- Create db, Add/remove users and passwords.)
 
-- Backup:
-Sample lifecycle operations- Backup Postgres db, Restore Postgres db.
+- Backup: (Sample lifecycle operations- Backup Postgres db, Restore Postgres db.)
 
-- Prometheus:
-Sample lifecycle operations- Define monitoring endpoints. Set metrics.
+- Prometheus: (Sample lifecycle operations- Define monitoring endpoints. Set metrics.)
 
-- Fluentd:
-Sample lifecycle operation- Set log rotation policy.
+- Fluentd: (Sample lifecycle operation- Set log rotation policy.)
 
 KubePlus purpose built platform for this EdTech startup would contain 5 custom resources - Nginx, Postgres, Backup, Prometheus and Fluentd, which are written to follow our guidelines for Kubernetes extensions. 
 
@@ -69,11 +68,12 @@ Kubernetes admin deploys KubePlus on a Kubernetes cluster using following simple
 
 - cld platform list -- List installed custom resources.
 
-Kubernetes users / app developers can create/delete/update/list the newly added 5 resources by directly using kubectl CLI. e.g.
+Kubernetes users / app developers can create/delete/update/list the newly added 5 resources by directly using kubectl CLI
 
 - kubectl create -f postgres.yaml
 
-Additionally they can use KubeARK to get more information about composition, configurables and supported operations on these resources. e.g.
+Additionally they can use KubeARK to get more information about composition, configurables and supported operations on these resources.
+
 -  kubectl explain kubeark.postgres
 
 This command provides following more information about postgres:
@@ -83,25 +83,6 @@ This command provides following more information about postgres:
 - Configurables - postgres configurable parameters that can be configured
 
 - Supported operations - Lifecycle operations that can be performed e.g. add/remove users.
-
-
-
-**Guidelines for consistency across all custom resources**
-
-Based on our study of existing Kubernetes custom controllers/extensions, we have developed guidelines that need to be followed by
-any custom controller to be part of KubePlus. This brings consistency and quality even when we use any other existing open-source controller for your needs.
-
-
-**Improved usability of custom resources**
-
-KubePlus installs an additional software component KubeArk on to your Kubernetes cluster that assists users of KubePlus 
-to easily consume new custom resources directly from your Kubernetes cluster. KubeArk serves following purposes: 
-
-- Provides information about resource specific configurable parameters exposed by the controller (e.g. MySQL configurable parameters)
-
-- Provides information on workflow actions that can be performed during the lifecycle of custom resource
-
-- Provides information of composition of custom resources in terms on native Kubernetes resources (e.g. pods, services etc.)
 
 
 **Example CRDs**
