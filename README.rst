@@ -20,10 +20,12 @@ KubePlus allows embedding platform element lifecycle actions or workflows in Kub
 
 
 *3) Consistency across Kubernetes custom resources*
+
 Based on our study of existing Kubernetes custom controllers/extensions, we have come up with common guidelines that need to be followed by any custom controller to be part of KubePlus. This brings consistency and quality in packaging Kubernetes extensions to build a purpose-built platform. 
 
 
 *4) Improved usability of Kubernetes custom resources*
+
 KubePlus installs an additional software component, named KubeARK, on your Kubernetes cluster to improve usablity of new custom resources. 
 
 KubeARK provides following information:
@@ -40,7 +42,7 @@ KubeARK provides following information:
 Imagine an EdTech startup building a classroom collaboration application on Kubernetes.
 They have following high level requirements for their application platform:
 
-- Platform should be composable for adding / updating elements.
+- Platform should be composable for adding / updating platform elements.
 
 - Platform learning curve for developers should be minimal without having to learn any new tools/interfaces for creating/managing the application platform. 
 
