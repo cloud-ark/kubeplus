@@ -39,7 +39,7 @@ type of Service. It is also possible to use an Ingress resource to expose the
 Service at some path.
 
 Once the Postgres Pod is READY, the controller executes commands defined in the 
-setupCommands spec attribute of the custom resource against the Service.
+commands spec attribute of the custom resource against the Service.
 
 An example custom resource is shown below.
 
@@ -54,10 +54,10 @@ spec:
   database: moodle
   image: postgres:9.3
   replicas: 1
-  setupCommands: ["create user client1 with password 'client1';","create database moodle with owner client1 encoding 'utf8' template=template0;"]
+  commands: ["create user client1 with password 'client1';","create database moodle with owner client1 encoding 'utf8' template=template0;"]
 ----------------
 
-setupCommands contains the setup commands for setting up the database on the container.
+commands contains any commands that you want to execute for for setting up the database on the container.
 
 This and other example Postgres custom resources are available in following directory:
 ./artifact/examples

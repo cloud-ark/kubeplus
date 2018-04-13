@@ -41,13 +41,17 @@ type PostgresSpec struct {
 	Password string `json:"password"`
 	Database string `json:"database"`
 	Replicas       *int32 `json:"replicas"`
-	SetupCommands []string `json:"setupCommands"`
+	Commands []string `json:"commands"`
 }
 
 // FooStatus is the status for a Foo resource
 type PostgresStatus struct {
 	AvailableReplicas int32 `json:"availableReplicas"`
-	SetupDone string `json:"setupDone"`
+	ActionHistory []string `json:"actionHistory"`
+	VerifyCmd string `json:"verifyCommand"`
+	ServiceIP string `json:"serviceIP"`
+	ServicePort string `json:"servicePort"`
+	Status string `json:"status"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

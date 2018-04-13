@@ -1,0 +1,12 @@
+apiVersion: postgrescontroller.kubeplus/v1
+kind: Postgres
+metadata:
+  name: client10
+spec:
+  deploymentName: client10
+  username: client10
+  password: client10
+  database: wordpress
+  image: postgres:9.3
+  replicas: 1
+  commands: ["create database wordpress with owner client10 encoding 'utf8' template=template0;"]
