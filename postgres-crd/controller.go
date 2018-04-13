@@ -276,7 +276,7 @@ func (c *Controller) syncHandler(key string) error {
 		return err
 	}
 
-     	//fmt.Println("Inside syncHandler 2")
+	//fmt.Println("Inside syncHandler 2")
 
 	deploymentName := foo.Spec.DeploymentName
 	if deploymentName == "" {
@@ -287,46 +287,112 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
-	setupDoneFlag := foo.Status.SetupDone
-	var verifyCmd []string
-	//fmt.Printf("SetupDoneFlag:[%s]\n", setupDoneFlag)
+	var verifyCmd string
+	var actionHistory []string
+	var serviceIP string
+	var servicePort string
+	var setupCommands []string
 
 	// Get the deployment with the name specified in Foo.spec
 	_, err = c.deploymentsLister.Deployments(foo.Namespace).Get(deploymentName)
 	// If the resource doesn't exist, we'll create it
 	if errors.IsNotFound(err) {
 	   fmt.Printf("Received request to create CRD %s\n", deploymentName)
-	   setupDoneFlag, verifyCmd = createDeployment(foo, c)
+	   serviceIP, servicePort, setupCommands, verifyCmd = createDeployment(foo, c)
+	   for _, cmds := range setupCommands {
+	       actionHistory = append(actionHistory, cmds)
+	   }
+           fmt.Printf("Setup Commands: %v\n", setupCommands)
            fmt.Printf("Verify using: %v\n", verifyCmd)
-	   if setupDoneFlag != "" {
-	      //fmt.Printf("Database setup done:%s\n" , setupDoneFlag)
-	      //fmt.Printf("[%v]\n",setupDoneFlag)
-	      err = c.updateFooStatus(foo, &verifyCmd)
-	      if err != nil {
+	   err = c.updateFooStatus(foo, &actionHistory, verifyCmd, serviceIP, servicePort, "READY")
+	   if err != nil {
 	      	 return err
-	      }
 	   }
 	} else {
-	  fmt.Printf("CRD %s created and initialized\n", deploymentName)
+	  fmt.Printf("CRD %s created\n", deploymentName)
 	  fmt.Printf("Check using: kubectl describe postgres %s \n", deploymentName)
-	  //fmt.Printf("Verify using: %v\n", verifyCmd)
-	  fmt.Printf("Verify using: %v\n", setupDoneFlag)
+
+	  pgresObj, err := c.sampleclientset.PostgrescontrollerV1().Postgreses(foo.Namespace).Get(deploymentName,
+												metav1.GetOptions{})
+
+	  actionHistory := pgresObj.Status.ActionHistory
+	  serviceIP := pgresObj.Status.ServiceIP
+	  servicePort := pgresObj.Status.ServicePort
+	  verifyCmd := pgresObj.Status.VerifyCmd
+	  fmt.Printf("Action History:[%s]\n", actionHistory)
+	  fmt.Printf("Service IP:[%s]\n", serviceIP)
+	  fmt.Printf("Service Port:[%s]\n", servicePort)
+	  fmt.Printf("Verify cmd: %v\n", verifyCmd)
+
+	  setupCommands = canonicalize(foo.Spec.Commands)
+
+	  var commandsToRun []string
+	  commandsToRun = getCommandsToRun(actionHistory, setupCommands)
+	  fmt.Printf("commandsToRun: %v\n", commandsToRun)
+
+	  if len(commandsToRun) > 0 {
+	     err = c.updateFooStatus(foo, &actionHistory, verifyCmd, serviceIP, servicePort, "UPDATING")
+	     if err != nil {
+         	return err
+	     }
+	     updateCRD(pgresObj, c, commandsToRun)
+	     for _, cmds := range commandsToRun {
+	     	   actionHistory = append(actionHistory, cmds)
+	     }
+	     err = c.updateFooStatus(foo, &actionHistory, verifyCmd, 
+	     	   	             serviceIP, servicePort, "READY")
+	     if err != nil {
+	     	return err
+	     }
+	  }
 	}
-
-     	//fmt.Println("Inside syncHandler 3")
-
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
 }
 
-func (c *Controller) updateFooStatus(foo *postgresv1.Postgres, verifyCmd *[]string) error {
+func getCommandsToRun(actionHistory []string, setupCommands []string) []string {
+     var commandsToRun []string
+     for _, v := range setupCommands {
+     	 var found bool = false
+     	 for _, v1 := range actionHistory {
+	     if v == v1 {
+	     	found = true
+	     }
+	 }
+	 if !found {
+	    commandsToRun = append(commandsToRun, v)
+	 }
+     }
+     fmt.Printf("-- commandsToRun: %v--\n", commandsToRun)     
+     return commandsToRun
+}
+
+
+func canonicalize(setupCommands1 []string) []string {
+     var setupCommands []string
+     //Convert setupCommands to Lower case
+     for _, cmd := range setupCommands1 {
+     	 setupCommands = append(setupCommands, strings.ToLower(cmd))
+     }
+  return setupCommands
+}
+
+func (c *Controller) updateFooStatus(foo *postgresv1.Postgres, 
+     actionHistory *[]string, verifyCmd string, serviceIP string, servicePort string,
+     status string) error {
 	// NEVER modify objects from the store. It's a read-only, local cache.
 	// You can use DeepCopy() to make a deep copy of original object and modify this copy
 	// Or create a copy manually for better performance
 	fooCopy := foo.DeepCopy()
 	//fooCopy.Status.AvailableReplicas = deployment.Status.AvailableReplicas
 	fooCopy.Status.AvailableReplicas = 1
-	fooCopy.Status.SetupDone = strings.Join(*verifyCmd, " ")
+
+	//fooCopy.Status.ActionHistory = strings.Join(*actionHistory, " ")
+	fooCopy.Status.VerifyCmd = verifyCmd
+	fooCopy.Status.ActionHistory = *actionHistory
+	fooCopy.Status.ServiceIP = serviceIP
+	fooCopy.Status.ServicePort = servicePort
+	fooCopy.Status.Status = status
 	// Until #38113 is merged, we must use Update instead of UpdateStatus to
 	// update the Status block of the Foo resource. UpdateStatus will not
 	// allow changes to the Spec of the resource, which is ideal for ensuring
@@ -388,8 +454,30 @@ func (c *Controller) handleObject(obj interface{}) {
 	}
 }
 
-func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, []string) {
-     	doneToReturn := ""
+func updateCRD(foo *postgresv1.Postgres, c *Controller, setupCommands []string) {
+     serviceIP := foo.Status.ServiceIP
+     servicePort := foo.Status.ServicePort
+
+     //setupCommands1 := foo.Spec.Commands
+     //var setupCommands []string
+
+     //Convert setupCommands to Lower case
+     //for _, cmd := range setupCommands1 {
+     //	 setupCommands = append(setupCommands, strings.ToLower(cmd))
+     //}
+
+     fmt.Printf("Service IP:[%s]\n", serviceIP)
+     fmt.Printf("Service Port:[%s]\n", servicePort)
+     fmt.Printf("Command:[%s]\n", setupCommands)
+
+     if len(setupCommands) > 0 {
+     	file := createTempDBFile(setupCommands)
+     	fmt.Println("Now setting up the database")
+     	setupDatabase(serviceIP, servicePort, file)
+     }
+}
+
+func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, []string, string) {
 
         deploymentsClient := c.kubeclientset.AppsV1().Deployments(apiv1.NamespaceDefault)
 
@@ -398,7 +486,7 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, []string
 	username := foo.Spec.Username
 	password := foo.Spec.Password
 	database := foo.Spec.Database
-	setupCommands := foo.Spec.SetupCommands
+	setupCommands := canonicalize(foo.Spec.Commands)
 
 	fmt.Printf("   Deployment:%v, Image:%v, User:%v\n", deploymentName, image, username)
 	fmt.Printf("   Password:%v, Database:%v\n", password, database)
@@ -503,30 +591,8 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, []string
 
         nodePort1 := result1.Spec.Ports[0].NodePort
 	nodePort := fmt.Sprint(nodePort1)
+	servicePort := nodePort
 	//fmt.Printf("NodePort:[%v]", nodePort)
-
-        file, err := ioutil.TempFile("/tmp", "create-db1")
-        if err != nil {
-           panic(err)
-        }
-        defer os.Remove(file.Name())
-        fmt.Printf("Database setup file:%s\n", file.Name())
-
-        for _, command := range setupCommands {
-            //fmt.Printf("Command: %v\n", command)
-	    // TODO: Interpolation of variables	    
-            file.WriteString(command)
-            file.WriteString("\n")
-        }
-        file.Sync()
-        file.Close()
-
-        //Execute PSQL command file against Service IP
-        //export PGPASSWORD=mysecretpassword; psql -h <Service IP> -p <Service Port> -U postgres -f file.Name()
-
-        args := strings.Fields("psql -h " + serviceIP + " -p " + nodePort + " -U postgres " + " -f " + file.Name())
-        fmt.Printf("Database setup command: %v\n", args)
-	verifyCmd := strings.Fields("psql -h " + serviceIP + " -p " + nodePort + " -U <user> " + " -d <db-name>")
 
 	//fmt.Println("About to get Pods")
 	time.Sleep(time.Second * 5)
@@ -560,26 +626,12 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, []string
 
 	// Wait couple of seconds more just to give the Pod some more time.
 	time.Sleep(time.Second * 2)
-	fmt.Println("Now setting up the database")
 
-        envName := "PGPASSWORD"
-        envValue := PGPASSWORD
-        newEnv := append(os.Environ(), fmt.Sprintf("%s=%s", envName, envValue))
-	//fmt.Printf("NewEnv: %v\n", newEnv)
-
-	cmd := exec.Command(args[0], args[1:]...)
-        cmd.Env = newEnv
-
-        out, err := cmd.CombinedOutput()
-	if err != nil {
-	   fmt.Printf("Err:%v\n", err)
-	   fmt.Printf("Out:%v\n", out)
-	   fmt.Printf("Out:%s\n", out)
-	   panic(err)
-	} else {
-	     doneToReturn = "done"
+	if len(setupCommands) > 0 {
+	    file := createTempDBFile(setupCommands)
+	    fmt.Println("Now setting up the database")
+	    setupDatabase(serviceIP, servicePort, file)
 	}
-	//fmt.Printf("Done To Return:%s\n", doneToReturn)
 
         // List Deployments
         //fmt.Printf("Listing deployments in namespace %q:\n", apiv1.NamespaceDefault)
@@ -590,8 +642,57 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, []string
         //for _, d := range list.Items {
         //        fmt.Printf(" * %s (%d replicas)\n", d.Name, *d.Spec.Replicas)
         //}
+
+     	verifyCmd := strings.Fields("psql -h " + serviceIP + " -p " + nodePort + " -U <user> " + " -d <db-name>")
+	var verifyCmdString = strings.Join(verifyCmd, " ")
 	fmt.Printf("VerifyCmd: %v\n", verifyCmd)
-	return doneToReturn, verifyCmd
+	return serviceIP, servicePort, setupCommands, verifyCmdString
+}
+
+func setupDatabase(serviceIP string, servicePort string, file *os.File) {
+
+     defer os.Remove(file.Name())
+
+     //Execute PSQL command file against Service IP
+     //export PGPASSWORD=mysecretpassword; psql -h <Service IP> -p <Service Port> -U postgres -f file.Name()
+
+     args := strings.Fields("psql -h " + serviceIP + " -p " + servicePort + " -U postgres " + " -f " + file.Name())
+     fmt.Printf("Database setup command: %v\n", args)
+
+     envName := "PGPASSWORD"
+     envValue := PGPASSWORD
+     newEnv := append(os.Environ(), fmt.Sprintf("%s=%s", envName, envValue))
+     //fmt.Printf("NewEnv: %v\n", newEnv)
+
+     cmd := exec.Command(args[0], args[1:]...)
+     cmd.Env = newEnv
+
+     out, err := cmd.CombinedOutput()
+     if err != nil {
+     	fmt.Printf("Err:%v\n", err)
+	fmt.Printf("Out:%v\n", out)
+	fmt.Printf("Out:%s\n", out)
+	panic(err)
+     }
+}
+
+func createTempDBFile(setupCommands []string) (*os.File){
+     file, err := ioutil.TempFile("/tmp", "create-db1")
+     if err != nil {
+     	panic(err)
+     }
+
+     fmt.Printf("Database setup file:%s\n", file.Name())
+
+     for _, command := range setupCommands {
+     	 //fmt.Printf("Command: %v\n", command)
+	 // TODO: Interpolation of variables	    
+         file.WriteString(command)
+         file.WriteString("\n")
+     }
+     file.Sync()
+     file.Close()
+     return file
 }
 
 func getPods(c *Controller, deploymentName string) *apiv1.PodList {
