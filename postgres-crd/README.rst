@@ -13,9 +13,6 @@ for a Postgres instance, such as:
 - Modify user permissions on an existing Postgres instance
 - etc.
 
-Currently, create user/password and create database actions, that need to happen
-when a Postgres instance is created, are implemented.
-
 This CRD reduces out-of-band automation that you have to implement for provisioning
 a Postgres instance on Kubernetes and managing its various life-cycle actions.
 
@@ -27,8 +24,8 @@ A new 'kind' named 'Postgres' is defined (see artifacts/examples/crd.yaml).
 
 The Custom Resource Controller (controller.go) listens for the creation of resources
 of the 'Postgres' kind (e.g.: artifacts/examples/client1-postgres.yaml).
-In the spec of a Postgres resource you can define the setup commands for creating
-user/password and creating a database.
+In the spec of a Postgres resource you can define any commands that you want to execute
+on the provisioned Postgres instance. 
 
 The controller handles Postgres resource creation event by creating a 
 Kubernetes Deployment with the specified Postgres image in the CRD definition, 
@@ -39,7 +36,7 @@ type of Service. It is also possible to use an Ingress resource to expose the
 Service at some path.
 
 Once the Postgres Pod is READY, the controller executes commands defined in the 
-commands spec attribute of the custom resource against the Service.
+commands spec attribute of the custom resource against the Service endpoint.
 
 An example custom resource is shown below.
 
@@ -57,7 +54,10 @@ spec:
   commands: ["create user client1 with password 'client1';","create database moodle with owner client1 encoding 'utf8' template=template0;"]
 ----------------
 
-commands contains any commands that you want to execute for for setting up the database on the container.
+The commands attribute contains any commands that you want to execute on the Postgres instance.
+(TODO: The commands definition should be changed to accommodate parameterized variable. This will allow
+using username, password, and database name defined as separate attributes in the spec to be integrated/used
+within the commands definition.)
 
 This and other example Postgres custom resources are available in following directory:
 ./artifact/examples
