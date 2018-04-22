@@ -1,0 +1,3 @@
+alter user client10 with PASSWORD 'client1010';
+create user client11 with password 'client11';
+drop user client10;
