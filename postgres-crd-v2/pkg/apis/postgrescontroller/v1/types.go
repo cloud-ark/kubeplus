@@ -45,7 +45,7 @@ type PostgresSpec struct {
 	Replicas       *int32 `json:"replicas"`
 	Users []UserSpec `json:"users"`
 	Databases []string `json:"databases"`
-	Commands []string `json:"commands"`
+	Commands []string `json:"initcommands"`
 }
 
 // FooStatus is the status for a Foo resource
@@ -54,7 +54,6 @@ type PostgresStatus struct {
 	ActionHistory []string `json:"actionHistory"`
 	Users []UserSpec `json:"users"`
 	Databases []string `json:"databases"`
-	Commands []string `json:"commands"`
 	VerifyCmd string `json:"verifyCommand"`
 	ServiceIP string `json:"serviceIP"`
 	ServicePort string `json:"servicePort"`

@@ -5,7 +5,6 @@ import (
        "strings"
 )
 
-
 func getCommandsToRun(actionHistory []string, setupCommands []string) []string {
      var commandsToRun []string
      for _, v := range setupCommands {

@@ -331,10 +331,11 @@ func (c *Controller) syncHandler(key string) error {
 	  fmt.Printf("Verify cmd: %v\n", verifyCmd)
 
 	  // 1. Find directly provided commands
-	  setupCommands1 := canonicalize(foo.Spec.Commands)
+	  //setupCommands1 := canonicalize(foo.Spec.Commands)
+	  //setupCommands = getCommandsToRun(actionHistory, setupCommands1)
+	  //fmt.Printf("setupCommands: %v\n", setupCommands)
+
 	  var commandsToRun []string
-	  setupCommands = getCommandsToRun(actionHistory, setupCommands1)
-	  fmt.Printf("setupCommands: %v\n", setupCommands)
 
 	  // 2. Reconcile databases
 	  desiredDatabases := foo.Spec.Databases
@@ -369,6 +370,7 @@ func (c *Controller) syncHandler(key string) error {
 	     updateCRD(pgresObj, c, commandsToRun)
 	  }
 
+	 /*
 	 if len(setupCommands) > 1 {
 	     pgresObj1, err := c.sampleclientset.PostgrescontrollerV1().Postgreses(foo.Namespace).Get(deploymentName,
 		       										metav1.GetOptions{})
@@ -379,6 +381,7 @@ func (c *Controller) syncHandler(key string) error {
 	     }
 	     updateCRD(pgresObj1, c, setupCommands)
 	  }   
+	  */
 
 	  pgresObj2, err := c.sampleclientset.PostgrescontrollerV1().Postgreses(foo.Namespace).Get(deploymentName,
 		       										metav1.GetOptions{})
@@ -387,6 +390,8 @@ func (c *Controller) syncHandler(key string) error {
 	  for _, cmds := range commandsToRun {
 	     actionHistory = append(actionHistory, cmds)
 	  }
+
+	  /*
 	  fmt.Printf("2222 Action History:%s\n", actionHistory)
 	  if len(setupCommands) > 1 {
 	     for _, cmds := range setupCommands {
@@ -397,6 +402,8 @@ func (c *Controller) syncHandler(key string) error {
 	     }
 	     fmt.Printf("3333 Action History:%s\n", actionHistory)
 	  }
+	  */
+
 	  err = c.updateFooStatus(pgresObj2, &actionHistory, &desiredUsers, &desiredDatabases, 
 	     	   		  verifyCmd, serviceIP, servicePort, "READY")
 	   if err != nil {

@@ -1,3 +1,7 @@
 alter user client10 with PASSWORD 'client1010';
 create user client11 with password 'client11';
 drop user client10;
+
+["\c moodle;", "create table moodle_data (items varchar(250);",
+             "insert into moodle_data (items) values ('Moodle data1');",
+             "insert into moodle_data (items) values ('Moodle data1');"]
