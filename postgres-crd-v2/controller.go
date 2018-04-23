@@ -302,7 +302,10 @@ func (c *Controller) syncHandler(key string) error {
 	   fmt.Printf("Received request to create CRD %s\n", deploymentName)
 	   serviceIP, servicePort, setupCommands, databases, users, verifyCmd = createDeployment(foo, c)
 	   for _, cmds := range setupCommands {
-	       actionHistory = append(actionHistory, cmds)
+	       // Don't save the connect command as we might connect later and perform more operations
+	       if ! strings.Contains(cmds, "\\c") {
+	       	  actionHistory = append(actionHistory, cmds)
+	       }
 	   }
            fmt.Printf("Setup Commands: %v\n", setupCommands)
            fmt.Printf("Verify using: %v\n", verifyCmd)
@@ -327,11 +330,11 @@ func (c *Controller) syncHandler(key string) error {
 	  fmt.Printf("Service Port:[%s]\n", servicePort)
 	  fmt.Printf("Verify cmd: %v\n", verifyCmd)
 
-	  // 1. Reconcile directly provided commands
-	  setupCommands = canonicalize(foo.Spec.Commands)
+	  // 1. Find directly provided commands
+	  setupCommands1 := canonicalize(foo.Spec.Commands)
 	  var commandsToRun []string
-	  commandsToRun = getCommandsToRun(actionHistory, setupCommands)
-	  fmt.Printf("commandsToRun: %v\n", commandsToRun)
+	  setupCommands = getCommandsToRun(actionHistory, setupCommands1)
+	  fmt.Printf("setupCommands: %v\n", setupCommands)
 
 	  // 2. Reconcile databases
 	  desiredDatabases := foo.Spec.Databases
@@ -364,22 +367,42 @@ func (c *Controller) syncHandler(key string) error {
          	return err
 	     }
 	     updateCRD(pgresObj, c, commandsToRun)
+	  }
 
+	 if len(setupCommands) > 1 {
 	     pgresObj1, err := c.sampleclientset.PostgrescontrollerV1().Postgreses(foo.Namespace).Get(deploymentName,
 		       										metav1.GetOptions{})
-             actionHistory := pgresObj1.Status.ActionHistory
-	     fmt.Printf("1111 Action History:%s\n", actionHistory)
-	     for _, cmds := range commandsToRun {
-	     	   actionHistory = append(actionHistory, cmds)
-	     }
-
-	     err = c.updateFooStatus(pgresObj1, &actionHistory, &desiredUsers, &desiredDatabases, 
-	     	   		     verifyCmd, serviceIP, servicePort, "READY")
+	     err = c.updateFooStatus(pgresObj1, &actionHistory, &currentUsers, &desiredDatabases, 
+	     	   		     verifyCmd, serviceIP, servicePort, "UPDATING")
 	     if err != nil {
-		panic(err)
-	     	return err
+         	return err
 	     }
+	     updateCRD(pgresObj1, c, setupCommands)
+	  }   
+
+	  pgresObj2, err := c.sampleclientset.PostgrescontrollerV1().Postgreses(foo.Namespace).Get(deploymentName,
+		       										metav1.GetOptions{})
+          actionHistory = pgresObj2.Status.ActionHistory
+	  fmt.Printf("1111 Action History:%s\n", actionHistory)
+	  for _, cmds := range commandsToRun {
+	     actionHistory = append(actionHistory, cmds)
 	  }
+	  fmt.Printf("2222 Action History:%s\n", actionHistory)
+	  if len(setupCommands) > 1 {
+	     for _, cmds := range setupCommands {
+	     	   // Don't save the connect command as we might connect later and perform more operations
+	       	   if ! strings.Contains(cmds, "\\c") {
+	       	      actionHistory = append(actionHistory, cmds)
+	       	   }	  
+	     }
+	     fmt.Printf("3333 Action History:%s\n", actionHistory)
+	  }
+	  err = c.updateFooStatus(pgresObj2, &actionHistory, &desiredUsers, &desiredDatabases, 
+	     	   		  verifyCmd, serviceIP, servicePort, "READY")
+	   if err != nil {
+	      panic(err)
+	      return err
+	   }
 	}
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
@@ -489,6 +512,9 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 	users := foo.Spec.Users
 	databases := foo.Spec.Databases
 	setupCommands := canonicalize(foo.Spec.Commands)
+	
+	var userAndDBCommands []string
+	var allCommands []string
 
 	var currentDatabases []string
 	var currentUsers []postgresv1.UserSpec
@@ -505,12 +531,16 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 	fmt.Printf("   DropUserCmds:%v\n", dropUserCmds)
 	fmt.Printf("   AlterUserCmds:%v\n", alterUserCmds)
 
-	appendList(&setupCommands, createDBCmds)
-	appendList(&setupCommands, dropDBCmds)
-	appendList(&setupCommands, createUserCmds)
-	appendList(&setupCommands, dropUserCmds)
-	appendList(&setupCommands, alterUserCmds)
+	appendList(&userAndDBCommands, createDBCmds)
+	appendList(&userAndDBCommands, dropDBCmds)
+	appendList(&userAndDBCommands, createUserCmds)
+	appendList(&userAndDBCommands, dropUserCmds)
+	appendList(&userAndDBCommands, alterUserCmds)
+	fmt.Printf("   UserAndDBCmds:%v\n", userAndDBCommands)
 	fmt.Printf("   SetupCmds:%v\n", setupCommands)
+
+	appendList(&allCommands, userAndDBCommands)
+	appendList(&allCommands, setupCommands)
 
         deployment := &appsv1.Deployment{
                 ObjectMeta: metav1.ObjectMeta{
@@ -647,12 +677,20 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 	// Wait couple of seconds more just to give the Pod some more time.
 	time.Sleep(time.Second * 2)
 
+	if len(userAndDBCommands) > 0 {
+	    fmt.Printf("About to create temp db file for user and db commands")
+	    file := createTempDBFile(userAndDBCommands)
+	    fmt.Println("Now setting up the database")
+	    setupDatabase(serviceIP, servicePort, file)
+	}
+
 	if len(setupCommands) > 0 {
-	    fmt.Printf("About to create temp db file")
+	    fmt.Printf("About to create temp db file for setup commands")
 	    file := createTempDBFile(setupCommands)
 	    fmt.Println("Now setting up the database")
 	    setupDatabase(serviceIP, servicePort, file)
 	}
+
 
         // List Deployments
         //fmt.Printf("Listing deployments in namespace %q:\n", apiv1.NamespaceDefault)
@@ -667,7 +705,7 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
      	verifyCmd := strings.Fields("psql -h " + serviceIP + " -p " + nodePort + " -U <user> " + " -d <db-name>")
 	var verifyCmdString = strings.Join(verifyCmd, " ")
 	fmt.Printf("VerifyCmd: %v\n", verifyCmd)
-	return serviceIP, servicePort, setupCommands, databases, users, verifyCmdString
+	return serviceIP, servicePort, allCommands, databases, users, verifyCmdString
 }
 
 

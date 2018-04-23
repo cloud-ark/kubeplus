@@ -14,6 +14,7 @@ spec:
              "insert into moodle_data1 (items) values ('Moodle data1');",
 	     "insert into moodle_data1 (items) values ('Moodle data1');",
 	     "insert into moodle_data1 (items) values ('Moodle data2');",
+	     "insert into moodle_data1 (items) values ('Moodle data3');",
 	     "GRANT ALL PRIVILEGES ON TABLE moodle_data1 TO devdatta;",
 	     "GRANT ALL PRIVILEGES ON TABLE moodle_data1 TO pallavi;"
 	    ]
