@@ -143,11 +143,6 @@ func (in *PostgresStatus) DeepCopyInto(out *PostgresStatus) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.Commands != nil {
-		in, out := &in.Commands, &out.Commands
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
 	return
 }
 

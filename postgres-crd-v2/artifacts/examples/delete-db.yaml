@@ -9,4 +9,3 @@ spec:
   users: [{"username": "devdatta", "password": "pass123"}, 
           {"username": "pallavi", "password": "pass234"}]
   databases: ["moodle", "wordpress"]
-  commands: ["create database magento;"]
