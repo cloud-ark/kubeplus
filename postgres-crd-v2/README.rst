@@ -28,7 +28,8 @@ In the spec of a Postgres resource you can define
 
 - Databases that you want created using the 'database' attribute
 - Users with their passwords that you want created using the 'users' attribute
-- Any other Postgres command directly using the 'commands' attribute
+- The 'initcommands' attribute should be used to specify any table creation and
+  data insert commands. See artifacts/examples/initializeclient.yaml for example.
 
 The controller handles Postgres resource creation event by creating a 
 Kubernetes Deployment with the Postgres image specified in the CRD definition.
@@ -38,6 +39,8 @@ the controller on Minikube. In real deployments this can be changed to LoadBalan
 type of Service. It is also possible to use an Ingress resource to expose the
 Service at some path instead of at an IP address.
 
+The Deployment should be changed to a Stateful Set in real deployments.
+
 
 How to test?
 ============
@@ -45,7 +48,9 @@ How to test?
 The code has been developed and tested on Minikube. 
 
 Minikube's IP address is hard coded in controller.go
+
 - Find out the IP address of Minikube VM: minikube ip
+
 - Update the MINIKUB_IP variable defined in controller.go
 
 
@@ -55,17 +60,23 @@ Pre-requisite step:
    https://github.com/golang/dep
 
 2) Install Postgres client:
+
 - brew install postgresql
+
 - sudo apt-get install postgresql-client
 
 
 Conceptual Steps:
 ------------------
+
 One time steps:
+
 - Run the Postgres Operator
+
 - Register the Postgres CRD
 
 Steps that will be run multiple times for multiple customers:
+
 - Create Postgres custom resource
 
 
@@ -77,28 +88,43 @@ Actual steps (Minikube):
    $GOPATH/src/github.com/cloud-ark/kubeplus
 
 2) Install dependencies:
+
    - cd $GOPATH/src/github.com/cloud-ark/kubeplus
+
    - dep ensure
 
 3) In one shell window run the Postgres Operator
+
    - cd $GOPATH/src/github.com/cloud-ark/kubeplus/postgres-crd
+
    - go run *.go -kubeconfig=$HOME/.kube/config
 
 4) In another shell window register CRD definition for Postgres
+
    - cd $GOPATH/src/github.com/cloud-ark/kubeplus/postgres-crd
+
    - kubectl create -f artifacts/examples/crd.yaml
+
    - kubectl get crd
 
 5) In the second window create Postgres custom resource
+
    - kubectl apply -f artifacts/examples/initializeclient.yaml
+
    - kubectl describe postgres client25
+
    - Verify (see below)
 
 6) Test Life-cycle actions (execute and verify)
-   - kubectl apply -f artifacts/examples/adduser.yaml
-   - kubectl apply -f artifacts/examples/deleteuser.yaml 
+
+   - kubectl apply -f artifacts/examples/add-user.yaml
+
+   - kubectl apply -f artifacts/examples/delete-user.yaml 
+
    - kubectl apply -f artifacts/examples/modify-password.yaml
+
    - kubectl apply -f artifacts/examples/add-db.yaml
+
    - kubectl apply -f artifacts/examples/delete-db.yaml
 
    
