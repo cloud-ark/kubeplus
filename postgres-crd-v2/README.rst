@@ -1,6 +1,6 @@
-=========================
-Postgres Custom Resource 
-=========================
+==================
+Postgres Operator
+==================
 
 This is a Kubernetes Custom Resource for Postgres.
 
@@ -9,6 +9,7 @@ for a Postgres instance, such as:
 
 - Create user and password when Postgres instance is created
 - Create database at the time of Postgres instance creation
+- Initialize the database with some data
 - Create database on an already created Postgres instance
 - Modify user password on an existing Postgres instance
 - etc.
