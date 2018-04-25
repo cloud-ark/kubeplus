@@ -13,7 +13,7 @@ its capabilities. This will also bring consistency in using multiple such operat
 in a single Kubernetes cluster to form a purpose-built application platform.
 
 
-## 1) Use declarative format to capture the state of the Custom Resource in Custom Resource Type definition:
+## 1) Define the desired states of a Custom Resource as declarative Spec in its Type definition 
 
 Custom Resource Type definitions should use declarative format for representing the state of the Custom Resource.
 Users should be able to specify the desired state of the custom resource using yaml input to kubectl only.
@@ -32,7 +32,7 @@ Explicit documentation of the supported life-cycle actions by the operator and h
 those can be performed using its declarative definition is recommended for the ease of use.
 
 
-## 2) Custom Resource Controller implementation should be state/level based and not trigger/edge based:
+## 2) Custom Resource Controller implementation should be state/level based and not trigger/edge based
 
 Custom controller code should be written such that it reconciles the current state
 with the desired state as defined in the Custom resource's Spec 
@@ -42,7 +42,7 @@ It should *not* matter *when* the desired state change is requested.
 This makes the controller code more robust as it does not have to worry about missing a state change trigger. 
 
 
-## 3) Expose Custom Resource's configuration parameters as ConfigMaps or Annotations:
+## 3) Expose Custom Resource's configuration parameters as ConfigMaps or Annotations
 
 A controller should be written such that it takes inputs for underlying resource's
 configuration parameters through ConfigMap(s) or Annotations. For instance, a custom resource controller
@@ -59,7 +59,7 @@ configuration file(s) and how to then inject them in appropriate Pods.
 Such configuration parameters should be explicitly identified and documented for each custom resource.
 
 
-## 4) Explicitly identify underlying resources that will be created by the Custom Resource Controller:
+## 4) Explicitly identify underlying resources that will be created by the Custom Resource Controller
 
 A custom controller will typically create one or more Kubernetes resources, such as Pod, Service, Deployment, Secret, Ingress, etc.,
 as part of instantiation of its custom resource. It is important for a user to understand this underlying composition
@@ -68,7 +68,7 @@ We also recommend adding labels to each of these underlying objects with custom 
 to maintain associations.
 
 
-## 5) Use annotations to pass parameters that modify the behavior of the Custom Resource Controller itself:
+## 5) Use annotations to pass parameters that modify the behavior of the Custom Resource Controller itself
 
 Use Kubernetes annotations to customize the behavior of the custom resource controller itself.
 Such annotations should be defined on the resource that is used to register the custom resource type ('kind').
