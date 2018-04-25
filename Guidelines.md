@@ -1,13 +1,13 @@
-# KubePlus
+# Operator/Custom controller Guidelines
 
-Kubernetes provides ability to extend a cluster's functionality by adding new operators (Custom
+Kubernetes provides ability to extend a cluster's functionality by adding new Operators (Custom
 Resource Definitions + associated controllers). Such an extended Kubernetes cluster essentially 
 represents a purpose-built application platform.
 
 *Discoverability* is a key requirement for these custom operators.
 
 Here we provide generic guidelines for developing Kubernetes Operators that will help
-with this requirement. Any custom operator that is written following
+with discoverability. Any custom operator that is written following
 these guidelines will make it easy for Kubernetes admins and application developers to self-discover
 its capabilities. This will also bring consistency in using multiple such operators
 in a single Kubernetes cluster to form a purpose-built application platform.
