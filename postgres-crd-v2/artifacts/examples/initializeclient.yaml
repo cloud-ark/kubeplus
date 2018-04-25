@@ -12,8 +12,8 @@ spec:
   initcommands: ["\\c moodle;",
        		  "create table moodle_data1 (items varchar(250));",
              	  "insert into moodle_data1 (items) values ('Moodle data1');",
-	    	  "insert into moodle_data1 (items) values ('Moodle data1');",
-	     	  "insert into moodle_data1 (items) values ('Moodle data2');",
-	     	  "GRANT ALL PRIVILEGES ON TABLE moodle_data1 TO devdatta;",
-	     	  "GRANT ALL PRIVILEGES ON TABLE moodle_data1 TO pallavi;"
-	    	  ]
+                  "insert into moodle_data1 (items) values ('Moodle data1');",
+                  "insert into moodle_data1 (items) values ('Moodle data2');",
+                  "GRANT ALL PRIVILEGES ON TABLE moodle_data1 TO devdatta;",
+                  "GRANT ALL PRIVILEGES ON TABLE moodle_data1 TO pallavi;"
+                ]

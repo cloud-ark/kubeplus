@@ -8,5 +8,5 @@ spec:
   replicas: 1
   users: [{"username": "devdatta", "password": "pass123"}, 
           {"username": "pallavi", "password": "pass234"},
-	  {"username": "shrinivas", "password": "pass1"}]
+          {"username": "shrinivas", "password": "pass1"}]
   databases: ["moodle", "wordpress"]
