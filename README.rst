@@ -90,4 +90,4 @@ This command provides following more information about postgres:
 **Example CRDs**
 
 1) Postgres
-   - Check postgres-crd/README.rst for details of this CRD
+   - Check postgres-crd-v2/README.rst for details of this CRD
