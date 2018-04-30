@@ -100,6 +100,7 @@ Additionally they can use KubeARK to get more information about the composition,
 
 **Build your own Operators**
 
-If you are interested in building your own operators, check the steps that you can follow here: 
-https://github.com/cloud-ark/kubeplus/issues/14
+If you are interested in building your own operators, check the steps that you can follow here_:
+
+.. _here: https://github.com/cloud-ark/kubeplus/issues/14
 
