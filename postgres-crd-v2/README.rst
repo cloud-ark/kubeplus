@@ -96,13 +96,13 @@ Actual steps (Minikube):
 
 3) In one shell window run the Postgres Operator
 
-   - cd $GOPATH/src/github.com/cloud-ark/kubeplus/postgres-crd
+   - cd $GOPATH/src/github.com/cloud-ark/kubeplus/postgres-crd-v2
 
    - go run *.go -kubeconfig=$HOME/.kube/config
 
 4) In another shell window register CRD definition for Postgres
 
-   - cd $GOPATH/src/github.com/cloud-ark/kubeplus/postgres-crd
+   - cd $GOPATH/src/github.com/cloud-ark/kubeplus/postgres-crd-v2
 
    - kubectl create -f artifacts/examples/crd.yaml
 
