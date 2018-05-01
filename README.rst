@@ -80,15 +80,15 @@ Kubernetes admin deploys KubePlus on a Kubernetes cluster using following simple
 Kubernetes users can create/delete/update/list the newly added custom resources by directly using kubectl CLI. e.g. # kubectl apply -f postgres.yaml
 Additionally they can use KubeARK to get more information about the composition, configurables and life-cycle actions of these resources. e.g.
 
-- kubectl configurables Postgres: This command provides information about supported configurable parameters of Postgres custom resource.
+- kubeark configurables Postgres: This command provides information about supported configurable parameters of Postgres custom resource.
 
-- kubectl composition Postgres: This command provides information about composition of Postgres custom resource
+- kubeark composition Postgres: This command provides information about composition of Postgres custom resource
   in terms of underlying Kubernetes resources like Pod, Service etc.
 
-- kubectl composition Postgres Postgres_wordpress: Here Postgres_wordpress is an instance of Postgres custom resource.
+- kubeark composition Postgres Postgres_wordpress: Here Postgres_wordpress is an instance of Postgres custom resource.
   This command shows actual underlying Kubernetes resources created for Postgres_wordpress resource instance.
 
-- kubectl actions Postgres: This command provides information about supported life-cycle actions on Postgres resource
+- kubeark actions Postgres: This command provides information about supported life-cycle actions on Postgres resource
   like backup/restore db and how they can be performed using declarative yaml definition.
 
 
