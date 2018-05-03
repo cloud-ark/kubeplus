@@ -43,8 +43,8 @@ KubeARK provides following information:
 **How it Works?**
 
 Imagine an EdTech startup building a classroom collaboration application on Kubernetes. They have following high level requirements for their application platform:
-- Platform should be composable.
-- It should be possible to add or update required platform elements to it. Platform learning curve for developers should be minimal. Minimize new tools. 
+- Platform should be composable. It should be possible to add or update required platform elements to it.
+- Platform learning curve for developers should be minimal.
 
 This application requires following platform elements.
 
@@ -68,11 +68,16 @@ custom resources using kubectl interface.
 
 Kubernetes admin deploys KubePlus on a Kubernetes cluster using following simple commands.
 
-- cld platform create platform.yaml -- platform.yaml defines the custom operators to be added to the kubernetes cluster.
+- kubeark platform create platform.yaml: platform.yaml defines the custom operators to be added to the Kubernetes cluster.
+  It requires following information about each custom operator that needs to be part of KubePlus platform.
 
-- cld platform update platform.yaml -- Add/Update custom operators.
+  - Path to operator's helm chart.
 
-- cld platform list -- List installed custom operators.
+  - KubeARK specific yaml file per operator that provides additional information about configurables, life-cycle actions, and composition. 
+
+- kubeark platform update platform.yaml: Add/Update custom operators.
+
+- kubeark platform list: List installed custom operators.
 
 
 *KubePlus usage*
