@@ -68,16 +68,16 @@ custom resources using kubectl interface.
 
 Kubernetes admin deploys KubePlus on a Kubernetes cluster using following simple commands.
 
-- kubeark platform create platform.yaml: platform.yaml defines the custom operators to be added to the Kubernetes cluster.
+- kubeark create platform platform.yaml: platform.yaml defines the custom operators to be added to the Kubernetes cluster.
   It requires following information about each custom operator that needs to be part of KubePlus platform.
 
   - Path to operator's helm chart.
 
   - KubeARK specific yaml file per operator that provides additional information about configurables, life-cycle actions, and composition. 
 
-- kubeark platform update platform.yaml: Add/Update custom operators.
+- kubeark update platform platform.yaml: Add/Update custom operators.
 
-- kubeark platform list: List installed custom operators.
+- kubeark list platform: List installed custom operators.
 
 
 *KubePlus usage*
@@ -85,15 +85,15 @@ Kubernetes admin deploys KubePlus on a Kubernetes cluster using following simple
 Kubernetes users can create/delete/update/list the newly added custom resources by directly using kubectl CLI. e.g. # kubectl apply -f postgres.yaml
 Additionally they can use KubeARK to get more information about the composition, configurables and life-cycle actions of these resources. e.g.
 
-- kubeark configurables Postgres: This command provides information about supported configurable parameters of Postgres custom resource.
+- kubeark get configurables Postgres: This command provides information about supported configurable parameters of Postgres custom resource.
 
-- kubeark composition Postgres: This command provides information about composition of Postgres custom resource
+- kubeark get composition Postgres: This command provides information about composition of Postgres custom resource
   in terms of underlying Kubernetes resources like Pod, Service etc.
 
-- kubeark composition Postgres Postgres_wordpress: Here Postgres_wordpress is an instance of Postgres custom resource.
+- kubeark get composition Postgres Postgres_wordpress: Here Postgres_wordpress is an instance of Postgres custom resource.
   This command shows actual underlying Kubernetes resources created for Postgres_wordpress resource instance.
 
-- kubeark actions Postgres: This command provides information about supported life-cycle actions on Postgres resource
+- kubeark get actions Postgres: This command provides information about supported life-cycle actions on Postgres resource
   like backup/restore db and how they can be performed using declarative yaml definition.
 
 
