@@ -29,9 +29,9 @@ This brings consistency and quality in packaging Kubernetes Operators to build a
 
 *4) Improved usability of Kubernetes custom resources*
 
-KubePlus installs an additional component, named KubeARK, on your Kubernetes cluster to improve usability of custom Operators.
+KubePlus installs an additional component, named CRDProvenanceAPIServer, on your Kubernetes cluster to improve usability of custom Operators.
 
-KubeARK provides following information:
+CRDProvenanceAPIServer provides following information:
 
 - Custom resource specific configurable parameters exposed by the controller (e.g. MySQL configurable parameters)
 
@@ -60,40 +60,41 @@ This application requires following platform elements.
 **KubePlus Purpose-built Platform**
 
 KubePlus purpose-built platform for this EdTech startup would contain four custom operators - Nginx, Postgres, Prometheus and Fluentd, which are written to 
-follow our guidelines for Kubernetes Operators. KubePlus will install a special Kubernetes controller called KubeARK
-to improve consumability of these KubePlus Operators. KubeARK provides additional information about KubePlus
-custom resources using kubectl interface.
+follow our guidelines for Kubernetes Operators.
+
+KubePlus will install a special Kubernetes API Server named CRDProvenanceAPIServer to improve consumability of these KubePlus Operators.
+CRDProvenanceAPIServer provides additional information about KubePlus custom resources using kubectl interface.
 
 *KubePlus deployment*
 
 Kubernetes admin deploys KubePlus on a Kubernetes cluster using following simple commands.
 
-- kubeark create platform platform.yaml: platform.yaml defines the custom operators to be added to the Kubernetes cluster.
+- *kubeplus create platform platform.yaml*: platform.yaml defines the custom operators to be added to the Kubernetes cluster.
   It requires following information about each custom operator that needs to be part of KubePlus platform.
 
   - Path to operator's helm chart.
 
-  - KubeARK specific yaml file per operator that provides additional information about configurables, life-cycle actions, and composition. 
+  - KubePlus specific yaml file per operator that provides additional information about configurables, life-cycle actions, and composition. 
 
-- kubeark update platform platform.yaml: Add/Update custom operators.
+- *kubeplus update platform platform.yaml*: Add/Update custom operators.
 
-- kubeark list platform: List installed custom operators.
+- *kubeplus list platform*: List installed custom operators.
 
 
 *KubePlus usage*
 
 Kubernetes users can create/delete/update/list the newly added custom resources by directly using kubectl CLI. e.g. # kubectl apply -f postgres.yaml
-Additionally they can use KubeARK to get more information about the composition, configurables and life-cycle actions of these resources. e.g.
+Additionally they can use CRDProvenanceAPIServer to get more information about the composition, configurables, and life-cycle actions of these resources. e.g.
 
-- kubeark get configurables Postgres: This command provides information about supported configurable parameters of Postgres custom resource.
+- *kubeplus get configurables Postgres*: This command provides information about supported configurable parameters of Postgres custom resource.
 
-- kubeark get composition Postgres: This command provides information about composition of Postgres custom resource
+- *kubeplus get composition Postgres*: This command provides information about composition of Postgres custom resource
   in terms of underlying Kubernetes resources like Pod, Service etc.
 
-- kubeark get composition Postgres Postgres_wordpress: Here Postgres_wordpress is an instance of Postgres custom resource.
+- *kubeplus get composition Postgres Postgres_wordpress*: Here Postgres_wordpress is an instance of Postgres custom resource.
   This command shows actual underlying Kubernetes resources created for Postgres_wordpress resource instance.
 
-- kubeark get actions Postgres: This command provides information about supported life-cycle actions on Postgres resource
+- *kubeplus get actions Postgres*: This command provides information about supported life-cycle actions on Postgres resource
   like backup/restore db and how they can be performed using declarative yaml definition.
 
 
