@@ -98,7 +98,17 @@ Actual steps (Minikube):
 
    - cd $GOPATH/src/github.com/cloud-ark/kubeplus/postgres-crd-v2
 
-   - go run *.go -kubeconfig=$HOME/.kube/config
+   - Run from Host machine:
+     
+     - go run *.go -kubeconfig=$HOME/.kube/config
+
+   - Deploy the controller as a Deployment in the cluster
+     
+     - ./build-deploy-artifacts.sh
+     
+     - cd artifacts/deployment
+
+     - kubectl create -f deployment.yaml
 
 4) In another shell window register CRD definition for Postgres
 
