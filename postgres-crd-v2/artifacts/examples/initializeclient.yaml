@@ -9,8 +9,7 @@ spec:
   users: [{"username": "devdatta", "password": "pass123"}, 
           {"username": "pallavi", "password": "pass234"}]
   databases: ["moodle"]
-  initcommands: ["\\c moodle;",
-       		  "create table moodle_data1 (items varchar(250));",
+  initcommands: [ "create table moodle_data1 (items varchar(250));",
              	  "insert into moodle_data1 (items) values ('Moodle data1');",
                   "insert into moodle_data1 (items) values ('Moodle data1');",
                   "insert into moodle_data1 (items) values ('Moodle data2');",

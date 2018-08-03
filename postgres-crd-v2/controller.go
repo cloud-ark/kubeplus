@@ -18,16 +18,19 @@ package main
 
 import (
 	"fmt"
-	"time"
-        "os"
-        "os/exec"
-        //"io/ioutil"
+	"os"
+	"os/exec"
+	"strconv"
 	"strings"
+	"time"
 
-	apiutil "k8s.io/apimachinery/pkg/util/intstr" 
-        apiv1 "k8s.io/api/core/v1"
-        metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-        "k8s.io/client-go/kubernetes"
+	"database/sql"
+	_ "github.com/lib/pq"
+
+	apiv1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiutil "k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/golang/glog"
 	appsv1 "k8s.io/api/apps/v1"
@@ -69,8 +72,8 @@ const (
 )
 
 const (
-      PGPASSWORD = "mysecretpassword"
-      MINIKUBE_IP = "192.168.99.100"
+	PGPASSWORD  = "mysecretpassword"
+	MINIKUBE_IP = "192.168.99.100"
 )
 
 // Controller is the controller implementation for Foo resources
@@ -256,7 +259,7 @@ func (c *Controller) processNextWorkItem() bool {
 // converge the two. It then updates the Status block of the Foo resource
 // with the current status of the resource.
 func (c *Controller) syncHandler(key string) error {
-     	//fmt.Println("Inside syncHandler 1")
+	//fmt.Println("Inside syncHandler 1")
 	// Convert the namespace/name string into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -292,133 +295,133 @@ func (c *Controller) syncHandler(key string) error {
 	var serviceIP string
 	var servicePort string
 	var setupCommands []string
-	var databases[]string
-	var users[]postgresv1.UserSpec
+	var databases []string
+	var users []postgresv1.UserSpec
 
 	// Get the deployment with the name specified in Foo.spec
 	_, err = c.deploymentsLister.Deployments(foo.Namespace).Get(deploymentName)
 	// If the resource doesn't exist, we'll create it
 	if errors.IsNotFound(err) {
-	   fmt.Printf("Received request to create CRD %s\n", deploymentName)
-	   serviceIP, servicePort, setupCommands, databases, users, verifyCmd = createDeployment(foo, c)
-	   for _, cmds := range setupCommands {
-	       // Don't save the connect command as we might connect later and perform more operations
-	       if ! strings.Contains(cmds, "\\c") {
-	       	  actionHistory = append(actionHistory, cmds)
-	       }
-	   }
-           fmt.Printf("Setup Commands: %v\n", setupCommands)
-           fmt.Printf("Verify using: %v\n", verifyCmd)
-	   err = c.updateFooStatus(foo, &actionHistory, &users, &databases, 
-	       	 		   verifyCmd, serviceIP, servicePort, "READY")
-	   if err != nil {
-	      	 return err
-	   }
+		fmt.Printf("Received request to create CRD %s\n", deploymentName)
+		serviceIP, servicePort, setupCommands, databases, users, verifyCmd = createDeployment(foo, c)
+		for _, cmds := range setupCommands {
+			// Don't save the connect command as we might connect later and perform more operations
+			if !strings.Contains(cmds, "\\c") {
+				actionHistory = append(actionHistory, cmds)
+			}
+		}
+		fmt.Printf("Setup Commands: %v\n", setupCommands)
+		fmt.Printf("Verify using: %v\n", verifyCmd)
+		err = c.updateFooStatus(foo, &actionHistory, &users, &databases,
+			verifyCmd, serviceIP, servicePort, "READY")
+		if err != nil {
+			return err
+		}
 	} else {
-	  fmt.Printf("CRD %s created\n", deploymentName)
-	  fmt.Printf("Check using: kubectl describe postgres %s \n", deploymentName)
+		fmt.Printf("CRD %s created\n", deploymentName)
+		fmt.Printf("Check using: kubectl describe postgres %s \n", deploymentName)
 
-	  pgresObj, err := c.sampleclientset.PostgrescontrollerV1().Postgreses(foo.Namespace).Get(deploymentName,
-												metav1.GetOptions{})
+		pgresObj, err := c.sampleclientset.PostgrescontrollerV1().Postgreses(foo.Namespace).Get(deploymentName,
+			metav1.GetOptions{})
 
-	  actionHistory := pgresObj.Status.ActionHistory
-	  serviceIP := pgresObj.Status.ServiceIP
-	  servicePort := pgresObj.Status.ServicePort
-	  verifyCmd := pgresObj.Status.VerifyCmd
-	  fmt.Printf("Action History:[%s]\n", actionHistory)
-	  fmt.Printf("Service IP:[%s]\n", serviceIP)
-	  fmt.Printf("Service Port:[%s]\n", servicePort)
-	  fmt.Printf("Verify cmd: %v\n", verifyCmd)
+		actionHistory := pgresObj.Status.ActionHistory
+		serviceIP := pgresObj.Status.ServiceIP
+		servicePort := pgresObj.Status.ServicePort
+		verifyCmd := pgresObj.Status.VerifyCmd
+		fmt.Printf("Action History:[%s]\n", actionHistory)
+		fmt.Printf("Service IP:[%s]\n", serviceIP)
+		fmt.Printf("Service Port:[%s]\n", servicePort)
+		fmt.Printf("Verify cmd: %v\n", verifyCmd)
 
-	  // 1. Find directly provided commands
-	  //setupCommands1 := canonicalize(foo.Spec.Commands)
-	  //setupCommands = getCommandsToRun(actionHistory, setupCommands1)
-	  //fmt.Printf("setupCommands: %v\n", setupCommands)
+		// 1. Find directly provided commands
+		//setupCommands1 := canonicalize(foo.Spec.Commands)
+		//setupCommands = getCommandsToRun(actionHistory, setupCommands1)
+		//fmt.Printf("setupCommands: %v\n", setupCommands)
 
-	  var commandsToRun []string
+		var commandsToRun []string
 
-	  // 2. Reconcile databases
-	  desiredDatabases := foo.Spec.Databases
-	  currentDatabases := pgresObj.Status.Databases
-	  fmt.Printf("Current Databases:%v\n", currentDatabases)
-	  fmt.Printf("Desired Databases:%v\n", desiredDatabases)
-	  createDBCommands, dropDBCommands := getDatabaseCommands(desiredDatabases, 
-	  		    		      		          currentDatabases)
-	  appendList(&commandsToRun, createDBCommands)
-	  appendList(&commandsToRun, dropDBCommands)
+		// 2. Reconcile databases
+		desiredDatabases := foo.Spec.Databases
+		currentDatabases := pgresObj.Status.Databases
+		fmt.Printf("Current Databases:%v\n", currentDatabases)
+		fmt.Printf("Desired Databases:%v\n", desiredDatabases)
+		createDBCommands, dropDBCommands := getDatabaseCommands(desiredDatabases,
+			currentDatabases)
+		appendList(&commandsToRun, createDBCommands)
+		appendList(&commandsToRun, dropDBCommands)
 
-	  // 3. Reconcile users
-	  desiredUsers := foo.Spec.Users
-	  currentUsers := pgresObj.Status.Users
-	  fmt.Printf("Current Users:%v\n", currentUsers)
-	  fmt.Printf("Desired Users:%v\n", desiredUsers)
-	  createUserCmds, dropUserCmds, alterUserCmds := getUserCommands(desiredUsers, 
-	  		  			      	 	         currentUsers)
-          appendList(&commandsToRun, createUserCmds)
-	  appendList(&commandsToRun, dropUserCmds)
-	  appendList(&commandsToRun, alterUserCmds)
-	  
-	  // 4. So what all commands should we run??
-	  fmt.Printf("commandsToRun:%v\n", commandsToRun)
+		// 3. Reconcile users
+		desiredUsers := foo.Spec.Users
+		currentUsers := pgresObj.Status.Users
+		fmt.Printf("Current Users:%v\n", currentUsers)
+		fmt.Printf("Desired Users:%v\n", desiredUsers)
+		createUserCmds, dropUserCmds, alterUserCmds := getUserCommands(desiredUsers,
+			currentUsers)
+		appendList(&commandsToRun, createUserCmds)
+		appendList(&commandsToRun, dropUserCmds)
+		appendList(&commandsToRun, alterUserCmds)
 
-	  if len(commandsToRun) > 0 {
-	     err = c.updateFooStatus(foo, &actionHistory, &currentUsers, &desiredDatabases, 
-	     	   		     verifyCmd, serviceIP, servicePort, "UPDATING")
-	     if err != nil {
-         	return err
-	     }
-	     updateCRD(pgresObj, c, commandsToRun)
-	  }
+		// 4. So what all commands should we run??
+		fmt.Printf("commandsToRun:%v\n", commandsToRun)
 
-	 /*
-	 if len(setupCommands) > 1 {
-	     pgresObj1, err := c.sampleclientset.PostgrescontrollerV1().Postgreses(foo.Namespace).Get(deploymentName,
-		       										metav1.GetOptions{})
-	     err = c.updateFooStatus(pgresObj1, &actionHistory, &currentUsers, &desiredDatabases, 
-	     	   		     verifyCmd, serviceIP, servicePort, "UPDATING")
-	     if err != nil {
-         	return err
-	     }
-	     updateCRD(pgresObj1, c, setupCommands)
-	  }   
-	  */
+		if len(commandsToRun) > 0 {
+			err = c.updateFooStatus(foo, &actionHistory, &currentUsers, &desiredDatabases,
+				verifyCmd, serviceIP, servicePort, "UPDATING")
+			if err != nil {
+				return err
+			}
+			updateCRD(pgresObj, c, commandsToRun)
+		}
 
-	  pgresObj2, err := c.sampleclientset.PostgrescontrollerV1().Postgreses(foo.Namespace).Get(deploymentName,
-		       										metav1.GetOptions{})
-          actionHistory = pgresObj2.Status.ActionHistory
-	  fmt.Printf("1111 Action History:%s\n", actionHistory)
-	  for _, cmds := range commandsToRun {
-	     actionHistory = append(actionHistory, cmds)
-	  }
+		/*
+				 if len(setupCommands) > 1 {
+				     pgresObj1, err := c.sampleclientset.PostgrescontrollerV1().Postgreses(foo.Namespace).Get(deploymentName,
+					       										metav1.GetOptions{})
+				     err = c.updateFooStatus(pgresObj1, &actionHistory, &currentUsers, &desiredDatabases,
+				     	   		     verifyCmd, serviceIP, servicePort, "UPDATING")
+				     if err != nil {
+			         	return err
+				     }
+				     updateCRD(pgresObj1, c, setupCommands)
+				  }
+		*/
 
-	  /*
-	  fmt.Printf("2222 Action History:%s\n", actionHistory)
-	  if len(setupCommands) > 1 {
-	     for _, cmds := range setupCommands {
-	     	   // Don't save the connect command as we might connect later and perform more operations
-	       	   if ! strings.Contains(cmds, "\\c") {
-	       	      actionHistory = append(actionHistory, cmds)
-	       	   }	  
-	     }
-	     fmt.Printf("3333 Action History:%s\n", actionHistory)
-	  }
-	  */
+		pgresObj2, err := c.sampleclientset.PostgrescontrollerV1().Postgreses(foo.Namespace).Get(deploymentName,
+			metav1.GetOptions{})
+		actionHistory = pgresObj2.Status.ActionHistory
+		fmt.Printf("1111 Action History:%s\n", actionHistory)
+		for _, cmds := range commandsToRun {
+			actionHistory = append(actionHistory, cmds)
+		}
 
-	  err = c.updateFooStatus(pgresObj2, &actionHistory, &desiredUsers, &desiredDatabases, 
-	     	   		  verifyCmd, serviceIP, servicePort, "READY")
-	   if err != nil {
-	      panic(err)
-	      return err
-	   }
+		/*
+		  fmt.Printf("2222 Action History:%s\n", actionHistory)
+		  if len(setupCommands) > 1 {
+		     for _, cmds := range setupCommands {
+		     	   // Don't save the connect command as we might connect later and perform more operations
+		       	   if ! strings.Contains(cmds, "\\c") {
+		       	      actionHistory = append(actionHistory, cmds)
+		       	   }
+		     }
+		     fmt.Printf("3333 Action History:%s\n", actionHistory)
+		  }
+		*/
+
+		err = c.updateFooStatus(pgresObj2, &actionHistory, &desiredUsers, &desiredDatabases,
+			verifyCmd, serviceIP, servicePort, "READY")
+		if err != nil {
+			panic(err)
+			return err
+		}
 	}
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
 }
 
-func (c *Controller) updateFooStatus(foo *postgresv1.Postgres, 
-     actionHistory *[]string, users *[]postgresv1.UserSpec, databases *[]string, 
-     verifyCmd string, serviceIP string, servicePort string,
-     status string) error {
+func (c *Controller) updateFooStatus(foo *postgresv1.Postgres,
+	actionHistory *[]string, users *[]postgresv1.UserSpec, databases *[]string,
+	verifyCmd string, serviceIP string, servicePort string,
+	status string) error {
 	// NEVER modify objects from the store. It's a read-only, local cache.
 	// You can use DeepCopy() to make a deep copy of original object and modify this copy
 	// Or create a copy manually for better performance
@@ -496,30 +499,32 @@ func (c *Controller) handleObject(obj interface{}) {
 }
 
 func updateCRD(foo *postgresv1.Postgres, c *Controller, setupCommands []string) {
-     serviceIP := foo.Status.ServiceIP
-     servicePort := foo.Status.ServicePort
+	serviceIP := foo.Status.ServiceIP
+	servicePort := foo.Status.ServicePort
 
-     fmt.Printf("Service IP:[%s]\n", serviceIP)
-     fmt.Printf("Service Port:[%s]\n", servicePort)
-     fmt.Printf("Command:[%s]\n", setupCommands)
+	fmt.Printf("Service IP:[%s]\n", serviceIP)
+	fmt.Printf("Service Port:[%s]\n", servicePort)
+	fmt.Printf("Command:[%s]\n", setupCommands)
 
-     if len(setupCommands) > 0 {
-     	file := createTempDBFile(setupCommands)
-     	fmt.Println("Now setting up the database")
-     	setupDatabase(serviceIP, servicePort, file)
-     }
+	if len(setupCommands) > 0 {
+		//file := createTempDBFile(setupCommands)
+		fmt.Println("Now setting up the database")
+		//setupDatabase(serviceIP, servicePort, file)
+		var dummyList []string
+		setupDatabase(serviceIP, servicePort, setupCommands, dummyList)
+	}
 }
 
 func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, []string, []string, []postgresv1.UserSpec, string) {
 
-        deploymentsClient := c.kubeclientset.AppsV1().Deployments(apiv1.NamespaceDefault)
+	deploymentsClient := c.kubeclientset.AppsV1().Deployments(apiv1.NamespaceDefault)
 
 	deploymentName := foo.Spec.DeploymentName
 	image := foo.Spec.Image
 	users := foo.Spec.Users
 	databases := foo.Spec.Databases
 	setupCommands := canonicalize(foo.Spec.Commands)
-	
+
 	var userAndDBCommands []string
 	var allCommands []string
 
@@ -549,104 +554,104 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 	appendList(&allCommands, userAndDBCommands)
 	appendList(&allCommands, setupCommands)
 
-        deployment := &appsv1.Deployment{
-                ObjectMeta: metav1.ObjectMeta{
-                        Name: deploymentName,
-                },
-                Spec: appsv1.DeploymentSpec{
-                        Replicas: int32Ptr(1),
-                        Selector: &metav1.LabelSelector{
-                                MatchLabels: map[string]string{
-                                             "app": deploymentName,
-                                },
-                        },
-                        Template: apiv1.PodTemplateSpec{
-                                ObjectMeta: metav1.ObjectMeta{
-                                        Labels: map[string]string{
-                                                "app": deploymentName,
-                                        },
-                                },
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: deploymentName,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: int32Ptr(1),
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": deploymentName,
+				},
+			},
+			Template: apiv1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": deploymentName,
+					},
+				},
 
-                                Spec: apiv1.PodSpec{
-                                        Containers: []apiv1.Container{
-                                                {
-                                                        Name:  deploymentName,
-                                                        Image: image,
+				Spec: apiv1.PodSpec{
+					Containers: []apiv1.Container{
+						{
+							Name:  deploymentName,
+							Image: image,
 							Ports: []apiv1.ContainerPort{
-							      {
-								ContainerPort: 5432,
-							      },
+								{
+									ContainerPort: 5432,
+								},
 							},
 							ReadinessProbe: &apiv1.Probe{
 								Handler: apiv1.Handler{
-								   TCPSocket: &apiv1.TCPSocketAction{
-								      Port: apiutil.FromInt(5432),
-								   },
+									TCPSocket: &apiv1.TCPSocketAction{
+										Port: apiutil.FromInt(5432),
+									},
 								},
 								InitialDelaySeconds: 5,
-								TimeoutSeconds: 60,
-								PeriodSeconds: 2,
+								TimeoutSeconds:      60,
+								PeriodSeconds:       2,
 							},
-                                                        Env: []apiv1.EnvVar{
-                                                           {
-                                                             Name: "POSTGRES_PASSWORD",
-                                                             Value: PGPASSWORD,
-                                                           },
-                                                        },
-                                                },
-                                        },
-                                },
-                        },
-                },
-        }
+							Env: []apiv1.EnvVar{
+								{
+									Name:  "POSTGRES_PASSWORD",
+									Value: PGPASSWORD,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 
-        // Create Deployment
-        fmt.Println("Creating deployment...")
-        result, err := deploymentsClient.Create(deployment)
-        if err != nil {
-                panic(err)
-        }
-        fmt.Printf("Created deployment %q.\n", result.GetObjectMeta().GetName())
-        fmt.Printf("------------------------------\n")
+	// Create Deployment
+	fmt.Println("Creating deployment...")
+	result, err := deploymentsClient.Create(deployment)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Created deployment %q.\n", result.GetObjectMeta().GetName())
+	fmt.Printf("------------------------------\n")
 
-        // Create Service
-        fmt.Printf("Creating service...\n")
-        serviceClient := c.kubeclientset.CoreV1().Services(apiv1.NamespaceDefault)
-        service := &apiv1.Service{
-                ObjectMeta: metav1.ObjectMeta{
-                        Name: deploymentName,
-                        Labels: map[string]string{
-                                "app": deploymentName,
-                        },
-                },
-                Spec: apiv1.ServiceSpec{
-                        Ports: []apiv1.ServicePort {
-                             {
-                                Name: "my-port",
-                                Port: 5432,
-				TargetPort: apiutil.FromInt(5432),
-				Protocol: apiv1.ProtocolTCP,
-                             },
-                        },
-                        Selector: map[string]string {
-                                  "app": deploymentName,
-                        },
-                        Type: apiv1.ServiceTypeNodePort,
-                },
-        }
+	// Create Service
+	fmt.Printf("Creating service...\n")
+	serviceClient := c.kubeclientset.CoreV1().Services(apiv1.NamespaceDefault)
+	service := &apiv1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: deploymentName,
+			Labels: map[string]string{
+				"app": deploymentName,
+			},
+		},
+		Spec: apiv1.ServiceSpec{
+			Ports: []apiv1.ServicePort{
+				{
+					Name:       "my-port",
+					Port:       5432,
+					TargetPort: apiutil.FromInt(5432),
+					Protocol:   apiv1.ProtocolTCP,
+				},
+			},
+			Selector: map[string]string{
+				"app": deploymentName,
+			},
+			Type: apiv1.ServiceTypeNodePort,
+		},
+	}
 
-        result1, err1 := serviceClient.Create(service)
-        if err1 != nil {
-                panic(err1)
-        }
-        fmt.Printf("Created service %q.\n", result1.GetObjectMeta().GetName())
-        fmt.Printf("------------------------------\n")
+	result1, err1 := serviceClient.Create(service)
+	if err1 != nil {
+		panic(err1)
+	}
+	fmt.Printf("Created service %q.\n", result1.GetObjectMeta().GetName())
+	fmt.Printf("------------------------------\n")
 
-        // Parse ServiceIP and Port
+	// Parse ServiceIP and Port
 	// Minikube VM IP
-        serviceIP := MINIKUBE_IP
+	serviceIP := MINIKUBE_IP
 
-        nodePort1 := result1.Spec.Ports[0].NodePort
+	nodePort1 := result1.Spec.Ports[0].NodePort
 	nodePort := fmt.Sprint(nodePort1)
 	servicePort := nodePort
 	//fmt.Printf("NodePort:[%v]", nodePort)
@@ -655,121 +660,168 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 	time.Sleep(time.Second * 5)
 
 	for {
-	    readyPods := 0
-	    pods := getPods(c, deploymentName)
-	    //fmt.Println("Got Pods:: %s", pods)
-	    for _, d := range pods.Items {
-                //fmt.Printf(" * %s %s \n", d.Name, d.Status)
-		podConditions := d.Status.Conditions
-		for _, podCond := range podConditions {
-		    if podCond.Type == corev1.PodReady {
-		       if podCond.Status == corev1.ConditionTrue {
-		       	     //fmt.Println("Pod is running.")
-			     readyPods += 1
-			     //fmt.Printf("ReadyPods:%d\n", readyPods)
-			     //fmt.Printf("TotalPods:%d\n", len(pods.Items))
-		       	  }
-		    }
+		readyPods := 0
+		pods := getPods(c, deploymentName)
+		//fmt.Println("Got Pods:: %s", pods)
+		for _, d := range pods.Items {
+			//fmt.Printf(" * %s %s \n", d.Name, d.Status)
+			podConditions := d.Status.Conditions
+			for _, podCond := range podConditions {
+				if podCond.Type == corev1.PodReady {
+					if podCond.Status == corev1.ConditionTrue {
+						//fmt.Println("Pod is running.")
+						readyPods += 1
+						//fmt.Printf("ReadyPods:%d\n", readyPods)
+						//fmt.Printf("TotalPods:%d\n", len(pods.Items))
+					}
+				}
+			}
 		}
-       	    }
-	    if readyPods >= len(pods.Items) {
-	       break
-	    } else {
-	      	   fmt.Println("Waiting for Pod to get ready.")
-		   // Sleep for the Pod to become active
-		   time.Sleep(time.Second * 4)
-	    }
+		if readyPods >= len(pods.Items) {
+			break
+		} else {
+			fmt.Println("Waiting for Pod to get ready.")
+			// Sleep for the Pod to become active
+			time.Sleep(time.Second * 4)
+		}
 	}
 
 	// Wait couple of seconds more just to give the Pod some more time.
 	time.Sleep(time.Second * 2)
 
 	if len(userAndDBCommands) > 0 {
-	    fmt.Printf("About to create temp db file for user and db commands")
-	    file := createTempDBFile(userAndDBCommands)
-	    fmt.Println("Now setting up the database")
-	    setupDatabase(serviceIP, servicePort, file)
+		fmt.Printf("About to create temp db file for user and db commands")
+		//file := createTempDBFile(userAndDBCommands)
+		fmt.Println("Now setting up the database")
+		//setupDatabase_prev(serviceIP, servicePort, file)
+		var dummyList []string
+		setupDatabase(serviceIP, servicePort, userAndDBCommands, dummyList)
 	}
 
 	if len(setupCommands) > 0 {
-	    fmt.Printf("About to create temp db file for setup commands")
-	    file := createTempDBFile(setupCommands)
-	    fmt.Println("Now setting up the database")
-	    setupDatabase(serviceIP, servicePort, file)
+		fmt.Printf("About to create temp db file for setup commands")
+		//file := createTempDBFile(setupCommands)
+		fmt.Println("Now setting up the database")
+		//setupDatabase(serviceIP, servicePort, file)
+		setupDatabase(serviceIP, servicePort, setupCommands, databases)
 	}
 
+	// List Deployments
+	//fmt.Printf("Listing deployments in namespace %q:\n", apiv1.NamespaceDefault)
+	//list, err := deploymentsClient.List(metav1.ListOptions{})
+	//if err != nil {
+	//        panic(err)
+	//}
+	//for _, d := range list.Items {
+	//        fmt.Printf(" * %s (%d replicas)\n", d.Name, *d.Spec.Replicas)
+	//}
 
-        // List Deployments
-        //fmt.Printf("Listing deployments in namespace %q:\n", apiv1.NamespaceDefault)
-        //list, err := deploymentsClient.List(metav1.ListOptions{})
-        //if err != nil {
-        //        panic(err)
-        //}
-        //for _, d := range list.Items {
-        //        fmt.Printf(" * %s (%d replicas)\n", d.Name, *d.Spec.Replicas)
-        //}
-
-     	verifyCmd := strings.Fields("psql -h " + serviceIP + " -p " + nodePort + " -U <user> " + " -d <db-name>")
+	verifyCmd := strings.Fields("psql -h " + serviceIP + " -p " + nodePort + " -U <user> " + " -d <db-name>")
 	var verifyCmdString = strings.Join(verifyCmd, " ")
 	fmt.Printf("VerifyCmd: %v\n", verifyCmd)
 	return serviceIP, servicePort, allCommands, databases, users, verifyCmdString
 }
 
+func setupDatabase(serviceIP string, servicePort string, setupCommands []string, databases []string) {
+	fmt.Println("Setting up database")
+	fmt.Println("Commands:")
+	fmt.Printf("%v", setupCommands)
 
-func setupDatabase(serviceIP string, servicePort string, file *os.File) {
+	var host = serviceIP
+	port := -1
+	port, _ = strconv.Atoi(servicePort)
+	var user = "postgres"
+	var password = PGPASSWORD
 
-     defer os.Remove(file.Name())
+	var psqlInfo string
+	if len(databases) > 0 {
+		dbname := databases[0]
+		fmt.Println("%s\n", dbname)
+		psqlInfo = fmt.Sprintf("host=%s port=%d user=%s "+
+			"password=%s dbname=%s sslmode=disable",
+			host, port, user, password, dbname)
+	} else {
+		psqlInfo = fmt.Sprintf("host=%s port=%d user=%s "+
+			"password=%s sslmode=disable",
+			host, port, user, password)
+	}
 
-     //Execute PSQL command file against Service IP
-     //export PGPASSWORD=mysecretpassword; psql -h <Service IP> -p <Service Port> -U postgres -f file.Name()
+	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
 
-     args := strings.Fields("psql -h " + serviceIP + " -p " + servicePort + " -U postgres " + " -f " + file.Name())
-     fmt.Printf("Database setup command: %v\n", args)
+	err = db.Ping()
+	if err != nil {
+		panic(err)
+	}
 
-     envName := "PGPASSWORD"
-     envValue := PGPASSWORD
-     newEnv := append(os.Environ(), fmt.Sprintf("%s=%s", envName, envValue))
-     //fmt.Printf("NewEnv: %v\n", newEnv)
+	fmt.Println("Successfully connected!")
 
-     cmd := exec.Command(args[0], args[1:]...)
-     cmd.Env = newEnv
-
-     out, err := cmd.CombinedOutput()
-     if err != nil {
-     	fmt.Printf("Err:%v\n", err)
-	fmt.Printf("Out:%v\n", out)
-	fmt.Printf("Out:%s\n", out)
-	panic(err)
-     }
+	for _, command := range setupCommands {
+		_, err = db.Exec(command)
+		if err != nil {
+			panic(err)
+		}
+	}
+	fmt.Println("Done setting up the database")
 }
 
-func createTempDBFile(setupCommands []string) (*os.File){
-     filename := "setup-db"
-     //file, err := ioutil.TempFile("/tmp", filename)
-     file, err := os.OpenFile("/tmp/" + filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-     if err != nil {
-     	panic(err)
-     }
+func setupDatabase_prev(serviceIP string, servicePort string, file *os.File) {
 
-     fmt.Printf("Database setup file:%s\n", file.Name())
+	defer os.Remove(file.Name())
 
-     for _, command := range setupCommands {
-     	 //fmt.Printf("Command: %v\n", command)
-	 // TODO: Interpolation of variables	    
-         file.WriteString(command)
-         file.WriteString("\n")
-     }
-     file.Sync()
-     file.Close()
-     return file
+	//Execute PSQL command file against Service IP
+	//export PGPASSWORD=mysecretpassword; psql -h <Service IP> -p <Service Port> -U postgres -f file.Name()
+
+	args := strings.Fields("psql -h " + serviceIP + " -p " + servicePort + " -U postgres " + " -f " + file.Name())
+	fmt.Printf("Database setup command: %v\n", args)
+
+	envName := "PGPASSWORD"
+	envValue := PGPASSWORD
+	newEnv := append(os.Environ(), fmt.Sprintf("%s=%s", envName, envValue))
+	//fmt.Printf("NewEnv: %v\n", newEnv)
+
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Env = newEnv
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("Err:%v\n", err)
+		fmt.Printf("Out:%v\n", out)
+		fmt.Printf("Out:%s\n", out)
+		panic(err)
+	}
+}
+
+func createTempDBFile(setupCommands []string) *os.File {
+	filename := "setup-db"
+	//file, err := ioutil.TempFile("/tmp", filename)
+	file, err := os.OpenFile("/tmp/"+filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Database setup file:%s\n", file.Name())
+
+	for _, command := range setupCommands {
+		//fmt.Printf("Command: %v\n", command)
+		// TODO: Interpolation of variables
+		file.WriteString(command)
+		file.WriteString("\n")
+	}
+	file.Sync()
+	file.Close()
+	return file
 }
 
 func getPods(c *Controller, deploymentName string) *apiv1.PodList {
-        // TODO(devkulkarni): This is returning all Pods. We should change this
-        // to only return Pods whose Label matches the Deployment Name.
-        pods, err := c.kubeclientset.CoreV1().Pods("default").List(metav1.ListOptions{
-	      	  //LabelSelector: deploymentName,
-	      	//LabelSelector: metav1.LabelSelector{
+	// TODO(devkulkarni): This is returning all Pods. We should change this
+	// to only return Pods whose Label matches the Deployment Name.
+	pods, err := c.kubeclientset.CoreV1().Pods("default").List(metav1.ListOptions{
+		//LabelSelector: deploymentName,
+		//LabelSelector: metav1.LabelSelector{
 		//	MatchLabels: map[string]string{
 		//	"app": deploymentName,
 		//},
@@ -777,7 +829,7 @@ func getPods(c *Controller, deploymentName string) *apiv1.PodList {
 	})
 	//fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
 	if err != nil {
-	   fmt.Printf("%s", err)
+		fmt.Printf("%s", err)
 	}
 	//fmt.Println("Got Pods: %s", pods)
 	return pods
