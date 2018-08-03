@@ -102,13 +102,19 @@ Actual steps (Minikube):
      
      - go run *.go -kubeconfig=$HOME/.kube/config
 
-   - Deploy the controller as a Deployment in the cluster
+   - Deploy the controller as a Deployment in the cluster using
+     controller Docker image built locally
      
      - ./build-deploy-artifacts.sh
      
      - cd artifacts/deployment
 
      - kubectl create -f deployment.yaml
+
+   - Deploy the controller with Helm chart (here the controller
+     Docker image is pulled from Docker hub
+
+     - helm install ./postgres-crd-v2-chart
 
 4) In another shell window register CRD definition for Postgres
 
@@ -137,6 +143,18 @@ Actual steps (Minikube):
    - kubectl apply -f artifacts/examples/add-db.yaml
 
    - kubectl apply -f artifacts/examples/delete-db.yaml
+
+7) Clean up
+
+   - kubectl get deployments
+
+   - kubectl delete deployments ...
+
+   - helm list
+
+   - helm delete ...
+
+   - ./deletecrds.sh ...
 
    
 Verify:
