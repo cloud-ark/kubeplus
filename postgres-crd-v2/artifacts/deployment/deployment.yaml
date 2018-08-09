@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: postgres-crd-v2
-        image: postgres-crd-v2:latest
-        imagePullPolicy: Never
+        image: lmecld/postgres-crd-v2:latest
+        imagePullPolicy: Always
         command: [ "/postgres-crd-v2"]
