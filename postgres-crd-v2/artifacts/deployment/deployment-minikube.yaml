@@ -1,0 +1,26 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: postgres-operator-deployment
+  labels:
+    app: postgres-operator
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: postgres-operator
+  template:
+    metadata:
+      labels:
+        app: postgres-operator
+    spec:
+      containers:
+      - name: postgres-crd-v2
+        image: postgres-crd-v2:latest
+        imagePullPolicy: Never
+        command: [ "/postgres-crd-v2"]
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
