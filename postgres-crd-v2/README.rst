@@ -2,9 +2,9 @@
 Postgres Operator
 ==================
 
-This is a Kubernetes Custom Resource for Postgres.
+This is a Kubernetes Operator for Postgres.
 
-The goal of this Custom Resource Definition (CRD) is to support various life-cycle actions 
+The goal of this Operator is to support various life-cycle actions 
 for a Postgres instance, such as:
 
 - Create user and password when Postgres instance is created
@@ -14,14 +14,17 @@ for a Postgres instance, such as:
 - Modify user password on an existing Postgres instance
 - etc.
 
-This CRD reduces out-of-band automation that you have to implement for provisioning
+This Operator is implemented as Kubernetes Custom Resource Definition (CRD). 
+It reduces out-of-band automation that you have to implement for provisioning
 a Postgres instance on Kubernetes and managing its various life-cycle actions.
 
 
-How it works?
-=============
+How does it work?
+=================
 
 A new 'kind' named 'Postgres' is defined (see artifacts/examples/crd.yaml).
+
+The Operator registers Postgres CRD at start up (in main.go).
 
 The Custom Resource Controller (controller.go) listens for the creation of resources
 of the 'Postgres' kind (e.g.: artifacts/examples/initializeclient.yaml).
@@ -46,15 +49,6 @@ The Deployment should be changed to a Stateful Set in real deployments.
 How to test?
 ============
 
-The code has been developed and tested on Minikube. 
-
-Minikube's IP address is hard coded in controller.go
-
-- Find out the IP address of Minikube VM: minikube ip
-
-- Update the MINIKUB_IP variable defined in controller.go
-
-
 Pre-requisite step:
 -------------------
 1) Install Go's dep dependency management tool:
@@ -74,15 +68,17 @@ One time steps:
 
 - Run the Postgres Operator
 
-- Register the Postgres CRD
-
 Steps that will be run multiple times for multiple customers:
 
-- Create Postgres custom resource
+- Create Postgres custom resources
 
 
-Actual steps (Minikube):
--------------------------
+Actual steps:
+--------------
+0) If using Minikube, enable using local docker images:
+ 
+   - eval $(minikube docker-env)
+
 1) Clone this repository and put it inside 'src' directory of your GOPATH
    at following location:
 
@@ -105,24 +101,27 @@ Actual steps (Minikube):
    - Deploy the controller as a Deployment in the cluster using
      controller Docker image built locally
      
-     - ./build-deploy-artifacts.sh
+     - ./build-local-deploy-artifacts.sh
      
      - cd artifacts/deployment
 
-     - kubectl create -f deployment.yaml
+     - kubectl create -f deployment-minikube.yaml
 
    - Deploy the controller with Helm chart (here the controller
-     Docker image is pulled from Docker hub
+     Docker image is pulled from Docker hub)
 
      - helm install ./postgres-crd-v2-chart
 
-4) In another shell window register CRD definition for Postgres
+4) In another shell window check that Postgres CRD has been registered.
+
+   - kubectl get crd
+
+   If it is not registered you can manually register it as follows:
 
    - cd $GOPATH/src/github.com/cloud-ark/kubeplus/postgres-crd-v2
 
    - kubectl create -f artifacts/examples/crd.yaml
 
-   - kubectl get crd
 
 5) In the second window create Postgres custom resource
 
@@ -165,10 +164,7 @@ Verify:
 
 3) kubectl describe postgres client25
 
-4) minikube service <service name> --url
-   - Parse VM IP and Service Port from the URL
-
-5) psql -h <IP> -p <port> -U <username> -d <db-name>
+4) psql -h <IP> -p <port> -U <username> -d <db-name>
    - When prompted for password, enter <password>
    - IP: Minikube IP
    - port: Port of the exposed Service
