@@ -63,6 +63,7 @@ func main() {
 		glog.Fatalf("Error building example clientset: %s", err.Error())
 	}
 
+	/*
 	if firstTime {
 		firstTime = false
 		crdclient, err := apiextensionsclientset.NewForConfig(cfg)
@@ -72,6 +73,7 @@ func main() {
 			registerCRD(crdclient)
 		}
 	}
+	*/
 
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 	exampleInformerFactory := informers.NewSharedInformerFactory(exampleClient, time.Second*30)
@@ -89,7 +91,7 @@ func main() {
 func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
-	firstTime = true
+	//firstTime = true
 }
 
 func registerCRD(crdclient *apiextensionsclientset.Clientset) {
