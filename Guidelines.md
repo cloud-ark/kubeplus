@@ -10,7 +10,7 @@ in a single Kubernetes cluster to form a purpose-built platform.
 
 We have come up with these guidelines based on our study of various Operators
 written by the community and through our experience of building
-[discovery] (https://github.com/cloud-ark/kubediscovery) and [provenance] (https://github.com/cloud-ark/kubeprovenance) tools for Kubernetes.
+[discovery](https://github.com/cloud-ark/kubediscovery) and [provenance](https://github.com/cloud-ark/kubeprovenance) tools for Kubernetes.
 
 
 ## 1) Prefer declarative state over imperative actions as update mechanism for Custom Resources
@@ -21,7 +21,7 @@ state in the declarative Spec of the resource.
 Users should not be concerned with the procedural details of specifying changes from the previous state.
 For example, to add a new user to a Postgres custom resource, 
 users should just update the yaml definition of Postgres resource instance adding a 
-[new name in the users list](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/artifacts/examples/add-user.yaml)
+[new name in the users list](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/artifacts/examples/add-user.yaml).
 
 Note that this means you should avoid using something like [JSON PATCH](https://tools.ietf.org/html/rfc6902#section-4) in the Spec of Custom Resource. This is because it will make your Custom Resource Specs
 [non-repeatable and non-shareable](https://medium.com/@cloudark/evolution-of-paases-to-platform-as-code-in-kubernetes-world-74464b0013ca).
@@ -57,7 +57,7 @@ Doing so will enable tools like kubediscovery to correctly show composition info
 
 When defining the types corresponding to your custom resources, you should use
 kube-openapi annotation - ``+k8s:openapi-gen=true''
-in the type definition to [enable generating documentation for the custom resource.](https://medium.com/@cloudark/understanding-kubectl-explain-9d703396cc8).
+in the type definition to [enable generating documentation for the custom resource](https://medium.com/@cloudark/understanding-kubectl-explain-9d703396cc8).
 An example of this annotation can be seen on type definition in our [Postgres operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/pkg/apis/postgrescontroller/v1/types.go#L28). This annotation enables generating OpenAPI Spec documentation for custom resources as seen [here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/generated.json).
 
 
