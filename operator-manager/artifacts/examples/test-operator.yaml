@@ -1,0 +1,7 @@
+apiVersion: operatorcontroller.kubeplus/v1
+kind: Operator
+metadata:
+  name: test-operator
+spec:
+  name: test-operator-1
+  chartURL: https://s3.abcd.efg
