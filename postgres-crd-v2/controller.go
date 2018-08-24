@@ -366,7 +366,7 @@ func (c *Controller) syncHandler(key string) error {
 		actionHistory := pgresObj.Status.ActionHistory
 		serviceIP := pgresObj.Status.ServiceIP
 		servicePort := pgresObj.Status.ServicePort
-		verifyCmd := pgresObj.Status.VerifyCmd
+		verifyCmd := pgresObj.Status.VerifyCommand
 		//fmt.Printf("Action History:[%s]\n", actionHistory)
 		//fmt.Printf("Service IP:[%s]\n", serviceIP)
 		//fmt.Printf("Service Port:[%s]\n", servicePort)
@@ -433,7 +433,7 @@ func (c *Controller) updateFooStatus(foo *postgresv1.Postgres,
 	fooCopy := foo.DeepCopy()
 	fooCopy.Status.AvailableReplicas = 1
 
-	fooCopy.Status.VerifyCmd = verifyCmd
+	fooCopy.Status.VerifyCommand = verifyCmd
 	fooCopy.Status.ActionHistory = *actionHistory
 	fooCopy.Status.Users = *users
 	fooCopy.Status.Databases = *databases
@@ -505,6 +505,14 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: deploymentName,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: "postgrescontroller.kubeplus/v1",
+					Kind: "Postgres",
+					Name: foo.Name,
+					UID: foo.UID,
+				},
+			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: int32Ptr(1),
@@ -566,6 +574,14 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 	service := &apiv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: deploymentName,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: "postgrescontroller.kubeplus/v1",
+					Kind: "Postgres",
+					Name: foo.Name,
+					UID: foo.UID,
+				},
+			},
 			Labels: map[string]string{
 				"app": deploymentName,
 			},
@@ -594,6 +610,7 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 
 	// Parse ServiceIP and Port
 	serviceIP := HOST_IP
+	fmt.Println("HOST IP:%s", serviceIP)
 
 	nodePort1 := result1.Spec.Ports[0].NodePort
 	nodePort := fmt.Sprint(nodePort1)

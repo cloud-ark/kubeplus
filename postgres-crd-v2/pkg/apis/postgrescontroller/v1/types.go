@@ -24,7 +24,8 @@ import (
 // +genclient:noStatus
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Foo is a specification for a Foo resource
+// Postgres is a specification for a Postgres resource
+// +k8s:openapi-gen=true
 type Postgres struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -33,28 +34,31 @@ type Postgres struct {
 	Status PostgresStatus `json:"status"`
 }
 
+// +k8s:openapi-gen=true
 type UserSpec struct {
-        User string `json:"username"`
+        User string `json:"user"`
         Password string `json:"password"`
 }
 
-// PostgresSpec is the spec for a Foo resource
+// PostgresSpec is the spec for a Postgres resource
+// +k8s:openapi-gen=true
 type PostgresSpec struct {
 	DeploymentName string `json:"deploymentName"`
 	Image string `json:"image"`
 	Replicas       *int32 `json:"replicas"`
 	Users []UserSpec `json:"users"`
 	Databases []string `json:"databases"`
-	Commands []string `json:"initcommands"`
+	Commands []string `json:"commands"`
 }
 
-// FooStatus is the status for a Foo resource
+// PostgresStatus is the status for a Postgres resource
+// +k8s:openapi-gen=true
 type PostgresStatus struct {
 	AvailableReplicas int32 `json:"availableReplicas"`
 	ActionHistory []string `json:"actionHistory"`
 	Users []UserSpec `json:"users"`
 	Databases []string `json:"databases"`
-	VerifyCmd string `json:"verifyCommand"`
+	VerifyCommand string `json:"verifyCommand"`
 	ServiceIP string `json:"serviceIP"`
 	ServicePort string `json:"servicePort"`
 	Status string `json:"status"`
@@ -62,7 +66,7 @@ type PostgresStatus struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// FooList is a list of Foo resources
+// PostgresList is a list of Postgres resources
 type PostgresList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`

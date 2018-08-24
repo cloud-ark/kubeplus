@@ -90,12 +90,8 @@ func (in *PostgresSpec) DeepCopyInto(out *PostgresSpec) {
 	*out = *in
 	if in.Replicas != nil {
 		in, out := &in.Replicas, &out.Replicas
-		if *in == nil {
-			*out = nil
-		} else {
-			*out = new(int32)
-			**out = **in
-		}
+		*out = new(int32)
+		**out = **in
 	}
 	if in.Users != nil {
 		in, out := &in.Users, &out.Users

@@ -21,11 +21,11 @@ package v1
 import (
 	time "time"
 
-	postgrescontroller_v1 "github.com/cloud-ark/kubeplus/postgres-crd-v2/pkg/apis/postgrescontroller/v1"
+	postgrescontrollerv1 "github.com/cloud-ark/kubeplus/postgres-crd-v2/pkg/apis/postgrescontroller/v1"
 	versioned "github.com/cloud-ark/kubeplus/postgres-crd-v2/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/cloud-ark/kubeplus/postgres-crd-v2/pkg/client/informers/externalversions/internalinterfaces"
 	v1 "github.com/cloud-ark/kubeplus/postgres-crd-v2/pkg/client/listers/postgrescontroller/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
@@ -57,20 +57,20 @@ func NewPostgresInformer(client versioned.Interface, namespace string, resyncPer
 func NewFilteredPostgresInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
-			ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
+			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
 				return client.PostgrescontrollerV1().Postgreses(namespace).List(options)
 			},
-			WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
 				return client.PostgrescontrollerV1().Postgreses(namespace).Watch(options)
 			},
 		},
-		&postgrescontroller_v1.Postgres{},
+		&postgrescontrollerv1.Postgres{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,7 +81,7 @@ func (f *postgresInformer) defaultInformer(client versioned.Interface, resyncPer
 }
 
 func (f *postgresInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&postgrescontroller_v1.Postgres{}, f.defaultInformer)
+	return f.factory.InformerFor(&postgrescontrollerv1.Postgres{}, f.defaultInformer)
 }
 
 func (f *postgresInformer) Lister() v1.PostgresLister {
