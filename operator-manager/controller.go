@@ -19,9 +19,13 @@ package main
 import (
 	"fmt"
 	"os"
+	"log"
+	"context"
 	//"strconv"
 	//"strings"
 	"time"
+	"github.com/coreos/etcd/client"
+	"encoding/json"
 
 	//"database/sql"
 	_ "github.com/lib/pq"
@@ -72,7 +76,12 @@ const (
 var (
 	PGPASSWORD  = "mysecretpassword"
 	HOST_IP = os.Getenv("HOST_IP")
+	etcdServiceURL string
 )
+
+func init() {
+	etcdServiceURL = "http://localhost:2379"
+}
 
 // Controller is the controller implementation for Foo resources
 type Controller struct {
@@ -325,9 +334,124 @@ func (c *Controller) syncHandler(key string) error {
 	fmt.Printf("Operator Name:%s\n", operatorName)
 	fmt.Printf("Chart URL:%s\n", operatorChartURL)
 
+	storeChartURL(operatorChartURL)
+
+	var operatorCRDString string
+	for {
+		operatorCRDString = getOperatorCRDs(operatorChartURL)
+		if operatorCRDString != "" {
+			break
+		}
+		time.Sleep(time.Second * 5)
+	}
+
+	fmt.Printf("OperatorCRDString:%s\n", operatorCRDString)
+
+	crds := make([]string, 0)
+	if err := json.Unmarshal([]byte(operatorCRDString), &crds); err != nil {
+        panic(err)
+    }
+    fmt.Printf("OperatorCRD:%v\n", crds)
+
+    status := "READY"
+    for _, crd := range crds {
+    	if crd == "error" {
+    		status = "ERROR"
+    	}
+    }
+    c.updateFooStatus(foo, &crds, status)
+
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
 }
+
+func storeChartURL(chartURL string) {
+	fmt.Println("Entering storeChartURL")
+	cfg := client.Config{
+		Endpoints: []string{etcdServiceURL},
+		Transport: client.DefaultTransport,
+	}
+	c, err := client.New(cfg)
+	if err != nil {
+//		log.Fatal(err)
+		fmt.Errorf("Error: %v", err)
+	}
+	kapi := client.NewKeysAPI(c)
+	
+	resourceKey := "/operatorsToInstall"
+
+	var currentListString string
+//	currentListString = make([]string, 0)
+	var operatorList []string
+
+	resp, err1 := kapi.Get(context.Background(), resourceKey, nil)
+	if err1 != nil {
+		//log.Fatal(err1)
+		fmt.Errorf("Error: %v", err1)
+	} else {
+		// print common key info
+		log.Printf("Get is done. Metadata is %q\n", resp)
+		// print value
+		log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
+		currentListString = resp.Node.Value
+		fmt.Printf("CurrentListString:%s\n", currentListString)
+
+		if err = json.Unmarshal([]byte(currentListString), &operatorList); err != nil {
+    	    panic(err)
+    	}
+    	fmt.Printf("OperatorList:%v\n", operatorList)
+	}
+
+    operatorList = append(operatorList, chartURL)
+    jsonOperatorList, err2 := json.Marshal(&operatorList)
+    if err2 != nil {
+        panic (err2)
+    }
+    resourceValue := string(jsonOperatorList)
+    fmt.Printf("Resource Value:%s\n", resourceValue)
+
+	fmt.Printf("Setting %s->%s\n",resourceKey, resourceValue)
+	resp, err = kapi.Set(context.Background(), resourceKey, resourceValue, nil)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		// print common key info
+		log.Printf("Set is done. Metadata is %q\n", resp.Node.Value)
+	}
+	fmt.Println("Exiting storeChartURL")
+}
+
+func getOperatorCRDs(chartURL string) string {
+	fmt.Println("Inside getEtcd")
+	cfg := client.Config{
+		Endpoints: []string{etcdServiceURL},
+		Transport: client.DefaultTransport,
+	}
+	c, err := client.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	kapi := client.NewKeysAPI(c)
+
+	resourceKey := chartURL
+
+	fmt.Printf("Getting value for %s\n", resourceKey)
+	resp, err1 := kapi.Get(context.Background(), resourceKey, nil)
+	if err1 != nil {
+		//log.Fatal(err1)
+		fmt.Errorf("Error: %v", err1)
+		return ""
+	} else {
+		// print common key info
+		log.Printf("Get is done. Metadata is %q\n", resp)
+		// print value
+		log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
+	}
+	fmt.Println("Exiting getEtcd")
+
+	return resp.Node.Value
+}
+
 
 func (c *Controller) updateFooStatus(foo *operatorv1.Operator,
 	crds *[]string, status string) error {
