@@ -24,7 +24,7 @@ How to use?
 
 3) Invoke the script:
 
-   ./build-openapi-spec.sh <relative-path-to-directory-where-your-types.go-is-located>
+   ./build-openapi-spec.sh <Path-to-directory-where-your-types.go-is-located>
 
    E.g.:
 
