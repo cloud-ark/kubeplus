@@ -3,10 +3,10 @@
 Kubernetes provides ability to extend a cluster's functionality by adding new Operators (Custom
 Resource Definitions + associated controllers). 
 
-Below are some guidelines for developing Kubernetes Operators that help in
-bringing consistency when multiple such Operators are used in a single Kubernetes cluster.
+We have come up with following best practice guidelines for developing Kubernetes Operators.
+Operators developed following these guidelines provide ease of use and management.
 
-We have come up with these guidelines based on our study of various Operators
+These guidelines are based on our study of various Operators
 written by the community and through our experience of building
 [discovery](https://github.com/cloud-ark/kubediscovery) and [provenance](https://github.com/cloud-ark/kubeprovenance) 
 tools for Kubernetes Operators.
@@ -28,6 +28,10 @@ Life-cycle actions of the underlying resource should be embedded in the controll
 For example, Postgres custom resource controller should be written to perform diff of the current users with the desired user
 and perform the required actions (such as adding new users, deleting current users, etc.) based on the received desired state.
 
+Note that the principle of diff-based implementation for custom controllers is essentially an extension of
+the level-triggered approach recommended in the [general guidelines](https://github.com/kubernetes/community/blob/master/contributors/devel/controllers.md) 
+for developing Kubernetes controllers.
+
 An example where underlying imperative actions are exposed in the Spec is this 
 [MySQL Backup Custom Resource Spec](https://github.com/oracle/mysql-operator/blob/master/examples/backup/backup.yaml#L7).
 Here the fact that MySQL Backup is done using mysqldump tool is exposed in the Spec.
@@ -48,21 +52,21 @@ Examples of Operators that use OwnerReferences include, [Etcd Operator](https://
 [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/pkg/resources/services/service.go#L34).
 
 
-## 3) Define composition of Custom Resources using annotation on the Custom Resource YAML Definition
+## 3) Use kube-openapi annotations in Custom Resource Type definition
+
+When defining the types corresponding to your custom resources, you should use
+kube-openapi annotation - ``+k8s:openapi-gen=true''
+in the type definition to [enable generating documentation for the custom resource](https://medium.com/@cloudark/understanding-kubectl-explain-9d703396cc8).
+An example of this annotation on type definition is our [Postgres operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/pkg/apis/postgrescontroller/v1/types.go#L28). This annotation enables generating OpenAPI Spec documentation for custom resources as seen [here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/openapispec.json). We have developed a [tool](https://github.com/cloud-ark/kubeplus/tree/master/openapi-spec-generator) 
+that you can use for generating OpenAPI Spec for your custom resources. 
+
+
+## 4) Define composition of Custom Resources using annotation on the Custom Resource YAML Definition
 
 We recommend that you use an annotation on the Custom Resource Definiton to identify the underlying Kubernetes resources
 that will be created by the Custom Resource. An example of this can be seen for our Postgres resource 
 [here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/artifacts/deployment/deployment.yaml#L33).
 Doing so will enable tools like kubediscovery to correctly show composition information for Postgres instances.
-
-
-## 4) Use kube-openapi annotations in Custom Resource Type definition
-
-When defining the types corresponding to your custom resources, you should use
-kube-openapi annotation - ``+k8s:openapi-gen=true''
-in the type definition to [enable generating documentation for the custom resource](https://medium.com/@cloudark/understanding-kubectl-explain-9d703396cc8).
-An example of this annotation on type definition is our [Postgres operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/pkg/apis/postgrescontroller/v1/types.go#L28). This annotation enables generating OpenAPI Spec documentation for custom resources as seen [here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/openapispec.json).
-
 
 
 ## 5) Use ConfigMaps or Annotations for setting underlying resource's configuration parameters
@@ -73,7 +77,7 @@ The ConfigMap/Annotation can be used for customizing some selection of configura
 parameters of the underlying resource (e.g.: [Nginx Custom Controller](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/customization)). Or you can use ConfigMap to pass in an entire configuration file (e.g.: [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/user/clusters.md)).
 
 
-## 6) Use ConfigMap to pass parameters that modify the behavior of the Controller
+## 6) Use ConfigMap to pass parameters that modify the behavior of the Custom Controller
 
 A Custom controller will typically support some form of customization. For example, 
 [this MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/tutorial.md#configuration) supports following customization settings: whether to deploy
@@ -81,14 +85,14 @@ the Operator cluster-wide or within a particular namespace, which version of MyS
 Use ConfigMap for passing in such customization parameter values for the controller.
 
 
-## 7) Expose Monitoring hooks for Custom Controller
+## 7) Collect Metrics for Custom Controller
 
 In order to monitor the health and status of your controller expose
 Prometheus monitoring metrics for your controller. 
 You can see an example of this in [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/setup/monitoring.md).
 
 
-## 8) Package Operator as Helm Chart and register your CRD as part of it
+## 8) Package Operator as Helm Chart and register Custom Resources as part of it
 
 You should create a Helm chart for your Operator. The chart should include two things: 
 
@@ -108,4 +112,3 @@ The documentation of the custom resources will be useful for application develop
 
 
 
-Apart from these you should follow the [general guidelines](https://github.com/kubernetes/community/blob/master/contributors/devel/controllers.md) for developing Kubernetes controllers.
