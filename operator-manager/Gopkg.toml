@@ -26,48 +26,28 @@
 
 
 [[constraint]]
-  name = "github.com/gogo/protobuf"
-  version = "1.1.1"
+  name = "github.com/coreos/etcd"
+  version = "3.3.9"
 
 [[constraint]]
   branch = "master"
   name = "github.com/golang/glog"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/google/gofuzz"
-
-[[constraint]]
-  name = "github.com/spf13/pflag"
-  version = "1.0.2"
+  name = "github.com/lib/pq"
+  version = "1.0.0"
 
 [[constraint]]
   branch = "master"
-  name = "golang.org/x/net"
+  name = "k8s.io/api"
 
 [[constraint]]
-  name = "golang.org/x/text"
-  version = "0.3.0"
-
-[[constraint]]
-  name = "gopkg.in/inf.v0"
-  version = "0.9.1"
+  branch = "release-1.11"
+  name = "k8s.io/apiextensions-apiserver"
 
 [[constraint]]
   branch = "release-1.11"
   name = "k8s.io/apimachinery"
-
-[[constraint]]
-  branch = "release-1.11"
-  name = "k8s.io/code-generator"
-
-[[constraint]]
-  branch = "master"
-  name = "k8s.io/gengo"
-
-[[constraint]]
-  branch = "master"
-  name = "k8s.io/kube-openapi"
 
 [[constraint]]
   name = "k8s.io/client-go"

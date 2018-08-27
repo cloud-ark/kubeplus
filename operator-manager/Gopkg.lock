@@ -14,10 +14,41 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
+  name = "github.com/coreos/etcd"
+  packages = [
+    "client",
+    "pkg/pathutil",
+    "pkg/srv",
+    "pkg/types",
+    "version"
+  ]
+  revision = "fca8add78a9d926166eb739b8e4a124434025ba3"
+  version = "v3.3.9"
+
+[[projects]]
+  name = "github.com/coreos/go-semver"
+  packages = ["semver"]
+  revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
+  version = "v0.2.0"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
   version = "v1.1.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/dsnet/compress"
+  packages = [
+    ".",
+    "bzip2",
+    "bzip2/internal/sais",
+    "internal",
+    "internal/errors",
+    "internal/prefix"
+  ]
+  revision = "cc9eb1d7ad760af14e8f918698f745e80377af4f"
 
 [[projects]]
   name = "github.com/emicklei/go-restful"
@@ -165,7 +196,7 @@
   name = "github.com/json-iterator/go"
   packages = ["."]
   revision = "1624edc4454b8682399def8740d46db5e4362ba4"
-  version = "1.1.5"
+  version = "v1.1.5"
 
 [[projects]]
   name = "github.com/lib/pq"
@@ -187,6 +218,12 @@
   revision = "60711f1a8329503b04e1c88535f419d0bb440bff"
 
 [[projects]]
+  name = "github.com/mholt/archiver"
+  packages = ["."]
+  revision = "cdc68dd1f170b8dfc1a0d2231b5bb0967ed67006"
+  version = "v2.0"
+
+[[projects]]
   name = "github.com/modern-go/concurrent"
   packages = ["."]
   revision = "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94"
@@ -197,6 +234,12 @@
   packages = ["."]
   revision = "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
   version = "1.0.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/nwaples/rardecode"
+  packages = ["."]
+  revision = "e06696f847aeda6f39a8f0b7cdff193b7690aef6"
 
 [[projects]]
   branch = "master"
@@ -217,6 +260,23 @@
   version = "v1.0.2"
 
 [[projects]]
+  name = "github.com/ugorji/go"
+  packages = ["codec"]
+  revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
+  version = "v1.1.1"
+
+[[projects]]
+  name = "github.com/ulikunitz/xz"
+  packages = [
+    ".",
+    "internal/hash",
+    "internal/xlog",
+    "lzma"
+  ]
+  revision = "0c6b41e72360850ca4f98dc341fd999726ea007f"
+  version = "v0.5.4"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
@@ -232,7 +292,7 @@
     "http2/hpack",
     "idna"
   ]
-  revision = "4bcd98cce591d8c7061bf313d7a3cbad05b58549"
+  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
 
 [[projects]]
   branch = "master"
@@ -279,7 +339,7 @@
     "imports",
     "internal/fastwalk"
   ]
-  revision = "ff6c8c104af2168da09d225428803f855a80b1ce"
+  revision = "f6ba5742950514ddd66494151ed5498ed77969ca"
 
 [[projects]]
   name = "gopkg.in/inf.v0"
@@ -327,7 +387,19 @@
     "storage/v1alpha1",
     "storage/v1beta1"
   ]
-  revision = "e7796012e019aac998c7035d60c53f4a25219604"
+  revision = "dd5c735cbff9767ba4ba339616a15236fab0ece5"
+
+[[projects]]
+  branch = "release-1.11"
+  name = "k8s.io/apiextensions-apiserver"
+  packages = [
+    "pkg/apis/apiextensions",
+    "pkg/apis/apiextensions/v1beta1",
+    "pkg/client/clientset/clientset",
+    "pkg/client/clientset/clientset/scheme",
+    "pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+  ]
+  revision = "aaea8ffc60577d42bca6f1ea93a10ec85ec4f54e"
 
 [[projects]]
   branch = "release-1.11"
@@ -511,7 +583,7 @@
   version = "v8.0.0"
 
 [[projects]]
-  branch = "release-1.11"
+  branch = "master"
   name = "k8s.io/code-generator"
   packages = [
     "cmd/client-gen/args",
@@ -534,7 +606,7 @@
     "pkg/util",
     "third_party/forked/golang/reflect"
   ]
-  revision = "dd8ec120686a9463868a57c4716b701f86f92fed"
+  revision = "aae79feb89bdded3679da91fd8c19b6dfcbdb79a"
 
 [[projects]]
   branch = "master"
@@ -569,6 +641,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "de8d6d737558d752367b4c9eeb2faf6feccde5ccb4d1178d1b36cb350d2a6fb9"
+  inputs-digest = "e6017153d81fbb820f213368b919c8c4c44acface5783b2a46262715cbf54a11"
   solver-name = "gps-cdcl"
   solver-version = 1

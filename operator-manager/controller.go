@@ -49,11 +49,24 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
+	"k8s.io/client-go/tools/clientcmd"
+	"io/ioutil"
+
+	"io"
+	"net/http"
+
+	"bytes"
+	"compress/gzip"
+	//"archive/tar"
+	"github.com/mholt/archiver"
+
 	operatorv1 "github.com/cloud-ark/kubeplus/operator-manager/pkg/apis/operatorcontroller/v1"
 	clientset "github.com/cloud-ark/kubeplus/operator-manager/pkg/client/clientset/versioned"
 	operatorscheme "github.com/cloud-ark/kubeplus/operator-manager/pkg/client/clientset/versioned/scheme"
 	informers "github.com/cloud-ark/kubeplus/operator-manager/pkg/client/informers/externalversions"
 	listers "github.com/cloud-ark/kubeplus/operator-manager/pkg/client/listers/operatorcontroller/v1"
+
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 )
 
 const controllerAgentName = "operator-controller"
@@ -146,8 +159,8 @@ func NewController(
 		UpdateFunc: func(old, new interface{}) {
 			newDepl := new.(*operatorv1.Operator)
 			oldDepl := old.(*operatorv1.Operator)
-			//fmt.Println("New Version:%s", newDepl.ResourceVersion)
-			//fmt.Println("Old Version:%s", oldDepl.ResourceVersion)
+			fmt.Println("New Version:%s", newDepl.ResourceVersion)
+			fmt.Println("Old Version:%s", oldDepl.ResourceVersion)
 			if newDepl.ResourceVersion == oldDepl.ResourceVersion {
 				// Periodic resync will send update events for all known Deployments.
 				// Two different versions of the same Deployment will always have different RVs.
@@ -328,6 +341,8 @@ func (c *Controller) syncHandler(key string) error {
 		return err
 	}
 
+	fmt.Println("**************************************")
+
 	operatorName := foo.Spec.Name
 	operatorChartURL := foo.Spec.ChartURL
 
@@ -359,11 +374,252 @@ func (c *Controller) syncHandler(key string) error {
     		status = "ERROR"
     	}
     }
+
+    if status == "READY" {
+	    operatorName, _ := parseChartNameVersion(operatorChartURL)
+    	operatorOpenAPIConfigMapName := uploadOperatorOpenAPISpec(operatorChartURL, c.kubeclientset)
+    	saveOperatorData(operatorName, crds, operatorOpenAPIConfigMapName)
+    }
+
     c.updateFooStatus(foo, &crds, status)
 
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
 }
+
+func saveOperatorData(operatorName string, crds []string, operatorOpenAPIConfigMapName string) {
+
+	resourceKey := "/operators"
+
+	var operatorDataMap = make(map[string]interface{})
+	var operatorMap = make(map[string]map[string]interface{})
+	var operatorMapList = make([]map[string]map[string]interface{}, 0)
+
+	operatorDataMap["Name"] = operatorName
+	operatorDataMap["CustomResources"] = crds
+	operatorDataMap["ConfigMapName"] = operatorOpenAPIConfigMapName
+
+	operatorMap["Operator"] = operatorDataMap
+
+	operatorMapList = append(operatorMapList, operatorMap)
+
+	storeEtcd(resourceKey, operatorMapList)
+
+	cfg, err := clientcmd.BuildConfigFromFlags("", "")
+	if err != nil {
+		panic(err)
+	}
+	crdclient, err := apiextensionsclientset.NewForConfig(cfg)
+
+	for _, crdName := range crds {
+		crdObj, err := crdclient.ApiextensionsV1beta1().CustomResourceDefinitions().Get(crdName, metav1.GetOptions{})
+		if err != nil {
+			fmt.Errorf("Error:%s\n", err)
+		}
+		group := crdObj.Spec.Group
+		version := crdObj.Spec.Version
+		endpoint := "apis/" + group + "/" + version
+		kind := crdObj.Spec.Names.Kind
+		plural := crdObj.Spec.Names.Plural
+		fmt.Printf("Group:%s, Version:%s, Kind:%s, Plural:%s, Endpoint:%s\n", group, version, kind, plural, endpoint)
+
+		objectMeta := crdObj.ObjectMeta
+		fmt.Printf("Object Meta:%v\n", objectMeta)
+		//name := objectMeta.GetName()
+		//namespace := objectMeta.GetNamespace()
+		annotations := objectMeta.GetAnnotations()
+		composition := annotations["composition"]
+
+		var crdDetailsMap = make(map[string]interface{})
+		crdDetailsMap["kind"] = kind
+		crdDetailsMap["endpoint"] = endpoint
+		crdDetailsMap["plural"] = plural
+		crdDetailsMap["composition"] = composition
+
+		//crdName := "postgreses.postgrescontroller.kubeplus"
+		storeEtcd("/" + crdName, crdDetailsMap)
+	}
+}
+
+
+func storeEtcd(resourceKey string, resourceData interface{}) {
+	fmt.Println("Entering storeEtcd")
+    jsonData, err := json.Marshal(&resourceData)
+    if err != nil {
+        panic (err)
+    }
+    jsonDataString := string(jsonData)
+    fmt.Println("JSON Data:%s", jsonDataString)
+	cfg := client.Config{
+		Endpoints: []string{etcdServiceURL},
+		Transport: client.DefaultTransport,
+	}
+	c, err := client.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	kapi := client.NewKeysAPI(c)
+	
+	fmt.Printf("Setting %s->%s\n",resourceKey, jsonDataString)
+	resp, err := kapi.Set(context.Background(), resourceKey, jsonDataString, nil)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		// print common key info
+		log.Printf("Set is done. Metadata is %q\n", resp.Node.Value)
+	}
+	fmt.Println("Exiting storeEtcd")
+}
+
+
+func uploadOperatorOpenAPISpec(chartURL string, kubeclientset kubernetes.Interface) string {
+	fmt.Println("Entering uploadOperatorOpenAPISpec")
+	extractOperatorChart(chartURL)
+
+	chartConfigMapName := createConfigMap(chartURL, kubeclientset)
+
+	fmt.Println("Exiting uploadOperatorOpenAPISpec")
+
+	return chartConfigMapName
+}
+
+func extractOperatorChart(chartURL string) {
+	fmt.Println("Entering extractOperatorChart")
+
+	chartName, _ := parseChartNameVersion(chartURL)
+
+	chartTarFile := chartName + ".tar"
+	out, err := os.Create(chartTarFile)
+	defer out.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	resp, err := http.Get(chartURL)
+	if err != nil {
+		log.Fatal(err)
+		//panic(err)
+	}
+
+	defer resp.Body.Close()
+
+	var buf bytes.Buffer
+	buf1, err1 := ioutil.ReadAll(resp.Body)
+	if err1 != nil {
+		log.Fatal(err1)
+	}
+
+	buf.Write(buf1)
+
+	zr, err := gzip.NewReader(&buf)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//fmt.Println("ABC")
+
+	//fmt.Printf("Name: %s\nComment: %s\nModTime: %s\n\n", zr.Name, zr.Comment, zr.ModTime.UTC())
+
+	if _, err := io.Copy(out, zr); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := zr.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	currentDir, err := os.Getwd()
+	//dirName := currentDir + "tmp/charts/" + chartName
+	dirName := currentDir + "/" + chartName
+	fmt.Printf("Chart tar downloaded to:%s\n", dirName)
+	err = os.Mkdir(dirName, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//dirName := "/Users/devdatta/go/src/github.com/cloud-ark/kubeplus/doc-generator/tmp3"
+	err = archiver.Tar.Open(chartTarFile, dirName)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	os.Chdir(dirName)
+	os.Chdir(chartName)
+	cwd, _ := os.Getwd()
+	//fmt.Println("Listing %s", cwd)
+
+	files, err := ioutil.ReadDir(cwd)
+    if err != nil {
+        log.Fatal(err)
+    }
+    for _, f := range files {
+            fmt.Println(f.Name())
+    }
+
+    os.Chdir(currentDir)
+
+	fmt.Println("Exiting createConfigMap")
+}
+
+func createConfigMap(chartURL string, kubeclientset kubernetes.Interface) string {
+	fmt.Println("Entering createConfigMap")
+	chartName, _ := parseChartNameVersion(chartURL)
+
+	currentDir, err := os.Getwd()
+	//dirName := currentDir + "tmp/charts/" + chartName
+	dirName := currentDir + "/" + chartName
+
+	os.Chdir(dirName)
+	os.Chdir(chartName)
+	cwd, _ := os.Getwd()
+	fmt.Printf("dirName:%s\n", cwd)
+
+	//openapispecFile := dirName + "/openapispec.json"
+	openapispecFile := "openapispec.json"
+
+	//fmt.Printf("OpenAPI Spec file:%s\n", openapispecFile)
+
+    jsonContents, err := ioutil.ReadFile(openapispecFile)
+    jsonContents1 := string(jsonContents)
+	if err != nil {
+		log.Fatal(err)
+	}
+	//fmt.Printf("OpenAPISpec Contents:%s\n", jsonContents1)
+
+	os.Chdir(currentDir)
+
+	configMapToCreate := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: chartName,
+		},
+		Data: map[string]string{
+			"docdata": jsonContents1,
+		},
+	}
+
+	_, err1 := kubeclientset.CoreV1().ConfigMaps("default").Create(configMapToCreate)
+	//fmt.Println("ConfigMap:%v", configMapCreated)
+
+	if err1 != nil {
+		panic(err1)
+	}
+
+	fmt.Println("Exiting createConfigMap")
+
+	return chartName
+}
+
+func parseChartNameVersion(chartURL string) (string, string) {
+
+	//"https://s3-us-west-2.amazonaws.com/cloudark-helm-charts/postgres-crd-v2-chart-0.0.2.tgz"
+
+	chartName := "postgres-crd-v2-chart"
+	chartVersion := "0.0.2"
+
+	return chartName, chartVersion
+}
+
 
 func storeChartURL(chartURL string) {
 	fmt.Println("Entering storeChartURL")
