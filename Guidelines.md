@@ -1,16 +1,15 @@
 # Operator Guidelines
 
 Kubernetes provides ability to extend a cluster's functionality by adding new Operators (Custom
-Resource Definitions + associated controllers). Such an extended Kubernetes cluster essentially 
-represents a purpose-built platform.
+Resource Definitions + associated controllers). 
 
-Here we provide guidelines for developing Kubernetes Operators that help in
-bringing consistency when multiple such Operators are used 
-in a single Kubernetes cluster to form a purpose-built platform.
+Below are some guidelines for developing Kubernetes Operators that help in
+bringing consistency when multiple such Operators are used in a single Kubernetes cluster.
 
 We have come up with these guidelines based on our study of various Operators
 written by the community and through our experience of building
-[discovery](https://github.com/cloud-ark/kubediscovery) and [provenance](https://github.com/cloud-ark/kubeprovenance) tools for Kubernetes.
+[discovery](https://github.com/cloud-ark/kubediscovery) and [provenance](https://github.com/cloud-ark/kubeprovenance) 
+tools for Kubernetes Operators.
 
 
 ## 1) Prefer declarative state over imperative actions in Custom Resource Spec definition
@@ -28,6 +27,12 @@ with the desired state by performing diff of the current state with the desired 
 Life-cycle actions of the underlying resource should be embedded in the controller logic.
 For example, Postgres custom resource controller should be written to perform diff of the current users with the desired user
 and perform the required actions (such as adding new users, deleting current users, etc.) based on the received desired state.
+
+An example where underlying imperative actions are exposed in the Spec is this 
+[MySQL Backup Custom Resource Spec](https://github.com/oracle/mysql-operator/blob/master/examples/backup/backup.yaml#L7).
+Here the fact that MySQL Backup is done using mysqldump tool is exposed in the Spec.
+In our view such internal details should not be exposed in the Spec as it prevents Custom Resource Type definition 
+(in this case, Backup) to evolve without affecting its users.
 
 
 ## 2) Use OwnerReferences on Custom Resource instances
