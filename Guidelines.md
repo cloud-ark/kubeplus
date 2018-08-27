@@ -65,7 +65,7 @@ An example of this annotation on type definition is our [Postgres operator](http
 A controller should be written such that it takes inputs for underlying resource's
 configuration parameters through ConfigMap(s) or Annotations. 
 The ConfigMap/Annotation can be used for customizing some selection of configuration
-parameters of the underlying resource (e.g.: [Nginx Operator](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/customization)). Or you can use ConfigMap to pass in an entire configuration file (e.g.: [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/user/clusters.md)).
+parameters of the underlying resource (e.g.: [Nginx Custom Controller](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/customization)). Or you can use ConfigMap to pass in an entire configuration file (e.g.: [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/user/clusters.md)).
 
 
 ## 6) Use ConfigMap to pass parameters that modify the behavior of the Controller
@@ -85,15 +85,16 @@ You can see an example of this in [MySQL Operator](https://github.com/oracle/mys
 
 ## 8) Package Operator as Helm Chart and register your CRD as part of it
 
-You should create a Helm chart for your Operator. The chart should include two things: (a) Registration of all Custom Resources managed by the Operator
-and (b) Any documentation for the custom resources, such as the OpenAPI Spec, for your custom resources.
+You should create a Helm chart for your Operator. The chart should include two things: 
 
-Registering CRDs as part of Helm Chart instead of in [Golang Code](https://github.com/coreos/etcd-operator/blob/master/pkg/controller/backup-operator/operator.go#L76)
-has following advantages: (a) Helm Charts have become the standard mechanism for defining all installation artifacts.
-(b) You can use this approach even if your Operator is not written in GO.
+(1) Registration of all Custom Resources managed by the Operator.
 Examples of this can be seen in our [Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/templates/deployment.yaml)
 and in this [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/mysql-operator/templates/01-resources.yaml).
+Registering CRDs as part of Helm Chart, instead in [Golang Code](https://github.com/coreos/etcd-operator/blob/master/pkg/controller/backup-operator/operator.go#L76),
+has following advantages: (a) Helm Charts have become the standard mechanism for defining all installation artifacts.
+(b) You can use this approach even if your Operator is not written in GO.
 
+(2) Any documentation for the custom resources, such as the OpenAPI Spec, for your custom resources.
 The documentation of the custom resources will be useful for application developers to figure out how to use your custom resources.
 
 
