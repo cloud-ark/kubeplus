@@ -39,7 +39,7 @@ In our view such internal details should not be exposed in the Spec as it preven
 (in this case, Backup) to evolve without affecting its users.
 
 
-## 2) Use OwnerReferences on Custom Resource instances
+## 2) Use OwnerReferences with Custom Resource instances
 
 A custom controller will typically create one or more Kubernetes resources, such as Pod, Service, Deployment, Secret, Ingress, etc., 
 as part of instantiation of its custom resource. The controller should be written to set OwnerReference on custom
@@ -61,38 +61,7 @@ An example of this annotation on type definition is our [Postgres operator](http
 that you can use for generating OpenAPI Spec for your custom resources. 
 
 
-## 4) Define composition of Custom Resources using annotation on the Custom Resource YAML Definition
-
-We recommend that you use an annotation on the Custom Resource Definiton to identify the underlying Kubernetes resources
-that will be created by the Custom Resource. An example of this can be seen for our Postgres resource 
-[here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/artifacts/deployment/deployment.yaml#L33).
-Doing so will enable tools like kubediscovery to correctly show composition information for Postgres instances.
-
-
-## 5) Use ConfigMaps or Annotations for setting underlying resource's configuration parameters
-
-A controller should be written such that it takes inputs for underlying resource's
-configuration parameters through ConfigMap(s) or Annotations. 
-The ConfigMap/Annotation can be used for customizing some selection of configuration
-parameters of the underlying resource (e.g.: [Nginx Custom Controller](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/customization)). Or you can use ConfigMap to pass in an entire configuration file (e.g.: [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/user/clusters.md)).
-
-
-## 6) Use ConfigMap to pass parameters that modify the behavior of the Custom Controller
-
-A Custom controller will typically support some form of customization. For example, 
-[this MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/tutorial.md#configuration) supports following customization settings: whether to deploy
-the Operator cluster-wide or within a particular namespace, which version of MySQL should be installed, etc.
-Use ConfigMap for passing in such customization parameter values for the controller.
-
-
-## 7) Collect Metrics for Custom Controller
-
-In order to monitor the health and status of your controller expose
-Prometheus monitoring metrics for your controller. 
-You can see an example of this in [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/setup/monitoring.md).
-
-
-## 8) Package Operator as Helm Chart and register Custom Resources as part of it
+## 4) Package Operator as Helm Chart and register Custom Resources as part of it
 
 You should create a Helm chart for your Operator. The chart should include two things: 
 
@@ -105,6 +74,67 @@ has following advantages: (a) Helm Charts have become the standard mechanism for
 
 (2) Any documentation for the custom resources, such as the OpenAPI Spec, for your custom resources.
 The documentation of the custom resources will be useful for application developers to figure out how to use your custom resources.
+
+
+
+## 5) Support Operator configuration parameters
+
+Custom controller of an Operator will need to support some form of customization. For example, 
+[this MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/tutorial.md#configuration) supports following customization settings: whether to deploy
+the Operator cluster-wide or within a particular namespace, which version of MySQL should be installed, etc.
+If you have followed previous guideline and have Helm chart for your Operator then use Helm's values YAML file to specify
+such parameters. If not, use Operator-specific ConfigMap for this purpose. 
+
+
+
+## 6) Support control over underlying resource's configuration parameters
+
+A controller should be written such that it takes inputs for underlying resource's
+configuration parameters. We have seen three different approaches towards this so far based on using ConfigMaps, using Annotations, using Spec definition itself.
+[Nginx Custom Controller](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/customization) supports both ConfigMap and Annotation.
+[Oracle MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/user/clusters.md) uses ConfigMap.
+[PressLabs MySQL Operator](https://github.com/presslabs/mysql-operator) uses Custom Resource [Spec definition](https://github.com/presslabs/mysql-operator/blob/master/examples/example-cluster.yaml#L22).
+
+
+
+## 7) Define composition of Custom Resources using annotation on the Custom Resource YAML Definition
+
+We recommend that you use an annotation on the Custom Resource Definiton to identify the underlying Kubernetes resources
+that will be created by the Custom Resource. An example of this can be seen for our Postgres resource 
+[here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/artifacts/deployment/deployment.yaml#L33).
+Doing so will enable tools like kubediscovery to correctly show composition information for custom resource instances.
+
+
+## 8) Custom Resource Metrics Collection
+
+You should plan for collecting different metrics for custom resources managed by your Operator.
+One approach towards this is to write your Custom controller to collect required metrics.
+An example of this can be seen in the [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/setup/monitoring.md).
+Another approach is to use a generic tool such as [kubeprovenance](https://github.com/cloud-ark/kubeprovenance) in your cluster.
+KubeProvenance uses Kubernetes Audit Logs to build lineage for custom resources.
+It also provides various provenance query operators to query the collected information.
+
+
+We consider first five guidelines (1-5) as must have for any Operator. Guidelines 7 and 8 are nice to have.
+Guideline #6 depends on the nature of the Operator. If your Operator is not managing any underlying resource
+such as a database, then this guideline does not apply. 
+Guideline #7 allows easy discovery of your custom resource instances.
+Guideline #8 is useful for understanding effect of 
+performing various actions on your custom resources over time.
+
+
+Here is our analysis of different Operators for their conformance to above guidelines. 
+If you are interested in getting your Operator checked against these guidelines, create a Issue with
+following information: <Link to your Operator Code - github, bitbucket> and we will analyze your Operator.
+
+
+| Operator      | URL           | Guidelines satisfied  | Comments     |
+| ------------- |:-------------:| ---------------------:| ------------:|
+| Oracle MySQL  | https://github.com/oracle/mysql-operator | 2, 4, 5, 7, 8 | 1: Not satisfied because of exposing mysqldump in Spec
+| PressLabs MySQL| https://github.com/presslabs/mysql-operator  | 1, 2, 3, 5, 6 | 4: Not satisfied because CRD installed in Code
+
+
+
 
 
 
