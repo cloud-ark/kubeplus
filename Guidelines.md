@@ -43,8 +43,8 @@ or native Kubernetes Kinds that it would create. These references aid with suppo
 [discovery of information](https://github.com/cloud-ark/kubediscovery), such as the Object composition tree, for custom resource instances
 and garbage collection of resources.
 
-Examples of Operators that use OwnerReferences include, [Etcd Operator](https://github.com/coreos/etcd-operator)
-[Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/controller.go#L508) and 
+Examples of Operators that use OwnerReferences include, [Etcd Operator](https://github.com/coreos/etcd-operator/blob/master/pkg/cluster/cluster.go#L351),
+[Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/controller.go#L508), and 
 [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/pkg/resources/services/service.go#L34).
 
 
