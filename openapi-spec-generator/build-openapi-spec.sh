@@ -1,11 +1,11 @@
 #!/bin/bash
 
-if [ "$#" -ne 1 ]; then
-   echo "./build-openapi-doc.sh <Path to the directory containing types.go>"
+if [ "$#" -ne 2 ]; then
+   echo "./build-openapi-doc.sh <Directory where your type file is located> <Name of type file>"
    exit
 fi
 
-cp $1/types.go typedir/.
+cp $1/$2 typedir/types.go
 cd typedir
 sed -E '/PersistentVolumeClaim|Affinity|ObjectMeta|ListMeta|LocalObjectReference|Time/s/^/\/\//' types.go > types1.go
 
@@ -23,5 +23,5 @@ if [[ $op1 = *"API rule violation"* ]]; then
 else
    echo OK
    echo "OpenAPI Spec file generated and copied to $1"
-   cp openapispec.json $1
+   cp openapispec.json $1/$2-openapispec.json
 fi

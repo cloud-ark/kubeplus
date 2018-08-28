@@ -29,17 +29,70 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.Operator":       schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_Operator(ref),
-		"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.OperatorSpec":   schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_OperatorSpec(ref),
-		"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.OperatorStatus": schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_OperatorStatus(ref),
+		"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.ABSRestoreSource": schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_ABSRestoreSource(ref),
+		"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.EtcdClusterRef":   schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_EtcdClusterRef(ref),
+		"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.EtcdRestore":      schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_EtcdRestore(ref),
+		"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.EtcdRestoreList":  schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_EtcdRestoreList(ref),
+		"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.RestoreSource":    schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_RestoreSource(ref),
+		"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.RestoreSpec":      schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_RestoreSpec(ref),
+		"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.RestoreStatus":    schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_RestoreStatus(ref),
+		"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.S3RestoreSource":  schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_S3RestoreSource(ref),
 	}
 }
 
-func schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_Operator(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_ABSRestoreSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Operator is a specification for a Operator resource",
+				Properties: map[string]spec.Schema{
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the full abs path where the backup is saved. The format of the path must be: \"<abs-container-name>/<path-to-backup-file>\" e.g: \"myabscontainer/etcd.backup\"",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"absSecret": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The name of the secret object that stores the Azure Blob Storage credential.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"path", "absSecret"},
+			},
+		},
+		Dependencies: []string{},
+	}
+}
+
+func schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_EtcdClusterRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "EtcdCluster references an EtcdCluster resource whose metadata and spec will be used to create the new restored EtcdCluster CR. This reference EtcdCluster CR and all its resources will be deleted before the restored EtcdCluster CR is created.",
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name is the EtcdCluster resource name. This reference EtcdCluster must be present in the same namespace as the restore-operator",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"name"},
+			},
+		},
+		Dependencies: []string{},
+	}
+}
+
+func schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_EtcdRestore(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "EtcdRestore represents a Kubernetes EtcdRestore Custom Resource. The EtcdRestore CR name will be used as the name of the new restored cluster.",
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -57,76 +110,187 @@ func schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_Operator(ref commo
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.OperatorSpec"),
+							Description: "\n\tmetav1.ObjectMeta `json:\"metadata\"`",
+							Ref:         ref("github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.RestoreSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.OperatorStatus"),
+							Ref: ref("github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.RestoreStatus"),
 						},
 					},
 				},
-				Required: []string{"spec", "status"},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.OperatorSpec", "github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.OperatorStatus"},
+			"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.RestoreSpec", "github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.RestoreStatus"},
 	}
 }
 
-func schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_OperatorSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_EtcdRestoreList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "OperatorSpec is the spec for a OperatorSpec resource",
+				Description: "EtcdRestoreList is a list of EtcdRestore.",
 				Properties: map[string]spec.Schema{
-					"name": {
+					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
-					"chartURL": {
+					"apiVersion": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Description: "\n\tmetav1.ListMeta `json:\"metadata\"`",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.EtcdRestore"),
+									},
+								},
+							},
 						},
 					},
 				},
-				Required: []string{"name", "chartURL"},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.EtcdRestore"},
+	}
+}
+
+func schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_RestoreSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Properties: map[string]spec.Schema{
+					"s3": {
+						SchemaProps: spec.SchemaProps{
+							Description: "S3 tells where on S3 the backup is saved and how to fetch the backup.",
+							Ref:         ref("github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.S3RestoreSource"),
+						},
+					},
+					"abs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ABS tells where on ABS the backup is saved and how to fetch the backup.",
+							Ref:         ref("github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.ABSRestoreSource"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.ABSRestoreSource", "github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.S3RestoreSource"},
+	}
+}
+
+func schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_RestoreSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "RestoreSpec defines how to restore an etcd cluster from existing backup.",
+				Properties: map[string]spec.Schema{
+					"backupStorageType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "BackupStorageType is the type of the backup storage which is used as RestoreSource.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"s3": {
+						SchemaProps: spec.SchemaProps{
+							Description: "S3 tells where on S3 the backup is saved and how to fetch the backup.",
+							Ref:         ref("github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.S3RestoreSource"),
+						},
+					},
+					"abs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ABS tells where on ABS the backup is saved and how to fetch the backup.",
+							Ref:         ref("github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.ABSRestoreSource"),
+						},
+					},
+					"etcdCluster": {
+						SchemaProps: spec.SchemaProps{
+							Description: "EtcdCluster references an EtcdCluster resource whose metadata and spec will be used to create the new restored EtcdCluster CR. This reference EtcdCluster CR and all its resources will be deleted before the restored EtcdCluster CR is created.",
+							Ref:         ref("github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.EtcdClusterRef"),
+						},
+					},
+				},
+				Required: []string{"backupStorageType", "etcdCluster"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.ABSRestoreSource", "github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.EtcdClusterRef", "github.com/cloud-ark/kubeplus/openapi-spec-generator/typedir.S3RestoreSource"},
+	}
+}
+
+func schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_RestoreStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "RestoreStatus reports the status of this restore operation.",
+				Properties: map[string]spec.Schema{
+					"succeeded": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Succeeded indicates if the backup has Succeeded.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reason indicates the reason for any backup related failures.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"succeeded"},
 			},
 		},
 		Dependencies: []string{},
 	}
 }
 
-func schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_OperatorStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_cloud_ark_kubeplus_openapi_spec_generator_typedir_S3RestoreSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "OperatorStatus is the status for a Operator resource",
 				Properties: map[string]spec.Schema{
-					"customResourceDefinitions": {
+					"path": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
+							Description: "Path is the full s3 path where the backup is saved. The format of the path must be: \"<s3-bucket-name>/<path-to-backup-file>\" e.g: \"mybucket/etcd.backup\"",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
-					"status": {
+					"awsSecret": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "The name of the secret object that stores the AWS credential and config files. The file name of the credential MUST be 'credentials'. The file name of the config MUST be 'config'. The profile to use in both files will be 'default'.\n\nAWSSecret overwrites the default etcd operator wide AWS credential and config.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"endpoint": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Endpoint if blank points to aws. If specified, can point to s3 compatible object stores.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
-				Required: []string{"customResourceDefinitions", "status"},
+				Required: []string{"path", "awsSecret", "endpoint"},
 			},
 		},
 		Dependencies: []string{},

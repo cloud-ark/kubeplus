@@ -6,11 +6,38 @@
   },
   "paths": {},
   "definitions": {
-   "typedir.Operator": {
-    "description": "Operator is a specification for a Operator resource",
+   "typedir.ABSRestoreSource": {
     "required": [
-     "spec",
-     "status"
+     "path",
+     "absSecret"
+    ],
+    "properties": {
+     "absSecret": {
+      "description": "The name of the secret object that stores the Azure Blob Storage credential.",
+      "type": "string"
+     },
+     "path": {
+      "description": "Path is the full abs path where the backup is saved. The format of the path must be: \"\u003cabs-container-name\u003e/\u003cpath-to-backup-file\u003e\" e.g: \"myabscontainer/etcd.backup\"",
+      "type": "string"
+     }
+    }
+   },
+   "typedir.EtcdClusterRef": {
+    "description": "EtcdCluster references an EtcdCluster resource whose metadata and spec will be used to create the new restored EtcdCluster CR. This reference EtcdCluster CR and all its resources will be deleted before the restored EtcdCluster CR is created.",
+    "required": [
+     "name"
+    ],
+    "properties": {
+     "name": {
+      "description": "Name is the EtcdCluster resource name. This reference EtcdCluster must be present in the same namespace as the restore-operator",
+      "type": "string"
+     }
+    }
+   },
+   "typedir.EtcdRestore": {
+    "description": "EtcdRestore represents a Kubernetes EtcdRestore Custom Resource. The EtcdRestore CR name will be used as the name of the new restored cluster.",
+    "required": [
+     "spec"
     ],
     "properties": {
      "apiVersion": {
@@ -22,42 +49,107 @@
       "type": "string"
      },
      "spec": {
-      "$ref": "#/definitions/typedir.OperatorSpec"
+      "description": "\n\tmetav1.ObjectMeta `json:\"metadata\"`",
+      "$ref": "#/definitions/typedir.RestoreSpec"
      },
      "status": {
-      "$ref": "#/definitions/typedir.OperatorStatus"
+      "$ref": "#/definitions/typedir.RestoreStatus"
      }
     }
    },
-   "typedir.OperatorSpec": {
-    "description": "OperatorSpec is the spec for a OperatorSpec resource",
+   "typedir.EtcdRestoreList": {
+    "description": "EtcdRestoreList is a list of EtcdRestore.",
     "required": [
-     "name",
-     "chartURL"
+     "items"
     ],
     "properties": {
-     "chartURL": {
+     "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
       "type": "string"
      },
-     "name": {
-      "type": "string"
-     }
-    }
-   },
-   "typedir.OperatorStatus": {
-    "description": "OperatorStatus is the status for a Operator resource",
-    "required": [
-     "customResourceDefinitions",
-     "status"
-    ],
-    "properties": {
-     "customResourceDefinitions": {
+     "items": {
+      "description": "\n\tmetav1.ListMeta `json:\"metadata\"`",
       "type": "array",
       "items": {
-       "type": "string"
+       "$ref": "#/definitions/typedir.EtcdRestore"
       }
      },
-     "status": {
+     "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+      "type": "string"
+     }
+    }
+   },
+   "typedir.RestoreSource": {
+    "properties": {
+     "abs": {
+      "description": "ABS tells where on ABS the backup is saved and how to fetch the backup.",
+      "$ref": "#/definitions/typedir.ABSRestoreSource"
+     },
+     "s3": {
+      "description": "S3 tells where on S3 the backup is saved and how to fetch the backup.",
+      "$ref": "#/definitions/typedir.S3RestoreSource"
+     }
+    }
+   },
+   "typedir.RestoreSpec": {
+    "description": "RestoreSpec defines how to restore an etcd cluster from existing backup.",
+    "required": [
+     "backupStorageType",
+     "etcdCluster"
+    ],
+    "properties": {
+     "abs": {
+      "description": "ABS tells where on ABS the backup is saved and how to fetch the backup.",
+      "$ref": "#/definitions/typedir.ABSRestoreSource"
+     },
+     "backupStorageType": {
+      "description": "BackupStorageType is the type of the backup storage which is used as RestoreSource.",
+      "type": "string"
+     },
+     "etcdCluster": {
+      "description": "EtcdCluster references an EtcdCluster resource whose metadata and spec will be used to create the new restored EtcdCluster CR. This reference EtcdCluster CR and all its resources will be deleted before the restored EtcdCluster CR is created.",
+      "$ref": "#/definitions/typedir.EtcdClusterRef"
+     },
+     "s3": {
+      "description": "S3 tells where on S3 the backup is saved and how to fetch the backup.",
+      "$ref": "#/definitions/typedir.S3RestoreSource"
+     }
+    }
+   },
+   "typedir.RestoreStatus": {
+    "description": "RestoreStatus reports the status of this restore operation.",
+    "required": [
+     "succeeded"
+    ],
+    "properties": {
+     "reason": {
+      "description": "Reason indicates the reason for any backup related failures.",
+      "type": "string"
+     },
+     "succeeded": {
+      "description": "Succeeded indicates if the backup has Succeeded.",
+      "type": "boolean"
+     }
+    }
+   },
+   "typedir.S3RestoreSource": {
+    "required": [
+     "path",
+     "awsSecret",
+     "endpoint"
+    ],
+    "properties": {
+     "awsSecret": {
+      "description": "The name of the secret object that stores the AWS credential and config files. The file name of the credential MUST be 'credentials'. The file name of the config MUST be 'config'. The profile to use in both files will be 'default'.\n\nAWSSecret overwrites the default etcd operator wide AWS credential and config.",
+      "type": "string"
+     },
+     "endpoint": {
+      "description": "Endpoint if blank points to aws. If specified, can point to s3 compatible object stores.",
+      "type": "string"
+     },
+     "path": {
+      "description": "Path is the full s3 path where the backup is saved. The format of the path must be: \"\u003cs3-bucket-name\u003e/\u003cpath-to-backup-file\u003e\" e.g: \"mybucket/etcd.backup\"",
       "type": "string"
      }
     }
