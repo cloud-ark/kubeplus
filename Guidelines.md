@@ -42,6 +42,8 @@ A custom controller will typically create one or more Kubernetes resources, such
 as part of instantiating its custom resources. The controller should be written to set OwnerReferences on 
 on such native Kubernetes resources that it creates. 
 They are key for correct garbage collection of custom resources.
+OwnerReferences also help with finding the composition tree of your custom resource instances consisting of
+the native Kubernetes resources (see guideline #7)
 
 Some examples of Operators that use OwnerReferences are: [Etcd Operator](https://github.com/coreos/etcd-operator/blob/master/pkg/cluster/cluster.go#L351),
 [Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/controller.go#L508), and 
@@ -59,7 +61,7 @@ that you can use for generating OpenAPI Spec for your custom resources.
 The generated OpenAPI Spec documentation for Postgres custom resource is [here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/openapispec.json). 
 
 
-## 4) Package Operator as Helm Chart and register Custom Resources as part of it
+## 4) Package Operator as Helm Chart and register CRDs as part of it
 
 You should create a Helm chart for your Operator. The chart should include two things: 
 
@@ -85,7 +87,7 @@ such parameters. If not, use ConfigMap for this purpose.
 
 
 
-## 6) Support control over underlying resource's configuration parameters
+## 6) Support underlying resource's configuration
 
 An Operator should be written such that it takes inputs for underlying resource's
 configuration parameters. We have seen three different approaches towards this in the community. 
@@ -96,15 +98,17 @@ They are based on using ConfigMaps, using Annotations, or using Spec definition 
 
 
 
-## 7) Define composition of Custom Resources using annotation on the Custom Resource YAML Definition
+## 7) Define composition of a Custom Resource as an annotation on its YAML Definition
 
 We recommend that you use an annotation on the Custom Resource Definiton to identify the underlying Kubernetes resources
 that will be created by the Custom Resource. An example of this can be seen for our Postgres resource 
 [here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/artifacts/deployment/deployment.yaml#L33).
 
-Such composition annotation along with OwnerReferences (guideline #2) 
-will enable tools like [kubediscovery](https://github.com/cloud-ark/kubediscovery)
-to correctly show Object composition tree for custom resource instances.
+By surfacing the composition information as an annotation on CRD, it is possible
+to build tools like [kubediscovery](https://github.com/cloud-ark/kubediscovery)
+that show Object composition tree for custom resource instances by working on the CRD definition.
+OwnerReferences (guideline #2) are also crucial in this regard.
+
 
 
 ## 8) Custom Resource Metrics Collection
@@ -123,18 +127,18 @@ Additionally, it provides various provenance query operators to query the collec
 ## Guideline Conformance
 
 We consider first five guidelines (1-5) as must have for any Operator. Guidelines 7 and 8 are nice to have.
-Guideline #6 depends on the nature of the Operator. If your Operator is not managing any underlying resource
-such as a database, then this guideline does not apply. 
+Guideline #6 depends on the nature of the Operator. If your Operator is not managing any underlying resource,
+such as a database, then this guideline does not apply.
 
 
-Here is a table showing how conformant are different community Operators to above guidelines. 
+Here is a table showing conformance of different community Operators to above guidelines. 
 
 
 | Operator      | URL           | Guidelines satisfied  | Comments     |
 | ------------- |:-------------:| ---------------------:| ------------:|
 | Oracle MySQL  | https://github.com/oracle/mysql-operator | 2, 4, 5, 6, 8 | 1: Not satisfied because of exposing mysqldump in Spec
 | PressLabs MySQL| https://github.com/presslabs/mysql-operator  | 1, 2, 3, 5, 6 | 4: Not satisfied because CRD installed in Code
-| CloudARK Postgres| https://github.com/cloud-ark/kubeplus/tree/master/postgres-crd-v2 | 1, 2, 3, 4, 7, 8 | 5, 6: Work-in-Progress
+| CloudARK Postgres| https://github.com/cloud-ark/kubeplus/tree/master/postgres-crd-v2 | 1, 2, 3, 4, 7 | 5, 6: Work-in-Progress
 
 
 ## Conformance Evaluation
