@@ -134,7 +134,7 @@ Here is a table showing how conformant are different community Operators to abov
 | ------------- |:-------------:| ---------------------:| ------------:|
 | Oracle MySQL  | https://github.com/oracle/mysql-operator | 2, 4, 5, 7, 8 | 1: Not satisfied because of exposing mysqldump in Spec
 | PressLabs MySQL| https://github.com/presslabs/mysql-operator  | 1, 2, 3, 5, 6 | 4: Not satisfied because CRD installed in Code
-
+| CloudARK Postgres| https://github.com/cloud-ark/kubeplus/tree/master/postgres-crd-v2 | 1, 2, 3, 4, 7, 8 | 5, 6: Work-in-Progress
 
 
 ## Conformance Evaluation
