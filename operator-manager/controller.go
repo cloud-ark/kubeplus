@@ -22,7 +22,7 @@ import (
 	"log"
 	"context"
 	//"strconv"
-	//"strings"
+	"strings"
 	"time"
 	"github.com/coreos/etcd/client"
 	"encoding/json"
@@ -159,8 +159,8 @@ func NewController(
 		UpdateFunc: func(old, new interface{}) {
 			newDepl := new.(*operatorv1.Operator)
 			oldDepl := old.(*operatorv1.Operator)
-			fmt.Println("New Version:%s", newDepl.ResourceVersion)
-			fmt.Println("Old Version:%s", oldDepl.ResourceVersion)
+			//fmt.Println("New Version:%s", newDepl.ResourceVersion)
+			//fmt.Println("Old Version:%s", oldDepl.ResourceVersion)
 			if newDepl.ResourceVersion == oldDepl.ResourceVersion {
 				// Periodic resync will send update events for all known Deployments.
 				// Two different versions of the same Deployment will always have different RVs.
@@ -360,7 +360,7 @@ func (c *Controller) syncHandler(key string) error {
 		time.Sleep(time.Second * 5)
 	}
 
-	fmt.Printf("OperatorCRDString:%s\n", operatorCRDString)
+	//fmt.Printf("OperatorCRDString:%s\n", operatorCRDString)
 
 	crds := make([]string, 0)
 	if err := json.Unmarshal([]byte(operatorCRDString), &crds); err != nil {
@@ -438,6 +438,8 @@ func saveOperatorData(operatorName string, crds []string, operatorOpenAPIConfigM
 
 		//crdName := "postgreses.postgrescontroller.kubeplus"
 		storeEtcd("/" + crdName, crdDetailsMap)
+
+		storeEtcd("/" + kind + "-OpenAPISpecConfigMap", operatorOpenAPIConfigMapName)
 	}
 }
 
@@ -474,8 +476,8 @@ func storeEtcd(resourceKey string, resourceData interface{}) {
 
 func uploadOperatorOpenAPISpec(chartURL string, kubeclientset kubernetes.Interface) string {
 	fmt.Println("Entering uploadOperatorOpenAPISpec")
-	extractOperatorChart(chartURL)
 
+	extractOperatorChart(chartURL)
 	chartConfigMapName := createConfigMap(chartURL, kubeclientset)
 
 	fmt.Println("Exiting uploadOperatorOpenAPISpec")
@@ -559,7 +561,7 @@ func extractOperatorChart(chartURL string) {
 
     os.Chdir(currentDir)
 
-	fmt.Println("Exiting createConfigMap")
+	fmt.Println("Exiting extractOperatorChart")
 }
 
 func createConfigMap(chartURL string, kubeclientset kubernetes.Interface) string {
@@ -614,10 +616,30 @@ func parseChartNameVersion(chartURL string) (string, string) {
 
 	//"https://s3-us-west-2.amazonaws.com/cloudark-helm-charts/postgres-crd-v2-chart-0.0.2.tgz"
 
-	chartName := "postgres-crd-v2-chart"
-	chartVersion := "0.0.2"
+	// 1. Split on '/'
+	// 2. Split on 'tgz'
+	// 3. Find last '/' -- Everything before is chartName everything after is version
 
-	return chartName, chartVersion
+	splitOnSlash := strings.Split(chartURL, "/")
+	lastItem := splitOnSlash[len(splitOnSlash)-1]
+	fmt.Printf("Last item:%s\n", lastItem)
+	
+	splitOnTgz := strings.Split(lastItem, ".tgz")
+	candidate := splitOnTgz[0]
+	fmt.Printf("Candidate:%s\n", candidate)
+	
+	nameVersionSplitIndex := strings.LastIndex(candidate, "-")
+	versionStartIndex := nameVersionSplitIndex + 1
+	version := candidate[versionStartIndex:]
+	fmt.Printf("Version:%s\n", version)
+	
+	nameEndIndex := nameVersionSplitIndex
+	name := candidate[0:nameEndIndex]
+	fmt.Printf("Name:%s\n", name)
+
+	//chartName := "postgres-crd-v2-chart"
+	//chartVersion := "0.0.2
+	return name, version
 }
 
 
@@ -678,7 +700,7 @@ func storeChartURL(chartURL string) {
 }
 
 func getOperatorCRDs(chartURL string) string {
-	fmt.Println("Inside getEtcd")
+	fmt.Println("Inside getOperatorCRDs")
 	cfg := client.Config{
 		Endpoints: []string{etcdServiceURL},
 		Transport: client.DefaultTransport,
@@ -703,7 +725,7 @@ func getOperatorCRDs(chartURL string) string {
 		// print value
 		log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
 	}
-	fmt.Println("Exiting getEtcd")
+	fmt.Println("Exiting getOperatorCRDs")
 
 	return resp.Node.Value
 }

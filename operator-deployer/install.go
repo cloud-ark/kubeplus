@@ -210,7 +210,7 @@ func (i *installCmd) run() (error, []string) {
 		fmt.Printf("FINAL NAME: %s\n", i.name)
 	}
 
-	fmt.Println("-1")
+	//fmt.Println("-1")
 
 	// Check chart requirements to make sure all dependencies are present in /charts
 	chartRequested, err := chartutil.Load(i.chartPath)
@@ -218,7 +218,7 @@ func (i *installCmd) run() (error, []string) {
 		return err, crds
 	}
 
-	fmt.Println("-2")
+	//fmt.Println("-2")
 
 	if req, err := chartutil.LoadRequirements(chartRequested); err == nil {
 		// If checkDependencies returns an error, we have unfulfilled dependencies.
@@ -251,7 +251,7 @@ func (i *installCmd) run() (error, []string) {
 		return fmt.Errorf("cannot load requirements: %v", err), crds
 	}
 
-	fmt.Println("1")
+	//fmt.Println("1")
 	res, err := i.client.InstallReleaseFromChart(
 		chartRequested,
 		i.namespace,
@@ -267,17 +267,17 @@ func (i *installCmd) run() (error, []string) {
 	if err != nil {
 		return err, crds
 	}
-	fmt.Println("2")
+	//fmt.Println("2")
 
 	rel := res.GetRelease()
 
-	fmt.Println("3")
+	//fmt.Println("3")
 	if rel == nil {
 		return nil, crds
 	}
-	fmt.Println("4")
+	//fmt.Println("4")
 	i.printRelease(rel)
-	fmt.Println("5")
+	//fmt.Println("5")
 
 	// If this is a dry run, we can't display status.
 	/*if i.dryRun {
@@ -303,8 +303,8 @@ func (i *installCmd) run() (error, []string) {
 
 	resources := status.GetInfo().GetStatus().GetResources()
 	lines := strings.Split(resources, "\n")
-	num := len(lines)
-	fmt.Println("Num of Lines:%d", num)
+	//num := len(lines)
+	//fmt.Println("Num of Lines:%d", num)
 
 	startCustomResourceLines := false
 	for _, line := range lines {
@@ -439,14 +439,14 @@ func locateChartPath(repoURL, username, password, name, version string, verify b
 	certFile, keyFile, caFile string) (string, error) {
 	name = strings.TrimSpace(name)
 	version = strings.TrimSpace(version)
-			fmt.Println("11")
+	//		fmt.Println("11")
 	if fi, err := os.Stat(name); err == nil {
 		abs, err := filepath.Abs(name)
-					fmt.Println("12")
+		//			fmt.Println("12")
 		if err != nil {
 			return abs, err
 		}
-					fmt.Println("13")
+		//			fmt.Println("13")
 		if verify {
 			if fi.IsDir() {
 				return "", errors.New("cannot verify a directory")
@@ -455,22 +455,22 @@ func locateChartPath(repoURL, username, password, name, version string, verify b
 				return "", err
 			}
 		}
-					fmt.Println("14")
+		//			fmt.Println("14")
 		return abs, nil
 	}
-				fmt.Println("15")
+	//			fmt.Println("15")
 	if filepath.IsAbs(name) || strings.HasPrefix(name, ".") {
 		return name, fmt.Errorf("path %q not found", name)
 	}
 
-			fmt.Println("16")
+	//		fmt.Println("16")
 	crepo := filepath.Join(settings.Home.Repository(), name)
 	if _, err := os.Stat(crepo); err == nil {
 		return filepath.Abs(crepo)
 	}
 
-	fmt.Println("RepoURL:" + repoURL)
-	fmt.Println("Settings:%v", settings)
+	//fmt.Println("RepoURL:" + repoURL)
+	//fmt.Println("Settings:%v", settings)
 
 	dl := downloader.ChartDownloader{
 		HelmHome: settings.Home,
@@ -480,11 +480,11 @@ func locateChartPath(repoURL, username, password, name, version string, verify b
 		Username: username,
 		Password: password,
 	}
-				fmt.Println("17")
+	//			fmt.Println("17")
 	if verify {
 		dl.Verify = downloader.VerifyAlways
 	}
-				fmt.Println("18")
+	//			fmt.Println("18")
 	if repoURL != "" {
 		chartURL, err := repo.FindChartInAuthRepoURL(repoURL, username, password, name, version,
 			certFile, keyFile, caFile, getter.All(settings))
@@ -493,12 +493,12 @@ func locateChartPath(repoURL, username, password, name, version string, verify b
 		}
 		name = chartURL
 	}
-				fmt.Println("19")
+	//			fmt.Println("19")
 
 	if _, err := os.Stat(settings.Home.Archive()); os.IsNotExist(err) {
 		os.MkdirAll(settings.Home.Archive(), 0744)
 	}
-				fmt.Println("20")
+	//			fmt.Println("20")
 
 	fmt.Printf("Name:%s, Version:%s\n", name, version)
 	filename, _, err := dl.DownloadTo(name, version, settings.Home.Archive())

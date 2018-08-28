@@ -100,7 +100,7 @@ func setupConnection() error {
 		fmt.Println("Created tunnel using local port:", tunnel.Local)
 	}
 
-	fmt.Println("SERVER:", settings.TillerHost)
+	//fmt.Println("SERVER:", settings.TillerHost)
 
 	return nil
 }
@@ -113,44 +113,47 @@ func main() {
 	//settings.KubeConfig = "/Users/devdatta/.kube/config"
 	//settings.Home = "/Users/devdatta/.helm"
 	
-	setupConnection()
-
-	options := []helm.Option{helm.Host(settings.TillerHost), helm.ConnectTimeout(settings.TillerConnectionTimeout)}
-
-	if tlsVerify || tlsEnable {
-		if tlsCaCertFile == "" {
-			tlsCaCertFile = settings.Home.TLSCaCert()
-		}
-		if tlsCertFile == "" {
-			tlsCertFile = settings.Home.TLSCert()
-		}
-		if tlsKeyFile == "" {
-			tlsKeyFile = settings.Home.TLSKey()
-		}
-		fmt.Println("Host=%q, Key=%q, Cert=%q, CA=%q\n", tlsKeyFile, tlsCertFile, tlsCaCertFile)
-		tlsopts := tlsutil.Options{
-			ServerName:         tlsServerName,
-			KeyFile:            tlsKeyFile,
-			CertFile:           tlsCertFile,
-			InsecureSkipVerify: true,
-		}
-		if tlsVerify {
-			tlsopts.CaCertFile = tlsCaCertFile
-			tlsopts.InsecureSkipVerify = false
-		}
-		tlscfg, err := tlsutil.ClientConfig(tlsopts)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
-		options = append(options, helm.WithTLS(tlscfg))
-	}
-
-	helmClient := helm.NewClient(options...)
-
-	fmt.Println("Helm client: %v", helmClient)
-
 	// Run forever -- if Operator chart is deleted we will create it.
 	for {
+
+		fmt.Println("===================================")
+
+		setupConnection()
+
+		options := []helm.Option{helm.Host(settings.TillerHost), helm.ConnectTimeout(settings.TillerConnectionTimeout)}
+
+		if tlsVerify || tlsEnable {
+			if tlsCaCertFile == "" {
+				tlsCaCertFile = settings.Home.TLSCaCert()
+			}
+			if tlsCertFile == "" {
+				tlsCertFile = settings.Home.TLSCert()
+			}
+			if tlsKeyFile == "" {
+				tlsKeyFile = settings.Home.TLSKey()
+			}
+			fmt.Println("Host=%q, Key=%q, Cert=%q, CA=%q\n", tlsKeyFile, tlsCertFile, tlsCaCertFile)
+			tlsopts := tlsutil.Options{
+				ServerName:         tlsServerName,
+				KeyFile:            tlsKeyFile,
+				CertFile:           tlsCertFile,
+				InsecureSkipVerify: true,
+			}
+			if tlsVerify {
+				tlsopts.CaCertFile = tlsCaCertFile
+				tlsopts.InsecureSkipVerify = false
+			}
+			tlscfg, err := tlsutil.ClientConfig(tlsopts)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			options = append(options, helm.WithTLS(tlscfg))
+		}
+
+		helmClient := helm.NewClient(options...)
+
+		//fmt.Println("Helm client: %v", helmClient)
+
 		operatorChartList := getOperatorChartList()
 		for _, chartURL := range operatorChartList {
 			releases, err := helmClient.ListReleases(
@@ -160,7 +163,7 @@ func main() {
 			if err != nil {
 				fmt.Errorf("Error: %v", err)
 			}
-			fmt.Println("Releases: %v", releases)
+			//fmt.Println("Releases: %v", releases)
 
 			//operatorName := "postgres-crd-v2-chart"
 			//operatorVersion := "0.0.2"
@@ -216,7 +219,7 @@ func getOperatorChartList() []string {
 		log.Printf("Get is done. Metadata is %q\n", resp)
 		log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
 		operatorListString := resp.Node.Value
-		fmt.Printf("OperatorListString:%s\n", operatorListString)
+		//fmt.Printf("OperatorListString:%s\n", operatorListString)
 
 		var operatorChartList []string
 		if err = json.Unmarshal([]byte(operatorListString), &operatorChartList); err != nil {
@@ -267,7 +270,7 @@ func checkIfDeployed(chartURL string, rels []*release.Release) (bool, string, st
 		version := r.GetChart().GetMetadata().GetVersion()
 		fmt.Printf("Name:%s Version:%s\n", name, version)
 		nameAndVersion := name + "-" + version
-		fmt.Printf("NameVersion:%s\n", nameAndVersion)
+		//fmt.Printf("NameVersion:%s\n", nameAndVersion)
 		if strings.Contains(chartURL, nameAndVersion) {
 			alreadyDeployed = true
 			operatorName = name
