@@ -42,8 +42,8 @@ A custom controller will typically create one or more Kubernetes resources, such
 as part of instantiating its custom resources. The controller should be written to set OwnerReferences on 
 on such native Kubernetes resources that it creates. 
 They are key for correct garbage collection of custom resources.
-OwnerReferences also help with finding the composition tree of your custom resource instances consisting of
-the native Kubernetes resources (see guideline #7)
+OwnerReferences also help with finding composition tree of your custom resource instances consisting of
+native Kubernetes resources (see guideline #7).
 
 Some examples of Operators that use OwnerReferences are: [Etcd Operator](https://github.com/coreos/etcd-operator/blob/master/pkg/cluster/cluster.go#L351),
 [Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/controller.go#L508), and 
@@ -106,7 +106,7 @@ that will be created by the Custom Resource. An example of this can be seen for 
 
 By surfacing the composition information as an annotation on CRD, it is possible
 to build tools like [kubediscovery](https://github.com/cloud-ark/kubediscovery)
-that show Object composition tree for custom resource instances by working on the CRD definition.
+that show Object composition tree for custom resource instances by using the CRD definition.
 OwnerReferences (guideline #2) are also crucial in this regard.
 
 
