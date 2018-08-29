@@ -12,12 +12,20 @@ Example:
 
 Find out details about a Custom Resource's Spec definition:
 
-`$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"`
+``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"``
 
 
 Find out dynamic composition tree for Postgres custom resource instance:
 
-`$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool`
+``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool``
+
+
+**Note:**
+
+This interface of ``kubectl get --raw`` will not be needed once ``kubectl describe`` and ``kubectl explain`` start
+supporting custom resources.
+
+We plan to contribute kubediscovery_ code upstream towards this.
 
 
 Check README from kubeplus repository for detailed example.
