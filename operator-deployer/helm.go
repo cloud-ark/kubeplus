@@ -39,10 +39,12 @@ var (
 	masterURL  string
 	kubeconfig string
 	etcdServiceURL string
+	deployedCharts []string
 )
 
 func init() {
 	etcdServiceURL = "http://localhost:2379"
+	deployedCharts = make([]string, 0)
 }
 
 func configForContext(context string, kubeconfig string) (*rest.Config, error) {
@@ -82,11 +84,13 @@ func getKubeClient() (*rest.Config, kubernetes.Interface, error) {
 }
 
 func setupConnection() error {
+	var errToReturn error
 	if settings.TillerHost == "" {
 		//config, client, err := getKubeClient(settings.KubeContext, settings.KubeConfig)
 		config, client, err := getKubeClient()
 		if err != nil {
 			fmt.Errorf("Error: %v", err)
+			errToReturn = err
 		}
 		//fmt.Println("Config:%v", config)
 		//fmt.Println("Client:%v", client)
@@ -94,6 +98,7 @@ func setupConnection() error {
 		tunnel, err := portforwarder.New(settings.TillerNamespace, client, config)
 		if err != nil {
 			panic(err)
+			errToReturn = err
 		}
 
 		settings.TillerHost = fmt.Sprintf("localhost:%d", tunnel.Local)
@@ -101,8 +106,7 @@ func setupConnection() error {
 	}
 
 	//fmt.Println("SERVER:", settings.TillerHost)
-
-	return nil
+	return errToReturn
 }
 
 func main() {
@@ -118,79 +122,98 @@ func main() {
 
 		fmt.Println("===================================")
 
-		setupConnection()
+		connectionError := setupConnection()
 
-		options := []helm.Option{helm.Host(settings.TillerHost), helm.ConnectTimeout(settings.TillerConnectionTimeout)}
+		if connectionError == nil {
 
-		if tlsVerify || tlsEnable {
-			if tlsCaCertFile == "" {
-				tlsCaCertFile = settings.Home.TLSCaCert()
-			}
-			if tlsCertFile == "" {
-				tlsCertFile = settings.Home.TLSCert()
-			}
-			if tlsKeyFile == "" {
-				tlsKeyFile = settings.Home.TLSKey()
-			}
-			fmt.Println("Host=%q, Key=%q, Cert=%q, CA=%q\n", tlsKeyFile, tlsCertFile, tlsCaCertFile)
-			tlsopts := tlsutil.Options{
-				ServerName:         tlsServerName,
-				KeyFile:            tlsKeyFile,
-				CertFile:           tlsCertFile,
-				InsecureSkipVerify: true,
-			}
-			if tlsVerify {
-				tlsopts.CaCertFile = tlsCaCertFile
-				tlsopts.InsecureSkipVerify = false
-			}
-			tlscfg, err := tlsutil.ClientConfig(tlsopts)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-			}
-			options = append(options, helm.WithTLS(tlscfg))
-		}
+			options := []helm.Option{helm.Host(settings.TillerHost), helm.ConnectTimeout(settings.TillerConnectionTimeout)}
 
-		helmClient := helm.NewClient(options...)
-
-		//fmt.Println("Helm client: %v", helmClient)
-
-		operatorChartList := getOperatorChartList()
-		for _, chartURL := range operatorChartList {
-			releases, err := helmClient.ListReleases(
-				helm.ReleaseListLimit(10),
-				helm.ReleaseListNamespace("default"),
-			)
-			if err != nil {
-				fmt.Errorf("Error: %v", err)
-			}
-			//fmt.Println("Releases: %v", releases)
-
-			//operatorName := "postgres-crd-v2-chart"
-			//operatorVersion := "0.0.2"
-			alreadyDeployed, operatorName, operatorVersion := checkIfDeployed(chartURL, releases.GetReleases())
-
-			if !alreadyDeployed {
-				fmt.Println("Installing chart.")
-				fmt.Printf("Chart URL%s\n", chartURL)
-				//chartURL := "https://s3-us-west-2.amazonaws.com/cloudark-helm-charts/postgres-crd-v2-chart-0.0.2.tgz"
-
-				cmd := &cobra.Command{}
-				out := cmd.OutOrStdout()
-
-				err1, crds := newInstallCmd(helmClient, out, chartURL)
-				if err1 != nil {
-					fmt.Println("%%%%%%%%%")
-					fmt.Errorf("Error: %v", err1)
-					fmt.Println("%%%%%%%%%")
-					errorString := string(err1.Error())
-					// Save Error in Etcd
-					saveOperatorCRDs(chartURL, []string{"error", errorString})
-				} else {
-					// Save CRDs in Etcd
-					saveOperatorCRDs(chartURL, crds)
+			if tlsVerify || tlsEnable {
+				if tlsCaCertFile == "" {
+					tlsCaCertFile = settings.Home.TLSCaCert()
 				}
-			} else {
-				fmt.Println("Operator chart %s %s already deployed", operatorName, operatorVersion)
+				if tlsCertFile == "" {
+					tlsCertFile = settings.Home.TLSCert()
+				}
+				if tlsKeyFile == "" {
+					tlsKeyFile = settings.Home.TLSKey()
+				}
+				fmt.Println("Host=%q, Key=%q, Cert=%q, CA=%q\n", tlsKeyFile, tlsCertFile, tlsCaCertFile)
+				tlsopts := tlsutil.Options{
+					ServerName:         tlsServerName,
+					KeyFile:            tlsKeyFile,
+					CertFile:           tlsCertFile,
+					InsecureSkipVerify: true,
+				}
+				if tlsVerify {
+					tlsopts.CaCertFile = tlsCaCertFile
+					tlsopts.InsecureSkipVerify = false
+				}
+				tlscfg, err := tlsutil.ClientConfig(tlsopts)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+				}
+				options = append(options, helm.WithTLS(tlscfg))
+			}
+
+			helmClient := helm.NewClient(options...)
+
+			//fmt.Println("Helm client: %v", helmClient)
+
+			operatorChartList := getOperatorChartList()
+			for _, chartURL := range operatorChartList {
+				releases, err := helmClient.ListReleases(
+					helm.ReleaseListLimit(10),
+					helm.ReleaseListNamespace("default"),
+				)
+				if err != nil {
+					fmt.Errorf("Error: %v", err)
+				}
+				//fmt.Println("Releases: %v", releases)
+
+				//operatorName := "postgres-crd-v2-chart"
+				//operatorVersion := "0.0.2"
+				alreadyDeployed, operatorName, operatorVersion := checkIfDeployed(chartURL, releases.GetReleases())
+
+				// releases.GetReleases() may return empty if connection to Tiller breaks
+				// If that happens alreadyDeployed will be false (its default value.)
+				// But the chart may actually be deployed from previous run. So check in our deployedCharts list
+				// to avoid re-triggering chart deployment.
+				// TODO(devdattakulkarni): Revisit when supporting Chart upgrades.
+				if !alreadyDeployed {
+					for _, deployedChart := range deployedCharts {
+						if deployedChart == chartURL {
+							alreadyDeployed = true
+						}
+					}
+				}
+
+				if !alreadyDeployed {
+					fmt.Println("Installing chart.")
+					fmt.Printf("Chart URL%s\n", chartURL)
+					//chartURL := "https://s3-us-west-2.amazonaws.com/cloudark-helm-charts/postgres-crd-v2-chart-0.0.2.tgz"
+
+					cmd := &cobra.Command{}
+					out := cmd.OutOrStdout()
+
+					err1, crds := newInstallCmd(helmClient, out, chartURL)
+					if err1 != nil {
+						fmt.Println("%%%%%%%%%")
+						fmt.Errorf("Error: %v", err1)
+						fmt.Println("%%%%%%%%%")
+						errorString := string(err1.Error())
+						// Save Error in Etcd
+						saveOperatorCRDs(chartURL, []string{"error", errorString})
+					} else {
+						// Save CRDs in Etcd
+						saveOperatorCRDs(chartURL, crds)
+
+						// Save Chart URL in deployedCharts
+						deployedCharts = append(deployedCharts, chartURL)
+					}
+				} else {
+					fmt.Println("Operator chart %s %s already deployed", operatorName, operatorVersion)
+				}
 			}
 		}
 		time.Sleep(time.Second * 5)

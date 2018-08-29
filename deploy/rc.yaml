@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: kubeplus
+  namespace: default
+  labels:
+    apiserver: "true"
+spec:
+  replicas: 1
+  selector:
+    apiserver: "true"
+  template:
+    metadata:
+      labels:
+        apiserver: "true"
+    spec:
+      serviceAccountName: apiserver
+      containers:
+      - name: etcd
+        image: quay.io/coreos/etcd:v3.2.18
+      - name: operator-manager
+        image: operator-manager:latest
+        imagePullPolicy: Never
+        command: [ "/operator-manager"]
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+      - name: operator-deployer
+        image: operator-deployer:latest
+        imagePullPolicy: Never
+        command: [ "/operator-deployer"]
+      - name: kube-discovery-apiserver
+        image: kube-discovery-apiserver:latest
+        imagePullPolicy: Never
+        command: [ "/kube-discovery-apiserver", "--etcd-servers=http://localhost:2379" ]
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: operators.operatorcontroller.kubeplus
+spec:
+  group: operatorcontroller.kubeplus
+  version: v1
+  names:
+    kind: Operator
+    plural: operators
+  scope: Namespaced

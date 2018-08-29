@@ -1,0 +1,29 @@
+Test:
+- kubectl apply -f deploy
+- kubectl get pods
+- more postgres-operator.yaml
+- kubectl create -f postgres-operator.yaml
+- kubectl get operators
+- kubectl describe operators postgres-operator
+- kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
+- kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"
+- more postgres.yaml
+- kubectl create -f postgres.yaml
+- kubectl get postgreses
+- kubectl describe postgreses client1
+- <Verify logging into to postgres instance after the status is READY>
+- kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool
+
+
+Cleanup:
+- cd postgres-crd-v2
+- ./deletecrds.sh postgres1
+- cd ..
+- ./deletestuff.sh
+- kubectl delete -f deploy
+
+
+Troubleshooting:
+- kubectl logs postgres-operator-deployment-7b5669c988-7v7wb
+
+

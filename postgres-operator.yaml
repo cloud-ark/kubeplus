@@ -1,0 +1,7 @@
+apiVersion: operatorcontroller.kubeplus/v1
+kind: Operator
+metadata:
+  name: postgres-operator
+spec:
+  name: postgres-operator
+  chartURL: https://s3-us-west-2.amazonaws.com/cloudark-helm-charts/postgres-crd-v2-chart-0.0.2.tgz

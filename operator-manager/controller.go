@@ -596,7 +596,7 @@ func createConfigMap(chartURL string, kubeclientset kubernetes.Interface) string
 			Name: chartName,
 		},
 		Data: map[string]string{
-			"docdata": jsonContents1,
+			"openapispec": jsonContents1,
 		},
 	}
 
@@ -604,7 +604,8 @@ func createConfigMap(chartURL string, kubeclientset kubernetes.Interface) string
 	//fmt.Println("ConfigMap:%v", configMapCreated)
 
 	if err1 != nil {
-		panic(err1)
+		//panic(err1)
+		fmt.Printf("Error:%s\n", err1.Error())
 	}
 
 	fmt.Println("Exiting createConfigMap")
@@ -680,7 +681,16 @@ func storeChartURL(chartURL string) {
     	fmt.Printf("OperatorList:%v\n", operatorList)
 	}
 
-    operatorList = append(operatorList, chartURL)
+	operatorPresent := false
+	for _, ops := range operatorList {
+		if ops == chartURL {
+			operatorPresent = true
+		}
+	}
+	if !operatorPresent {
+	    operatorList = append(operatorList, chartURL)		
+	}
+
     jsonOperatorList, err2 := json.Marshal(&operatorList)
     if err2 != nil {
         panic (err2)
