@@ -127,7 +127,7 @@ Additionally, it provides various provenance query operators to query the collec
 
 
 
-## Evaluation with example Operators
+## Evaluation of example Operators
 
 Here is a table showing conformance of different community Operators to above guidelines.
 
