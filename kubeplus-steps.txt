@@ -24,7 +24,7 @@ Test:
 - more postgres.yaml
 - kubectl create -f postgres.yaml
 - kubectl get postgreses
-- kubectl describe postgreses client1
+- kubectl describe postgreses postgres1
 - <Verify logging into to postgres instance after the status is READY>
 - kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool
   --> You should see composition tree for postgres1 instance of Postgres custom resource
