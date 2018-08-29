@@ -102,20 +102,19 @@ KubePlus does not introduce any new CLI interface. Entire workflow is supported 
 
 **Install KubePlus - by cluster admin**
 
-We provide deployment YAMLs for deploying KubePlus (Soon we will have Helm Chart)
-
 KubePlus requires Helm to be installed on the cluster.
 
 Install Helm:
 
 `$ helm init`
 
-Once tiller pod is Running (kubectl get pods -n kube-system), install KubePlus
+Once tiller pod is Running (kubectl get pods -n kube-system), install KubePlus.
+We provide deployment YAMLs for deploying KubePlus.
 
 `$ kubectl apply -f deploy/`
 
 
-**Purpose-built platform deployment - by cluster admin**
+**Purpose-built platform deployment - by cluster administrator**
 
 Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrators define Kubernetes Operators to be installed in a `yaml file`__ and then use following kubectl commands: 
 
@@ -137,7 +136,7 @@ Find out information such as custom resources managed by an Operator:
 
 
 
-*Purpose-built platform usage - by application developer*
+**Purpose-built platform usage - by application developer**
 
 Kubernetes application developers can create/delete/update/list the newly added 
 custom resources by using kubectl CLI:
