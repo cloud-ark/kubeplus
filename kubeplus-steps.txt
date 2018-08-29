@@ -1,5 +1,5 @@
 Test:
-- Install Minikube v0.25.0
+- Install Minikube v0.25.0 (KubePlus has been built and tested on this version. With other versions also it should work. If not, please file an Issue).
 - minikube start
 - eval $(minikube docker-env)
 - GOSOURCE=<Directory of your GO Code>

@@ -160,6 +160,15 @@ Find out dynamic composition tree for Postgres custom resource instance:
 `$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool`
 
 
+**Try Out**
+
+Follow steps given in `kubeplus-steps.txt`__.
+
+.. _steps: https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-steps.txt
+
+__ steps_
+
+
 
 **Available Operators**
 
