@@ -106,7 +106,7 @@ KubePlus requires Helm to be installed on the cluster.
 
 Install Helm:
 
-`$ helm init`
+``$ helm init``
 
 Once tiller pod is Running (kubectl get pods -n kube-system), install KubePlus.
 We provide deployment YAMLs for deploying KubePlus.
