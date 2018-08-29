@@ -111,7 +111,7 @@ Install Helm:
 Once tiller pod is Running (kubectl get pods -n kube-system), install KubePlus.
 We provide deployment YAMLs for deploying KubePlus.
 
-`$ kubectl apply -f deploy/`
+``$ kubectl apply -f deploy/``
 
 
 **Purpose-built platform deployment - by cluster administrator**
@@ -124,15 +124,15 @@ __ operatoryaml_
 
 Install one or more Operators:
 
-`$ kubectl apply -f <operator yaml file>`
+``$ kubectl apply -f <operator yaml file>``
 
 Find out all the installed Operators:
 
-`$ kubectl get operators`
+``$ kubectl get operators``
 
 Find out information such as custom resources managed by an Operator:
 
-`$ kubectl describe operators postgres-operator`
+``$ kubectl describe operators postgres-operator``
 
 
 
@@ -143,21 +143,21 @@ custom resources by using kubectl CLI:
 
 Find out custom resources managed by an Operator:
 
-`$ kubectl describe operators postgres-operator`
+``$ kubectl describe operators postgres-operator``
 
-`$ kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus`
+``$ kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus``
 
 Find out details about a Custom Resource's Spec definition:
 
-`$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"`
+``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"``
 
 Create Custom Resource instance:
 
-`$ kubectl apply -f postgres.yaml`
+``$ kubectl apply -f postgres.yaml``
 
 Find out dynamic composition tree for Postgres custom resource instance:
 
-`$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool`
+``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool``
 
 
 **Try Out**
