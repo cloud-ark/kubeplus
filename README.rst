@@ -61,13 +61,13 @@ This brings consistency and quality in packaging Kubernetes Operators to build a
 .. _guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
 
-*5) Discovery of custom resources
+*5) Discovery of custom resources*
 
-KubePlus installs an additional components, KubePlus Discovery Manager, on your Kubernetes cluster to improve usability of custom Operators.
+KubePlus installs an additional component, KubePlus Discovery Manager, on your Kubernetes cluster to improve usability of custom Operators.
 
 KubePlus Discovery Manager component provides information about custom resources managed by the Operators. E.g. Assume there is a Postgres Operator which is managing a custom resource called Postgres. To make it is easy to consume Postgres resource in your application YAML, KubePlus will provide following information about Postgres resource: 
 
-- Static information like OpenAPI Spec for the Postgres resource that can be used by application developers.
+- Static information like OpenAPI Spec for the Postgres resource. This information can be used by application developers.
 
 - Dynamic information like composition of custom resources in terms on native Kubernetes resources (e.g. If you create an instance of a Postgres custom resource, it would internally create Deployement, Pod, and a Service object.)
 
@@ -96,11 +96,11 @@ follow our guidelines for Kubernetes Operators.
 
 KubePlus will install two additional component: KubePlus Operator Manager and KubePlus Discovery Manager. 
 
-KubePlus Operator Manager enables Kubernetes administrators to installation and manage required Operators. KubePlus Discovery Manager enables application developers to learn more about newly added custom resources.
+KubePlus Operator Manager enables Kubernetes administrators to install and manage required Operators. KubePlus Discovery Manager enables application developers to learn more about newly added custom resources.
 KubePlus does not introduce any new CLI interface. Entire workflow is supported through native Kubernetes interface of kubectl. 
 
 
-**Install KubePlus - by cluster admin*
+**Install KubePlus - by cluster admin**
 
 We provide deployment YAMLs for deploying KubePlus (Soon we will have Helm Chart)
 
@@ -115,9 +115,9 @@ Once tiller pod is Running (kubectl get pods -n kube-system), install KubePlus
 `$ kubectl apply -f deploy/`
 
 
-*Purpose-built platform deployment - by cluster admin*
+**Purpose-built platform deployment - by cluster admin**
 
-Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrators defines Kubernetes Operators to be installed in a `yaml file`__ and then uses following commands using kubectl CLI: 
+Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrators define Kubernetes Operators to be installed in a `yaml file`__ and then use following kubectl commands: 
 
 .. _operatoryaml: https://github.com/cloud-ark/kubeplus/blob/master/postgres-operator.yaml
 
@@ -148,7 +148,7 @@ Find out custom resources managed by an Operator:
 
 `$ kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus`
 
-Find out details of Custom Resource Spec definition:
+Find out details about a Custom Resource's Spec definition:
 
 `$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"`
 
@@ -158,7 +158,7 @@ Create Custom Resource instance:
 
 Find out dynamic composition tree for Postgres custom resource instance:
 
-`$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=client1" | python -mjson.tool`
+`$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool`
 
 
 

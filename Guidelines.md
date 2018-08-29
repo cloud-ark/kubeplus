@@ -85,12 +85,12 @@ Typically Operators will need to support some form of customization. For example
 [this MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/tutorial.md#configuration) supports following customization settings: whether to deploy
 the Operator cluster-wide or within a particular namespace, which version of MySQL should be installed, etc.
 If you have followed previous guideline and have Helm chart for your Operator then use Helm's values YAML file to specify
-such parameters. If not, use ConfigMap for this purpose. This guideline ensures that Kubernetes Administrator
-can interact and use the Operator using Kubernetes native's interface.
+such parameters. If not, use ConfigMap for this purpose. This guideline ensures that Kubernetes Administrators
+can interact and use the Operator using Kubernetes native's interfaces.
 
 
 
-## 6) Use ConfigMap or Annotation or Spec definition for custom resource configurables
+## 6) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables
 
 An Operator generally needs to take inputs for underlying resource's configuration parameters. We have seen three different approaches being used towards this in the community and anyone should be fine to use based on your Operator design. They are - using ConfigMaps, using Annotations, or using Spec definition itself. 
 
@@ -98,7 +98,7 @@ An Operator generally needs to take inputs for underlying resource's configurati
 [Oracle MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/user/clusters.md) uses ConfigMap.
 [PressLabs MySQL Operator](https://github.com/presslabs/mysql-operator) uses Custom Resource [Spec definition](https://github.com/presslabs/mysql-operator/blob/master/examples/example-cluster.yaml#L22).
 
-Similar to guideline #5, this guideline ensure that application developer can interact and use Custom Resources using Kubernetes's native interface.
+Similar to guideline #5, this guideline ensures that application developers can interact and use Custom Resources using Kubernetes's native interfaces.
 
 
 
@@ -128,10 +128,6 @@ Additionally, it provides various provenance query operators to query the collec
 
 
 ## Evaluation with example Operators
-
-We consider first five guidelines (1-5) as must have for any Operator. Guidelines 7 and 8 are nice to have.
-Guideline #6 depends on the nature of the Operator. If your Operator is not managing any underlying resource,
-such as a database, then this guideline does not apply.
 
 Here is a table showing conformance of different community Operators to above guidelines.
 
