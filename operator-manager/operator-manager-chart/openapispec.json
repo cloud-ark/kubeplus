@@ -1,0 +1,66 @@
+{
+  "swagger": "2.0",
+  "info": {
+   "title": "OpenAPI Doc Generator",
+   "version": "0.0.1"
+  },
+  "paths": {},
+  "definitions": {
+   "typedir.Operator": {
+    "description": "Operator is a specification for a Operator resource",
+    "required": [
+     "spec",
+     "status"
+    ],
+    "properties": {
+     "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+      "type": "string"
+     },
+     "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+      "type": "string"
+     },
+     "spec": {
+      "$ref": "#/definitions/typedir.OperatorSpec"
+     },
+     "status": {
+      "$ref": "#/definitions/typedir.OperatorStatus"
+     }
+    }
+   },
+   "typedir.OperatorSpec": {
+    "description": "OperatorSpec is the spec for a OperatorSpec resource",
+    "required": [
+     "name",
+     "chartURL"
+    ],
+    "properties": {
+     "chartURL": {
+      "type": "string"
+     },
+     "name": {
+      "type": "string"
+     }
+    }
+   },
+   "typedir.OperatorStatus": {
+    "description": "OperatorStatus is the status for a Operator resource",
+    "required": [
+     "customResourceDefinitions",
+     "status"
+    ],
+    "properties": {
+     "customResourceDefinitions": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "status": {
+      "type": "string"
+     }
+    }
+   }
+  }
+ }

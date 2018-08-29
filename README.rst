@@ -4,10 +4,33 @@ KubePlus
 
 Purpose-built application platforms on Kubernetes.
 
-KubePlus Purpose-built Platforms extend Kubernetes with Operators of your choice.
-This allows embedding customer-specific workflows and platform life-cycle actions directly in Kubernetes.
-Common examples of such Kubernetes Operators are for Platform elements such as 
-Postgres, MySQL, Fluentd, Prometheus etc.
+KubePlus simplifies composition of purpose-built platforms on Kubernetes enabling teams to build their own PaaSes. 
+
+KubePlus Platform Kit is designed to simplify composition of a custom platform using Kubernetes Operators. 
+
+* It brings consistency across multiple Kubernetes Operators with our Operator development guidelines. 
+
+* It offers tooling for uniform management and consumption of Kubernetes Operators. 
+
+This enables teams to Build their Own PaaSes on Kubernetes selecting required Operators from the KubePlus portfolio.
+
+
+**KubePlus Platform Kit for uniform management and consumption of Kubernetes Operators**
+
+KubePlus is designed with 3 user personas in mind. 
+
+*1. Operator developer*
+
+*2. Kubernetes cluster administrator*
+
+*3. Application developer*
+
+KubePlus follows ‘extension over abstraction’ as a guiding principle and hence provides all its functionality under existing Kubernetes interfaces.
+
+.. image:: ./docs/KubePlus-Platform-Kit.jpg
+   :scale: 75%
+   :align: center
+
 
 **Value of KubePlus**
 
@@ -17,34 +40,39 @@ KubePlus enables you to Build Your Own Platform on Kubernetes. You can choose yo
 KubePlus extends your Kubernetes cluster with Kubernetes Operators for those specific platform elements.
 Examples of such operators can be MySQL, Ngnix, Redis etc. 
 
+*2) No new CLI to learn*
 
-*2) Eliminate out-of-band platform automation*
+KubePlus does not introduce any new CLI. Users can work with the same Kubernetes native interfaces like kubectl and YAML to leverage KubePlus functionality.
+
+
+*3) Eliminate out-of-band platform automation*
 
 Kubernetes Operators embed platform element life-cycle actions directly in Kubernetes. An example of a Kubernetes Operator can be Postgres Operator that 
 embeds life-cycle actions such as create a database, add user to the database, change password of a user etc.
 Such Operators leverage Kubernetes's strength of control loop (current state -> desired state) eliminating additional out-of-band automation.
 
 
-*3) Consistency across Kubernetes Operators*
+*4) Consistency across Kubernetes Operators*
 
-Based on our study of existing Kubernetes Operators, we have come up with common guidelines that need to be followed by any Operator to be part of KubePlus. 
+Based on our study of existing Kubernetes Operators, we have come up with common guidelines_
+that need to be followed by any Operator to be part of KubePlus. 
 This brings consistency and quality in packaging Kubernetes Operators to build a purpose-built platform.
 
+.. _guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
-*4) Improved usability of Kubernetes Operators*
+
+*5) Discovery of custom resources
 
 KubePlus installs an additional components, KubePlus Discovery Manager, on your Kubernetes cluster to improve usability of custom Operators.
 
-It provides following information about newly added custom resources:
+KubePlus Discovery Manager component provides information about custom resources managed by the Operators. E.g. Assume there is a Postgres Operator which is managing a custom resource called Postgres. To make it is easy to consume Postgres resource in your application YAML, KubePlus will provide following information about Postgres resource: 
 
-- Static information like Life-cycle actions that can be performed on a custom resource (e.g. You can add/remove users to an instance of MySQL resource.)
+- Static information like OpenAPI Spec for the Postgres resource that can be used by application developers.
 
-- Dynamic information like Composition of custom resources in terms on native Kubernetes resources (e.g. If you create an instance of a MySQL custom resource, it would internally create a pod and a service.)
-
-- Custom resource specific configurable parameters exposed by the controller (e.g. MySQL configurable parameters)
+- Dynamic information like composition of custom resources in terms on native Kubernetes resources (e.g. If you create an instance of a Postgres custom resource, it would internally create Deployement, Pod, and a Service object.)
 
 
-**How it Works?**
+**Sample Scenario**
 
 Imagine an EdTech startup building a classroom collaboration application on Kubernetes. They have following high level requirements for their application platform:
 - Platform should be composable. It should be possible to add or update required platform elements to it.
@@ -66,33 +94,71 @@ This application requires following platform elements.
 KubePlus purpose-built platform for this EdTech startup would contain four custom operators - Nginx, Postgres, Prometheus and Fluentd, which are written to 
 follow our guidelines for Kubernetes Operators.
 
-KubePlus will install two additional component: KubePlus Operator Manager and KubePlus Discovery Manager. KubePlus Operator Manager enables installation and lifecycle management of required Operators. KubePlus Discovery Manager improves consumability of bundled Operators by providing additional information about them. 
+KubePlus will install two additional component: KubePlus Operator Manager and KubePlus Discovery Manager. 
 
-KubePlus does not introduce any new CLI interface. 
-Entire workflow is supported through native Kubernetes interface of kubectl. 
+KubePlus Operator Manager enables Kubernetes administrators to installation and manage required Operators. KubePlus Discovery Manager enables application developers to learn more about newly added custom resources.
+KubePlus does not introduce any new CLI interface. Entire workflow is supported through native Kubernetes interface of kubectl. 
 
-*Purpose-built platform deployment*
 
-Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrator defines Kubernetes Operators to be installed in an extensions.yaml file and then uses following command to install those Operators. 
+**Install KubePlus - by cluster admin*
 
-`$ kubectl apply -f extensions.yaml`
+We provide deployment YAMLs for deploying KubePlus (Soon we will have Helm Chart)
 
-*Purpose-built platform usage*
+KubePlus requires Helm to be installed on the cluster.
 
-Kubernetes app developers can create/delete/update/list the newly added 
-custom resources by directly using kubectl CLI. e.g. 
+Install Helm:
+
+`$ helm init`
+
+Once tiller pod is Running (kubectl get pods -n kube-system), install KubePlus
+
+`$ kubectl apply -f deploy/`
+
+
+*Purpose-built platform deployment - by cluster admin*
+
+Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrators defines Kubernetes Operators to be installed in a `yaml file`__ and then uses following commands using kubectl CLI: 
+
+.. _operatoryaml: https://github.com/cloud-ark/kubeplus/blob/master/postgres-operator.yaml
+
+__ operatoryaml_
+
+Install one or more Operators:
+
+`$ kubectl apply -f <operator yaml file>`
+
+Find out all the installed Operators:
+
+`$ kubectl get operators`
+
+Find out information such as custom resources managed by an Operator:
+
+`$ kubectl describe operators postgres-operator`
+
+
+
+*Purpose-built platform usage - by application developer*
+
+Kubernetes application developers can create/delete/update/list the newly added 
+custom resources by using kubectl CLI:
+
+Find out custom resources managed by an Operator:
+
+`$ kubectl describe operators postgres-operator`
+
+`$ kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus`
+
+Find out details of Custom Resource Spec definition:
+
+`$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"`
+
+Create Custom Resource instance:
 
 `$ kubectl apply -f postgres.yaml`
 
-Additionally they can get more information about the composition and life-cycle actions of these resources through KubePlus Discovery Manager. e.g. 
+Find out dynamic composition tree for Postgres custom resource instance:
 
-`$ kubectl get –raw …/postgres/*/composition`
-
-Composition of postgres in terms of underlying Kubernetes resources like Pod, Service etc. 
-
-`$ kubectl get –raw …/postgres/explain`
-
-Postgres life cycle actions and other static information
+`$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=client1" | python -mjson.tool`
 
 
 
