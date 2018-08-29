@@ -1,4 +1,16 @@
 Test:
+- Install Minikube v0.25.0
+- minikube start
+- eval $(minikube docker-env)
+- GOSOURCE=<Directory of your GO Code>
+- git clone https://github.com/cloud-ark/kubeplus 
+- mkdir $GOSOURCE/github.com/cloud-ark
+- mv kubeplus $GOSOURCE/github.com/cloud-ark/.
+- git clone https://github.com/cloud-ark/kubediscovery
+- mv kubediscovery $GOSOURCE/github.com/cloud-ark/.
+
+- ./buildall.sh
+
 - kubectl apply -f deploy
 - kubectl get pods
 - more postgres-operator.yaml
@@ -7,12 +19,15 @@ Test:
 - kubectl describe operators postgres-operator
 - kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
 - kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"
+  --> You should see OpenAPI Spec for Postgres custom resource as output
+
 - more postgres.yaml
 - kubectl create -f postgres.yaml
 - kubectl get postgreses
 - kubectl describe postgreses client1
 - <Verify logging into to postgres instance after the status is READY>
 - kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool
+  --> You should see composition tree for postgres1 instance of Postgres custom resource
 
 
 Cleanup:
@@ -24,6 +39,7 @@ Cleanup:
 
 
 Troubleshooting:
-- kubectl logs postgres-operator-deployment-7b5669c988-7v7wb
+- kubectl logs <postgres-operator pod>
+- kubectl logs <kubeplus pod> -c <container-name>
 
 
