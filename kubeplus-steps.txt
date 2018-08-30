@@ -1,10 +1,17 @@
 Test:
 - Install Minikube v0.25.0 (KubePlus has been built and tested on this version. With other versions also it should work. If not, please file an Issue).
+- Install Docker
+- Install Golang 1.10.3
+  - wget https://dl.google.com/go/go1.10.3.linux-amd64.tar.gz
+  - sudo tar -C /usr/local -xzf go1.10.3.linux-amd64.tar.gz
+  - export PATH=$PATH:/usr/local/go/bin
+- Install Golang dependency management tool (dep)
+
 - minikube start
 - eval $(minikube docker-env)
 - GOSOURCE=<Directory of your GO Code>
 - git clone https://github.com/cloud-ark/kubeplus 
-- mkdir $GOSOURCE/github.com/cloud-ark
+- mkdir -p $GOSOURCE/github.com/cloud-ark
 - mv kubeplus $GOSOURCE/github.com/cloud-ark/.
 - git clone https://github.com/cloud-ark/kubediscovery
 - mv kubediscovery $GOSOURCE/github.com/cloud-ark/.
