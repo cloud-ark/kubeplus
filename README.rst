@@ -109,7 +109,7 @@ KubePlus Operator Manager enables Kubernetes administrators to install and manag
 KubePlus does not introduce any new CLI interface. Entire workflow is supported through native Kubernetes interface of kubectl. 
 
 
-**1) Install KubePlus - by cluster admin**
+**1) Install KubePlus (by cluster administrator)**
 
 KubePlus requires Helm to be installed on the cluster.
 
@@ -123,7 +123,7 @@ We provide deployment YAMLs for deploying KubePlus.
 ``$ kubectl apply -f deploy/``
 
 
-**2) Purpose-built platform deployment - by cluster administrator**
+**2) Purpose-built platform deployment - (cluster administrator)**
 
 Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrators define Kubernetes Operators to be installed in a `yaml file`__ and then use following kubectl commands: 
 
@@ -145,7 +145,7 @@ Find out information such as custom resources managed by an Operator:
 
 
 
-**3) Purpose-built platform usage - by application developer**
+**3) Purpose-built platform usage (by application developer)**
 
 Kubernetes application developers can create/delete/update/list the newly added 
 custom resources by using kubectl CLI:
