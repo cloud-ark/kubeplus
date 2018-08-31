@@ -179,6 +179,18 @@ Follow steps given in `kubeplus-steps.txt`__.
 __ steps_
 
 
+
+
+Operator Development Guidelines
+================================
+
+Here_ are some guidelines for developing Operators with the focus on usability. 
+These guidelines are based on our study of various Operators written by the community
+and through our experience of building discovery and provenance tools for Kubernetes Operators.
+
+.. _Here: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
+
+
 --------------------
 Available Operators
 --------------------
