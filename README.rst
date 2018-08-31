@@ -35,7 +35,7 @@ KubePlus follows ‘extension over abstraction’ as a guiding principle and hen
 
  
 .. image:: ./docs/Architecture.jpg
-   :scale: 50%
+   :scale: 75%
    :align: center
 
 
