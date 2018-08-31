@@ -26,8 +26,15 @@ KubePlus is designed with 3 user personas in mind.
 *3. Application developer*
 
 KubePlus follows ‘extension over abstraction’ as a guiding principle and hence provides all its functionality under existing Kubernetes interfaces.
-
+ 
 .. image:: ./docs/KubePlus-Platform-Kit.jpg
+   :scale: 75%
+   :align: center
+
+**KubePlus Architecture**
+
+ 
+.. image:: ./docs/Architecture.jpg
    :scale: 75%
    :align: center
 
