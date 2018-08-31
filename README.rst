@@ -2,8 +2,6 @@
 KubePlus
 =========
 
-Purpose-built application platforms on Kubernetes.
-
 KubePlus simplifies composition of purpose-built platforms on Kubernetes enabling teams to build their own PaaSes. 
 
 KubePlus Platform Kit is designed to simplify composition of a custom platform using Kubernetes Operators. 
@@ -15,7 +13,8 @@ KubePlus Platform Kit is designed to simplify composition of a custom platform u
 This enables teams to Build their Own PaaSes on Kubernetes selecting required Operators from the KubePlus portfolio.
 
 
-**KubePlus Platform Kit for uniform management and consumption of Kubernetes Operators**
+KubePlus Platform Kit for uniform management and consumption of Kubernetes Operators
+=====================================================================================
 
 KubePlus is designed with 3 user personas in mind. 
 
@@ -39,7 +38,8 @@ KubePlus follows ‘extension over abstraction’ as a guiding principle and hen
    :align: center
 
 
-**Value of KubePlus**
+Value of KubePlus
+==================
 
 *1) Choose your own platform elements*
 
@@ -79,7 +79,8 @@ KubePlus Discovery Manager component provides information about custom resources
 - Dynamic information like composition of custom resources in terms on native Kubernetes resources (e.g. If you create an instance of a Postgres custom resource, it would internally create Deployement, Pod, and a Service object.)
 
 
-**Sample Scenario**
+Sample Scenario
+================
 
 Imagine an EdTech startup building a classroom collaboration application on Kubernetes. They have following high level requirements for their application platform:
 - Platform should be composable. It should be possible to add or update required platform elements to it.
@@ -95,8 +96,9 @@ This application requires following platform elements.
 
 - Fluentd for logging: (Required life-cycle action- Set log rotation policy.)
 
-
-**KubePlus Purpose-built Platform**
+--------------------------------
+KubePlus Purpose-built Platform
+--------------------------------
 
 KubePlus purpose-built platform for this EdTech startup would contain four custom operators - Nginx, Postgres, Prometheus and Fluentd, which are written to 
 follow our guidelines for Kubernetes Operators.
@@ -107,7 +109,7 @@ KubePlus Operator Manager enables Kubernetes administrators to install and manag
 KubePlus does not introduce any new CLI interface. Entire workflow is supported through native Kubernetes interface of kubectl. 
 
 
-**Install KubePlus - by cluster admin**
+**1) Install KubePlus - by cluster admin**
 
 KubePlus requires Helm to be installed on the cluster.
 
@@ -121,7 +123,7 @@ We provide deployment YAMLs for deploying KubePlus.
 ``$ kubectl apply -f deploy/``
 
 
-**Purpose-built platform deployment - by cluster administrator**
+**2) Purpose-built platform deployment - by cluster administrator**
 
 Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrators define Kubernetes Operators to be installed in a `yaml file`__ and then use following kubectl commands: 
 
@@ -143,7 +145,7 @@ Find out information such as custom resources managed by an Operator:
 
 
 
-**Purpose-built platform usage - by application developer**
+**3) Purpose-built platform usage - by application developer**
 
 Kubernetes application developers can create/delete/update/list the newly added 
 custom resources by using kubectl CLI:
@@ -167,7 +169,8 @@ Find out dynamic composition tree for Postgres custom resource instance:
 ``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool``
 
 
-**Try Out**
+Try Out
+========
 
 Follow steps given in `kubeplus-steps.txt`__.
 
@@ -176,8 +179,9 @@ Follow steps given in `kubeplus-steps.txt`__.
 __ steps_
 
 
-
-**Available Operators**
+--------------------
+Available Operators
+--------------------
 
 1) Postgres
    - Check postgres-crd-v2/README.rst for details about how to use this Operator.
