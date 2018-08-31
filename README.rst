@@ -184,7 +184,7 @@ __ steps_
 Operator Development Guidelines
 ================================
 
-Checkout_ out guidelines for developing Operators with the focus on usability. 
+Checkout_ our guidelines that focus on usability for developing Operators.
 These guidelines are based on our study of various Operators written by the community
 and through our experience of building discovery and provenance tools for Kubernetes Operators.
 
