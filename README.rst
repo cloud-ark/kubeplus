@@ -2,9 +2,9 @@
 KubePlus
 =========
 
-KubePlus simplifies composition of purpose-built platforms on Kubernetes enabling teams to build their own PaaSes. 
+KubePlus is an open technology designed to deliver composable PaaSes on Kubernetes
 
-KubePlus Platform Kit is designed to simplify composition of a custom platform using Kubernetes Operators. 
+KubePlus Platform Kit is designed to simplify composition of a custom PaaS using Kubernetes Operators. 
 
 * It brings consistency across multiple Kubernetes Operators with our Operator development guidelines. 
 
