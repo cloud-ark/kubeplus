@@ -126,7 +126,7 @@ We provide deployment YAMLs for deploying KubePlus.
 ``$ kubectl apply -f deploy/``
 
 
-**2) Operator deployment to create custom PaaS (by cluster administrator)**a
+**2) Operator deployment to create custom PaaS (by cluster administrator)**
 
 Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrators define Kubernetes Operators to be installed in a `yaml file`__ and then use following kubectl commands: 
 
