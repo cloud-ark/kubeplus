@@ -130,12 +130,8 @@ Additionally, it provides various provenance query operators to query the collec
 
 When designing your Operator you should try to support most of its actions through kubectl. 
 Kubernetes contains various mechanisms such as Custom Resource Definitions, Aggregated API servers, 
-Custom Sub-resources. Refer to `our blog post`__ to learn more about them. 
+Custom Sub-resources. Refer to [our blog post](https://medium.com/@cloudark/comparing-kubernetes-api-extension-mechanisms-of-custom-resource-definition-and-aggregated-api-64f4ca6d0966) to learn more about them. 
 Before considering to introduce new CLI for your Operator, validate if you can use these mechanisms instead.
-
-.. _blog: https://medium.com/@cloudark/comparing-kubernetes-api-extension-mechanisms-of-custom-resource-definition-and-aggregated-api-64f4ca6d0966
-
-__ blog_
 
 
 
