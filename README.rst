@@ -2,7 +2,34 @@
 KubePlus
 =========
 
-KubePlus is an open technology designed to deliver composable PaaSes on Kubernetes
+KubePlus is an open technology designed to deliver composable PaaSes from our repository 
+of certified Kubernetes Operators
+
+
+Why Composable PaaSes
+=======================
+
+One of the key reasons for Kubernetes’s popularity is its extendibility.
+Kubernetes Operators_ extend Kubernetes API to manage
+third-party software as native Kubernetes objects. Number of Operators are
+being built for middlewares like databases, queues, loggers, etc. This has led to
+tremendous choice in the platform elements for building application platforms
+on Kubernetes, making pre-built PaaS a less attractive option. Current popular
+approach is to ‘self-assemble’ platform stacks using Kubernetes Operators of
+choice. In addition to the effort required in building such an assembly, there is
+lack of consistent user experience across multiple Operators.
+
+.. _Operators: https://medium.com/@cloudark/why-to-write-kubernetes-operators-9b1e32a24814
+
+
+.. image:: ./docs/Composable-PaaSes.jpg
+   :scale: 75%
+   :align: center
+
+
+
+KubePlus Platform Kit
+======================
 
 KubePlus Platform Kit simplifies composition of a custom PaaS using Kubernetes Operators. 
 
@@ -10,11 +37,18 @@ KubePlus Platform Kit simplifies composition of a custom PaaS using Kubernetes O
 
 * It offers tooling for uniform management and consumption of Kubernetes Operators. 
 
-This enables teams to Build their Own PaaSes on Kubernetes selecting required Operators from the KubePlus portfolio.
+This enables teams to Build their Own PaaSes on Kubernetes selecting required Operators 
+from KubePlus portfolio of certified Operators. 
+
+KubePlus follows ‘extension over abstraction’ as a guiding principle and provides all 
+its functionality through existing Kubernetes interfaces.
 
 
-KubePlus Platform Kit for uniform management and consumption of Kubernetes Operators
-=====================================================================================
+.. image:: ./docs/KubePlus-Flow.jpg
+   :scale: 75%
+   :align: center
+
+
 
 KubePlus is designed with 3 user personas in mind. 
 
@@ -24,7 +58,6 @@ KubePlus is designed with 3 user personas in mind.
 
 *3. Application developer*
 
-KubePlus follows ‘extension over abstraction’ as a guiding principle and provides all its functionality through existing Kubernetes interfaces.
  
 .. image:: ./docs/KubePlus-Platform-Kit.jpg
    :scale: 75%
