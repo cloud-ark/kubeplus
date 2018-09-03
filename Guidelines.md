@@ -126,6 +126,18 @@ KubeProvenance uses Kubernetes Audit Logs to build lineage for custom resources.
 Additionally, it provides various provenance query operators to query the collected custom resource provenance information.
 
 
+## 9) Plan to use kubectl as the primary interaction point
+
+When designing your Operator you should try to support most of its actions through kubectl. 
+Kubernetes contains various mechanisms such as Custom Resource Definitions, Aggregated API servers, 
+Custom Sub-resources. Refer to `our blog post`__ to learn more about them. 
+Before considering to introduce new CLI for your Operator, validate if you can use these mechanisms instead.
+
+.. _blog: https://medium.com/@cloudark/comparing-kubernetes-api-extension-mechanisms-of-custom-resource-definition-and-aggregated-api-64f4ca6d0966
+
+__ blog_
+
+
 
 ## Evaluation of example Operators
 
