@@ -44,7 +44,7 @@ from our `repository of certified Operators`__ that are packaged as Helm charts.
 
 .. _repository: https://github.com/cloud-ark/operatorcharts
 
-__ repository1_
+__ repository_
 
 
 .. image:: ./docs/KubePlus-Flow.jpg
@@ -106,9 +106,9 @@ Based on our study of existing Kubernetes Operators, we have come up with `commo
 that need to be followed by any Operator to be part of KubePlus. 
 This brings consistency and quality in packaging Kubernetes Operators to build custom PaaS.
 
-.. _guidelines1: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
+.. _guideline1: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
-.. __guideline1_
+__ guideline1_
 
 
 *5) Discovery of custom resources*
