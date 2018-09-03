@@ -44,7 +44,7 @@ from our `repository of certified Operators`__ that are packaged as Helm charts.
 
 .. _repository: https://github.com/cloud-ark/operatorcharts
 
-.. __repository1:
+__ repository1_
 
 
 .. image:: ./docs/KubePlus-Flow.jpg
@@ -60,7 +60,7 @@ application `Platforms as Code`__ on their KubePlus custom PaaS.
 
 .. _pac: https://medium.com/@cloudark/evolution-of-paases-to-platform-as-code-in-kubernetes-world-74464b0013ca
 
-.. __pac_
+__ pac_
 
 
 
