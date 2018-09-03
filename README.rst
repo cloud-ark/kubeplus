@@ -3,7 +3,7 @@ KubePlus
 =========
 
 KubePlus is an open technology designed to deliver composable PaaSes from our repository 
-of certified Kubernetes Operators
+of certified Kubernetes Operators.
 
 
 Why Composable PaaSes
@@ -31,22 +31,36 @@ lack of consistent user experience across multiple Operators.
 KubePlus Platform Kit
 ======================
 
-KubePlus Platform Kit simplifies composition of a custom PaaS using Kubernetes Operators. 
+KubePlus Platform Kit simplifies composition of a custom PaaS on Kubernetes. 
 
-* It brings consistency across multiple Kubernetes Operators with our Operator development guidelines. 
+* It brings consistency across multiple Kubernetes Operators with our Operator development guidelines_. 
 
 * It offers tooling for uniform management and consumption of Kubernetes Operators. 
 
 This enables teams to Build their Own PaaSes on Kubernetes selecting required Operators 
-from KubePlus portfolio of certified Operators. 
+from our `repository of certified Operators`__ that are packaged as Helm charts.
 
-KubePlus follows ‘extension over abstraction’ as a guiding principle and provides all 
-its functionality through existing Kubernetes interfaces.
+.. _guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
+
+.. _repository: https://github.com/cloud-ark/operatorcharts
+
+.. __repository1:
 
 
 .. image:: ./docs/KubePlus-Flow.jpg
    :scale: 75%
    :align: center
+
+
+KubePlus does not introduce any new CLI. KubePlus users continue to use the
+standard Kubernetes CLI (kubectl) and YAML definition format to manage
+their extended platforms. This design constraint has helped us deliver on
+composability along with usability. And application developers get to create
+application `Platforms as Code`__ on their KubePlus custom PaaS.
+
+.. _pac: https://medium.com/@cloudark/evolution-of-paases-to-platform-as-code-in-kubernetes-world-74464b0013ca
+
+.. __pac_
 
 
 
@@ -88,11 +102,13 @@ Such Operators leverage Kubernetes's strength of control loop (current state -> 
 
 *4) Consistency across Kubernetes Operators*
 
-Based on our study of existing Kubernetes Operators, we have come up with common guidelines_
+Based on our study of existing Kubernetes Operators, we have come up with `common guidelines`__
 that need to be followed by any Operator to be part of KubePlus. 
-This brings consistency and quality in packaging Kubernetes Operators to build a purpose-built platform.
+This brings consistency and quality in packaging Kubernetes Operators to build custom PaaS.
 
-.. _guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
+.. _guidelines1: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
+
+.. __guideline1_
 
 
 *5) Discovery of custom resources*
@@ -132,11 +148,11 @@ This application requires following platform elements.
 
 - Fluentd for logging: (Required life-cycle action- Set log rotation policy.)
 
---------------------------------
-KubePlus Purpose-built PaaS
---------------------------------
+-----------------------
+KubePlus Custom PaaS
+-----------------------
 
-KubePlus purpose-built PaaS for this EdTech startup would contain four custom operators - Nginx, Postgres, Prometheus and Fluentd, which are written to 
+KubePlus custom PaaS for this EdTech startup would contain four custom operators - Nginx, Postgres, Prometheus and Fluentd, which are written to 
 follow our guidelines for Kubernetes Operators.
 
 KubePlus will install two additional component: KubePlus Operator Manager and KubePlus Discovery Manager. 
