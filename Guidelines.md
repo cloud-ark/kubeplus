@@ -129,7 +129,7 @@ One approach towards this is to use a generic tool such as [kubeprovenance](http
 KubeProvenance uses Kubernetes Audit Logs to build lineage information for custom resources.
 Additionally, it provides various provenance query operators to query the collected custom resource provenance information.
 Another approach is to write your Custom controller to collect required metrics.
-An example of this can be seen in the [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/setup/monitoring.md).
+An example of this can be seen in this [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/setup/monitoring.md).
 
 
 ## 9) Plan to use kubectl as the primary interaction point
