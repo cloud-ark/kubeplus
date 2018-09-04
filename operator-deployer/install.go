@@ -14,6 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+
+/*
+   This file is taken from Helm source and has been modified to work as part
+   of operator-deployer.
+*/
+
+
 package main
 
 import (
