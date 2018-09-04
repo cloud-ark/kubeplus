@@ -1,15 +1,21 @@
 # Operator Guidelines
 
-Kubernetes provides ability to extend a cluster's functionality by adding new Operators (Custom
-Resource Definitions + custom controllers).
+Kubernetes Operators extend Kubernetes API to manage third-party software as native Kubernetes objects. 
+Number of Operators are being built for platform elements like databases, queues, loggers, etc. 
+We are seeing more and more fit-for-purpose application platforms being created by composing multiple Operators together.
 
-We have come up with following best practice guidelines for developing Kubernetes Operators with the goal to bring uniformity across multiple Operators. These would improve usability of Operators and enable users to consume them in a group to build custom application platforms. 
+While working on such a custom platform for one of our customers, we observed some of the challenges that arise when using multiple Operators together. 
+For example, some of these Operators tend to introduce a new CLI for its end users. 
+While by itself this is not a problem, usability becomes an issue when end users have to learn multiple CLIs to use more than one Operators in a cluster. 
+We reflected more on usability of Operators while building tools that work on multiple Operators 
+e.g.: tools for [discovery](https://github.com/cloud-ark/kubediscovery) and [lineage tracking](https://github.com/cloud-ark/kubeprovenance)
+of Custom Resources created by Operators.
 
-These guidelines are based on our study of various Operators
-written by the community and through our experience of building
-[discovery](https://github.com/cloud-ark/kubediscovery) and [provenance](https://github.com/cloud-ark/kubeprovenance) 
-tools for Kubernetes Operators.
+Our this ongoing work on Operator tooling and study of existing community Operators led us to come up with some Operator development guidelines 
+that will improve overall usability of Operators. The primary goal of these guidelines is that cluster admins should be able to easily 
+compose multiple Operators together to form a platform stack; and application developers should be able to discover and consume the Operators effortlessly.
 
+Here are those guidelines:
 
 ## 1) Prefer declarative state over imperative actions in Custom Resource Spec definition
 
