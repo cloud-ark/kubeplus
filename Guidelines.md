@@ -125,11 +125,11 @@ OwnerReferences (guideline #2) are also crucial in this regard.
 
 Your Operator design should plan for collecting different metrics for custom resource instances managed by your Operator. This information is useful for understanding effect of performing various actions on your custom resources over time and improves traceability. 
 
-One approach towards this is to write your Custom controller to collect required metrics.
-An example of this can be seen in the [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/setup/monitoring.md).
-Another approach is to use a generic tool such as [kubeprovenance](https://github.com/cloud-ark/kubeprovenance) in your cluster.
-KubeProvenance uses Kubernetes Audit Logs to build lineage for custom resources.
+One approach towards this is to use a generic tool such as [kubeprovenance](https://github.com/cloud-ark/kubeprovenance) in your cluster.
+KubeProvenance uses Kubernetes Audit Logs to build lineage information for custom resources.
 Additionally, it provides various provenance query operators to query the collected custom resource provenance information.
+Another approach is to write your Custom controller to collect required metrics.
+An example of this can be seen in the [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/setup/monitoring.md).
 
 
 ## 9) Plan to use kubectl as the primary interaction point
@@ -141,7 +141,7 @@ Before considering to introduce new CLI for your Operator, validate if you can u
 
 
 
-## Evaluation of example Operators
+## Evaluation of community Operators
 
 Here is a table showing conformance of different community Operators to above guidelines.
 
