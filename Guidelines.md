@@ -4,16 +4,19 @@ Kubernetes Operators extend Kubernetes API to manage third-party software as nat
 Number of Operators are being built for platform elements like databases, queues, loggers, etc. 
 We are seeing more and more fit-for-purpose application platforms being created by composing multiple Operators together.
 
-While working on such a custom platform for one of our customers, we observed some of the challenges that arise when using multiple Operators together. 
+While working on such a custom platform for one of our customers, we observed challenges that arise when using multiple Operators together. 
 For example, some of these Operators tend to introduce a new CLI for its end users. 
-While by itself this is not a problem, usability becomes an issue when end users have to learn multiple CLIs to use more than one Operators in a cluster. 
 We reflected more on usability of Operators while building tools that work on multiple Operators 
 e.g.: tools for [discovery](https://github.com/cloud-ark/kubediscovery) and [lineage tracking](https://github.com/cloud-ark/kubeprovenance)
-of Custom Resources created by Operators.
+of Custom Resources created by Operators. Examples of such usability challenges can be:
 
-Our this ongoing work on Operator tooling and study of existing community Operators led us to come up with some Operator development guidelines 
-that will improve overall usability of Operators. The primary goal of these guidelines is that cluster admins should be able to easily 
-compose multiple Operators together to form a platform stack; and application developers should be able to discover and consume the Operators effortlessly.
+  * Some of the Operators introduce new CLIs. Usability becomes an issue when end users have to learn multiple CLIs to use more than one Operators in a cluster.
+
+  * Some of the Operator type definitions do not follow OpenAPI Specification. This makes it hard to generate documentation for custom resources similar to native Kubernetes resources.
+
+Our study of existing community Operators from this perspective led us to come up with Operator development guidelines that will improve overall usability of Operators. The primary goal of these guidelines is : cluster admin should be able to easily compose multiple Operators together to form a platform stack; and application developers should be able to discover and consume Operators effortlessly.
+
+
 
 Here are those guidelines:
 
@@ -55,7 +58,7 @@ Some examples of Operators that use OwnerReferences are: [Etcd Operator](https:/
 [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/pkg/resources/services/service.go#L34).
 
 
-## 3) Use kube-openapi annotations in Custom Resource Type definition
+## 3) Generate OpenAPI Spec for your Custom Resources
 
 When defining the types corresponding to your custom resources, you should use
 kube-openapi annotation - ``+k8s:openapi-gen=true''
@@ -147,8 +150,8 @@ Here is a table showing conformance of different community Operators to above gu
 
 | Operator      | URL           | Guidelines satisfied  | Comments     |
 | ------------- |:-------------:| ---------------------:| ------------:|
-| Oracle MySQL  | https://github.com/oracle/mysql-operator | 2, 4, 5, 6, 8 | 1: Not satisfied because of exposing mysqldump in Spec <br>3: Not satisfied, PR to address the violation: https://github.com/oracle/mysql-operator/pull/216
-| PressLabs MySQL| https://github.com/presslabs/mysql-operator  | 1, 2, 3, 5, 6 | 4: Not satisfied because CRD installed in Code
+| Oracle MySQL  | https://github.com/oracle/mysql-operator | 2, 4, 5, 6, 8, 9 | 1: Not satisfied because of exposing mysqldump in Spec <br>3: Not satisfied, PR to address the violation: https://github.com/oracle/mysql-operator/pull/216 <br> 7: Not satisfied as composition of CRDs not defined
+| PressLabs MySQL| https://github.com/presslabs/mysql-operator  | 1, 2, 3, 5, 6, 9 | 4: Not satisfied because CRD installed in Code <br> 7: Not satisfied as composition of  CRDs not defined
 | CloudARK Postgres| https://github.com/cloud-ark/kubeplus/tree/master/postgres-crd-v2 | 1, 2, 3, 4, 7 | 5, 6: Work-in-Progress
 
 
