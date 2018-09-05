@@ -22,7 +22,13 @@ How to use?
 
    - dep ensure
 
-3) Invoke the script:
+3) Modify your types.go to include "//+k8s:openapi-gen=true" above Type declaration.
+   As an example check this_.
+
+.. _this: https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/pkg/apis/postgrescontroller/v1/types.go#L28
+
+
+4) Invoke the script:
 
    ./build-openapi-spec.sh <Path-to-directory-where-your-types.go-is-located>
 
