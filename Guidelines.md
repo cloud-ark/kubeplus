@@ -152,7 +152,7 @@ Here is a table showing conformance of different community Operators to above gu
 | ------------- |:-------------:| ---------------------:| ------------:|
 | Oracle MySQL  | https://github.com/oracle/mysql-operator | 2, 4, 5, 6, 8, 9 | 1: Not satisfied because of exposing mysqldump in Spec <br>3: Not satisfied, PR to address the violation: https://github.com/oracle/mysql-operator/pull/216 <br> 7: Not satisfied as composition of CRDs not defined
 | PressLabs MySQL| https://github.com/presslabs/mysql-operator  | 1, 2, 3, 5, 6, 9 | 4: Not satisfied because CRD installed in Code <br> 7: Not satisfied as composition of  CRDs not defined
-| CloudARK Postgres| https://github.com/cloud-ark/kubeplus/tree/master/postgres-crd-v2 | 1, 2, 3, 4, 7 | 5, 6: Work-in-Progress
+| CloudARK Postgres| https://github.com/cloud-ark/kubeplus/tree/master/postgres-crd-v2 | 1, 2, 3, 4, 7, 9 | 5, 6: Work-in-Progress
 
 
 
