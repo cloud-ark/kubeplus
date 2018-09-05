@@ -5,7 +5,11 @@ OpenAPI Spec Generator
 This is a utility that you can use to generate OpenAPI Spec for Custom Resources
 that are managed by your Operator.
 
-It wraps code available in [kube-openapi repository](https://github.com/kubernetes/kube-openapi) in a easy to use script.
+It wraps code available in `kube-openapi repository`__ in a easy to use script.
+
+.. _kubeopenapi: https://github.com/kubernetes/kube-openapi
+
+__ kubeopenapi_ 
 
 
 How to use?
@@ -38,3 +42,6 @@ How to use?
 
    If there are no validation errors in types.go then the OpenAPI Spec will be generated
    in file named openapispec.json and this file will be copied in the input directory.
+
+   
+   If there are validation errors then fix those and try again. 
