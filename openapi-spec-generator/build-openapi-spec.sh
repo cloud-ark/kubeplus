@@ -8,9 +8,16 @@ fi
 cp $1/types.go typedir/.
 cd typedir
 sed -E '/PersistentVolumeClaim|Affinity|ObjectMeta|ListMeta|LocalObjectReference|Time/s/^/\/\//' types.go > types1.go
+sed -E '/package */s/^/\/\//' types1.go > types2.go
+sed -e '1i\
+package typedir
+' < types2.go > types3.go
 
+mv types1.go types1.go.bak
+mv types2.go types2.go.bak
 mv types.go types.go.orig
-cp types1.go types.go
+mv types3.go types.go
+
 cd ..
 op1=`go run openapi-gen.go`
 op2=`go run builder.go`
