@@ -24,137 +24,16 @@
 #   go-tests = true
 #   unused-packages = true
 
-
-[[constraint]]
-  name = "github.com/PuerkitoBio/purell"
-  version = "1.1.0"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/PuerkitoBio/urlesc"
-
-[[constraint]]
-  name = "github.com/davecgh/go-spew"
-  version = "1.1.0"
-
-[[constraint]]
-  name = "github.com/emicklei/go-restful"
-  version = "2.8.0"
-
-[[constraint]]
-  name = "github.com/ghodss/yaml"
-  version = "1.0.0"
-
-[[constraint]]
-  name = "github.com/go-openapi/jsonpointer"
-  version = "0.16.0"
-
-[[constraint]]
-  name = "github.com/go-openapi/jsonreference"
-  version = "0.16.0"
-
-[[constraint]]
-  name = "github.com/go-openapi/spec"
-  version = "0.16.0"
-
-[[constraint]]
-  name = "github.com/go-openapi/swag"
-  version = "0.16.0"
-
-[[constraint]]
-  name = "github.com/gogo/protobuf"
-  version = "1.1.1"
-
 [[constraint]]
   branch = "master"
   name = "github.com/golang/glog"
 
 [[constraint]]
-  name = "github.com/golang/protobuf"
-  version = "1.1.0"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/google/btree"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/google/gofuzz"
-
-[[constraint]]
-  name = "github.com/googleapis/gnostic"
-  version = "0.2.0"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/gregjones/httpcache"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/hashicorp/golang-lru"
-
-[[constraint]]
-  name = "github.com/json-iterator/go"
-  version = "1.1.5"
-
-[[constraint]]
-  name = "github.com/juju/ratelimit"
-  version = "1.0.1"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/lib/pq"
+  version = "1.0.0"
 
 [[constraint]]
   branch = "master"
-  name = "github.com/mailru/easyjson"
-
-[[constraint]]
-  name = "github.com/modern-go/concurrent"
-  version = "1.0.3"
-
-[[constraint]]
-  name = "github.com/modern-go/reflect2"
-  version = "1.0.1"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/petar/GoLLRB"
-
-[[constraint]]
-  name = "github.com/peterbourgon/diskv"
-  version = "2.0.1"
-
-[[constraint]]
-  name = "github.com/spf13/pflag"
-  version = "1.0.2"
-
-[[constraint]]
-  branch = "master"
-  name = "golang.org/x/crypto"
-
-[[constraint]]
-  branch = "master"
-  name = "golang.org/x/net"
-
-[[constraint]]
-  branch = "master"
-  name = "golang.org/x/sys"
-
-[[constraint]]
-  name = "golang.org/x/text"
-  version = "0.3.0"
-
-[[constraint]]
-  name = "gopkg.in/inf.v0"
-  version = "0.9.1"
-
-[[constraint]]
-  name = "gopkg.in/yaml.v2"
-  version = "2.2.1"
-
-[[constraint]]
-  branch = "release-1.11"
   name = "k8s.io/api"
 
 [[constraint]]
@@ -168,18 +47,6 @@
 [[constraint]]
   name = "k8s.io/client-go"
   version = "8.0.0"
-
-[[constraint]]
-  branch = "release-1.11"
-  name = "k8s.io/code-generator"
-
-[[constraint]]
-  branch = "master"
-  name = "k8s.io/gengo"
-
-[[constraint]]
-  branch = "master"
-  name = "k8s.io/kube-openapi"
 
 [prune]
   go-tests = true
