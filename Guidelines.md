@@ -20,18 +20,13 @@ Our study of existing community Operators from this perspective led us to come u
 
 Here are those guidelines:
 
-## 1) Prefer declarative state over imperative actions in Custom Resource Spec definition
 
-Define the desired state of a Custom Resource instance and any updates to it 
-as declarative Spec in its Type definition.
-Users should not be concerned with the procedural details of specifying changes from the previous state.
+# Design guidelines
 
-Custom controller code should be written such that it reconciles the current state
-with the desired state by performing diff of the current state with the desired state. 
-Life-cycle actions of the underlying resource should be embedded in the controller logic.
-For example, Postgres custom resource controller should be written to perform diff of the current users with the desired user
-and perform the required actions (such as adding new users, deleting current users, etc.) based on 
-the [received desired state](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/artifacts/examples/add-user.yaml).
+## 1) Design your Operator with declarative API/s and avoid inputs as imperative actions
+
+A declarative API allows you to declare or specify the desired state of your custom resource. Prefer declarative state over any imperative actions in Custom Resource Spec Type definition. Custom controller code should be written such that it reconciles the current state with the desired state by performing diff of the current state with the desired state. This enables end users to use your custom resources just like any other Kubernetes resources with declarative state based inputs. For example, when writing a Postgres Operator, the custom controller should be written to perform diff of the existing value of ‘users’ with the desired value of ‘users’ based on the received desired state and perform the required actions (such as adding new users, deleting current users, etc.).
+
 
 Note that the diff-based implementation approach for custom controllers is essentially an extension of
 the level-triggered approach recommended in the [general guidelines](https://github.com/kubernetes/community/blob/master/contributors/devel/controllers.md) 
@@ -44,51 +39,39 @@ In our view such internal details should not be exposed in the Spec as it preven
 to evolve independently without affecting its users.
 
 
-## 2) Use OwnerReferences with Custom Resource instances
+## 2) Consider to use kubectl as the primary interaction mechanism
 
-A custom resource instance will typically create one or more Kubernetes resources, such as Deployment, Service, Secret etc., 
-as part of instantiating its custom resources. The controller should be written to set OwnerReferences on 
-on such native Kubernetes resources that it creates. 
-They are key for correct garbage collection of custom resources.
-OwnerReferences also help with finding composition tree of your custom resource instances consisting of
-native Kubernetes resources (see guideline #7).
+When designing your Operator you should try to support most of its actions through kubectl. Kubernetes contains various mechanisms such as Custom Resource Definitions, Aggregated API servers, Custom Sub-resources. Before considering to introduce new CLI for your Operator, validate if you can use these mechanisms instead. 
+Refer to [this blog post](https://medium.com/@cloudark/comparing-kubernetes-api-extension-mechanisms-of-custom-resource-definition-and-aggregated-api-64f4ca6d0966) to learn more about them.
+
+
+## 3) Decide your Custom Resource Metrics Collection strategy
+
+Plan for metrics collection of custom resources managed by your Operator. This information is useful for understanding effect of various actions on your custom resources over time and improving traceability. One option is to collect metrics inside your custom controller and then expose them with solutions like Prometheus. On the other hand, if you decide not to include this in your custom controller code, then the alternate is to leverage Kubernetes Audit Logs. You can use also external tooling like kubeprovenance that works with Kubernetes Audit Logs for this.
+
+
+## 4) Prefer to register CRDs as part of Operator Helm chart rather than in code
+
+Prefer to register CRDs as part of Operator Helm Chart rather than in code. This has following advantages:
+
+  * All installation artifacts and dependencies will be in one place — the Operator’s Helm Chart.
+
+  * It is easy to modify and/or evolve the CRD through Helm chart.
+
+
+# Implementation guidelines
+
+## 5) Set OwnerReferences for underlying resources owned by your Custom Resource
+
+A custom resource instance will typically create one or more other Kubernetes resource instances, such as Deployment, Service, Secret etc., as part of its instantiation. Here this custom resource is the owner of its underlying resources that it manages. Custom controller should be written to set OwnerReference on such managed Kubernetes resources. They are key for correct garbage collection of custom resources. OwnerReferences also help with finding composition tree of your custom resource instances. 
 
 Some examples of Operators that use OwnerReferences are: [Etcd Operator](https://github.com/coreos/etcd-operator/blob/master/pkg/cluster/cluster.go#L351),
 [Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/controller.go#L508), and 
 [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/pkg/resources/services/service.go#L34).
 
 
-## 3) Generate OpenAPI Spec for your Custom Resources
 
-When defining the types corresponding to your custom resources, you should use
-kube-openapi annotation - ``+k8s:openapi-gen=true''
-in the type definition to [enable generating OpenAPI Spec documentation for the custom resource](https://medium.com/@cloudark/understanding-kubectl-explain-9d703396cc8).
-An example of this annotation on type definition is our [Postgres operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/pkg/apis/postgrescontroller/v1/types.go#L28).
-We have developed a [tool](https://github.com/cloud-ark/kubeplus/tree/master/openapi-spec-generator) 
-that you can use for generating OpenAPI Spec for your custom resources. 
-The generated OpenAPI Spec documentation for Postgres custom resource is [here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/openapispec.json). 
-
-
-## 4) Package Operator as Helm Chart and register CRDs as part of it
-
-You should create a Helm chart for your Operator. The chart should include two things: 
-
-* Registration of all Custom Resources managed by the Operator.
-Examples of this can be seen in our [Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/templates/deployment.yaml)
-and in this [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/mysql-operator/templates/01-resources.yaml).
-Registering CRDs as part of Helm Chart instead of in [Code](https://github.com/coreos/etcd-operator/blob/master/pkg/controller/backup-operator/operator.go#L76),
-has following advantages: 
-
-  * All installation artifacts are available in one place - the Operator's Helm Chart.
-
-  * It is easy to modify and evolve the CRD.
-
-* OpenAPI Spec for your custom resources (if you have followed guideline #3).
-The Spec will be useful for application developers to figure out how to use your custom resources.
-
-
-
-## 5) Use Helm chart or ConfigMap for Operator configurables
+## 6) Use Helm chart or ConfigMap for Operator configurables
 
 Typically Operators will need to support some form of customization. For example, 
 [this MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/tutorial.md#configuration) supports following customization settings: whether to deploy
@@ -99,7 +82,7 @@ can interact and use the Operator using Kubernetes native's interfaces.
 
 
 
-## 6) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables
+## 7) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables
 
 An Operator generally needs to take inputs for underlying resource's configuration parameters. We have seen three different approaches being used towards this in the community and anyone should be fine to use based on your Operator design. They are - using ConfigMaps, using Annotations, or using Spec definition itself. 
 
@@ -111,36 +94,57 @@ Similar to guideline #5, this guideline ensures that application developers can 
 
 
 
-## 7) Define composition of a Custom Resource as an Annotation on its YAML Definition
+8) Define underlying resources created by Custom Resource as Annotation on CRD registration YAML
 
-We recommend that you use an annotation on the Custom Resource Definiton to identify the underlying Kubernetes resources
-that will be created by the Custom Resource. An example of this can be seen for our Postgres resource 
-[here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/artifacts/deployment/deployment.yaml#L33).
+Use an annotation on the Custom Resource Definition to specify the underlying Kubernetes resources that will be created & managed by the Custom Resource. An example of this can be seen for our Sample Postgres resource below:
 
-By surfacing the composition information as an annotation on CRD, it is possible
-to build tools like [kubediscovery](https://github.com/cloud-ark/kubediscovery)
-that show Object composition tree for custom resource instances by using the CRD definition.
-OwnerReferences (guideline #2) are also crucial in this regard.
+```
+  kind: CustomResourceDefinition
+  metadata:
+    name: postgreses.postgrescontroller
+    annotations:
+      composition: Deployment, Service
+```
 
-
-
-## 8) Plan for Custom Resource Metrics Collection
-
-Your Operator design should plan for collecting different metrics for custom resource instances managed by your Operator. This information is useful for understanding effect of performing various actions on your custom resources over time and improves traceability. 
-
-One approach towards this is to use a generic tool such as [kubeprovenance](https://github.com/cloud-ark/kubeprovenance) in your cluster.
-KubeProvenance uses Kubernetes Audit Logs to build lineage information for custom resources.
-Additionally, it provides various provenance query operators to query the collected custom resource provenance information.
-Another approach is to write your Custom controller to collect required metrics.
-An example of this can be seen in this [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/setup/monitoring.md).
+Otherwise this composition information will be available only in custom controller code and be hidden from end users in case they require it for traceability or any other reason. It is also possible to build tools like kubediscovery that show Object composition tree for custom resource instances by using this information.
 
 
-## 9) Plan to use kubectl as the primary interaction point
+9) Make your Custom Resource type definitions compliant with Kube OpenAPI
 
-When designing your Operator you should try to support most of its actions through kubectl. 
-Kubernetes contains various mechanisms such as Custom Resource Definitions, Aggregated API servers, 
-Custom Sub-resources. Refer to [our blog post](https://medium.com/@cloudark/comparing-kubernetes-api-extension-mechanisms-of-custom-resource-definition-and-aggregated-api-64f4ca6d0966) to learn more about them. 
-Before considering to introduce new CLI for your Operator, validate if you can use these mechanisms instead.
+Kubernetes API details are documented using Swagger v1.2 and OpenAPI. Kube OpenAPI supports a subset of OpenAPI features to satisfy kubernetes use-cases. As Operators extend Kubernetes API, it is important to follow Kube OpenAPI features to provide consistent user experience. Following actions are required to comply with Kube OpenAPI.
+
+Add documentation on your type definition and on the various fields in it.
+The field names need to be defined using following pattern:
+Kube OpenAPI name validation rules expect the field name in Go code and field name in JSON to be exactly the same with just the first letter in different case (Go code requires CamelCase, JSON requires camelCase).
+
+When defining the types corresponding to your custom resources, you should use kube-openapi annotation — “+k8s:openapi-gen=true’’ in the type definition to enable generating OpenAPI Spec documentation for your custom resources. An example of this annotation on type definition can be seen on CloudARK sample Postgres custom resource.
+```
+  // +k8s:openapi-gen=true
+  type Postgres struct {
+    :
+  }
+```
+
+# Packaging guidelines
+
+## 10) Generate Kube OpenAPI Spec for your Custom Resources
+
+We have developed a [tool](https://github.com/cloud-ark/kubeplus/tree/master/openapi-spec-generator) that you can use for generating Kube OpenAPI Spec for your custom resources. 
+It wraps code available in [kube-openapi repository](https://github.com/kubernetes/kube-openapi) 
+in an easy to use script. 
+The generated Kube OpenAPI Spec documentation for sample Postgres custom resource is 
+[here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/openapispec.json).
+
+
+## 11) Package Operator as Helm Chart
+
+Create a Helm chart for your Operator. The chart should include two things:
+
+  * Registration of all Custom Resources managed by the Operator. Examples of this can be seen in 
+CloudARK [sample Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/templates/deployment.yaml) and in 
+[this MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/mysql-operator/templates/01-resources.yaml).
+
+  * Kube Open API Spec for your custom resources. The Spec will be useful as reference documentation and can be leveraged by different tools.
 
 
 
@@ -150,9 +154,9 @@ Here is a table showing conformance of different community Operators to above gu
 
 | Operator      | URL           | Guidelines satisfied  | Comments     |
 | ------------- |:-------------:| ---------------------:| ------------:|
-| Oracle MySQL Operator | https://github.com/oracle/mysql-operator | 2, 4, 5, 6, 8, 9 | 1: Not satisfied because of exposing mysqldump in Spec <br>3: Not satisfied, PR to address the violation: https://github.com/oracle/mysql-operator/pull/216 <br> 7: Not satisfied as composition of CRDs not defined
-| PressLabs MySQL Operator | https://github.com/presslabs/mysql-operator  | 1, 2, 3, 5, 6, 9 | 4: Not satisfied because CRD installed in Code <br> 7: Not satisfied as composition of  CRDs not defined
-| CloudARK sample Postgres Operator | https://github.com/cloud-ark/kubeplus/tree/master/postgres-crd-v2 | 1, 2, 3, 4, 7, 9 | 5, 6: Work-in-Progress
+| Oracle MySQL Operator | https://github.com/oracle/mysql-operator | 2, 3, 4, 5, 6, 7 | 1: Not satisfied because of exposing mysqldump in Spec <br> 8: Not satisfied as composition of CRDs not defined <br>9, 10: Not satisfied, PR that addresses them: https://github.com/oracle/mysql-operator/pull/216 
+| PressLabs MySQL Operator | https://github.com/presslabs/mysql-operator  | 1, 2, 3, 5, 6, 7, 9, 10, 11 | 4: Not satisfied because CRD installed in Code <br> 8: Not satisfied as composition of  CRDs not defined
+| CloudARK sample Postgres Operator | https://github.com/cloud-ark/kubeplus/tree/master/postgres-crd-v2 | 1, 2, 3, 4, 5, 8, 9, 10, 11 | 6, 7: Work-in-Progress
 
 
 
