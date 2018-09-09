@@ -94,9 +94,9 @@ Similar to guideline #5, this guideline ensures that application developers can 
 
 
 
-8) Define underlying resources created by Custom Resource as Annotation on CRD registration YAML
+## 8) Define underlying resources created by Custom Resource as Annotation on CRD registration YAML
 
-Use an annotation on the Custom Resource Definition to specify the underlying Kubernetes resources that will be created & managed by the Custom Resource. An example of this can be seen for our Sample Postgres resource below:
+Use an annotation on the Custom Resource Definition to specify the underlying Kubernetes resources that will be created and managed by the Custom Resource. An example of this can be seen for our Sample Postgres resource below:
 
 ```
   kind: CustomResourceDefinition
@@ -109,7 +109,7 @@ Use an annotation on the Custom Resource Definition to specify the underlying Ku
 Otherwise this composition information will be available only in custom controller code and be hidden from end users in case they require it for traceability or any other reason. It is also possible to build tools like kubediscovery that show Object composition tree for custom resource instances by using this information.
 
 
-9) Make your Custom Resource type definitions compliant with Kube OpenAPI
+## 9) Make your Custom Resource type definitions compliant with Kube OpenAPI
 
 Kubernetes API details are documented using Swagger v1.2 and OpenAPI. Kube OpenAPI supports a subset of OpenAPI features to satisfy kubernetes use-cases. As Operators extend Kubernetes API, it is important to follow Kube OpenAPI features to provide consistent user experience. Following actions are required to comply with Kube OpenAPI.
 
