@@ -14,10 +14,41 @@
   revision = "de5bf2ad457846296e2031421a34e2568e304e35"
 
 [[projects]]
+  name = "github.com/coreos/etcd"
+  packages = [
+    "client",
+    "pkg/pathutil",
+    "pkg/srv",
+    "pkg/types",
+    "version"
+  ]
+  revision = "fca8add78a9d926166eb739b8e4a124434025ba3"
+  version = "v3.3.9"
+
+[[projects]]
+  name = "github.com/coreos/go-semver"
+  packages = ["semver"]
+  revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
+  version = "v0.2.0"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/dsnet/compress"
+  packages = [
+    ".",
+    "bzip2",
+    "bzip2/internal/sais",
+    "internal",
+    "internal/errors",
+    "internal/prefix"
+  ]
+  revision = "cc9eb1d7ad760af14e8f918698f745e80377af4f"
 
 [[projects]]
   name = "github.com/emicklei/go-restful"
@@ -112,8 +143,8 @@
     "ptypes/duration",
     "ptypes/timestamp"
   ]
-  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
-  version = "v1.1.0"
+  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
+  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
@@ -165,22 +196,16 @@
   name = "github.com/json-iterator/go"
   packages = ["."]
   revision = "1624edc4454b8682399def8740d46db5e4362ba4"
-  version = "1.1.5"
+  version = "v1.1.5"
 
 [[projects]]
-  name = "github.com/juju/ratelimit"
-  packages = ["."]
-  revision = "59fac5042749a5afb9af70e813da1dd5474f0167"
-  version = "1.0.1"
-
-[[projects]]
-  branch = "master"
   name = "github.com/lib/pq"
   packages = [
     ".",
     "oid"
   ]
-  revision = "90697d60dd844d5ef6ff15135d0203f65d2f53b8"
+  revision = "4ded0e9383f75c197b3a2aaa6d590ac52df6fd79"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -190,7 +215,13 @@
     "jlexer",
     "jwriter"
   ]
-  revision = "03f2033d19d5860aef995fe360ac7d395cd8ce65"
+  revision = "60711f1a8329503b04e1c88535f419d0bb440bff"
+
+[[projects]]
+  name = "github.com/mholt/archiver"
+  packages = ["."]
+  revision = "cdc68dd1f170b8dfc1a0d2231b5bb0967ed67006"
+  version = "v2.0"
 
 [[projects]]
   name = "github.com/modern-go/concurrent"
@@ -203,6 +234,12 @@
   packages = ["."]
   revision = "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
   version = "1.0.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/nwaples/rardecode"
+  packages = ["."]
+  revision = "e06696f847aeda6f39a8f0b7cdff193b7690aef6"
 
 [[projects]]
   branch = "master"
@@ -223,10 +260,27 @@
   version = "v1.0.2"
 
 [[projects]]
+  name = "github.com/ugorji/go"
+  packages = ["codec"]
+  revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
+  version = "v1.1.1"
+
+[[projects]]
+  name = "github.com/ulikunitz/xz"
+  packages = [
+    ".",
+    "internal/hash",
+    "internal/xlog",
+    "lzma"
+  ]
+  revision = "0c6b41e72360850ca4f98dc341fd999726ea007f"
+  version = "v0.5.4"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "de0752318171da717af4ce24d0a2e8626afaeb11"
+  revision = "614d502a4dac94afa3a6ce146bd1736da82514c6"
 
 [[projects]]
   branch = "master"
@@ -238,7 +292,7 @@
     "http2/hpack",
     "idna"
   ]
-  revision = "c39426892332e1bb5ec0a434a079bf82f5d30c54"
+  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
 
 [[projects]]
   branch = "master"
@@ -247,7 +301,7 @@
     "unix",
     "windows"
   ]
-  revision = "14742f9018cd6651ec7364dc6ee08af0baaa1031"
+  revision = "4910a1d54f876d7b22162a85f4d066d3ee649450"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -285,7 +339,7 @@
     "imports",
     "internal/fastwalk"
   ]
-  revision = "8f8fd1f23985f19c387c894e5597b22d8256a495"
+  revision = "f6ba5742950514ddd66494151ed5498ed77969ca"
 
 [[projects]]
   name = "gopkg.in/inf.v0"
@@ -300,7 +354,7 @@
   version = "v2.2.1"
 
 [[projects]]
-  branch = "release-1.11"
+  branch = "master"
   name = "k8s.io/api"
   packages = [
     "admissionregistration/v1alpha1",
@@ -333,7 +387,7 @@
     "storage/v1alpha1",
     "storage/v1beta1"
   ]
-  revision = "61b11ee6533278ae17d77fd36825d0b47ec3a293"
+  revision = "dd5c735cbff9767ba4ba339616a15236fab0ece5"
 
 [[projects]]
   branch = "release-1.11"
@@ -393,7 +447,7 @@
     "third_party/forked/golang/json",
     "third_party/forked/golang/reflect"
   ]
-  revision = "1c9f4d20e8d7ca63f4ce98dc22110138cd6a365f"
+  revision = "488889b0007f63ffee90b66a34a2deca9ec58774"
 
 [[projects]]
   name = "k8s.io/client-go"
@@ -529,7 +583,7 @@
   version = "v8.0.0"
 
 [[projects]]
-  branch = "release-1.11"
+  branch = "master"
   name = "k8s.io/code-generator"
   packages = [
     "cmd/client-gen/args",
@@ -552,7 +606,7 @@
     "pkg/util",
     "third_party/forked/golang/reflect"
   ]
-  revision = "dd8ec120686a9463868a57c4716b701f86f92fed"
+  revision = "aae79feb89bdded3679da91fd8c19b6dfcbdb79a"
 
 [[projects]]
   branch = "master"
@@ -587,6 +641,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ee8173fb80ccf28f0e480144ea4ad47c426ffb113fd9e8d35f3aab7f7ffc6d4d"
+  inputs-digest = "e6017153d81fbb820f213368b919c8c4c44acface5783b2a46262715cbf54a11"
   solver-name = "gps-cdcl"
   solver-version = 1
