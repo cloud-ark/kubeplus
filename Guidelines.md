@@ -17,8 +17,29 @@ of Custom Resources created by Operators. Examples of such usability challenges 
 Our study of existing community Operators from this perspective led us to come up with Operator development guidelines that will improve overall usability of Operators. The primary goal of these guidelines is : cluster admin should be able to easily compose multiple Operators together to form a platform stack; and application developers should be able to discover and consume Operators effortlessly.
 
 
-
 Here are those guidelines:
+
+[1) Design your Operator with declarative API/s and avoid inputs as imperative actions](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#1-design-your-operator-with-declarative-apis-and-avoid-inputs-as-imperative-actions)
+
+[2) Consider to use kubectl as the primary interaction mechanism](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#2-consider-to-use-kubectl-as-the-primary-interaction-mechanism)
+
+[3) Decide your Custom Resource Metrics Collection strategy](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#3-decide-your-custom-resource-metrics-collection-strategy)
+
+[4) Prefer to register CRDs as part of Operator Helm chart rather than in code](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#4-prefer-to-register-crds-as-part-of-operator-helm-chart-rather-than-in-code)
+
+[5) Set OwnerReferences for underlying resources owned by your Custom Resource](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#5-set-ownerreferences-for-underlying-resources-owned-by-your-custom-resource)
+
+[6) Use Helm chart or ConfigMap for Operator configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#6-use-helm-chart-or-configmap-for-operator-configurables)
+
+[7) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#7-use-configmap-or-annotation-or-spec-definition-for-custom-resource-configurables)
+
+[8) Define underlying resources created by Custom Resource as Annotation on CRD registration YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#8-define-underlying-resources-created-by-custom-resource-as-annotation-on-crd-registration-yaml)
+
+[9) Make your Custom Resource type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#9-make-your-custom-resource-type-definitions-compliant-with-kube-openapi)
+
+[10) Generate Kube OpenAPI Spec for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-generate-kube-openapi-spec-for-your-custom-resources)
+
+[11) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-package-operator-as-helm-chart)
 
 
 # Design guidelines
