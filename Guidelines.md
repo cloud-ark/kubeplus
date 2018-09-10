@@ -47,6 +47,7 @@ Here are those guidelines:
 
 [11) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-package-operator-as-helm-chart)
 
+Detailed guidelines:
 
 # Design guidelines
 
