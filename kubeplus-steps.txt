@@ -28,8 +28,8 @@ Test:
 - kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"
   --> You should see OpenAPI Spec for Postgres custom resource as output
 
-- more postgres.yaml
-- kubectl create -f postgres.yaml
+- more platform.yaml
+- kubectl create -f platform.yaml
 - kubectl get postgreses
 - kubectl describe postgreses postgres1
 - <Verify logging into to postgres instance after the status is READY>
