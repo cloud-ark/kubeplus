@@ -22,9 +22,7 @@ lack of consistent user experience across multiple Operators.
 .. _Operators: https://medium.com/@cloudark/why-to-write-kubernetes-operators-9b1e32a24814
 
 
-.. image:: ./docs/Composable-PaaSes.jpg
-   :scale: 75%
-   :align: center
+https://youtu.be/NjNWMQTFjLM
 
 
 
@@ -218,6 +216,13 @@ d) Create application Platform:
 e) Find out dynamic composition tree for Postgres custom resource instance:
 
   ``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool``
+
+
+Demo
+====
+
+https://youtu.be/Fbr1LNqvGRE
+
 
 
 Try Out
