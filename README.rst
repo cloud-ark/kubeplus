@@ -50,7 +50,7 @@ from our `repository of certified Operators`__ that are packaged as Helm charts.
 
 .. _guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
-.. _repository: https://github.com/cloud-ark/operatorcharts
+.. _repository: https://s3-us-west-2.amazonaws.com/cloudark-helm-charts/
 
 __ repository_
 
