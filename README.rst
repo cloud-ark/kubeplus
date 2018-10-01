@@ -21,6 +21,9 @@ lack of consistent user experience across multiple Operators.
 
 .. _Operators: https://medium.com/@cloudark/why-to-write-kubernetes-operators-9b1e32a24814
 
+With Kubernetes API Extension mechanisms it is now possible to provide application
+platform functionality as Code. Check out following video for understanding
+how Platform-as-Code is emerging as a progression of the Cloud computing models.
 
 https://youtu.be/NjNWMQTFjLM
 
@@ -187,7 +190,7 @@ c) Find out all the installed Operators:
 
 
 
-**3) Get Application Platform as-Code (for application developer)**
+**3) Create Application Platform as Code (for application developer)**
 
 Kubernetes application developers can create/delete/update/list the newly added 
 custom resources by using kubectl CLI:
