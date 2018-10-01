@@ -2,11 +2,11 @@
 KubePlus
 =========
 
-KubePlus is an open technology designed to deliver composable PaaSes from our repository 
-of certified Kubernetes Operators.
+KubePlus is an open technology designed to deliver Platforms as Code experience
+utilizing Kubernetes Operators.
 
 
-Why Composable PaaSes
+Why Platform-as-Code
 =======================
 
 One of the key reasons for Kubernetes’s popularity is its extendibility.
@@ -31,11 +31,19 @@ lack of consistent user experience across multiple Operators.
 KubePlus Platform Kit
 ======================
 
-KubePlus Platform Kit simplifies composition of a custom PaaS on Kubernetes. 
+KubePlus Platform Kit is designed to deliver `Platform as Code`__ experience utilizing 
+Kubernetes Operators. Using KubePlus Platform Kit,
 
-* It brings consistency across multiple Kubernetes Operators with our Operator development guidelines_. 
+* DevOps engineer constructs a custom PaaS comprised of required Kubernetes Operators.
 
-* It offers tooling for uniform management and consumption of Kubernetes Operators. 
+* Application developer declares and creates application platforms as code with Kubernetes YAML. 
+
+.. _pac: https://medium.com/@cloudark/evolution-of-paases-to-platform-as-code-in-kubernetes-world-74464b0013ca
+
+__ pac_
+
+
+We bring consistency across multiple Kubernetes Operators with our Operator development guidelines_. 
 
 This enables teams to Build their Own PaaSes on Kubernetes selecting required Operators 
 from our `repository of certified Operators`__ that are packaged as Helm charts.
@@ -53,22 +61,14 @@ __ repository_
 
 
 KubePlus does not introduce any new CLI. KubePlus users continue to use the
-standard Kubernetes CLI (kubectl) and YAML definition format to manage
-their extended platforms. This design constraint has helped us deliver on
-composability along with usability. And application developers get to create
-application `Platforms as Code`__ on their KubePlus custom PaaS.
-
-.. _pac: https://medium.com/@cloudark/evolution-of-paases-to-platform-as-code-in-kubernetes-world-74464b0013ca
-
-__ pac_
-
+standard Kubernetes CLI (kubectl) and YAML definition format to manage their extended platforms. 
 
 
 KubePlus is designed with 3 user personas in mind. 
 
 *1. Operator developer*
 
-*2. Kubernetes cluster administrator*
+*2. DevOps Engineer*
 
 *3. Application developer*
 
@@ -82,11 +82,10 @@ KubePlus is designed with 3 user personas in mind.
 Value of KubePlus
 ==================
 
-*1) Choose your own platform elements*
+*1) Uniformity between native and custom Kubernetes resources*
 
-KubePlus enables you to Build Your Own Platform on Kubernetes. You can choose your platform elements for databases, caching, logging, monitoring etc. 
-KubePlus extends your Kubernetes cluster with Kubernetes Operators for those specific platform elements.
-Examples of such operators can be MySQL, Ngnix, Redis etc. 
+Our Operator development guidelines are designed to ensure custom resources become 
+first-class entities of Kubernetes. 
 
 *2) No new CLI to learn*
 
@@ -100,15 +99,9 @@ embeds life-cycle actions such as create a database, add user to the database, c
 Such Operators leverage Kubernetes's strength of control loop (current state -> desired state) eliminating additional out-of-band automation.
 
 
-*4) Consistency across Kubernetes Operators*
+*4) Common language between Devs and Ops*
 
-Based on our study of existing Kubernetes Operators, we have come up with `common guidelines`__
-that need to be followed by any Operator to be part of KubePlus. 
-This brings consistency and quality in packaging Kubernetes Operators to build custom PaaS.
-
-.. _guideline1: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
-
-__ guideline1_
+KubePlus leverages kubectl for management of Operators by Ops; and their consumption by Devs, making Kubernetes YAMLs as the common language between Devs and Ops. 
 
 
 *5) Discovery of custom resources*
@@ -175,49 +168,51 @@ We provide deployment YAMLs for deploying KubePlus.
 ``$ kubectl apply -f deploy/``
 
 
-**2) Operator deployment to create custom PaaS (by cluster administrator)**
+**2) Operator deployment to create custom PaaS (by DevOps Engineer)**
 
 
-Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrators define Kubernetes Operators to be installed in a `yaml file`__ and then use following kubectl commands: 
+a) Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrators define Kubernetes Operators to be installed in a `yaml file`__ and then use following kubectl commands: 
 
 .. _operatoryaml: https://github.com/cloud-ark/kubeplus/blob/master/postgres-operator.yaml
 
 __ operatoryaml_
 
-Install one or more Operators:
+
+b) Install one or more Operators:
 
 ``$ kubectl apply -f <operator yaml file>``
 
-Find out all the installed Operators:
+
+c) Find out all the installed Operators:
 
 ``$ kubectl get operators``
 
-Find out information such as custom resources managed by an Operator:
-
-``$ kubectl describe operators postgres-operator``
 
 
-
-**3) PaaS usage (by application developer)**
+**3) Get Application Platform as-Code (for application developer)**
 
 Kubernetes application developers can create/delete/update/list the newly added 
 custom resources by using kubectl CLI:
 
-Find out custom resources managed by an Operator:
+a) Find out custom resources managed by an Operator:
 
 ``$ kubectl describe operators postgres-operator``
 
 ``$ kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus``
 
-Find out details about a Custom Resource's Spec definition:
+b) Find out details about a Custom Resource's Spec definition:
 
 ``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"``
 
-Create Custom Resource instance:
+c) Define application Platform as Code:
+
+``$ vi postgres.yaml``
+
+d) Create application Platform:
 
 ``$ kubectl apply -f postgres.yaml``
 
-Find out dynamic composition tree for Postgres custom resource instance:
+e) Find out dynamic composition tree for Postgres custom resource instance:
 
 ``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool``
 
@@ -258,4 +253,13 @@ Available Operators
 If you are interested in building your own operators, you can follow steps here_:
 
 .. _here: https://github.com/cloud-ark/kubeplus/issues/14
+
+
+-------
+Issues
+-------
+
+Suggestions/Issues are welcome_
+
+.. _welcome: https://github.com/cloud-ark/kubeplus/issues
 
