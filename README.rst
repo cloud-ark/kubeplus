@@ -202,18 +202,18 @@ a) Find out custom resources managed by an Operator:
 
 b) Find out details about a Custom Resource's Spec definition:
 
-``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"``
+  ``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"``
 
 c) Define application Platform elements_:
 
-  ``$ vi postgres.yaml``
+  ``$ vi platform.yaml``
 
-.. _elements: https://github.com/cloud-ark/kubeplus/blob/master/postgres.yaml
+.. _elements: https://github.com/cloud-ark/kubeplus/blob/master/platform.yaml
 
 
 d) Create application Platform:
 
-  ``$ kubectl apply -f postgres.yaml``
+  ``$ kubectl apply -f platform.yaml``
 
 e) Find out dynamic composition tree for Postgres custom resource instance:
 
