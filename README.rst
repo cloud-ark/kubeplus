@@ -168,7 +168,7 @@ We provide deployment YAMLs for deploying KubePlus.
   ``$ kubectl apply -f deploy/``
 
 
-**2) Operator deployment to create custom PaaS (by cluster administrator)**
+**2) Create custom PaaS (by cluster administrator)**
 
 
 a) Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrators define Kubernetes Operators to be installed in a `yaml file`__ and then use following kubectl commands: 
@@ -178,14 +178,14 @@ a) Once core KubePlus components (Operator Manager and Discovery Manager) are in
 __ operatoryaml_
 
 
-b) Install one or more Operators:
+b) Deploy/install Operators:
 
-``$ kubectl apply -f <operator yaml file>``
+  ``$ kubectl apply -f <operator yaml file>``
 
 
 c) Find out all the installed Operators:
 
-``$ kubectl get operators``
+  ``$ kubectl get operators``
 
 
 
@@ -196,25 +196,28 @@ custom resources by using kubectl CLI:
 
 a) Find out custom resources managed by an Operator:
 
-``$ kubectl describe operators postgres-operator``
+  ``$ kubectl describe operators postgres-operator``
 
-``$ kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus``
+  ``$ kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus``
 
 b) Find out details about a Custom Resource's Spec definition:
 
 ``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"``
 
-c) Define application Platform as Code:
+c) Define application Platform elements_:
 
-``$ vi postgres.yaml``
+  ``$ vi postgres.yaml``
+
+.. _elements: https://github.com/cloud-ark/kubeplus/blob/master/postgres.yaml
+
 
 d) Create application Platform:
 
-``$ kubectl apply -f postgres.yaml``
+  ``$ kubectl apply -f postgres.yaml``
 
 e) Find out dynamic composition tree for Postgres custom resource instance:
 
-``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool``
+  ``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/describe?cr=Postgres&instance=postgres1" | python -mjson.tool``
 
 
 Try Out
