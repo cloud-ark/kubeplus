@@ -34,7 +34,7 @@ KubePlus Platform Kit
 KubePlus Platform Kit is designed to deliver `Platform as Code`__ experience utilizing 
 Kubernetes Operators. Using KubePlus Platform Kit,
 
-* DevOps engineer constructs a custom PaaS comprised of required Kubernetes Operators.
+* Cluster Administrator constructs a custom PaaS comprised of required Kubernetes Operators.
 
 * Application developer declares and creates application platforms as code with Kubernetes YAML. 
 
@@ -68,7 +68,7 @@ KubePlus is designed with 3 user personas in mind.
 
 *1. Operator developer*
 
-*2. DevOps Engineer*
+*2. Cluster Administrator*
 
 *3. Application developer*
 
@@ -160,15 +160,15 @@ KubePlus requires Helm to be installed on the cluster.
 
 Install Helm:
 
-``$ helm init``
+  ``$ helm init``
 
 Once tiller pod is Running (kubectl get pods -n kube-system), install KubePlus.
 We provide deployment YAMLs for deploying KubePlus.
 
-``$ kubectl apply -f deploy/``
+  ``$ kubectl apply -f deploy/``
 
 
-**2) Operator deployment to create custom PaaS (by DevOps Engineer)**
+**2) Operator deployment to create custom PaaS (by cluster administrator)**
 
 
 a) Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrators define Kubernetes Operators to be installed in a `yaml file`__ and then use following kubectl commands: 
