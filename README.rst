@@ -202,7 +202,7 @@ a) Find out custom resources managed by an Operator:
 
 b) Find out details about a Custom Resource's Spec definition:
 
-``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"``
+  ``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"``
 
 c) Define application Platform elements_:
 
