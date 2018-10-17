@@ -154,9 +154,19 @@ KubePlus will install two additional component: KubePlus Operator Manager and Ku
 KubePlus Operator Manager enables Kubernetes administrators to install and manage required Operators. KubePlus Discovery Manager enables application developers to learn more about newly added custom resources.
 KubePlus does not introduce any new CLI interface. Entire workflow is supported through native Kubernetes interface of kubectl. 
 
+We provide steps to try KubePlus on Minikube here:
+
+https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-steps.txt
+
+Steps that can be followed by different personas are outlined below:
+
 
 **1) Install KubePlus (by cluster administrator)**
 
+Create Kubernetes Cluster. Follow the steps (upto line 19) given in 
+https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-steps.txt
+
+Once images are built and cluster is up, install Helm.
 KubePlus requires Helm to be installed on the cluster.
 
 Install Helm:
@@ -165,6 +175,7 @@ Install Helm:
 
 Once tiller pod is Running (kubectl get pods -n kube-system), install KubePlus.
 We provide deployment YAMLs for deploying KubePlus.
+
 
   ``$ kubectl apply -f deploy/``
 
