@@ -533,12 +533,17 @@ func extractOperatorChart(chartURL string) {
 	currentDir, err := os.Getwd()
 	//dirName := currentDir + "tmp/charts/" + chartName
 	dirName := currentDir + "/" + chartName
-	fmt.Printf("Chart tar downloaded to:%s\n", dirName)
-	err = os.Mkdir(dirName, 0755)
-	if err != nil {
-		log.Fatal(err)
+	fmt.Printf("Chart tar file downloaded to:%s\n", dirName)
+	_, err = os.Stat(dirName)
+	if os.IsNotExist(err) {
+	   fmt.Printf("%s does not exist\n", dirName)
+	   err = os.Mkdir(dirName, 0755)
+	    if err != nil {
+	    	log.Fatal(err)
+	    }
 	}
 
+	fmt.Println("Untaring the Chart")
 	//dirName := "/Users/devdatta/go/src/github.com/cloud-ark/kubeplus/doc-generator/tmp3"
 	err = archiver.Tar.Open(chartTarFile, dirName)
 

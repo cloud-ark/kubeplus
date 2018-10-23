@@ -60,6 +60,12 @@ __ repository_
    :scale: 75%
    :align: center
 
+Checkout `KubePlus Demo`__
+
+.. _demo: https://drive.google.com/open?id=1jDptIWM8fiAorlZdW-pwOMttxAQAZHIR
+
+__ demo_
+
 
 KubePlus does not introduce any new CLI. KubePlus users continue to use the
 standard Kubernetes CLI (kubectl) and YAML definition format to manage their extended platforms. 
