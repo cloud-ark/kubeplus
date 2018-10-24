@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"os"
 
 	"database/sql"
 	_ "github.com/lib/pq"
@@ -146,6 +147,13 @@ func NewController(
 				controller.enqueueFoo(new)
 			}
 		},
+		/*
+		DeleteFunc: func(obj interface{}) {
+		        _, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+			if err == nil {
+			   controller.deleteFoo(obj)
+			}
+		},*/
 	})
 	return controller
 }
@@ -294,6 +302,16 @@ func (c *Controller) handleObject(obj interface{}) {
 	}
 }
 
+
+func (c *Controller) deleteFoo(obj interface{}) {
+
+	fmt.Println("Inside delete Foo")
+
+	var err error
+	if _, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
+	   panic(err)
+	}
+}
 
 // syncHandler compares the actual state with the desired, and attempts to
 // converge the two. It then updates the Status block of the Foo resource
