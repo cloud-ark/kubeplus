@@ -5,6 +5,9 @@ if [ "$#" -ne 1 ]; then
    exit
 fi
 
+mkdir -p vendor/k8s.io/gengo/boilerplate
+cp boilerplate.go.txt vendor/k8s.io/gengo/boilerplate/.
+
 cp $1/types.go typedir/.
 cd typedir
 sed -E '/PersistentVolumeClaim|Affinity|ObjectMeta|ListMeta|LocalObjectReference|Time/s/^/\/\//' types.go > types1.go
