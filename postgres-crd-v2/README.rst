@@ -86,7 +86,7 @@ Actual steps:
 
 2) Install dependencies:
 
-   - cd $GOPATH/src/github.com/cloud-ark/kubeplus
+   - cd $GOPATH/src/github.com/cloud-ark/kubeplus/postgres-crd-v2
 
    - dep ensure
 
@@ -94,23 +94,26 @@ Actual steps:
 
    - cd $GOPATH/src/github.com/cloud-ark/kubeplus/postgres-crd-v2
 
-   - Run from Host machine:
+   - Follow either one of the following 3 options:
+
+     A] Run from Host machine:
      
-     - go run *.go -kubeconfig=$HOME/.kube/config
+        - export HOST_IP=`minikube ip`
+        - go run *.go -kubeconfig=$HOME/.kube/config
 
-   - Deploy the controller as a Deployment in the cluster using
-     controller Docker image built locally
+     B] Deploy the controller as a Deployment in the cluster using
+        controller Docker image built locally
      
-     - ./build-local-deploy-artifacts.sh
+         - ./build-local-deploy-artifacts.sh
      
-     - cd artifacts/deployment
+         - cd artifacts/deployment
 
-     - kubectl create -f deployment-minikube.yaml
+         - kubectl create -f deployment-minikube.yaml
 
-   - Deploy the controller with Helm chart (here the controller
-     Docker image is pulled from Docker hub)
+     C] Deploy the controller with Helm chart (here the controller
+        Docker image is pulled from Docker hub)
 
-     - helm install ./postgres-crd-v2-chart
+        - helm install ./postgres-crd-v2-chart
 
 4) In another shell window check that Postgres CRD has been registered.
 
