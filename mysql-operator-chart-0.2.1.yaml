@@ -1,0 +1,9 @@
+apiVersion: operatorcontroller.kubeplus/v1
+kind: Operator
+metadata:
+  name: mysql-operator-0.2.1
+spec:
+  name: mysql-operator-0.2.1
+  chartURL: https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-chart-0.2.1.tgz?raw=true
+
+

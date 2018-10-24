@@ -1,0 +1,15 @@
+apiVersion: operatorcontroller.kubeplus/v1
+kind: Operator
+metadata:
+  name: postgres-operator
+spec:
+  name: postgres-operator
+  chartURL: https://github.com/cloud-ark/operatorcharts/blob/master/postgres-crd-v2-chart-0.0.2.tgz?raw=true
+---
+apiVersion: operatorcontroller.kubeplus/v1
+kind: Operator
+metadata:
+  name: mysql-operator-0.2.1
+spec:
+  name: mysql-operator-0.2.1
+  chartURL: https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-chart-0.2.1.tgz?raw=true
