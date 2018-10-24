@@ -19,19 +19,29 @@ Test:
 2. helm init
 
 3. Deploy Kubeplus
+
 - kubectl apply -f deploy
 - kubectl get pods
   -> Verify that 4 containers have come up successfully
 
-4. Create KubePlus Platform Stack consisting of Postgres Operator
-- more postgres-operator.yaml
-  -> Take a look at the Operator custom resource
-- kubectl create -f postgres-operator.yaml
+
+4. Create KubePlus Platform Stack consisting of Postgres Operator and MySQL Operator
+
+- more paas.yaml
+- kubectl create -f paas.yaml
 - kubectl get operators
+
 - kubectl describe operators postgres-operator
 - kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
 - kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"
   --> You should see OpenAPI Spec for Postgres custom resource as output
+
+- kubectl describe operators mysql-operator-0.2.1
+- kubectl describe customresourcedefinition mysqlclusters.mysql.oracle.com
+- kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Cluster"
+  --> You should see OpenAPI Spec for Cluster custom resource as output
+
+
 
 5. Deploy application platform as Code containing Postgres custom resource
 - more platform.yaml
