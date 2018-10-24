@@ -25,7 +25,7 @@ Test:
   -> Verify that 4 containers have come up successfully
 
 
-4. Create KubePlus Platform Stack consisting of Postgres Operator and MySQL Operator
+4. Create KubePlus Custom PaaS consisting of Postgres Operator and MySQL Operator
 
 - more paas.yaml
 - kubectl create -f paas.yaml
