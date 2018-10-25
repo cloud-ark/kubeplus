@@ -1,22 +1,19 @@
 Setup:
 -------
-- Install Minikube v0.25.0
+- Install Minikube v0.25.0 or Minikube v0.28.0
   - curl -Lo minikube-0.25 https://storage.googleapis.com/minikube/releases/v0.25.0/minikube-linux-amd64
-- Install Docker
-- Install Golang 1.10.3
-  - wget https://dl.google.com/go/go1.10.3.linux-amd64.tar.gz
-  - sudo tar -C /usr/local -xzf go1.10.3.linux-amd64.tar.gz
-  - export PATH=$PATH:/usr/local/go/bin
-- Install Golang dependency management tool (dep)
+  - curl -Lo minikube-0.28 https://storage.googleapis.com/minikube/releases/v0.28.0/minikube-linux-amd64
+
 - Install Helm
 
 
 Test:
 -----
 
-1. minikube-0.25 start
+1. Start Minikube and run Helm
 
-2. helm init
+   - minikube-0.25 start
+   - helm init
 
 3. Deploy Kubeplus
 
@@ -25,25 +22,42 @@ Test:
   -> Verify that 4 containers have come up successfully
 
 
-4. Create KubePlus Custom PaaS consisting of Postgres Operator and MySQL Operator
+4. Create KubePlus Custom PaaS consisting of Postgres Operator, MySQL Operator and Moodle Operator
 
-- more paas.yaml
-- kubectl create -f paas.yaml
-- kubectl get operators
+   a) Deploy Postgres Operator
+      - kubectl create -f postgres-operator.yaml
 
-- kubectl describe operators postgres-operator
-- kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
-- kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"
-  --> You should see OpenAPI Spec for Postgres custom resource as output
+      - kubectl get operators
 
-- kubectl describe operators mysql-operator-0.2.1
-- kubectl describe customresourcedefinition mysqlclusters.mysql.oracle.com
-- kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Cluster"
-  --> You should see OpenAPI Spec for Cluster custom resource as output
+      - kubectl describe operators postgres-operator
+      - kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
+      - kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Postgres"
+        --> You should see OpenAPI Spec for Postgres custom resource as output
 
+    b) Deploy MySQL Operator
+       - kubectl create -f mysql-operator-chart-0.2.1.yaml
+       - kubectl describe operators mysql-operator-0.2.1
+       - kubectl describe customresourcedefinition mysqlclusters.mysql.oracle.com
+       - kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Cluster"
+         --> You should see OpenAPI Spec for Cluster custom resource as output
+
+    c) Deploy Moodle Operator
+       - kubectl create -f moodle-operator.yaml
+       - kubectl describe operators moodle-operator
+       - kubectl describe customresourcedefinition moodles.moodlecontroller.kubeplus
+       - kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?cr=Moodle"
+         --> You should see OpenAPI Spec for Moodle custom resource as output
+
+    Note: Creation of a custom PaaS by defining all the Operators in a single YAML
+          file is under work. Track this issue for status:
+
+	  https://github.com/cloud-ark/kubeplus/issues/95
+
+	  Add a comment to it/upvote it if you are interested in this support.
 
 
 5. Deploy application platform as Code containing Postgres custom resource
+
 - more platform.yaml
   -> platform.yaml defines a Postgres instance. There are two users and a database defined.
      When verifying, use the the username, password, and database name specified in the Spec.
@@ -62,11 +76,18 @@ Test:
 
 
 
-
-
-
 Development:
 -------------
+
+Apart from the Setup steps listed earlier, you will need to do following:
+
+- Install Docker
+- Install Golang 1.10.3
+  - wget https://dl.google.com/go/go1.10.3.linux-amd64.tar.gz
+  - sudo tar -C /usr/local -xzf go1.10.3.linux-amd64.tar.gz
+  - export PATH=$PATH:/usr/local/go/bin
+- Install Golang dependency management tool (dep)
+
 
 A] Start Minikube
 - minikube-0.25 start

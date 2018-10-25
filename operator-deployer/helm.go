@@ -293,8 +293,8 @@ func checkIfDeployed(chartURL string, rels []*release.Release) (bool, string, st
 	alreadyDeployed := false
 	var operatorName, operatorVersion string
 	for _, r := range rels {
-		name := r.GetChart().GetMetadata().GetName()
-		version := r.GetChart().GetMetadata().GetVersion()
+		name := strings.TrimSuffix(r.GetChart().GetMetadata().GetName(), "\n")
+		version := strings.TrimSuffix(r.GetChart().GetMetadata().GetVersion(), "\n")
 		fmt.Printf("Name:%s Version:%s\n", name, version)
 		nameAndVersion := name + "-" + version
 		//fmt.Printf("NameVersion:%s\n", nameAndVersion)
