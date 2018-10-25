@@ -159,8 +159,8 @@ func NewController(
 		UpdateFunc: func(old, new interface{}) {
 			newDepl := new.(*operatorv1.Operator)
 			oldDepl := old.(*operatorv1.Operator)
-			//fmt.Println("New Version:%s", newDepl.ResourceVersion)
-			//fmt.Println("Old Version:%s", oldDepl.ResourceVersion)
+			fmt.Println("New Version:%s", newDepl.ResourceVersion)
+			fmt.Println("Old Version:%s", oldDepl.ResourceVersion)
 			if newDepl.ResourceVersion == oldDepl.ResourceVersion {
 				// Periodic resync will send update events for all known Deployments.
 				// Two different versions of the same Deployment will always have different RVs.
@@ -349,7 +349,7 @@ func (c *Controller) syncHandler(key string) error {
 	fmt.Printf("Operator Name:%s\n", operatorName)
 	fmt.Printf("Chart URL:%s\n", operatorChartURL)
 
-	storeChartURL(operatorChartURL)
+	storeChartURL("/operatorsToInstall", operatorChartURL)
 
 	var operatorCRDString string
 	for {
@@ -368,29 +368,49 @@ func (c *Controller) syncHandler(key string) error {
     }
     fmt.Printf("OperatorCRD:%v\n", crds)
 
+    fmt.Println("Checking if OpenAPI Spec for the Operator is registered or not")
+    openAPISpecRegistered := isOpenAPISpecRegistered(operatorChartURL)
+
+    /*
     status := "READY"
     for _, crd := range crds {
     	if crd == "error" {
     		status = "ERROR"
     	}
     }
+    */
 
-    if status == "READY" {
+    if !openAPISpecRegistered {
+       fmt.Println("OpenAPI Spec for the Operator not registered.")
+    //if status == "READY" {
 	    operatorName, _ := parseChartNameVersion(operatorChartURL)
-    	operatorOpenAPIConfigMapName := uploadOperatorOpenAPISpec(operatorChartURL, c.kubeclientset)
-    	saveOperatorData(operatorName, crds, operatorOpenAPIConfigMapName)
+    	    operatorOpenAPIConfigMapName := uploadOperatorOpenAPISpec(operatorChartURL, c.kubeclientset)
+    	    saveOperatorData(operatorName, crds, operatorOpenAPIConfigMapName)
+	    recordOpenAPISpecRegistration(operatorChartURL)
+	    
+	    status := "READY"
+    	    c.updateFooStatus(foo, &crds, status)
     }
+    fmt.Println("OpenAPI Spec for the Operator already registered.")
 
-    c.updateFooStatus(foo, &crds, status)
+    c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
+    return nil
+}
 
-	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
-	return nil
+func isOpenAPISpecRegistered(operatorChartURL string) bool {
+     resourceKey := "/openAPISpecRegistered"     
+     operatorPresent := checkIfOperatorURLPresentInETCD(resourceKey, operatorChartURL)
+     return operatorPresent
+}
+
+func recordOpenAPISpecRegistration(operatorChartURL string) {
+     resourceKey := "/openAPISpecRegistered"
+     storeChartURL(resourceKey, operatorChartURL)
 }
 
 func saveOperatorData(operatorName string, crds []string, operatorOpenAPIConfigMapName string) {
 
 	resourceKey := "/operators"
-
 	var operatorDataMap = make(map[string]interface{})
 	var operatorMap = make(map[string]map[string]interface{})
 	var operatorMapList = make([]map[string]map[string]interface{}, 0)
@@ -473,15 +493,11 @@ func storeEtcd(resourceKey string, resourceData interface{}) {
 	fmt.Println("Exiting storeEtcd")
 }
 
-
 func uploadOperatorOpenAPISpec(chartURL string, kubeclientset kubernetes.Interface) string {
 	fmt.Println("Entering uploadOperatorOpenAPISpec")
-
 	extractOperatorChart(chartURL)
 	chartConfigMapName := createConfigMap(chartURL, kubeclientset)
-
 	fmt.Println("Exiting uploadOperatorOpenAPISpec")
-
 	return chartConfigMapName
 }
 
@@ -491,10 +507,12 @@ func extractOperatorChart(chartURL string) {
 	chartName, _ := parseChartNameVersion(chartURL)
 
 	chartTarFile := chartName + ".tar"
+	fmt.Printf("Chart tgz file name:%s\n", chartTarFile)
 	out, err := os.Create(chartTarFile)
 	defer out.Close()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
+		//panic(err)
 	}
 
 	resp, err := http.Get(chartURL)
@@ -518,13 +536,15 @@ func extractOperatorChart(chartURL string) {
 		log.Fatal(err)
 	}
 
-	//fmt.Println("ABC")
+	fmt.Println("Read tgz file in buffer")
 
-	//fmt.Printf("Name: %s\nComment: %s\nModTime: %s\n\n", zr.Name, zr.Comment, zr.ModTime.UTC())
+	fmt.Printf("Name: %s\nComment: %s\nModTime: %s\n\n", zr.Name, zr.Comment, zr.ModTime.UTC())
 
 	if _, err := io.Copy(out, zr); err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Println("Saving tgz buffer to file")
 
 	if err := zr.Close(); err != nil {
 		log.Fatal(err)
@@ -566,7 +586,7 @@ func extractOperatorChart(chartURL string) {
 
     os.Chdir(currentDir)
 
-	fmt.Println("Exiting extractOperatorChart")
+    fmt.Println("Exiting extractOperatorChart")
 }
 
 func createConfigMap(chartURL string, kubeclientset kubernetes.Interface) string {
@@ -648,8 +668,7 @@ func parseChartNameVersion(chartURL string) (string, string) {
 	return name, version
 }
 
-
-func storeChartURL(chartURL string) {
+func storeChartURL(resourceKey, chartURL string) {
 	fmt.Println("Entering storeChartURL")
 	cfg := client.Config{
 		Endpoints: []string{etcdServiceURL},
@@ -662,7 +681,45 @@ func storeChartURL(chartURL string) {
 	}
 	kapi := client.NewKeysAPI(c)
 	
-	resourceKey := "/operatorsToInstall"
+	//resourceKey := "/operatorsToInstall"
+
+	operatorPresent := checkIfOperatorURLPresentInETCD(resourceKey, chartURL)
+
+	var operatorList []string
+	if !operatorPresent {
+	    operatorList = append(operatorList, chartURL)		
+	}
+
+    	jsonOperatorList, err2 := json.Marshal(&operatorList)
+    	if err2 != nil {
+           panic (err2)
+    	}
+    	resourceValue := string(jsonOperatorList)
+    	fmt.Printf("Resource Value:%s\n", resourceValue)
+
+	fmt.Printf("Setting %s->%s\n",resourceKey, resourceValue)
+	resp, err1 := kapi.Set(context.Background(), resourceKey, resourceValue, nil)
+	if err1 != nil {
+		log.Fatal(err)
+	} else {
+		// print common key info
+		log.Printf("Set is done. Metadata is %q\n", resp.Node.Value)
+	}
+	fmt.Println("Exiting storeChartURL")
+}
+
+func checkIfOperatorURLPresentInETCD(resourceKey, chartURL string) bool {
+     fmt.Println("Entering checkIfOperatorURLPresent")
+     	cfg := client.Config{
+		Endpoints: []string{etcdServiceURL},
+		Transport: client.DefaultTransport,
+	}
+	c, err := client.New(cfg)
+	if err != nil {
+//		log.Fatal(err)
+		fmt.Errorf("Error: %v", err)
+	}
+	kapi := client.NewKeysAPI(c)
 
 	var currentListString string
 //	currentListString = make([]string, 0)
@@ -681,9 +738,9 @@ func storeChartURL(chartURL string) {
 		fmt.Printf("CurrentListString:%s\n", currentListString)
 
 		if err = json.Unmarshal([]byte(currentListString), &operatorList); err != nil {
-    	    panic(err)
-    	}
-    	fmt.Printf("OperatorList:%v\n", operatorList)
+    		   panic(err)
+    		}
+	    	fmt.Printf("OperatorList:%v\n", operatorList)
 	}
 
 	operatorPresent := false
@@ -692,26 +749,9 @@ func storeChartURL(chartURL string) {
 			operatorPresent = true
 		}
 	}
-	if !operatorPresent {
-	    operatorList = append(operatorList, chartURL)		
-	}
 
-    jsonOperatorList, err2 := json.Marshal(&operatorList)
-    if err2 != nil {
-        panic (err2)
-    }
-    resourceValue := string(jsonOperatorList)
-    fmt.Printf("Resource Value:%s\n", resourceValue)
-
-	fmt.Printf("Setting %s->%s\n",resourceKey, resourceValue)
-	resp, err = kapi.Set(context.Background(), resourceKey, resourceValue, nil)
-	if err != nil {
-		log.Fatal(err)
-	} else {
-		// print common key info
-		log.Printf("Set is done. Metadata is %q\n", resp.Node.Value)
-	}
-	fmt.Println("Exiting storeChartURL")
+     	fmt.Println("Exiting checkIfOperatorURLPresent")
+	return operatorPresent
 }
 
 func getOperatorCRDs(chartURL string) string {
