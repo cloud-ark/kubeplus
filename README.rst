@@ -2,38 +2,32 @@
 KubePlus
 =========
 
-KubePlus is an open technology designed to deliver Platforms as Code experience
-utilizing Kubernetes Operators.
+KubePlus delivers application `Platform as Code`__ on Kubernetes.
+
+.. _pac: https://medium.com/@cloudark/evolution-of-paases-to-platform-as-code-in-kubernetes-world-74464b0013ca
+
+__ pac_
 
 
-Why Platform-as-Code
-=======================
+KubePlus Platform Kit
+======================
 
 One of the key reasons for Kubernetes’s popularity is its extendibility.
-Kubernetes Operators_ extend Kubernetes API to manage
+`Kubernetes Operators`__ extend Kubernetes API to manage
 third-party software as native Kubernetes objects. Today, number of Operators are
 being built for middlewares like databases, queues, loggers, etc. This has led to
 tremendous choice in the platform elements for building application platforms
-on Kubernetes, making pre-built PaaS a less attractive option. Current popular
+on Kubernetes making pre-built PaaS a less attractive option. Current popular
 approach is to ‘self-assemble’ platform stacks using Kubernetes Operators of
 choice. This approach requires significant efforts and there is 
 lack of consistent user experience across multiple Operators.
 
 .. _Operators: https://medium.com/@cloudark/why-to-write-kubernetes-operators-9b1e32a24814
 
-With Kubernetes Operators it is now possible to create application platforms as Code.
+__ Operators_
 
 
-Demo
-====
-
-KubePlus in Action: https://drive.google.com/file/d/1jDptIWM8fiAorlZdW-pwOMttxAQAZHIR/view
-
-
-KubePlus Platform Kit
-======================
-
-KubePlus Platform Kit is designed to deliver `Platform as Code`__ experience utilizing 
+KubePlus Platform Kit is designed to deliver Platform-as-Code experience utilizing
 Kubernetes Operators. Using KubePlus Platform Kit,
 
 * Cluster Administrator constructs a custom PaaS comprised of required Kubernetes Operators.
@@ -41,12 +35,7 @@ Kubernetes Operators. Using KubePlus Platform Kit,
 * Application developer declares and creates application platforms as code leveraging custom resources
   introduced by the installed Operators.
 
-.. _pac: https://medium.com/@cloudark/evolution-of-paases-to-platform-as-code-in-kubernetes-world-74464b0013ca
-
-__ pac_
-
-
-We bring consistency across multiple Kubernetes Operators with our Operator development guidelines_. 
+We bring consistency of usage across multiple Operators with our Operator development guidelines_.
 Teams can Build their Own PaaSes on Kubernetes selecting required Operators 
 from our `repository of certified Operators`__ packaged as Helm charts.
 
@@ -62,9 +51,14 @@ __ repository_
    :align: center
 
 
-KubePlus does not introduce any new CLI. KubePlus users continue to use the
-standard Kubernetes CLI (kubectl) and YAML definition format to manage their extended platforms. 
+Demo
+====
 
+https://drive.google.com/file/d/1jDptIWM8fiAorlZdW-pwOMttxAQAZHIR/view
+
+
+Usage
+======
 
 KubePlus is designed with 3 user personas in mind. 
 
@@ -74,11 +68,14 @@ KubePlus is designed with 3 user personas in mind.
 
 *3. Application developer*
 
+KubePlus does not introduce any new CLI. KubePlus users continue to use the
+standard Kubernetes CLI (kubectl) and YAML definition format to manage their platforms.
+
+
  
 .. image:: ./docs/KubePlus-Platform-Kit.jpg
    :scale: 75%
    :align: center
-
 
 
 Value of KubePlus
@@ -152,15 +149,24 @@ We provide deployment YAMLs for deploying KubePlus.
 
   ``$ kubectl apply -f deploy/``
 
+Check KubePlus is ready
+
+  ``$ kubectl get pods``
+
+KubePlus consists of 4 containers - operator-manager, operator-deployer, kube-discovery-apiserver, etcd.
+Wait till all 4 containers come up and are in 'Running' state (4/4 READY).
 
 **2) Create custom PaaS (by cluster administrator)**
 
 
-a) Once core KubePlus components (Operator Manager and Discovery Manager) are installed on the cluster, Kubernetes cluster administrators define Kubernetes Operators to be installed in a `yaml files (e.g.: Postgres)`__ and then use following kubectl commands: 
+a) Once core KubePlus is READY, Kubernetes cluster administrators define Kubernetes Operators to be installed in yaml files (e.g.: Postgres_, MySQL_, Moodle_) 
+and use following kubectl commands:
 
-.. _operatoryaml: https://github.com/cloud-ark/kubeplus/blob/master/postgres-operator.yaml
+.. _Postgres: https://github.com/cloud-ark/kubeplus/blob/master/postgres-operator.yaml
 
-__ operatoryaml_
+.. _MySQL: https://github.com/cloud-ark/kubeplus/blob/master/mysql-operator-chart-0.2.1.yaml
+
+.. _Moodle: https://github.com/cloud-ark/kubeplus/blob/master/moodle-operator.yaml
 
 
 b) Deploy/install Operators:
@@ -177,7 +183,7 @@ c) Find out all the installed Operators:
 **3) Create Application Platform as Code (by application developer)**
 
 Kubernetes application developers can create/delete/update/list the newly added 
-custom resources by using kubectl CLI:
+custom resources by using kubectl CLI using following commands:
 
 a) Find out custom resources managed by an Operator:
 
@@ -187,7 +193,7 @@ a) Find out custom resources managed by an Operator:
 
 b) Find out details about a Custom Resource's Spec definition:
 
-  ``$ kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?cr=Postgres"``
+  ``$ kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres"``
 
 c) Define application Platform elements_:
 
@@ -227,16 +233,23 @@ Available Operators
 https://github.com/cloud-ark/operatorcharts
 
 
-If you are interested in building your own operators, you can follow steps here_:
+If you are interested in building your own operators, you can follow steps here_.
 
 .. _here: https://github.com/cloud-ark/kubeplus/issues/14
 
+You can also use tools like kubebuilder_ or `Operator SDK`__ to build your Operator.
+
+.. _kubebuilder: https://github.com/kubernetes-sigs/kubebuilder
+
+.. _sdk: https://github.com/operator-framework/operator-sdk
+
+__ sdk_
 
 
 Issues
 ======
 
-Suggestions/Issues are welcome_
+Suggestions/Issues are welcome_.
 
 .. _welcome: https://github.com/cloud-ark/kubeplus/issues
 
