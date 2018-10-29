@@ -2,7 +2,7 @@
 KubePlus
 =========
 
-KubePlus delivers application `Platform as Code`__ on Kubernetes.
+KubePlus delivers `Platform as Code`__ experience on Kubernetes.
 
 .. _pac: https://medium.com/@cloudark/evolution-of-paases-to-platform-as-code-in-kubernetes-world-74464b0013ca
 

@@ -15,14 +15,14 @@ Test:
    - minikube-0.25 start
    - helm init
 
-3. Deploy Kubeplus
+2. Deploy Kubeplus
 
 - kubectl apply -f deploy
 - kubectl get pods
   -> Verify that 4 containers have come up successfully
 
 
-4. Create KubePlus Custom PaaS consisting of Postgres Operator, MySQL Operator and Moodle Operator
+3. Create KubePlus Custom PaaS consisting of Postgres Operator, MySQL Operator and Moodle Operator
 
    a) Deploy Postgres Operator
       - kubectl create -f postgres-operator.yaml
@@ -56,7 +56,7 @@ Test:
 	  Add a comment to it/upvote it if you are interested in this support.
 
 
-5. Deploy application platform as Code containing Postgres custom resource
+4. Deploy application platform as Code containing Postgres custom resource
 
 - more platform.yaml
   -> platform.yaml defines a Postgres instance. There are two users and a database defined.
