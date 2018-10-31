@@ -208,7 +208,7 @@ d) Create application Platform:
 
 e) Find out dynamic composition tree for Postgres custom resource instance:
 
-  ``$ kubectl get --raw "/apis/kubeplus.cloudark.io/v1/describe?kind=Postgres&instance=postgres1" | python -mjson.tool``
+  ``$ kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Postgres&instance=postgres1" | python -mjson.tool``
 
 
 
