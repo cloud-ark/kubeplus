@@ -21,7 +21,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"os"
 
 	"database/sql"
 	_ "github.com/lib/pq"
@@ -71,7 +70,6 @@ const (
 
 var (
 	PGPASSWORD  = "mysecretpassword"
-	HOST_IP = os.Getenv("HOST_IP")
 )
 
 // Controller is the controller implementation for Foo resources
@@ -624,14 +622,19 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 		panic(err1)
 	}
 	fmt.Printf("Created service %q.\n", result1.GetObjectMeta().GetName())
-
+	//fmt.Printf("Service object:%v\n", result1)
+	fmt.Println("---")
+	fmt.Printf("ClusterIP:%s\n", result1.Spec.ClusterIP)
+	serviceIP := result1.Spec.ClusterIP
 	// Parse ServiceIP and Port
-	serviceIP := HOST_IP
-	fmt.Println("HOST IP:%s", serviceIP)
+	fmt.Printf("Service IP:%s\n", serviceIP)
 
 	nodePort1 := result1.Spec.Ports[0].NodePort
 	nodePort := fmt.Sprint(nodePort1)
-	servicePort := nodePort
+	fmt.Printf("Node Port:%s\n", nodePort)
+	servicePort := "5432"
+	fmt.Printf("Service Port:%s\n", servicePort)
+	//servicePort := nodePort
 
 	//time.Sleep(time.Second * 5)
 
@@ -676,7 +679,7 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 		setupDatabase(serviceIP, servicePort, setupCommands, databases)
 	}
 
-	verifyCmd := strings.Fields("psql -h " + serviceIP + " -p " + nodePort + " -U <user> " + " -d <db-name>")
+	verifyCmd := strings.Fields("psql -h <IP of the HOST> -p " + nodePort + " -U <user> " + " -d <db-name>")
 	var verifyCmdString = strings.Join(verifyCmd, " ")
 	fmt.Printf("VerifyCmd: %v\n", verifyCmd)
 	return serviceIP, servicePort, allCommands, databases, users, verifyCmdString

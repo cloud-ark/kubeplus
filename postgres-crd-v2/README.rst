@@ -98,7 +98,6 @@ Actual steps:
 
      A] Run from Host machine:
      
-        - export HOST_IP=`minikube ip`
         - go run *.go -kubeconfig=$HOME/.kube/config
 
      B] Deploy the controller as a Deployment in the cluster using
@@ -167,9 +166,9 @@ Verify:
 
 3) kubectl describe postgres client25
 
-4) psql -h <IP> -p <port> -U <username> -d <db-name>
+4) psql -h <IP of the Host> -p <port> -U <username> -d <db-name>
    - When prompted for password, enter <password>
-   - IP: Minikube IP
+   - IP: Minikube IP (find using 'minikube ip' command)
    - port: Port of the exposed Service
    - username: Name of the user from artifacts/examples/initializeclient.yaml
    - db-name: Name of the database from setupCommands artifacts/examples/initializeclient.yaml
