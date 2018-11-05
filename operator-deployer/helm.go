@@ -26,6 +26,7 @@ import (
 	"log"
 	"context"
 	"strings"
+	"github.com/ghodss/yaml"
 	//_ "k8s.io/apimachinery"
 )
 
@@ -54,7 +55,7 @@ func init() {
 func configForContext(context string, kubeconfig string) (*rest.Config, error) {
 	config, err := kube.GetConfig(context, kubeconfig).ClientConfig()
 	if err != nil {
-		return nil, fmt.Errorf("could not get Kubernetes config for context %q: %s", context, err)
+		return nil, fmt.Printf("could not get Kubernetes config for context %q: %s", context, err)
 	}
 	return config, nil
 }
@@ -67,7 +68,7 @@ func getKubeClient1(context string, kubeconfig string) (*rest.Config, kubernetes
 	}
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not get Kubernetes client: %s", err)
+		return nil, nil, fmt.Printf("could not get Kubernetes client: %s", err)
 	}
 	return config, client, nil
 }
@@ -93,7 +94,7 @@ func setupConnection() error {
 		//config, client, err := getKubeClient(settings.KubeContext, settings.KubeConfig)
 		config, client, err := getKubeClient()
 		if err != nil {
-			fmt.Errorf("Error: %v", err)
+			fmt.Printf("Error: %v", err)
 			errToReturn = err
 		}
 		//fmt.Println("Config:%v", config)
@@ -171,7 +172,7 @@ func main() {
 					helm.ReleaseListNamespace("default"),
 				)
 				if err != nil {
-					fmt.Errorf("Error: %v", err)
+					fmt.Printf("Error: %v", err)
 				}
 				//fmt.Println("Releases: %v", releases)
 
@@ -200,10 +201,15 @@ func main() {
 					cmd := &cobra.Command{}
 					out := cmd.OutOrStdout()
 
-					err1, crds := newInstallCmd(helmClient, out, chartURL)
+					err, chartValues := getChartValues(chartURL)
+					if err != nil {
+					   panic(err)
+					}
+					fmt.Printf("ChartValues:%v\n", chartValues)
+					err1, crds := newInstallCmd(helmClient, out, chartURL, chartValues)
 					if err1 != nil {
 						fmt.Println("%%%%%%%%%")
-						fmt.Errorf("Error: %v", err1)
+						fmt.Printf("Error: %v", err1)
 						fmt.Println("%%%%%%%%%")
 						errorString := string(err1.Error())
 						// Save Error in Etcd
@@ -225,6 +231,43 @@ func main() {
 //	return nil
 }
 
+func getChartValues(chartURL string) (error, []byte) {
+        valuesData := make([]byte, 0)
+	cfg := client.Config{
+		Endpoints: []string{etcdServiceURL},
+		Transport: client.DefaultTransport,
+	}
+	c, err := client.New(cfg)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	kapi := client.NewKeysAPI(c)
+
+	resourceKey := "/chartvalues/" + chartURL
+
+	resp, err1 := kapi.Get(context.Background(), resourceKey, nil)
+	if err1 != nil {
+		fmt.Printf("Error: %v\n", err1)
+		return err1, valuesData
+	} else {
+		log.Printf("Get is done. Metadata is %q\n", resp)
+		log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
+		valuesString := resp.Node.Value
+		fmt.Printf("ValuesString:%s\n", valuesString)
+
+		valuesMap := map[string]interface{}{}
+		if err = json.Unmarshal([]byte(valuesString), &valuesMap); err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
+		fmt.Printf("ValuesMap:%v\n", valuesMap)
+		valuesData, err1 := yaml.Marshal(valuesMap)
+		if err1 != nil {
+		   return err1, valuesData
+		}
+		return nil, valuesData
+	}
+}
+
 func getOperatorChartList() []string {
 	cfg := client.Config{
 		Endpoints: []string{etcdServiceURL},
@@ -232,7 +275,7 @@ func getOperatorChartList() []string {
 	}
 	c, err := client.New(cfg)
 	if err != nil {
-		fmt.Errorf("Error: %v", err)
+		fmt.Printf("Error: %v\n", err)
 	}
 	kapi := client.NewKeysAPI(c)
 
@@ -240,7 +283,7 @@ func getOperatorChartList() []string {
 
 	resp, err1 := kapi.Get(context.Background(), resourceKey, nil)
 	if err1 != nil {
-		fmt.Errorf("Error: %v", err1)
+		fmt.Printf("Error: %v\n", err1)
 		return []string{}
 	} else {
 		log.Printf("Get is done. Metadata is %q\n", resp)
@@ -250,7 +293,7 @@ func getOperatorChartList() []string {
 
 		var operatorChartList []string
 		if err = json.Unmarshal([]byte(operatorListString), &operatorChartList); err != nil {
-			fmt.Errorf("Error: %v", err)
+			fmt.Printf("Error: %v", err)
 		}
 		fmt.Printf("OperatorList:%v\n", operatorChartList)
 		return operatorChartList
@@ -265,7 +308,7 @@ func saveOperatorCRDs(chartURL string, contents []string) {
 	}
 	c, err := client.New(cfg)
 	if err != nil {
-		fmt.Errorf("Error: %v", err)
+		fmt.Printf("Error: %v", err)
 	}
 	kapi := client.NewKeysAPI(c)
 
@@ -273,7 +316,7 @@ func saveOperatorCRDs(chartURL string, contents []string) {
 
 	jsonContents, err2 := json.Marshal(&contents)
 	if err2 != nil {
-		fmt.Errorf("Error: %v", err2)
+		fmt.Printf("Error: %v", err2)
 	}
 	resourceValue := string(jsonContents)
 	fmt.Printf("Resource Value:%s\n", resourceValue)
@@ -281,7 +324,7 @@ func saveOperatorCRDs(chartURL string, contents []string) {
 	fmt.Printf("Setting %s->%s\n", resourceKey, resourceValue)
 	resp, err3 := kapi.Set(context.Background(), resourceKey, resourceValue, nil)
 	if err3 != nil {
-		fmt.Errorf("Error: %v", err3)
+		fmt.Printf("Error: %v", err3)
 	} else {
 		// print common key info
 		log.Printf("Set is done. Metadata is %q\n", resp.Node.Value)

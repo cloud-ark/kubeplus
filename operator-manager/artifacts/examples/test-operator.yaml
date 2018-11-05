@@ -5,3 +5,14 @@ metadata:
 spec:
   name: test-operator-1
   chartURL: https://s3-us-west-2.amazonaws.com/cloudark-helm-charts/postgres-crd-v2-chart-0.0.2.tgz
+  values:
+    HOST_IP: 192.123
+    key1:
+      name: abc
+      value: def
+    key3:
+      - name: foo
+        port: 80
+      - name: bar
+        port: 81
+

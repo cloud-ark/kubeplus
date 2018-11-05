@@ -23,6 +23,7 @@ type Operator struct {
 type OperatorSpec struct {
 	Name string `json:"name"`
 	ChartURL string `json:"chartURL"`
+	Values map[string]interface{} `json:"values"`
 }
 
 // OperatorStatus is the status for a Operator resource

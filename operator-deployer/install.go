@@ -166,7 +166,7 @@ func (v *valueFiles) Set(value string) error {
 }
 
 // Original newInsallCmd changed and reduced to work with operator-manager
-func newInstallCmd(c helm.Interface, out io.Writer, chartName string) (error, []string) {
+func newInstallCmd(c helm.Interface, out io.Writer, chartName string, chartValues []byte) (error, []string) {
 	inst := &installCmd{
 		out:    out,
 		client: c,
@@ -178,37 +178,40 @@ func newInstallCmd(c helm.Interface, out io.Writer, chartName string) (error, []
 	cp, err := locateChartPath(inst.repoURL, inst.username, inst.password, chartName, inst.version, inst.verify, inst.keyring,
 		inst.certFile, inst.keyFile, inst.caFile)
 	if err != nil {
-		fmt.Errorf("Error: %v", err)
+		fmt.Printf("Error: %v", err)
 	}
 	inst.chartPath = cp
 	fmt.Printf("Chart PATH:%s\n", cp)
 	//inst.client = ensureHelmClient(inst.client)
-	err1, crds := inst.run()
+	err1, crds := inst.run(chartValues)
 	if err1 != nil {
 		fmt.Println("***********************************")
-		fmt.Errorf("Error: %v", err1)
+		fmt.Printf("Error: %v", err1)
 		fmt.Println("***********************************")
 		return err1, []string{}
 	}
 	return nil, crds
 }
 
-func (i *installCmd) run() (error, []string) {
+func (i *installCmd) run(rawVals []byte) (error, []string) {
 	fmt.Println("CHART PATH: %s\n", i.chartPath)
-
+	fmt.Println("Chart Values:%v\n", rawVals)
 	crds := make([]string, 0)
 
 	if i.namespace == "" {
 		i.namespace = defaultNamespace()
 	}
 
+	//rawVals, err := yaml.Marshal(base)
+
+	/*
 	rawVals, err := vals(i.valueFiles, i.values, i.stringValues, i.fileValues, i.certFile, i.keyFile, i.caFile)
 	if err != nil {
 		return err, crds
 	}
-
-	// If template is specified, try to run the template.
+	*/
 	if i.nameTemplate != "" {
+	        var err error
 		i.name, err = generateName(i.nameTemplate)
 		if err != nil {
 			return err, crds
@@ -255,7 +258,7 @@ func (i *installCmd) run() (error, []string) {
 			}
 		}
 	} else if err != chartutil.ErrRequirementsNotFound {
-		return fmt.Errorf("cannot load requirements: %v", err), crds
+		return fmt.Printf("cannot load requirements: %v\n", err), crds
 	}
 
 	//fmt.Println("1")
@@ -384,7 +387,7 @@ func vals(valueFiles valueFiles, values []string, stringValues []string, fileVal
 		}
 
 		if err := yaml.Unmarshal(bytes, &currentMap); err != nil {
-			return []byte{}, fmt.Errorf("failed to parse %s: %s", filePath, err)
+			return []byte{}, fmt.Printf("failed to parse %s: %s\n", filePath, err)
 		}
 		// Merge with the previous map
 		base = mergeValues(base, currentMap)
@@ -393,14 +396,14 @@ func vals(valueFiles valueFiles, values []string, stringValues []string, fileVal
 	// User specified a value via --set
 	for _, value := range values {
 		if err := strvals.ParseInto(value, base); err != nil {
-			return []byte{}, fmt.Errorf("failed parsing --set data: %s", err)
+			return []byte{}, fmt.Printf("failed parsing --set data: %s\n", err)
 		}
 	}
 
 	// User specified a value via --set-string
 	for _, value := range stringValues {
 		if err := strvals.ParseIntoString(value, base); err != nil {
-			return []byte{}, fmt.Errorf("failed parsing --set-string data: %s", err)
+			return []byte{}, fmt.Printf("failed parsing --set-string data: %s\n", err)
 		}
 	}
 
@@ -411,7 +414,7 @@ func vals(valueFiles valueFiles, values []string, stringValues []string, fileVal
 			return string(bytes), err
 		}
 		if err := strvals.ParseIntoFile(value, base, reader); err != nil {
-			return []byte{}, fmt.Errorf("failed parsing --set-file data: %s", err)
+			return []byte{}, fmt.Printf("failed parsing --set-file data: %s", err)
 		}
 	}
 
