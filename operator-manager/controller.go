@@ -345,11 +345,15 @@ func (c *Controller) syncHandler(key string) error {
 
 	operatorName := foo.Spec.Name
 	operatorChartURL := foo.Spec.ChartURL
+	operatorChartValues := foo.Spec.Values
 
 	fmt.Printf("Operator Name:%s\n", operatorName)
 	fmt.Printf("Chart URL:%s\n", operatorChartURL)
+	fmt.Printf("Values:%v\n", operatorChartValues)
 
 	storeChartURL("/operatorsToInstall", operatorChartURL)
+
+	storeEtcd("/chartvalues/" + operatorChartURL, operatorChartValues)
 
 	var operatorCRDString string
 	for {
@@ -360,7 +364,7 @@ func (c *Controller) syncHandler(key string) error {
 		time.Sleep(time.Second * 5)
 	}
 
-	//fmt.Printf("OperatorCRDString:%s\n", operatorCRDString)
+	fmt.Printf("OperatorCRDString:%s\n", operatorCRDString)
 
 	crds := make([]string, 0)
 	if err := json.Unmarshal([]byte(operatorCRDString), &crds); err != nil {

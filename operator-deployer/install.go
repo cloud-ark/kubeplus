@@ -166,7 +166,7 @@ func (v *valueFiles) Set(value string) error {
 }
 
 // Original newInsallCmd changed and reduced to work with operator-manager
-func newInstallCmd(c helm.Interface, out io.Writer, chartName string) (error, []string) {
+func newInstallCmd(c helm.Interface, out io.Writer, chartName string, chartValues []byte) (error, []string) {
 	inst := &installCmd{
 		out:    out,
 		client: c,
@@ -178,37 +178,46 @@ func newInstallCmd(c helm.Interface, out io.Writer, chartName string) (error, []
 	cp, err := locateChartPath(inst.repoURL, inst.username, inst.password, chartName, inst.version, inst.verify, inst.keyring,
 		inst.certFile, inst.keyFile, inst.caFile)
 	if err != nil {
-		fmt.Errorf("Error: %v", err)
+		fmt.Printf("Error: %v", err)
 	}
 	inst.chartPath = cp
 	fmt.Printf("Chart PATH:%s\n", cp)
 	//inst.client = ensureHelmClient(inst.client)
-	err1, crds := inst.run()
+	err1, crds := inst.run(chartValues)
 	if err1 != nil {
 		fmt.Println("***********************************")
-		fmt.Errorf("Error: %v", err1)
+		fmt.Printf("Error: %v", err1)
 		fmt.Println("***********************************")
 		return err1, []string{}
 	}
 	return nil, crds
 }
 
-func (i *installCmd) run() (error, []string) {
+func (i *installCmd) run(rawVals []byte) (error, []string) {
 	fmt.Println("CHART PATH: %s\n", i.chartPath)
-
+	str1 := fmt.Sprintf("%s", rawVals)
+	fmt.Println("Chart Values:%s\n", str1)
 	crds := make([]string, 0)
 
 	if i.namespace == "" {
 		i.namespace = defaultNamespace()
 	}
 
+	/*
+	valuesArray := make([]string, 1)
+	valuesArray[0] = "HOST_IP=192.168.99.100"
+	i.values = valuesArray
+
 	rawVals, err := vals(i.valueFiles, i.values, i.stringValues, i.fileValues, i.certFile, i.keyFile, i.caFile)
+	fmt.Println("Chart Values 2:%v\n", rawVals)
+
 	if err != nil {
 		return err, crds
 	}
+	*/
 
-	// If template is specified, try to run the template.
 	if i.nameTemplate != "" {
+	        var err error
 		i.name, err = generateName(i.nameTemplate)
 		if err != nil {
 			return err, crds
@@ -225,7 +234,7 @@ func (i *installCmd) run() (error, []string) {
 		return err, crds
 	}
 
-	//fmt.Println("-2")
+	fmt.Println("-2")
 
 	if req, err := chartutil.LoadRequirements(chartRequested); err == nil {
 		// If checkDependencies returns an error, we have unfulfilled dependencies.
@@ -255,10 +264,10 @@ func (i *installCmd) run() (error, []string) {
 			}
 		}
 	} else if err != chartutil.ErrRequirementsNotFound {
-		return fmt.Errorf("cannot load requirements: %v", err), crds
+		return fmt.Errorf("cannot load requirements: %v\n", err), crds
 	}
 
-	//fmt.Println("1")
+	fmt.Println("1")
 	res, err := i.client.InstallReleaseFromChart(
 		chartRequested,
 		i.namespace,
@@ -272,19 +281,20 @@ func (i *installCmd) run() (error, []string) {
 		helm.InstallWait(i.wait),
 		helm.InstallDescription(i.description))
 	if err != nil {
+	        fmt.Printf("Error1:%v\n", err)
 		return err, crds
 	}
-	//fmt.Println("2")
+	fmt.Println("2")
 
 	rel := res.GetRelease()
 
-	//fmt.Println("3")
+	fmt.Println("3")
 	if rel == nil {
 		return nil, crds
 	}
-	//fmt.Println("4")
+	fmt.Println("4")
 	i.printRelease(rel)
-	//fmt.Println("5")
+	fmt.Println("5")
 
 	// If this is a dry run, we can't display status.
 	/*if i.dryRun {
@@ -384,7 +394,7 @@ func vals(valueFiles valueFiles, values []string, stringValues []string, fileVal
 		}
 
 		if err := yaml.Unmarshal(bytes, &currentMap); err != nil {
-			return []byte{}, fmt.Errorf("failed to parse %s: %s", filePath, err)
+			return []byte{}, fmt.Errorf("failed to parse %s: %s\n", filePath, err)
 		}
 		// Merge with the previous map
 		base = mergeValues(base, currentMap)
@@ -393,14 +403,14 @@ func vals(valueFiles valueFiles, values []string, stringValues []string, fileVal
 	// User specified a value via --set
 	for _, value := range values {
 		if err := strvals.ParseInto(value, base); err != nil {
-			return []byte{}, fmt.Errorf("failed parsing --set data: %s", err)
+			return []byte{}, fmt.Errorf("failed parsing --set data: %s\n", err)
 		}
 	}
 
 	// User specified a value via --set-string
 	for _, value := range stringValues {
 		if err := strvals.ParseIntoString(value, base); err != nil {
-			return []byte{}, fmt.Errorf("failed parsing --set-string data: %s", err)
+			return []byte{}, fmt.Errorf("failed parsing --set-string data: %s\n", err)
 		}
 	}
 

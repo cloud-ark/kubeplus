@@ -1,0 +1,12 @@
+helm init
+kubectl apply -f kubeplus/deploy/
+
+Update moodle-operator.yaml with value of HOST_IP
+
+
+kubectl create -f moodle-operator.yaml
+kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"
+kubectl create -f moodle-mysql.yaml
+kubectl create -f moodle1.yaml
+kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1" | python -m json.tool
+kubectl apply -f update-moodle1.yaml

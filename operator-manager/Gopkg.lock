@@ -237,6 +237,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/mohae/deepcopy"
+  packages = ["."]
+  revision = "c48cc78d482608239f6c4c92a4abd87eb8761c90"
+
+[[projects]]
+  branch = "master"
   name = "github.com/nwaples/rardecode"
   packages = ["."]
   revision = "e06696f847aeda6f39a8f0b7cdff193b7690aef6"
@@ -641,6 +647,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e6017153d81fbb820f213368b919c8c4c44acface5783b2a46262715cbf54a11"
+  inputs-digest = "bedf3a0aa52121158566e16ef5de7ad3ed002da8b71284647b89e25c52f80d48"
   solver-name = "gps-cdcl"
   solver-version = 1
