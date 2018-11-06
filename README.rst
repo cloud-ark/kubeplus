@@ -211,6 +211,47 @@ e) Find out dynamic composition tree for Postgres custom resource instance:
   ``$ kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Postgres&instance=postgres1" | python -mjson.tool``
 
 
+Try Moodle on Real cluster (experimental):
+-------------------------------------------
+
+1) Create a AWS EC2 instance: t2.xlarge (4vCPUs, 16GB memory, 40 GB disk)
+
+2) Update the security group to allow traffic on port range 1-32000 from 0.0.0.0/0
+
+2) Login
+
+3) Switch user to root:
+   sudo su -
+
+4) git clone https://github.com/cloud-ark/kubeplus.git
+
+5) cd kubeplus
+
+6) ./setup-test-cluster.sh
+
+7) cd $HOME/goworkspace/src/k8s.io/kubernetes
+
+8) Edit hack/local-up-cluster.sh to include following:
+   - NODE_PORT_RANGE:"1-32000"
+   - ENABLE_HOST_PATH_PROVISIONER: "true"
+
+9) Start cluster
+   - export KUBERNETES_PROVIDER=local 
+   - nohup hack/local-up-cluster.sh &
+
+10) Start Helm
+    - push ~/kubeplus
+    - ./setup-helm.sh
+
+11) Deploy Kubeplus
+
+    - export PATH=$PATH:$HOME/goworkspace/src/k8s.io/kubernetes/cluster
+    - kubectl.sh apply -f deploy
+
+12) Deploy Moodle Operator and then create Moodle Instance
+
+    - Follow examples/moodle/steps.txt
+
 
 Operator Development Guidelines
 ================================
