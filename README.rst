@@ -214,7 +214,7 @@ e) Find out dynamic composition tree for Postgres custom resource instance:
 Try Moodle on Real cluster (experimental):
 -------------------------------------------
 
-1) Create a AWS EC2 instance: t2.xlarge (4vCPUs, 16GB memory, 40 GB disk)
+1) Create a AWS EC2 instance: t2.2xlarge (8vCPUs, 32GB memory, 40 GB disk)
 
 2) Update the security group to allow traffic on port range 1-32000 from 0.0.0.0/0
 
@@ -233,20 +233,21 @@ Try Moodle on Real cluster (experimental):
 
 8) Edit hack/local-up-cluster.sh to include following:
    - NODE_PORT_RANGE:"1-32000"
-   - ENABLE_HOST_PATH_PROVISIONER: "true"
+   - ENABLE_HOSTPATH_PROVISIONER: "true"
 
 9) Start cluster
+   - export PATH=$PATH:/usr/local/go/bin
    - export KUBERNETES_PROVIDER=local 
    - nohup hack/local-up-cluster.sh &
 
 10) Start Helm
-    - push ~/kubeplus
+    - export PATH=$PATH:$HOME/goworkspace/src/k8s.io/kubernetes/cluster
+    - pushd ~/kubeplus
     - ./setup-helm.sh
 
 11) Deploy Kubeplus
-
-    - export PATH=$PATH:$HOME/goworkspace/src/k8s.io/kubernetes/cluster
     - kubectl.sh apply -f deploy
+    - kubectl.sh get pods (wait till all KubePlus containers are READY)
 
 12) Deploy Moodle Operator and then create Moodle Instance
 

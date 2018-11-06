@@ -8,7 +8,7 @@ Then,
 - kubectl.sh create -f moodle-mysql.yaml
 - kubectl.sh get pods
 
-Once MySQL Pods are running,
+Once MySQL Pod is running and READY (1/1),
 - kubectl.sh create -f moodle1.yaml
 - kubectl.sh get pods
 
