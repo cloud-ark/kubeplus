@@ -1,12 +1,26 @@
-helm init
-kubectl apply -f kubeplus/deploy/
+#helm init
+#kubectl apply -f kubeplus/deploy/
 
-Update moodle-operator.yaml with value of HOST_IP
+Update moodle-operator.yaml with value of HOST_IP (public IP)
+Then,
+- kubectl.sh create -f moodle-operator.yaml
+- kubectl.sh get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"
+- kubectl.sh create -f moodle-mysql.yaml
+- kubectl.sh get pods
 
+Once MySQL Pods are running,
+- kubectl.sh create -f moodle1.yaml
+- kubectl.sh get pods
 
-kubectl create -f moodle-operator.yaml
-kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"
-kubectl create -f moodle-mysql.yaml
-kubectl create -f moodle1.yaml
-kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1" | python -m json.tool
-kubectl apply -f update-moodle1.yaml
+It may take about 5/6 minutes for Moodle Pod to become ready.
+Once Moodle Pod is ready,
+- kubectl.sh describe moodle moodle1
+
+Moodle instance status will contain IP address.
+Open it in browser. If the deployment is successful
+you should see Moodle login page.
+Login using username 'admin' and password defined in moodle1.yaml
+Then,
+
+- kubectl.sh get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1" | python -m json.tool
+
