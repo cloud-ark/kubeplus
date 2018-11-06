@@ -195,21 +195,27 @@ func newInstallCmd(c helm.Interface, out io.Writer, chartName string, chartValue
 
 func (i *installCmd) run(rawVals []byte) (error, []string) {
 	fmt.Println("CHART PATH: %s\n", i.chartPath)
-	fmt.Println("Chart Values:%v\n", rawVals)
+	str1 := fmt.Sprintf("%s", rawVals)
+	fmt.Println("Chart Values:%s\n", str1)
 	crds := make([]string, 0)
 
 	if i.namespace == "" {
 		i.namespace = defaultNamespace()
 	}
 
-	//rawVals, err := yaml.Marshal(base)
-
 	/*
+	valuesArray := make([]string, 1)
+	valuesArray[0] = "HOST_IP=192.168.99.100"
+	i.values = valuesArray
+
 	rawVals, err := vals(i.valueFiles, i.values, i.stringValues, i.fileValues, i.certFile, i.keyFile, i.caFile)
+	fmt.Println("Chart Values 2:%v\n", rawVals)
+
 	if err != nil {
 		return err, crds
 	}
 	*/
+
 	if i.nameTemplate != "" {
 	        var err error
 		i.name, err = generateName(i.nameTemplate)
@@ -228,7 +234,7 @@ func (i *installCmd) run(rawVals []byte) (error, []string) {
 		return err, crds
 	}
 
-	//fmt.Println("-2")
+	fmt.Println("-2")
 
 	if req, err := chartutil.LoadRequirements(chartRequested); err == nil {
 		// If checkDependencies returns an error, we have unfulfilled dependencies.
@@ -258,10 +264,10 @@ func (i *installCmd) run(rawVals []byte) (error, []string) {
 			}
 		}
 	} else if err != chartutil.ErrRequirementsNotFound {
-		return fmt.Printf("cannot load requirements: %v\n", err), crds
+		return fmt.Errorf("cannot load requirements: %v\n", err), crds
 	}
 
-	//fmt.Println("1")
+	fmt.Println("1")
 	res, err := i.client.InstallReleaseFromChart(
 		chartRequested,
 		i.namespace,
@@ -275,19 +281,20 @@ func (i *installCmd) run(rawVals []byte) (error, []string) {
 		helm.InstallWait(i.wait),
 		helm.InstallDescription(i.description))
 	if err != nil {
+	        fmt.Printf("Error1:%v\n", err)
 		return err, crds
 	}
-	//fmt.Println("2")
+	fmt.Println("2")
 
 	rel := res.GetRelease()
 
-	//fmt.Println("3")
+	fmt.Println("3")
 	if rel == nil {
 		return nil, crds
 	}
-	//fmt.Println("4")
+	fmt.Println("4")
 	i.printRelease(rel)
-	//fmt.Println("5")
+	fmt.Println("5")
 
 	// If this is a dry run, we can't display status.
 	/*if i.dryRun {
@@ -387,7 +394,7 @@ func vals(valueFiles valueFiles, values []string, stringValues []string, fileVal
 		}
 
 		if err := yaml.Unmarshal(bytes, &currentMap); err != nil {
-			return []byte{}, fmt.Printf("failed to parse %s: %s\n", filePath, err)
+			return []byte{}, fmt.Errorf("failed to parse %s: %s\n", filePath, err)
 		}
 		// Merge with the previous map
 		base = mergeValues(base, currentMap)
@@ -396,14 +403,14 @@ func vals(valueFiles valueFiles, values []string, stringValues []string, fileVal
 	// User specified a value via --set
 	for _, value := range values {
 		if err := strvals.ParseInto(value, base); err != nil {
-			return []byte{}, fmt.Printf("failed parsing --set data: %s\n", err)
+			return []byte{}, fmt.Errorf("failed parsing --set data: %s\n", err)
 		}
 	}
 
 	// User specified a value via --set-string
 	for _, value := range stringValues {
 		if err := strvals.ParseIntoString(value, base); err != nil {
-			return []byte{}, fmt.Printf("failed parsing --set-string data: %s\n", err)
+			return []byte{}, fmt.Errorf("failed parsing --set-string data: %s\n", err)
 		}
 	}
 
@@ -414,7 +421,7 @@ func vals(valueFiles valueFiles, values []string, stringValues []string, fileVal
 			return string(bytes), err
 		}
 		if err := strvals.ParseIntoFile(value, base, reader); err != nil {
-			return []byte{}, fmt.Printf("failed parsing --set-file data: %s", err)
+			return []byte{}, fmt.Errorf("failed parsing --set-file data: %s", err)
 		}
 	}
 

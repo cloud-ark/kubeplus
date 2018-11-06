@@ -55,7 +55,7 @@ func init() {
 func configForContext(context string, kubeconfig string) (*rest.Config, error) {
 	config, err := kube.GetConfig(context, kubeconfig).ClientConfig()
 	if err != nil {
-		return nil, fmt.Printf("could not get Kubernetes config for context %q: %s", context, err)
+		return nil, fmt.Errorf("could not get Kubernetes config for context %q: %s", context, err)
 	}
 	return config, nil
 }
@@ -68,7 +68,7 @@ func getKubeClient1(context string, kubeconfig string) (*rest.Config, kubernetes
 	}
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, nil, fmt.Printf("could not get Kubernetes client: %s", err)
+		return nil, nil, fmt.Errorf("could not get Kubernetes client: %s", err)
 	}
 	return config, client, nil
 }
@@ -255,16 +255,20 @@ func getChartValues(chartURL string) (error, []byte) {
 		valuesString := resp.Node.Value
 		fmt.Printf("ValuesString:%s\n", valuesString)
 
-		valuesMap := map[string]interface{}{}
-		if err = json.Unmarshal([]byte(valuesString), &valuesMap); err != nil {
-			fmt.Printf("Error: %v\n", err)
+		if valuesString != "null" {
+		   valuesMap := map[string]interface{}{}
+		   if err = json.Unmarshal([]byte(valuesString), &valuesMap); err != nil {
+			  fmt.Printf("Error: %v\n", err)
+	           }
+		   fmt.Printf("ValuesMap:%v\n", valuesMap)
+		   valuesData, err1 := yaml.Marshal(valuesMap)
+		   if err1 != nil {
+		      return err1, valuesData
+		   }
+		   return nil, valuesData
+		} else {
+		  return nil, nil
 		}
-		fmt.Printf("ValuesMap:%v\n", valuesMap)
-		valuesData, err1 := yaml.Marshal(valuesMap)
-		if err1 != nil {
-		   return err1, valuesData
-		}
-		return nil, valuesData
 	}
 }
 
