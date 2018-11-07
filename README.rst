@@ -125,6 +125,9 @@ KubePlus Architecture
 Try it
 =======
 
+Minikube
+---------
+
 Detailed steps are available in `kubeplus-steps.txt`__.
 
 .. _steps: https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-steps.txt
@@ -211,8 +214,8 @@ e) Find out dynamic composition tree for Postgres custom resource instance:
   ``$ kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Postgres&instance=postgres1" | python -mjson.tool``
 
 
-Try Moodle on Real cluster (experimental):
--------------------------------------------
+Real cluster (experimental):
+-----------------------------
 
 1) Create a AWS EC2 instance: t2.2xlarge (8vCPUs, 32GB memory, 40 GB disk)
 
@@ -221,7 +224,8 @@ Try Moodle on Real cluster (experimental):
 2) Login
 
 3) Switch user to root:
-   sudo su -
+
+   ``sudo su -``
 
 4) git clone https://github.com/cloud-ark/kubeplus.git
 
@@ -232,21 +236,31 @@ Try Moodle on Real cluster (experimental):
 7) cd $HOME/goworkspace/src/k8s.io/kubernetes
 
 8) Edit hack/local-up-cluster.sh to include following:
+
    - NODE_PORT_RANGE:"1-32000"
+
    - ENABLE_HOSTPATH_PROVISIONER: "true"
 
 9) Start cluster
+
    - export PATH=$PATH:/usr/local/go/bin
+
    - export KUBERNETES_PROVIDER=local 
+
    - nohup hack/local-up-cluster.sh &
 
 10) Start Helm
+
     - export PATH=$PATH:$HOME/goworkspace/src/k8s.io/kubernetes/cluster
+
     - pushd ~/kubeplus
+
     - ./setup-helm.sh
 
 11) Deploy Kubeplus
+
     - kubectl.sh apply -f deploy
+
     - kubectl.sh get pods (wait till all KubePlus containers are READY)
 
 12) Deploy Moodle Operator and then create Moodle Instance
@@ -268,7 +282,6 @@ and through our experience of building Operators ourselves along with discovery_
 .. _provenance: https://github.com/cloud-ark/kubeprovenance
 
 
---------------------
 Available Operators
 --------------------
 
