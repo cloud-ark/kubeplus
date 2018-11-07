@@ -15,7 +15,7 @@ KubePlus Platform Kit
 `Kubernetes Operators`__ extend Kubernetes API to manage
 third-party software as native Kubernetes objects. Today, number of Operators are
 being built for middlewares like databases, queues, loggers, etc. This has led to
-tremendous choice in the platform elements for building application platforms
+tremendous choice in the platform elements for building application platforms.
 Current popular approach is to ‘self-assemble’ platform stacks using Kubernetes Operators of
 choice. This requires significant efforts and there is 
 lack of consistent user experience across multiple Operators.
@@ -25,11 +25,12 @@ lack of consistent user experience across multiple Operators.
 __ Operators_
 
 
-KubePlus Platform Kit streamlines the process of composing multiple Operators into a custom PaaS which then allows creating application Platforms as Code. Using KubePlus Platform Kit,
+KubePlus Platform Kit streamlines the process of composing multiple Operators into a custom PaaS,
+and enables creating application Platforms as Code. Using KubePlus Platform Kit,
 
-* Cluster Administrator constructs a custom PaaS comprised of required Kubernetes Operators.
+* DevOps Engineer constructs a custom PaaS comprised of required Kubernetes Operators.
 
-* Application developer declares and creates application platforms as code leveraging custom resources
+* Application Developer declares and creates application platforms as code leveraging custom resources
   introduced by the installed Operators.
 
 We bring consistency of usage across multiple Operators with our Operator development guidelines_.
