@@ -12,14 +12,12 @@ __ pac_
 KubePlus Platform Kit
 ======================
 
-One of the key reasons for Kubernetes’s popularity is its extendibility.
 `Kubernetes Operators`__ extend Kubernetes API to manage
 third-party software as native Kubernetes objects. Today, number of Operators are
 being built for middlewares like databases, queues, loggers, etc. This has led to
 tremendous choice in the platform elements for building application platforms
-on Kubernetes making pre-built PaaS a less attractive option. Current popular
-approach is to ‘self-assemble’ platform stacks using Kubernetes Operators of
-choice. This approach requires significant efforts and there is 
+Current popular approach is to ‘self-assemble’ platform stacks using Kubernetes Operators of
+choice. This requires significant efforts and there is 
 lack of consistent user experience across multiple Operators.
 
 .. _Operators: https://medium.com/@cloudark/why-to-write-kubernetes-operators-9b1e32a24814
@@ -27,8 +25,7 @@ lack of consistent user experience across multiple Operators.
 __ Operators_
 
 
-KubePlus Platform Kit is designed to deliver Platform-as-Code experience utilizing
-Kubernetes Operators. Using KubePlus Platform Kit,
+KubePlus Platform Kit streamlines the process of composing multiple Operators into a custom PaaS which then allows creating application Platforms as Code. Using KubePlus Platform Kit,
 
 * Cluster Administrator constructs a custom PaaS comprised of required Kubernetes Operators.
 
@@ -100,18 +97,18 @@ Such Operators leverage Kubernetes's strength of control loop (current state -> 
 
 *4) Common language between Devs and Ops*
 
-KubePlus leverages kubectl for management of Operators by Ops; and their consumption by Devs, making Kubernetes YAMLs as the common language between Devs and Ops. 
+KubePlus leverages kubectl for management of Operators by Ops and their consumption by Devs. This makes Kubernetes YAMLs as the common language between Devs and Ops. 
 
 
 *5) Discovery of custom resources*
 
 KubePlus installs an additional component, KubePlus Discovery Manager, on your Kubernetes cluster to improve usability of custom Operators.
 
-KubePlus Discovery Manager component provides information about custom resources managed by the Operators. E.g. Assume there is a Postgres Operator which is managing a custom resource called Postgres. To make it is easy to consume Postgres resource in your application YAML, KubePlus will provide following information about Postgres resource: 
+KubePlus Discovery Manager provides information about custom resources managed by the Operators. E.g. Assume there is a Postgres Operator which is managing a custom resource called Postgres. To make it is easy to consume Postgres resource in your application YAML, KubePlus will provide following information about Postgres resource: 
 
 - Static information like OpenAPI Spec for the Postgres resource. This information can be used by application developers when creating their application platform.
 
-- Dynamic information like composition of custom resources in terms on native Kubernetes resources (e.g. If you create an instance of a Postgres custom resource, it would internally create Deployement, Pod, and a Service object.)
+- Dynamic information like composition tree of custom resources in terms on native Kubernetes resources (e.g. which Deployment, Pod, Service, etc. objects are part of the composition tree of a Postgres resource instance.)
 
 
 KubePlus Architecture
@@ -221,27 +218,27 @@ Real cluster (experimental):
 
 2) Update the security group to allow traffic on port range 1-32000 from 0.0.0.0/0
 
-2) Login
+3) Login
 
-3) Switch user to root:
+4) Switch user to root:
 
    ``sudo su -``
 
-4) git clone https://github.com/cloud-ark/kubeplus.git
+5) git clone https://github.com/cloud-ark/kubeplus.git
 
-5) cd kubeplus
+6) cd kubeplus
 
-6) ./setup-test-cluster.sh
+7) ./setup-test-cluster.sh
 
-7) cd $HOME/goworkspace/src/k8s.io/kubernetes
+8) cd $HOME/goworkspace/src/k8s.io/kubernetes
 
-8) Edit hack/local-up-cluster.sh to include following:
+9) Edit hack/local-up-cluster.sh to include following:
 
    - NODE_PORT_RANGE:"1-32000"
 
    - ENABLE_HOSTPATH_PROVISIONER: "true"
 
-9) Start cluster
+10) Start cluster
 
    - export PATH=$PATH:/usr/local/go/bin
 
@@ -249,7 +246,7 @@ Real cluster (experimental):
 
    - nohup hack/local-up-cluster.sh &
 
-10) Start Helm
+11) Start Helm
 
     - export PATH=$PATH:$HOME/goworkspace/src/k8s.io/kubernetes/cluster
 
@@ -257,13 +254,13 @@ Real cluster (experimental):
 
     - ./setup-helm.sh
 
-11) Deploy Kubeplus
+12) Deploy Kubeplus
 
     - kubectl.sh apply -f deploy
 
     - kubectl.sh get pods (wait till all KubePlus containers are READY)
 
-12) Deploy Moodle Operator and then create Moodle Instance
+13) Deploy Moodle Operator and then create Moodle Instance
 
     - Follow examples/moodle/steps.txt
 
