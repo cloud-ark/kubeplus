@@ -5,10 +5,12 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/coreos/etcd/client"
+	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -21,12 +23,10 @@ import (
 	_ "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/proto/hapi/release"
 	"k8s.io/helm/pkg/tlsutil"
-	"os"
-	"time"
 	"log"
-	"context"
+	"os"
 	"strings"
-	"github.com/ghodss/yaml"
+	"time"
 	//_ "k8s.io/apimachinery"
 )
 
@@ -41,8 +41,8 @@ var (
 )
 
 var (
-	masterURL  string
-	kubeconfig string
+	masterURL      string
+	kubeconfig     string
 	etcdServiceURL string
 	deployedCharts []string
 )
@@ -121,14 +121,12 @@ func main() {
 	//fmt.Println("ConnectTimeout:%d", settings.TillerConnectionTimeout)
 	//settings.KubeConfig = "/Users/devdatta/.kube/config"
 	//settings.Home = "/Users/devdatta/.helm"
-	
-	// Run forever -- if Operator chart is deleted we will create it.
-	for {
 
-		fmt.Println("===================================")
+	// Run forever
+	for {
+		//fmt.Println("===================================")
 
 		connectionError := setupConnection()
-
 		if connectionError == nil {
 
 			options := []helm.Option{helm.Host(settings.TillerHost), helm.ConnectTimeout(settings.TillerConnectionTimeout)}
@@ -163,10 +161,44 @@ func main() {
 
 			helmClient := helm.NewClient(options...)
 
-			//fmt.Println("Helm client: %v", helmClient)
+			operatorsToInstall := getOperatorChartList("/operatorsToInstall")
+			if len(operatorsToInstall) > 0 {
+			   fmt.Printf("Operators to install:%v\n", operatorsToInstall)
+			}
+			operatorsToDelete := getOperatorChartList("/operatorsToDelete")
+			if len(operatorsToDelete) > 0 {
+			   fmt.Printf("Operators to delete:%v\n", operatorsToDelete)
+			}
 
-			operatorChartList := getOperatorChartList()
-			for _, chartURL := range operatorChartList {
+			// Delete Operators
+			for _, chartURL := range operatorsToDelete {
+				releaseName := getReleaseName("release-" + chartURL)
+				fmt.Printf("Release Name to delete:%s\n", releaseName)
+				if releaseName != "" {
+				   err1 := deleteChart(helmClient, releaseName)
+				   if err1 != nil {
+				      fmt.Printf("Error deleting chart %s %s", releaseName, err1)
+				   }
+
+				   // Delete Chart URL from deployedCharts
+				   newChartList := make([]string, 0)
+				   for _, depChart := range deployedCharts {
+				   	if depChart != chartURL {
+						newChartList = append(newChartList, depChart)
+					}
+				   }
+				   deployedCharts = newChartList
+				 } else {
+				  fmt.Printf("Did not find any release for %s\n", chartURL)
+				 }
+			}
+
+			// Install Operators
+			operatorsToInstall = subtract(operatorsToInstall, operatorsToDelete)
+			if len(operatorsToInstall) > 0 {
+			   fmt.Printf("Effective Operators to install:%v\n", operatorsToInstall)
+			}
+			for _, chartURL := range operatorsToInstall {
 				releases, err := helmClient.ListReleases(
 					helm.ReleaseListLimit(10),
 					helm.ReleaseListNamespace("default"),
@@ -174,10 +206,7 @@ func main() {
 				if err != nil {
 					fmt.Printf("Error: %v", err)
 				}
-				//fmt.Println("Releases: %v", releases)
 
-				//operatorName := "postgres-crd-v2-chart"
-				//operatorVersion := "0.0.2"
 				alreadyDeployed, operatorName, operatorVersion := checkIfDeployed(chartURL, releases.GetReleases())
 
 				// releases.GetReleases() may return empty if connection to Tiller breaks
@@ -196,17 +225,16 @@ func main() {
 				if !alreadyDeployed {
 					fmt.Println("Installing chart.")
 					fmt.Printf("Chart URL%s\n", chartURL)
-					//chartURL := "https://s3-us-west-2.amazonaws.com/cloudark-helm-charts/postgres-crd-v2-chart-0.0.2.tgz"
 
 					cmd := &cobra.Command{}
 					out := cmd.OutOrStdout()
 
 					err, chartValues := getChartValues(chartURL)
 					if err != nil {
-					   panic(err)
+						panic(err)
 					}
 					fmt.Printf("ChartValues:%v\n", chartValues)
-					err1, crds := newInstallCmd(helmClient, out, chartURL, chartValues)
+					err1, crds, releaseName := installChart(helmClient, out, chartURL, chartValues)
 					if err1 != nil {
 						fmt.Println("%%%%%%%%%")
 						fmt.Printf("Error: %v", err1)
@@ -218,6 +246,9 @@ func main() {
 						// Save CRDs in Etcd
 						saveOperatorCRDs(chartURL, crds)
 
+						// Save release name
+						saveReleaseName("release-"+chartURL, releaseName)
+
 						// Save Chart URL in deployedCharts
 						deployedCharts = append(deployedCharts, chartURL)
 					}
@@ -225,14 +256,122 @@ func main() {
 					fmt.Println("Operator chart %s %s already deployed", operatorName, operatorVersion)
 				}
 			}
+
+			// Set the operatorsToInstall key with the new List
+			updateInstallList("/operatorsToInstall", operatorsToInstall)
+
+			// After all Operators are deleted, reset the list in etcd
+			if len(operatorsToDelete) > 0 {
+			   emptyList := make([]string, 0)
+			   storeList("/operatorsToDelete", emptyList)
+			}
 		}
 		time.Sleep(time.Second * 5)
 	}
-//	return nil
+}
+
+func getReleaseName(resourceKey string) string {
+	releaseName := getSingleValue(resourceKey)
+	return releaseName
+}
+
+func getSingleValue(resourceKey string) string {
+	var releaseName string
+	cfg := client.Config{
+		Endpoints: []string{etcdServiceURL},
+		Transport: client.DefaultTransport,
+	}
+	c, err := client.New(cfg)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	kapi := client.NewKeysAPI(c)
+
+	resp, err1 := kapi.Get(context.Background(), resourceKey, nil)
+	if err1 != nil {
+		fmt.Printf("Error: %v\n", err1)
+		return ""
+	} else {
+		//log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
+		releaseName = resp.Node.Value
+		return releaseName
+	}
+}
+
+func saveReleaseName(resourceKey, releaseName string) {
+	storeSingleValue(resourceKey, releaseName)
+}
+
+func updateInstallList(resourceKey string, operatorList []string) {
+     storeList(resourceKey, operatorList)
+}
+
+func storeList(resourceKey string, dataList []string) {
+	cfg := client.Config{
+		Endpoints: []string{etcdServiceURL},
+		Transport: client.DefaultTransport,
+	}
+	c, err := client.New(cfg)
+	if err != nil {
+		fmt.Errorf("Error: %v", err)
+	}
+	kapi := client.NewKeysAPI(c)
+	
+    	jsonOperatorList, err2 := json.Marshal(&dataList)
+    	if err2 != nil {
+           panic (err2)
+    	}
+    	resourceValue := string(jsonOperatorList)
+    	//fmt.Printf("Resource Value:%s\n", resourceValue)
+
+	//fmt.Printf("Setting %s->%s\n",resourceKey, resourceValue)
+	_, err1 := kapi.Set(context.Background(), resourceKey, resourceValue, nil)
+	if err1 != nil {
+		log.Fatal(err)
+	} else {
+		//log.Printf("Set is done. Metadata is %q\n", resp.Node.Value)
+	}
+}
+
+func storeSingleValue(resourceKey, resourceData string) {
+	cfg := client.Config{
+		Endpoints: []string{etcdServiceURL},
+		Transport: client.DefaultTransport,
+	}
+	c, err := client.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	kapi := client.NewKeysAPI(c)
+
+	fmt.Printf("Setting %s->%s\n", resourceKey, resourceData)
+	_, err1 := kapi.Set(context.Background(), resourceKey, resourceData, nil)
+	if err1 != nil {
+		log.Fatal(err1)
+	} else {
+		// print common key info
+		//log.Printf("Set is done. Metadata is %q\n", resp.Node.Value)
+	}
+}
+
+func subtract(installList, deleteList []string) []string {
+	operatorsToInstall := make([]string, 0)
+	for _, installChart := range installList {
+		found := false
+		for _, deleteChart := range deleteList {
+			if installChart == deleteChart {
+				found = true
+			}
+		}
+		if !found {
+			operatorsToInstall = append(operatorsToInstall, installChart)
+		}
+	}
+	return operatorsToInstall
 }
 
 func getChartValues(chartURL string) (error, []byte) {
-        valuesData := make([]byte, 0)
+	valuesData := make([]byte, 0)
 	cfg := client.Config{
 		Endpoints: []string{etcdServiceURL},
 		Transport: client.DefaultTransport,
@@ -250,29 +389,29 @@ func getChartValues(chartURL string) (error, []byte) {
 		fmt.Printf("Error: %v\n", err1)
 		return err1, valuesData
 	} else {
-		log.Printf("Get is done. Metadata is %q\n", resp)
-		log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
+		//log.Printf("Get is done. Metadata is %q\n", resp)
+		//log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
 		valuesString := resp.Node.Value
 		fmt.Printf("ValuesString:%s\n", valuesString)
 
 		if valuesString != "null" {
-		   valuesMap := map[string]interface{}{}
-		   if err = json.Unmarshal([]byte(valuesString), &valuesMap); err != nil {
-			  fmt.Printf("Error: %v\n", err)
-	           }
-		   fmt.Printf("ValuesMap:%v\n", valuesMap)
-		   valuesData, err1 := yaml.Marshal(valuesMap)
-		   if err1 != nil {
-		      return err1, valuesData
-		   }
-		   return nil, valuesData
+			valuesMap := map[string]interface{}{}
+			if err = json.Unmarshal([]byte(valuesString), &valuesMap); err != nil {
+				fmt.Printf("Error: %v\n", err)
+			}
+			fmt.Printf("ValuesMap:%v\n", valuesMap)
+			valuesData, err1 := yaml.Marshal(valuesMap)
+			if err1 != nil {
+				return err1, valuesData
+			}
+			return nil, valuesData
 		} else {
-		  return nil, nil
+			return nil, nil
 		}
 	}
 }
 
-func getOperatorChartList() []string {
+func getOperatorChartList(resourceKey string) []string {
 	cfg := client.Config{
 		Endpoints: []string{etcdServiceURL},
 		Transport: client.DefaultTransport,
@@ -283,23 +422,20 @@ func getOperatorChartList() []string {
 	}
 	kapi := client.NewKeysAPI(c)
 
-	resourceKey := "/operatorsToInstall"
-
 	resp, err1 := kapi.Get(context.Background(), resourceKey, nil)
 	if err1 != nil {
-		fmt.Printf("Error: %v\n", err1)
+		//fmt.Printf("Error: %v\n", err1)
 		return []string{}
 	} else {
-		log.Printf("Get is done. Metadata is %q\n", resp)
-		log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
+		//log.Printf("Get is done. Metadata is %q\n", resp)
+		//log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
 		operatorListString := resp.Node.Value
-		//fmt.Printf("OperatorListString:%s\n", operatorListString)
 
 		var operatorChartList []string
 		if err = json.Unmarshal([]byte(operatorListString), &operatorChartList); err != nil {
 			fmt.Printf("Error: %v", err)
 		}
-		fmt.Printf("OperatorList:%v\n", operatorChartList)
+		//fmt.Printf("OperatorList:%v\n", operatorChartList)
 		return operatorChartList
 	}
 }
@@ -326,12 +462,12 @@ func saveOperatorCRDs(chartURL string, contents []string) {
 	fmt.Printf("Resource Value:%s\n", resourceValue)
 
 	fmt.Printf("Setting %s->%s\n", resourceKey, resourceValue)
-	resp, err3 := kapi.Set(context.Background(), resourceKey, resourceValue, nil)
+	_, err3 := kapi.Set(context.Background(), resourceKey, resourceValue, nil)
 	if err3 != nil {
 		fmt.Printf("Error: %v", err3)
 	} else {
 		// print common key info
-		log.Printf("Set is done. Metadata is %q\n", resp.Node.Value)
+		//log.Printf("Set is done. Metadata is %q\n", resp.Node.Value)
 	}
 	fmt.Println("Exiting saveOperatorCRDs")
 }
