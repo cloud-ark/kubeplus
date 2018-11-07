@@ -19,7 +19,7 @@ spec:
       - name: etcd
         image: quay.io/coreos/etcd:v3.2.18
       - name: operator-manager
-        image: lmecld/operator-manager:latest
+        image: lmecld/operator-manager-test:latest
         imagePullPolicy: IfNotPresent
         command: [ "/operator-manager"]
         env:
@@ -28,7 +28,7 @@ spec:
             fieldRef:
               fieldPath: status.hostIP
       - name: operator-deployer
-        image: lmecld/operator-deployer:latest
+        image: lmecld/operator-deployer-test:latest
         imagePullPolicy: IfNotPresent
         command: [ "/operator-deployer"]
       - name: kube-discovery-apiserver

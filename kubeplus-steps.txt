@@ -31,21 +31,21 @@ Test:
 
       - kubectl describe operators postgres-operator
       - kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
-      - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?cr=Postgres"
+      - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres"
         --> You should see OpenAPI Spec for Postgres custom resource as output
 
     b) Deploy MySQL Operator
        - kubectl create -f mysql-operator-chart-0.2.1.yaml
        - kubectl describe operators mysql-operator-0.2.1
        - kubectl describe customresourcedefinition mysqlclusters.mysql.oracle.com
-       - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?cr=Cluster"
+       - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Cluster"
          --> You should see OpenAPI Spec for Cluster custom resource as output
 
     c) Deploy Moodle Operator
        - kubectl create -f moodle-operator.yaml
        - kubectl describe operators moodle-operator
        - kubectl describe customresourcedefinition moodles.moodlecontroller.kubeplus
-       - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?cr=Moodle"
+       - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"
          --> You should see OpenAPI Spec for Moodle custom resource as output
 
     Note: Creation of a custom PaaS by defining all the Operators in a single YAML
@@ -127,7 +127,7 @@ E] Create KubePlus Platform Stack consisting of Postgres Operator
 - kubectl get operators
 - kubectl describe operators postgres-operator
 - kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
-- kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?cr=Postgres"
+- kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres"
   --> You should see OpenAPI Spec for Postgres custom resource as output
 
 

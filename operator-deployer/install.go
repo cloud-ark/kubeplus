@@ -18,6 +18,9 @@ limitations under the License.
 /*
    This file is taken from Helm source and has been modified to work as part
    of operator-deployer.
+
+   Original file: helm/cmd/helm/install.go   
+
 */
 
 
@@ -166,7 +169,7 @@ func (v *valueFiles) Set(value string) error {
 }
 
 // Original newInsallCmd changed and reduced to work with operator-manager
-func newInstallCmd(c helm.Interface, out io.Writer, chartName string, chartValues []byte) (error, []string) {
+func installChart(c helm.Interface, out io.Writer, chartName string, chartValues []byte) (error, []string, string) {
 	inst := &installCmd{
 		out:    out,
 		client: c,
@@ -183,17 +186,19 @@ func newInstallCmd(c helm.Interface, out io.Writer, chartName string, chartValue
 	inst.chartPath = cp
 	fmt.Printf("Chart PATH:%s\n", cp)
 	//inst.client = ensureHelmClient(inst.client)
-	err1, crds := inst.run(chartValues)
+	err1, crds, releaseName := inst.run(chartValues)
 	if err1 != nil {
 		fmt.Println("***********************************")
 		fmt.Printf("Error: %v", err1)
 		fmt.Println("***********************************")
-		return err1, []string{}
+		return err1, []string{}, releaseName
 	}
-	return nil, crds
+	return nil, crds, releaseName
 }
 
-func (i *installCmd) run(rawVals []byte) (error, []string) {
+func (i *installCmd) run(rawVals []byte) (error, []string, string) {
+
+     	var releaseName string
 	fmt.Println("CHART PATH: %s\n", i.chartPath)
 	str1 := fmt.Sprintf("%s", rawVals)
 	fmt.Println("Chart Values:%s\n", str1)
@@ -203,24 +208,11 @@ func (i *installCmd) run(rawVals []byte) (error, []string) {
 		i.namespace = defaultNamespace()
 	}
 
-	/*
-	valuesArray := make([]string, 1)
-	valuesArray[0] = "HOST_IP=192.168.99.100"
-	i.values = valuesArray
-
-	rawVals, err := vals(i.valueFiles, i.values, i.stringValues, i.fileValues, i.certFile, i.keyFile, i.caFile)
-	fmt.Println("Chart Values 2:%v\n", rawVals)
-
-	if err != nil {
-		return err, crds
-	}
-	*/
-
 	if i.nameTemplate != "" {
 	        var err error
 		i.name, err = generateName(i.nameTemplate)
 		if err != nil {
-			return err, crds
+			return err, crds, releaseName
 		}
 		// Print the final name so the user knows what the final name of the release is.
 		fmt.Printf("FINAL NAME: %s\n", i.name)
@@ -231,10 +223,10 @@ func (i *installCmd) run(rawVals []byte) (error, []string) {
 	// Check chart requirements to make sure all dependencies are present in /charts
 	chartRequested, err := chartutil.Load(i.chartPath)
 	if err != nil {
-		return err, crds
+		return err, crds, releaseName
 	}
 
-	fmt.Println("-2")
+	//fmt.Println("-2")
 
 	if req, err := chartutil.LoadRequirements(chartRequested); err == nil {
 		// If checkDependencies returns an error, we have unfulfilled dependencies.
@@ -251,23 +243,23 @@ func (i *installCmd) run(rawVals []byte) (error, []string) {
 					Getters:    getter.All(settings),
 				}
 				if err := man.Update(); err != nil {
-					return err, crds
+					return err, crds, releaseName
 				}
 
 				// Update all dependencies which are present in /charts.
 				chartRequested, err = chartutil.Load(i.chartPath)
 				if err != nil {
-					return err, crds
+					return err, crds, releaseName
 				}
 			} else {
-				return err, crds
+				return err, crds, releaseName
 			}
 		}
 	} else if err != chartutil.ErrRequirementsNotFound {
-		return fmt.Errorf("cannot load requirements: %v\n", err), crds
+		return fmt.Errorf("cannot load requirements: %v\n", err), crds, releaseName
 	}
 
-	fmt.Println("1")
+	//fmt.Println("1")
 	res, err := i.client.InstallReleaseFromChart(
 		chartRequested,
 		i.namespace,
@@ -282,33 +274,26 @@ func (i *installCmd) run(rawVals []byte) (error, []string) {
 		helm.InstallDescription(i.description))
 	if err != nil {
 	        fmt.Printf("Error1:%v\n", err)
-		return err, crds
+		return err, crds, releaseName
 	}
-	fmt.Println("2")
+	//fmt.Println("2")
 
 	rel := res.GetRelease()
 
-	fmt.Println("3")
+	//fmt.Println("3")
 	if rel == nil {
-		return nil, crds
+		return nil, crds, releaseName
 	}
-	fmt.Println("4")
+	//fmt.Println("4")
 	i.printRelease(rel)
-	fmt.Println("5")
+	//fmt.Println("5")
 
-	// If this is a dry run, we can't display status.
-	/*if i.dryRun {
-		// This is special casing to avoid breaking backward compatibility:
-		if res.Release.Info.Description != "Dry run complete" {
-			fmt.Fprintf(os.Stdout, "WARNING: %s\n", res.Release.Info.Description)
-		}
-		return nil, crds
-	}*/
+	releaseName = rel.Name
 
 	// Print the status like status command does
 	status, err := i.client.ReleaseStatus(rel.Name)
 	if err != nil {
-		return err, crds
+		return err, crds, releaseName
 	}
 	//PrintStatus(i.out, status)
 	fmt.Println("Status:%v", status)
@@ -322,6 +307,7 @@ func (i *installCmd) run(rawVals []byte) (error, []string) {
 	lines := strings.Split(resources, "\n")
 	//num := len(lines)
 	//fmt.Println("Num of Lines:%d", num)
+	fmt.Printf("Lines:%v\n", lines)
 
 	startCustomResourceLines := false
 	for _, line := range lines {
@@ -342,7 +328,7 @@ func (i *installCmd) run(rawVals []byte) (error, []string) {
 
 	fmt.Println("Resources:%s", crds)
 
-	return nil, crds
+	return nil, crds, releaseName
 }
 
 // Merges source and destination map, preferring values from the source map
@@ -528,7 +514,6 @@ func locateChartPath(repoURL, username, password, name, version string, verify b
 	}
 
 	if err == nil {
-					fmt.Println("21")
 		lname, err := filepath.Abs(filename)
 		if err != nil {
 						fmt.Println("22")
