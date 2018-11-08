@@ -1,4 +1,12 @@
 /*
+   This file is taken from Helm source and has been modified to work as part
+   of operator-deployer.
+
+   Original file: helm/cmd/helm/delete.go
+
+*/
+
+/*
 Copyright The Helm Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +21,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
-
-/*
-   This file is taken from Helm source and has been modified to work as part
-   of operator-deployer.
-
-   Original file: helm/cmd/helm/delete.go
-
-*/
-
 
 package main
 
@@ -62,7 +60,6 @@ func deleteChart(c helm.Interface, chartName string) error {
 		client: c,
 	}
 
-	//del.client = ensureHelmClient(del.client)
 	del.name = chartName
 	fmt.Printf("Deleting chart:%s\n", del.name)
 
@@ -78,8 +75,6 @@ func newDeleteCmd(c helm.Interface, out io.Writer, chartName string) *cobra.Comm
 		out:    out,
 		client: c,
 	}
-
-	//del.client = ensureHelmClient(del.client)
 
 	cmd := &cobra.Command{
 		Use:        "delete [flags] RELEASE_NAME [...]",
@@ -131,6 +126,5 @@ func (d *deleteCmd) run() error {
 		fmt.Fprintln(d.out, res.Info)
 	}
 
-	//return prettyError(err)
 	return err
 }

@@ -1,4 +1,12 @@
 /*
+   This file is taken from Helm source and has been modified to work as part
+   of operator-deployer.
+
+   Original file: helm/cmd/helm/install.go
+
+*/
+
+/*
 Copyright The Helm Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +21,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
-
-/*
-   This file is taken from Helm source and has been modified to work as part
-   of operator-deployer.
-
-   Original file: helm/cmd/helm/install.go   
-
-*/
-
 
 package main
 
@@ -185,7 +183,7 @@ func installChart(c helm.Interface, out io.Writer, chartName string, chartValues
 	}
 	inst.chartPath = cp
 	fmt.Printf("Chart PATH:%s\n", cp)
-	//inst.client = ensureHelmClient(inst.client)
+
 	err1, crds, releaseName := inst.run(chartValues)
 	if err1 != nil {
 		fmt.Println("***********************************")
@@ -218,15 +216,11 @@ func (i *installCmd) run(rawVals []byte) (error, []string, string) {
 		fmt.Printf("FINAL NAME: %s\n", i.name)
 	}
 
-	//fmt.Println("-1")
-
 	// Check chart requirements to make sure all dependencies are present in /charts
 	chartRequested, err := chartutil.Load(i.chartPath)
 	if err != nil {
 		return err, crds, releaseName
 	}
-
-	//fmt.Println("-2")
 
 	if req, err := chartutil.LoadRequirements(chartRequested); err == nil {
 		// If checkDependencies returns an error, we have unfulfilled dependencies.
@@ -259,7 +253,6 @@ func (i *installCmd) run(rawVals []byte) (error, []string, string) {
 		return fmt.Errorf("cannot load requirements: %v\n", err), crds, releaseName
 	}
 
-	//fmt.Println("1")
 	res, err := i.client.InstallReleaseFromChart(
 		chartRequested,
 		i.namespace,
@@ -276,17 +269,14 @@ func (i *installCmd) run(rawVals []byte) (error, []string, string) {
 	        fmt.Printf("Error1:%v\n", err)
 		return err, crds, releaseName
 	}
-	//fmt.Println("2")
 
 	rel := res.GetRelease()
 
-	//fmt.Println("3")
 	if rel == nil {
 		return nil, crds, releaseName
 	}
-	//fmt.Println("4")
+
 	i.printRelease(rel)
-	//fmt.Println("5")
 
 	releaseName = rel.Name
 
@@ -442,14 +432,14 @@ func locateChartPath(repoURL, username, password, name, version string, verify b
 	certFile, keyFile, caFile string) (string, error) {
 	name = strings.TrimSpace(name)
 	version = strings.TrimSpace(version)
-	//		fmt.Println("11")
+
 	if fi, err := os.Stat(name); err == nil {
 		abs, err := filepath.Abs(name)
-		//			fmt.Println("12")
+
 		if err != nil {
 			return abs, err
 		}
-		//			fmt.Println("13")
+
 		if verify {
 			if fi.IsDir() {
 				return "", errors.New("cannot verify a directory")
@@ -458,22 +448,19 @@ func locateChartPath(repoURL, username, password, name, version string, verify b
 				return "", err
 			}
 		}
-		//			fmt.Println("14")
+
 		return abs, nil
 	}
-	//			fmt.Println("15")
+
 	if filepath.IsAbs(name) || strings.HasPrefix(name, ".") {
 		return name, fmt.Errorf("path %q not found", name)
 	}
 
-	//		fmt.Println("16")
+
 	crepo := filepath.Join(settings.Home.Repository(), name)
 	if _, err := os.Stat(crepo); err == nil {
 		return filepath.Abs(crepo)
 	}
-
-	//fmt.Println("RepoURL:" + repoURL)
-	//fmt.Println("Settings:%v", settings)
 
 	dl := downloader.ChartDownloader{
 		HelmHome: settings.Home,
@@ -483,11 +470,11 @@ func locateChartPath(repoURL, username, password, name, version string, verify b
 		Username: username,
 		Password: password,
 	}
-	//			fmt.Println("17")
+
 	if verify {
 		dl.Verify = downloader.VerifyAlways
 	}
-	//			fmt.Println("18")
+
 	if repoURL != "" {
 		chartURL, err := repo.FindChartInAuthRepoURL(repoURL, username, password, name, version,
 			certFile, keyFile, caFile, getter.All(settings))
@@ -496,12 +483,10 @@ func locateChartPath(repoURL, username, password, name, version string, verify b
 		}
 		name = chartURL
 	}
-	//			fmt.Println("19")
 
 	if _, err := os.Stat(settings.Home.Archive()); os.IsNotExist(err) {
 		os.MkdirAll(settings.Home.Archive(), 0744)
 	}
-	//			fmt.Println("20")
 
 	fmt.Printf("Name:%s, Version:%s\n", name, version)
 	filename, _, err := dl.DownloadTo(name, version, settings.Home.Archive())

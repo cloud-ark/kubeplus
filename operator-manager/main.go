@@ -19,7 +19,6 @@ package main
 import (
 	"flag"
 	"time"
-	//"fmt"
 
 	"github.com/golang/glog"
 	kubeinformers "k8s.io/client-go/informers"
@@ -31,7 +30,6 @@ import (
 	clientset "github.com/cloud-ark/kubeplus/operator-manager/pkg/client/clientset/versioned"
 	informers "github.com/cloud-ark/kubeplus/operator-manager/pkg/client/informers/externalversions"
 	"github.com/cloud-ark/kubeplus/operator-manager/pkg/signals"
-	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
