@@ -27,7 +27,6 @@ import (
 	"os"
 	"strings"
 	"time"
-	//_ "k8s.io/apimachinery"
 )
 
 var (
@@ -97,8 +96,6 @@ func setupConnection() error {
 			fmt.Printf("Error: %v", err)
 			errToReturn = err
 		}
-		//fmt.Println("Config:%v", config)
-		//fmt.Println("Client:%v", client)
 
 		tunnel, err := portforwarder.New(settings.TillerNamespace, client, config)
 		if err != nil {
@@ -109,8 +106,6 @@ func setupConnection() error {
 		settings.TillerHost = fmt.Sprintf("localhost:%d", tunnel.Local)
 		fmt.Println("Created tunnel using local port:", tunnel.Local)
 	}
-
-	//fmt.Println("SERVER:", settings.TillerHost)
 	return errToReturn
 }
 
@@ -118,14 +113,9 @@ func main() {
 	settings.TillerNamespace = "kube-system"
 	settings.Home = "/.helm"
 	settings.TillerConnectionTimeout = 300
-	//fmt.Println("ConnectTimeout:%d", settings.TillerConnectionTimeout)
-	//settings.KubeConfig = "/Users/devdatta/.kube/config"
-	//settings.Home = "/Users/devdatta/.helm"
 
 	// Run forever
 	for {
-		//fmt.Println("===================================")
-
 		connectionError := setupConnection()
 		if connectionError == nil {
 
@@ -322,7 +312,6 @@ func storeList(resourceKey string, dataList []string) {
            panic (err2)
     	}
     	resourceValue := string(jsonOperatorList)
-    	//fmt.Printf("Resource Value:%s\n", resourceValue)
 
 	//fmt.Printf("Setting %s->%s\n",resourceKey, resourceValue)
 	_, err1 := kapi.Set(context.Background(), resourceKey, resourceValue, nil)
@@ -389,7 +378,6 @@ func getChartValues(chartURL string) (error, []byte) {
 		fmt.Printf("Error: %v\n", err1)
 		return err1, valuesData
 	} else {
-		//log.Printf("Get is done. Metadata is %q\n", resp)
 		//log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
 		valuesString := resp.Node.Value
 		fmt.Printf("ValuesString:%s\n", valuesString)
@@ -424,10 +412,8 @@ func getOperatorChartList(resourceKey string) []string {
 
 	resp, err1 := kapi.Get(context.Background(), resourceKey, nil)
 	if err1 != nil {
-		//fmt.Printf("Error: %v\n", err1)
 		return []string{}
 	} else {
-		//log.Printf("Get is done. Metadata is %q\n", resp)
 		//log.Printf("%q key has %q value\n", resp.Node.Key, resp.Node.Value)
 		operatorListString := resp.Node.Value
 
@@ -435,7 +421,6 @@ func getOperatorChartList(resourceKey string) []string {
 		if err = json.Unmarshal([]byte(operatorListString), &operatorChartList); err != nil {
 			fmt.Printf("Error: %v", err)
 		}
-		//fmt.Printf("OperatorList:%v\n", operatorChartList)
 		return operatorChartList
 	}
 }
@@ -459,14 +444,12 @@ func saveOperatorCRDs(chartURL string, contents []string) {
 		fmt.Printf("Error: %v", err2)
 	}
 	resourceValue := string(jsonContents)
-	fmt.Printf("Resource Value:%s\n", resourceValue)
 
-	fmt.Printf("Setting %s->%s\n", resourceKey, resourceValue)
+	//fmt.Printf("Setting %s->%s\n", resourceKey, resourceValue)
 	_, err3 := kapi.Set(context.Background(), resourceKey, resourceValue, nil)
 	if err3 != nil {
 		fmt.Printf("Error: %v", err3)
 	} else {
-		// print common key info
 		//log.Printf("Set is done. Metadata is %q\n", resp.Node.Value)
 	}
 	fmt.Println("Exiting saveOperatorCRDs")
@@ -480,15 +463,12 @@ func checkIfDeployed(chartURL string, rels []*release.Release) (bool, string, st
 		version := strings.TrimSuffix(r.GetChart().GetMetadata().GetVersion(), "\n")
 		fmt.Printf("Name:%s Version:%s\n", name, version)
 		nameAndVersion := name + "-" + version
-		//fmt.Printf("NameVersion:%s\n", nameAndVersion)
+
 		if strings.Contains(chartURL, nameAndVersion) {
 			alreadyDeployed = true
 			operatorName = name
 			operatorVersion = version
 		}
-		//if name == operatorName && version == operatorVersion {
-		//	alreadyDeployed = true
-		//}
 	}
 	return alreadyDeployed, operatorName, operatorVersion
 }
