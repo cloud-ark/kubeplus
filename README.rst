@@ -250,56 +250,12 @@ f) Explain custom Kinds
    ``kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"  | python -m json.tool``
 
 
-Real cluster (experimental):
------------------------------
+Real cluster:
+--------------
 
-1) Create a AWS EC2 instance: t2.2xlarge (8vCPUs, 32GB memory, 40 GB disk)
+- Moodle
 
-2) Update the security group to allow traffic on port range 1-32000 from 0.0.0.0/0
-
-3) Login
-
-4) Switch user to root:
-
-   ``sudo su -``
-
-5) git clone https://github.com/cloud-ark/kubeplus.git
-
-6) cd kubeplus
-
-7) ./setup-test-cluster.sh
-
-8) cd $HOME/goworkspace/src/k8s.io/kubernetes
-
-9) Edit hack/local-up-cluster.sh to include following:
-
-   - NODE_PORT_RANGE:"1-32000"
-
-   - ENABLE_HOSTPATH_PROVISIONER: "true"
-
-10) Start cluster
-
-   - export PATH=$PATH:/usr/local/go/bin
-
-   - export KUBERNETES_PROVIDER=local 
-
-   - nohup hack/local-up-cluster.sh &
-
-11) Start Helm
-
-    - export PATH=$PATH:$HOME/goworkspace/src/k8s.io/kubernetes/cluster
-
-    - pushd ~/kubeplus
-
-    - ./setup-helm.sh
-
-12) Deploy Kubeplus
-
-    - kubectl.sh apply -f deploy
-
-    - kubectl.sh get pods (wait till all KubePlus containers are READY)
-
-13) Deploy Moodle Operator and then create Moodle Instance
+  - Deploy Moodle Operator and then create Moodle Instance on a EC2 instance
 
     - Follow examples/moodle/steps.txt
 
