@@ -1,21 +1,20 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: moodle-mysql
+  name: moodle1-mysql
   labels:
-    app: moodle-mysql
+    app: moodle1-mysql
 spec:
   ports:
     - port: 3306
-      nodePort: 32000
   selector:
-    app: moodle-mysql
-  type: NodePort
+    app: moodle1-mysql
+  type: ClusterIP
 ---
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: mysql-data
+  name: moodle1-mysql-data
   labels:
     type: local
 spec:
@@ -30,9 +29,9 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mysql-data
+  name: moodle1-mysql-data
   labels:
-    app: moodle-mysql
+    app: moodle1-mysql
 spec:
   accessModes:
     - ReadWriteOnce
@@ -43,17 +42,17 @@ spec:
 apiVersion: apps/v1beta2 # for versions before 1.9.0 use apps/v1beta2
 kind: Deployment
 metadata:
-  name: moodle-mysql
+  name: moodle1-mysql
   labels:
-    app: moodle-mysql
+    app: moodle1-mysql
 spec:
   selector:
     matchLabels:
-      app: moodle-mysql
+      app: moodle1-mysql
   template:
     metadata:
       labels:
-        app: moodle-mysql
+        app: moodle1-mysql
     spec:
       containers:
       - name: mysql
@@ -80,5 +79,5 @@ spec:
       volumes:
       - name: mysql-persistent-storage
         persistentVolumeClaim:
-          claimName: mysql-data
+          claimName: moodle1-mysql-data
 ---
