@@ -107,14 +107,16 @@ func main() {
 
 		operatorsToInstall := getOperatorChartList(operatorsToInstallKey)
 		if len(operatorsToInstall) > 0 {
-			fmt.Printf("Operators to install:%v\n", operatorsToInstall)
+			//fmt.Printf("Operators to install:%v\n", operatorsToInstall)
 		}
 		operatorsToDelete := getOperatorChartList(operatorsToDeleteKey)
 		if len(operatorsToDelete) > 0 {
-			fmt.Printf("Operators to delete:%v\n", operatorsToDelete)
+			//fmt.Printf("Operators to delete:%v\n", operatorsToDelete)
 		}
 
-		if len(operatorsToInstall) > 0 || len(operatorsToDelete) > 0 {
+		newOperators := subtract(operatorsToInstall, deployedCharts)
+
+		if len(newOperators) > 0 || len(operatorsToDelete) > 0 {
 
 			connectionError := setupConnection()
 			if connectionError == nil {
