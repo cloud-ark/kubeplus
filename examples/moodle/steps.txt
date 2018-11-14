@@ -1,7 +1,7 @@
 #helm init
 #kubectl apply -f kubeplus/deploy/
 
-Download minikube-0.25
+Download minikube-0.25, download helm
 
 1) minikube start --memory 4096
 
@@ -19,7 +19,7 @@ Download minikube-0.25
 
    - kubectl apply -f deploy/
 
-7) Wail till kubeplus is ready (4/4 Ready containers)
+7) Wait till kubeplus is ready (4/4 Ready containers)
   
    - kubectl get pods
 
