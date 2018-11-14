@@ -89,7 +89,7 @@ func getKubeClient() (*rest.Config, kubernetes.Interface, error) {
 
 func setupConnection() error {
 	var errToReturn error
-	if settings.TillerHost == "" {
+	//if settings.TillerHost == "" {
 		//config, client, err := getKubeClient(settings.KubeContext, settings.KubeConfig)
 		config, client, err := getKubeClient()
 		if err != nil {
@@ -105,7 +105,7 @@ func setupConnection() error {
 
 		settings.TillerHost = fmt.Sprintf("localhost:%d", tunnel.Local)
 		fmt.Println("Created tunnel using local port:", tunnel.Local)
-	}
+	//}
 	return errToReturn
 }
 
@@ -116,6 +116,18 @@ func main() {
 
 	// Run forever
 	for {
+
+		operatorsToInstall := getOperatorChartList("/operatorsToInstall")
+		if len(operatorsToInstall) > 0 {
+		   fmt.Printf("Operators to install:%v\n", operatorsToInstall)
+		}
+		operatorsToDelete := getOperatorChartList("/operatorsToDelete")
+		if len(operatorsToDelete) > 0 {
+		   fmt.Printf("Operators to delete:%v\n", operatorsToDelete)
+		}
+
+		if len(operatorsToInstall) > 0 || len(operatorsToDelete) > 0 {
+
 		connectionError := setupConnection()
 		if connectionError == nil {
 
@@ -150,15 +162,6 @@ func main() {
 			}
 
 			helmClient := helm.NewClient(options...)
-
-			operatorsToInstall := getOperatorChartList("/operatorsToInstall")
-			if len(operatorsToInstall) > 0 {
-			   fmt.Printf("Operators to install:%v\n", operatorsToInstall)
-			}
-			operatorsToDelete := getOperatorChartList("/operatorsToDelete")
-			if len(operatorsToDelete) > 0 {
-			   fmt.Printf("Operators to delete:%v\n", operatorsToDelete)
-			}
 
 			// Delete Operators
 			for _, chartURL := range operatorsToDelete {
@@ -255,7 +258,8 @@ func main() {
 			   emptyList := make([]string, 0)
 			   storeList("/operatorsToDelete", emptyList)
 			}
-		}
+		   }
+		} // If len() || len()
 		time.Sleep(time.Second * 5)
 	}
 }
