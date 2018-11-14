@@ -166,16 +166,13 @@ func (v *valueFiles) Set(value string) error {
 	return nil
 }
 
-// Original newInsallCmd changed and reduced to work with operator-manager
+// Original newInsallCmd changed and reduced to work with operator-deployer
 func installChart(c helm.Interface, out io.Writer, chartName string, chartValues []byte) (error, []string, string) {
 	inst := &installCmd{
 		out:    out,
 		client: c,
 	}
 
-	//inst.repoURL = "https://s3-us-west-2.amazonaws.com/cloudark-helm-charts"
-	//chartName = "postgres-crd-v2-chart"
-	//inst.version = "0.0.2"
 	cp, err := locateChartPath(inst.repoURL, inst.username, inst.password, chartName, inst.version, inst.verify, inst.keyring,
 		inst.certFile, inst.keyFile, inst.caFile)
 	if err != nil {
@@ -196,7 +193,7 @@ func installChart(c helm.Interface, out io.Writer, chartName string, chartValues
 
 func (i *installCmd) run(rawVals []byte) (error, []string, string) {
 
-     	var releaseName string
+	var releaseName string
 	fmt.Println("CHART PATH: %s\n", i.chartPath)
 	str1 := fmt.Sprintf("%s", rawVals)
 	fmt.Println("Chart Values:%s\n", str1)
@@ -207,7 +204,7 @@ func (i *installCmd) run(rawVals []byte) (error, []string, string) {
 	}
 
 	if i.nameTemplate != "" {
-	        var err error
+		var err error
 		i.name, err = generateName(i.nameTemplate)
 		if err != nil {
 			return err, crds, releaseName
@@ -266,7 +263,7 @@ func (i *installCmd) run(rawVals []byte) (error, []string, string) {
 		helm.InstallWait(i.wait),
 		helm.InstallDescription(i.description))
 	if err != nil {
-	        fmt.Printf("Error1:%v\n", err)
+		fmt.Printf("Error1:%v\n", err)
 		return err, crds, releaseName
 	}
 
@@ -290,7 +287,7 @@ func (i *installCmd) run(rawVals []byte) (error, []string, string) {
 	fmt.Println("==========")
 	fmt.Println("==========")
 	fmt.Println("==========")
-	fmt.Println("**********")	
+	fmt.Println("**********")
 	fmt.Println("Printing Resources")
 
 	resources := status.GetInfo().GetStatus().GetResources()
@@ -302,7 +299,7 @@ func (i *installCmd) run(rawVals []byte) (error, []string, string) {
 	startCustomResourceLines := false
 	for _, line := range lines {
 		if startCustomResourceLines {
-			if !strings.HasPrefix(line, "NAME") && !strings.HasPrefix(line, "==>") && line != " "  && line != "" {
+			if !strings.HasPrefix(line, "NAME") && !strings.HasPrefix(line, "==>") && line != " " && line != "" {
 				parts := strings.Split(line, " ")
 				crds = append(crds, string(parts[0]))
 			}
@@ -456,7 +453,6 @@ func locateChartPath(repoURL, username, password, name, version string, verify b
 		return name, fmt.Errorf("path %q not found", name)
 	}
 
-
 	crepo := filepath.Join(settings.Home.Repository(), name)
 	if _, err := os.Stat(crepo); err == nil {
 		return filepath.Abs(crepo)
@@ -501,13 +497,13 @@ func locateChartPath(repoURL, username, password, name, version string, verify b
 	if err == nil {
 		lname, err := filepath.Abs(filename)
 		if err != nil {
-						fmt.Println("22")
+			fmt.Println("22")
 			return filename, err
 		}
 		fmt.Println("Fetched %s to %s\n", name, filename)
 		return lname, nil
 	} else if settings.Debug {
-			fmt.Println("23")
+		fmt.Println("23")
 		return filename, err
 	}
 
