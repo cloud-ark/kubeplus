@@ -64,7 +64,7 @@ func deleteChart(c helm.Interface, chartName string) error {
 	fmt.Printf("Deleting chart:%s\n", del.name)
 
 	if err := del.run(); err != nil {
-	   return err
+		return err
 	}
 	fmt.Printf("release \"%s\" deleted\n", del.name)
 	return nil

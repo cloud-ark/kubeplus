@@ -44,6 +44,8 @@ var (
 	kubeconfig     string
 	etcdServiceURL string
 	deployedCharts []string
+        operatorsToDeleteKey  = "/operatorsToDelete"
+        operatorsToInstallKey = "/operatorsToInstall"
 )
 
 func init() {
@@ -57,19 +59,6 @@ func configForContext(context string, kubeconfig string) (*rest.Config, error) {
 		return nil, fmt.Errorf("could not get Kubernetes config for context %q: %s", context, err)
 	}
 	return config, nil
-}
-
-// getKubeClient creates a Kubernetes config and client for a given kubeconfig context.
-func getKubeClient1(context string, kubeconfig string) (*rest.Config, kubernetes.Interface, error) {
-	config, err := configForContext(context, kubeconfig)
-	if err != nil {
-		return nil, nil, err
-	}
-	client, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, nil, fmt.Errorf("could not get Kubernetes client: %s", err)
-	}
-	return config, client, nil
 }
 
 func getKubeClient() (*rest.Config, kubernetes.Interface, error) {
@@ -90,21 +79,20 @@ func getKubeClient() (*rest.Config, kubernetes.Interface, error) {
 func setupConnection() error {
 	var errToReturn error
 	//if settings.TillerHost == "" {
-		//config, client, err := getKubeClient(settings.KubeContext, settings.KubeConfig)
-		config, client, err := getKubeClient()
-		if err != nil {
-			fmt.Printf("Error: %v", err)
-			errToReturn = err
-		}
+	config, client, err := getKubeClient()
+	if err != nil {
+		fmt.Printf("Error: %v", err)
+		errToReturn = err
+	}
 
-		tunnel, err := portforwarder.New(settings.TillerNamespace, client, config)
-		if err != nil {
-			panic(err)
-			errToReturn = err
-		}
+	tunnel, err := portforwarder.New(settings.TillerNamespace, client, config)
+	if err != nil {
+		panic(err)
+		errToReturn = err
+	}
 
-		settings.TillerHost = fmt.Sprintf("localhost:%d", tunnel.Local)
-		fmt.Println("Created tunnel using local port:", tunnel.Local)
+	settings.TillerHost = fmt.Sprintf("localhost:%d", tunnel.Local)
+	fmt.Println("Created tunnel using local port:", tunnel.Local)
 	//}
 	return errToReturn
 }
@@ -117,148 +105,148 @@ func main() {
 	// Run forever
 	for {
 
-		operatorsToInstall := getOperatorChartList("/operatorsToInstall")
+		operatorsToInstall := getOperatorChartList(operatorsToInstallKey)
 		if len(operatorsToInstall) > 0 {
-		   fmt.Printf("Operators to install:%v\n", operatorsToInstall)
+			fmt.Printf("Operators to install:%v\n", operatorsToInstall)
 		}
-		operatorsToDelete := getOperatorChartList("/operatorsToDelete")
+		operatorsToDelete := getOperatorChartList(operatorsToDeleteKey)
 		if len(operatorsToDelete) > 0 {
-		   fmt.Printf("Operators to delete:%v\n", operatorsToDelete)
+			fmt.Printf("Operators to delete:%v\n", operatorsToDelete)
 		}
 
 		if len(operatorsToInstall) > 0 || len(operatorsToDelete) > 0 {
 
-		connectionError := setupConnection()
-		if connectionError == nil {
+			connectionError := setupConnection()
+			if connectionError == nil {
 
-			options := []helm.Option{helm.Host(settings.TillerHost), helm.ConnectTimeout(settings.TillerConnectionTimeout)}
+				options := []helm.Option{helm.Host(settings.TillerHost), helm.ConnectTimeout(settings.TillerConnectionTimeout)}
 
-			if tlsVerify || tlsEnable {
-				if tlsCaCertFile == "" {
-					tlsCaCertFile = settings.Home.TLSCaCert()
-				}
-				if tlsCertFile == "" {
-					tlsCertFile = settings.Home.TLSCert()
-				}
-				if tlsKeyFile == "" {
-					tlsKeyFile = settings.Home.TLSKey()
-				}
-				fmt.Println("Host=%q, Key=%q, Cert=%q, CA=%q\n", tlsKeyFile, tlsCertFile, tlsCaCertFile)
-				tlsopts := tlsutil.Options{
-					ServerName:         tlsServerName,
-					KeyFile:            tlsKeyFile,
-					CertFile:           tlsCertFile,
-					InsecureSkipVerify: true,
-				}
-				if tlsVerify {
-					tlsopts.CaCertFile = tlsCaCertFile
-					tlsopts.InsecureSkipVerify = false
-				}
-				tlscfg, err := tlsutil.ClientConfig(tlsopts)
-				if err != nil {
-					fmt.Fprintln(os.Stderr, err)
-				}
-				options = append(options, helm.WithTLS(tlscfg))
-			}
-
-			helmClient := helm.NewClient(options...)
-
-			// Delete Operators
-			for _, chartURL := range operatorsToDelete {
-				releaseName := getReleaseName("release-" + chartURL)
-				fmt.Printf("Release Name to delete:%s\n", releaseName)
-				if releaseName != "" {
-				   err1 := deleteChart(helmClient, releaseName)
-				   if err1 != nil {
-				      fmt.Printf("Error deleting chart %s %s", releaseName, err1)
-				   }
-
-				   // Delete Chart URL from deployedCharts
-				   newChartList := make([]string, 0)
-				   for _, depChart := range deployedCharts {
-				   	if depChart != chartURL {
-						newChartList = append(newChartList, depChart)
+				if tlsVerify || tlsEnable {
+					if tlsCaCertFile == "" {
+						tlsCaCertFile = settings.Home.TLSCaCert()
 					}
-				   }
-				   deployedCharts = newChartList
-				 } else {
-				  fmt.Printf("Did not find any release for %s\n", chartURL)
-				 }
-			}
-
-			// Install Operators
-			operatorsToInstall = subtract(operatorsToInstall, operatorsToDelete)
-			if len(operatorsToInstall) > 0 {
-			   fmt.Printf("Effective Operators to install:%v\n", operatorsToInstall)
-			}
-			for _, chartURL := range operatorsToInstall {
-				releases, err := helmClient.ListReleases(
-					helm.ReleaseListLimit(10),
-					helm.ReleaseListNamespace("default"),
-				)
-				if err != nil {
-					fmt.Printf("Error: %v", err)
+					if tlsCertFile == "" {
+						tlsCertFile = settings.Home.TLSCert()
+					}
+					if tlsKeyFile == "" {
+						tlsKeyFile = settings.Home.TLSKey()
+					}
+					fmt.Println("Host=%q, Key=%q, Cert=%q, CA=%q\n", tlsKeyFile, tlsCertFile, tlsCaCertFile)
+					tlsopts := tlsutil.Options{
+						ServerName:         tlsServerName,
+						KeyFile:            tlsKeyFile,
+						CertFile:           tlsCertFile,
+						InsecureSkipVerify: true,
+					}
+					if tlsVerify {
+						tlsopts.CaCertFile = tlsCaCertFile
+						tlsopts.InsecureSkipVerify = false
+					}
+					tlscfg, err := tlsutil.ClientConfig(tlsopts)
+					if err != nil {
+						fmt.Fprintln(os.Stderr, err)
+					}
+					options = append(options, helm.WithTLS(tlscfg))
 				}
 
-				alreadyDeployed, operatorName, operatorVersion := checkIfDeployed(chartURL, releases.GetReleases())
+				helmClient := helm.NewClient(options...)
 
-				// releases.GetReleases() may return empty if connection to Tiller breaks
-				// If that happens alreadyDeployed will be false (its default value.)
-				// But the chart may actually be deployed from previous run. So check in our deployedCharts list
-				// to avoid re-triggering chart deployment.
-				// TODO(devdattakulkarni): Revisit when supporting Chart upgrades.
-				if !alreadyDeployed {
-					for _, deployedChart := range deployedCharts {
-						if deployedChart == chartURL {
-							alreadyDeployed = true
+				// Delete Operators
+				for _, chartURL := range operatorsToDelete {
+					releaseName := getReleaseName("release-" + chartURL)
+					fmt.Printf("Release Name to delete:%s\n", releaseName)
+					if releaseName != "" {
+						err1 := deleteChart(helmClient, releaseName)
+						if err1 != nil {
+							fmt.Printf("Error deleting chart %s %s", releaseName, err1)
+						}
+
+						// Delete Chart URL from deployedCharts
+						newChartList := make([]string, 0)
+						for _, depChart := range deployedCharts {
+							if depChart != chartURL {
+								newChartList = append(newChartList, depChart)
+							}
+						}
+						deployedCharts = newChartList
+					} else {
+						fmt.Printf("Did not find any release for %s\n", chartURL)
+					}
+				}
+
+				// Install Operators
+				operatorsToInstall = subtract(operatorsToInstall, operatorsToDelete)
+				if len(operatorsToInstall) > 0 {
+					fmt.Printf("Effective Operators to install:%v\n", operatorsToInstall)
+				}
+				for _, chartURL := range operatorsToInstall {
+					releases, err := helmClient.ListReleases(
+						helm.ReleaseListLimit(10),
+						helm.ReleaseListNamespace("default"),
+					)
+					if err != nil {
+						fmt.Printf("Error: %v", err)
+					}
+
+					alreadyDeployed, operatorName, operatorVersion := checkIfDeployed(chartURL, releases.GetReleases())
+
+					// releases.GetReleases() may return empty if connection to Tiller breaks
+					// If that happens alreadyDeployed will be false (its default value.)
+					// But the chart may actually be deployed from previous run. So check in our deployedCharts list
+					// to avoid re-triggering chart deployment.
+					// TODO(devdattakulkarni): Revisit when supporting Chart upgrades.
+					if !alreadyDeployed {
+						for _, deployedChart := range deployedCharts {
+							if deployedChart == chartURL {
+								alreadyDeployed = true
+							}
 						}
 					}
-				}
 
-				if !alreadyDeployed {
-					fmt.Println("Installing chart.")
-					fmt.Printf("Chart URL%s\n", chartURL)
+					if !alreadyDeployed {
+						fmt.Println("Installing chart.")
+						fmt.Printf("Chart URL%s\n", chartURL)
 
-					cmd := &cobra.Command{}
-					out := cmd.OutOrStdout()
+						cmd := &cobra.Command{}
+						out := cmd.OutOrStdout()
 
-					err, chartValues := getChartValues(chartURL)
-					if err != nil {
-						panic(err)
-					}
-					fmt.Printf("ChartValues:%v\n", chartValues)
-					err1, crds, releaseName := installChart(helmClient, out, chartURL, chartValues)
-					if err1 != nil {
-						fmt.Println("%%%%%%%%%")
-						fmt.Printf("Error: %v", err1)
-						fmt.Println("%%%%%%%%%")
-						errorString := string(err1.Error())
-						// Save Error in Etcd
-						saveOperatorCRDs(chartURL, []string{"error", errorString})
+						err, chartValues := getChartValues(chartURL)
+						if err != nil {
+							panic(err)
+						}
+						fmt.Printf("ChartValues:%v\n", chartValues)
+						err1, crds, releaseName := installChart(helmClient, out, chartURL, chartValues)
+						if err1 != nil {
+							fmt.Println("%%%%%%%%%")
+							fmt.Printf("Error: %v", err1)
+							fmt.Println("%%%%%%%%%")
+							errorString := string(err1.Error())
+							// Save Error in Etcd
+							saveOperatorCRDs(chartURL, []string{"error", errorString})
+						} else {
+							// Save CRDs in Etcd
+							saveOperatorCRDs(chartURL, crds)
+
+							// Save release name
+							saveReleaseName("release-"+chartURL, releaseName)
+
+							// Save Chart URL in deployedCharts
+							deployedCharts = append(deployedCharts, chartURL)
+						}
 					} else {
-						// Save CRDs in Etcd
-						saveOperatorCRDs(chartURL, crds)
-
-						// Save release name
-						saveReleaseName("release-"+chartURL, releaseName)
-
-						// Save Chart URL in deployedCharts
-						deployedCharts = append(deployedCharts, chartURL)
+						fmt.Println("Operator chart %s %s already deployed", operatorName, operatorVersion)
 					}
-				} else {
-					fmt.Println("Operator chart %s %s already deployed", operatorName, operatorVersion)
+				}
+
+				// Set the operatorsToInstall key with the new List
+				updateInstallList(operatorsToInstallKey, operatorsToInstall)
+
+				// After all Operators are deleted, reset the list in etcd
+				if len(operatorsToDelete) > 0 {
+					emptyList := make([]string, 0)
+					storeList(operatorsToDeleteKey, emptyList)
 				}
 			}
-
-			// Set the operatorsToInstall key with the new List
-			updateInstallList("/operatorsToInstall", operatorsToInstall)
-
-			// After all Operators are deleted, reset the list in etcd
-			if len(operatorsToDelete) > 0 {
-			   emptyList := make([]string, 0)
-			   storeList("/operatorsToDelete", emptyList)
-			}
-		   }
 		} // If len() || len()
 		time.Sleep(time.Second * 5)
 	}
@@ -297,7 +285,7 @@ func saveReleaseName(resourceKey, releaseName string) {
 }
 
 func updateInstallList(resourceKey string, operatorList []string) {
-     storeList(resourceKey, operatorList)
+	storeList(resourceKey, operatorList)
 }
 
 func storeList(resourceKey string, dataList []string) {
@@ -310,12 +298,12 @@ func storeList(resourceKey string, dataList []string) {
 		fmt.Errorf("Error: %v", err)
 	}
 	kapi := client.NewKeysAPI(c)
-	
-    	jsonOperatorList, err2 := json.Marshal(&dataList)
-    	if err2 != nil {
-           panic (err2)
-    	}
-    	resourceValue := string(jsonOperatorList)
+
+	jsonOperatorList, err2 := json.Marshal(&dataList)
+	if err2 != nil {
+		panic(err2)
+	}
+	resourceValue := string(jsonOperatorList)
 
 	//fmt.Printf("Setting %s->%s\n",resourceKey, resourceValue)
 	_, err1 := kapi.Set(context.Background(), resourceKey, resourceValue, nil)

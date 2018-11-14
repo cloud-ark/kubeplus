@@ -17,14 +17,14 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
-	"os"
-	"log"
 	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/coreos/etcd/client"
+	"log"
+	"os"
 	"strings"
 	"time"
-	"github.com/coreos/etcd/client"
-	"encoding/json"
 
 	_ "github.com/lib/pq"
 
@@ -44,8 +44,8 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	"k8s.io/client-go/tools/clientcmd"
 	"io/ioutil"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"io"
 	"net/http"
@@ -81,8 +81,11 @@ const (
 )
 
 var (
-	etcdServiceURL string
-        openAPISpecKey = "/openAPISpecRegistered"
+	etcdServiceURL        string
+	openAPISpecKey        = "/openAPISpecRegistered"
+	operatorsToDeleteKey  = "/operatorsToDelete"
+	operatorsToInstallKey = "/operatorsToInstall"
+	chartValuesKey        = "/chartvalues"
 )
 
 func init() {
@@ -163,12 +166,11 @@ func NewController(
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-		        //_, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+			//_, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			//if err == nil {
 			controller.deleteOperator(obj)
 			//}
 		},
-
 	})
 	return controller
 }
@@ -320,7 +322,7 @@ func (c *Controller) handleObject(obj interface{}) {
 func (c *Controller) deleteOperator(obj interface{}) {
 	var err error
 	if _, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
-	   panic(err)
+		panic(err)
 	}
 
 	foo := obj.(*operatorv1.Operator)
@@ -332,7 +334,7 @@ func (c *Controller) deleteOperator(obj interface{}) {
 
 	operatorChartURL := foo.Spec.ChartURL
 
-	storeChartURL("/operatorsToDelete", operatorChartURL)
+	storeChartURL(operatorsToDeleteKey, operatorChartURL)
 
 	deleteConfigMap(operatorChartURL, c.kubeclientset)
 
@@ -374,9 +376,9 @@ func (c *Controller) syncHandler(key string) error {
 	fmt.Printf("Chart URL:%s\n", operatorChartURL)
 	fmt.Printf("Values:%v\n", operatorChartValues)
 
-	storeChartURL("/operatorsToInstall", operatorChartURL)
+	storeChartURL(operatorsToInstallKey, operatorChartURL)
 
-	storeEtcd("/chartvalues/" + operatorChartURL, operatorChartValues)
+	storeEtcd(chartValuesKey+"/"+operatorChartURL, operatorChartValues)
 
 	var operatorCRDString string
 	for {
@@ -391,37 +393,37 @@ func (c *Controller) syncHandler(key string) error {
 
 	crds := make([]string, 0)
 	if err := json.Unmarshal([]byte(operatorCRDString), &crds); err != nil {
-        panic(err)
-    }
-    fmt.Printf("OperatorCRD:%v\n", crds)
+		panic(err)
+	}
+	fmt.Printf("OperatorCRD:%v\n", crds)
 
-    fmt.Println("Checking if OpenAPI Spec for the Operator is registered or not")
-    openAPISpecRegistered := isOpenAPISpecRegistered(operatorChartURL)
+	fmt.Println("Checking if OpenAPI Spec for the Operator is registered or not")
+	openAPISpecRegistered := isOpenAPISpecRegistered(operatorChartURL)
 
-    if !openAPISpecRegistered {
-       	    fmt.Println("OpenAPI Spec for the Operator not registered.")
-	    operatorName, _ := parseChartNameVersion(operatorChartURL)
-    	    operatorOpenAPIConfigMapName := uploadOperatorOpenAPISpec(operatorChartURL, c.kubeclientset)
-    	    saveOperatorData(operatorName, crds, operatorOpenAPIConfigMapName)
-	    recordOpenAPISpecRegistration(operatorChartURL)
-	    
-	    status := "READY"
-    	    c.updateFooStatus(foo, &crds, status)
-    } else {
-      fmt.Println("OpenAPI Spec for the Operator already registered.")
-    }
+	if !openAPISpecRegistered {
+		fmt.Println("OpenAPI Spec for the Operator not registered.")
+		operatorName, _ := parseChartNameVersion(operatorChartURL)
+		operatorOpenAPIConfigMapName := uploadOperatorOpenAPISpec(operatorChartURL, c.kubeclientset)
+		saveOperatorData(operatorName, crds, operatorOpenAPIConfigMapName)
+		recordOpenAPISpecRegistration(operatorChartURL)
 
-    c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
-    return nil
+		status := "READY"
+		c.updateFooStatus(foo, &crds, status)
+	} else {
+		fmt.Println("OpenAPI Spec for the Operator already registered.")
+	}
+
+	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
+	return nil
 }
 
 func isOpenAPISpecRegistered(operatorChartURL string) bool {
-     operatorPresent := checkIfOperatorURLPresentInETCD(openAPISpecKey, operatorChartURL)
-     return operatorPresent
+	operatorPresent := checkIfOperatorURLPresentInETCD(openAPISpecKey, operatorChartURL)
+	return operatorPresent
 }
 
 func recordOpenAPISpecRegistration(operatorChartURL string) {
-     storeChartURL("/openAPISpecRegistered", operatorChartURL)
+	storeChartURL(openAPISpecKey, operatorChartURL)
 }
 
 func saveOperatorData(operatorName string, crds []string, operatorOpenAPIConfigMapName string) {
@@ -473,18 +475,18 @@ func saveOperatorData(operatorName string, crds []string, operatorOpenAPIConfigM
 		crdDetailsMap["composition"] = composition
 
 		//crdName := "postgreses.postgrescontroller.kubeplus"
-		storeEtcd("/" + crdName, crdDetailsMap)
+		storeEtcd("/"+crdName, crdDetailsMap)
 
-		storeEtcd("/" + kind + "-OpenAPISpecConfigMap", operatorOpenAPIConfigMapName)
+		storeEtcd("/"+kind+"-OpenAPISpecConfigMap", operatorOpenAPIConfigMapName)
 	}
 }
 
 func storeEtcd(resourceKey string, resourceData interface{}) {
-    jsonData, err := json.Marshal(&resourceData)
-    if err != nil {
-        panic (err)
-    }
-    jsonDataString := string(jsonData)
+	jsonData, err := json.Marshal(&resourceData)
+	if err != nil {
+		panic(err)
+	}
+	jsonDataString := string(jsonData)
 	cfg := client.Config{
 		Endpoints: []string{etcdServiceURL},
 		Transport: client.DefaultTransport,
@@ -494,7 +496,7 @@ func storeEtcd(resourceKey string, resourceData interface{}) {
 		log.Fatal(err)
 	}
 	kapi := client.NewKeysAPI(c)
-	
+
 	//fmt.Printf("Setting %s->%s\n",resourceKey, jsonDataString)
 	_, err1 := kapi.Set(context.Background(), resourceKey, jsonDataString, nil)
 	if err1 != nil {
@@ -561,11 +563,11 @@ func extractOperatorChart(chartURL string) {
 	fmt.Printf("Chart tar file downloaded to:%s\n", dirName)
 	_, err = os.Stat(dirName)
 	if os.IsNotExist(err) {
-	   fmt.Printf("%s does not exist\n", dirName)
-	   err = os.Mkdir(dirName, 0755)
-	    if err != nil {
-	    	log.Fatal(err)
-	    }
+		fmt.Printf("%s does not exist\n", dirName)
+		err = os.Mkdir(dirName, 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	fmt.Println("Untaring the Chart")
@@ -582,16 +584,15 @@ func extractOperatorChart(chartURL string) {
 	//fmt.Println("Listing %s", cwd)
 
 	files, err := ioutil.ReadDir(cwd)
-    if err != nil {
-        log.Fatal(err)
-    }
-    for _, f := range files {
-            fmt.Println(f.Name())
-    }
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, f := range files {
+		fmt.Println(f.Name())
+	}
 
-    os.Chdir(currentDir)
+	os.Chdir(currentDir)
 }
-
 
 func deleteConfigMap(chartURL string, kubeclientset kubernetes.Interface) {
 	chartName, _ := parseChartNameVersion(chartURL)
@@ -619,8 +620,8 @@ func createConfigMap(chartURL string, kubeclientset kubernetes.Interface) string
 
 	//fmt.Printf("OpenAPI Spec file:%s\n", openapispecFile)
 
-    jsonContents, err := ioutil.ReadFile(openapispecFile)
-    jsonContents1 := string(jsonContents)
+	jsonContents, err := ioutil.ReadFile(openapispecFile)
+	jsonContents1 := string(jsonContents)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -657,16 +658,16 @@ func parseChartNameVersion(chartURL string) (string, string) {
 	splitOnSlash := strings.Split(chartURL, "/")
 	lastItem := splitOnSlash[len(splitOnSlash)-1]
 	fmt.Printf("Last item:%s\n", lastItem)
-	
+
 	splitOnTgz := strings.Split(lastItem, ".tgz")
 	candidate := splitOnTgz[0]
 	fmt.Printf("Candidate:%s\n", candidate)
-	
+
 	nameVersionSplitIndex := strings.LastIndex(candidate, "-")
 	versionStartIndex := nameVersionSplitIndex + 1
 	version := candidate[versionStartIndex:]
 	fmt.Printf("Version:%s\n", version)
-	
+
 	nameEndIndex := nameVersionSplitIndex
 	name := candidate[0:nameEndIndex]
 	fmt.Printf("Name:%s\n", name)
@@ -684,20 +685,20 @@ func deleteChartURL(resourceKey, chartURL string) {
 		fmt.Errorf("Error: %v", err)
 	}
 	kapi := client.NewKeysAPI(c)
-	
+
 	operatorList := getList(resourceKey)
 	var newList []string
 	for _, operatorURL := range operatorList {
-	    if operatorURL != chartURL {
-	       newList = append(newList, operatorURL)
-	    } 
+		if operatorURL != chartURL {
+			newList = append(newList, operatorURL)
+		}
 	}
 
-    	jsonOperatorList, err2 := json.Marshal(&newList)
-    	if err2 != nil {
-           panic (err2)
-    	}
-    	resourceValue := string(jsonOperatorList)
+	jsonOperatorList, err2 := json.Marshal(&newList)
+	if err2 != nil {
+		panic(err2)
+	}
+	resourceValue := string(jsonOperatorList)
 
 	//fmt.Printf("Setting %s->%s\n",resourceKey, resourceValue)
 	_, err1 := kapi.Set(context.Background(), resourceKey, resourceValue, nil)
@@ -742,17 +743,17 @@ func addToList(resourceKey, chartURL string) {
 	kapi := client.NewKeysAPI(c)
 
 	var operatorList []string
-	operatorList = getList(resourceKey)	
+	operatorList = getList(resourceKey)
 	operatorPresent := checkIfOperatorURLPresentInETCD(resourceKey, chartURL)
 	if !operatorPresent {
-	    operatorList = append(operatorList, chartURL)		
+		operatorList = append(operatorList, chartURL)
 	}
 
-    	jsonOperatorList, err2 := json.Marshal(&operatorList)
-    	if err2 != nil {
-           panic (err2)
-    	}
-    	resourceValue := string(jsonOperatorList)
+	jsonOperatorList, err2 := json.Marshal(&operatorList)
+	if err2 != nil {
+		panic(err2)
+	}
+	resourceValue := string(jsonOperatorList)
 
 	//fmt.Printf("Setting %s->%s\n",resourceKey, resourceValue)
 	_, err1 := kapi.Set(context.Background(), resourceKey, resourceValue, nil)
@@ -764,7 +765,7 @@ func addToList(resourceKey, chartURL string) {
 }
 
 func getList(resourceKey string) []string {
-     	cfg := client.Config{
+	cfg := client.Config{
 		Endpoints: []string{etcdServiceURL},
 		Transport: client.DefaultTransport,
 	}
@@ -784,9 +785,9 @@ func getList(resourceKey string) []string {
 		currentListString = resp.Node.Value
 
 		if err = json.Unmarshal([]byte(currentListString), &operatorList); err != nil {
-    		   panic(err)
-    		}
-	    	//fmt.Printf("OperatorList:%v\n", operatorList)
+			panic(err)
+		}
+		//fmt.Printf("OperatorList:%v\n", operatorList)
 	}
 	return operatorList
 }
@@ -811,8 +812,6 @@ func getSingleValue(resourceKey string) string {
 	}
 	return resp.Node.Value
 }
-
-
 
 func (c *Controller) updateFooStatus(foo *operatorv1.Operator,
 	crds *[]string, status string) error {
