@@ -1,0 +1,11 @@
+apiVersion: postgrescontroller.kubeplus/v1
+kind: Postgres
+metadata:
+  name: postgres1
+spec:
+  deploymentName: postgres1
+  image: postgres:9.3
+  replicas: 1
+  users: [{"user": "devdatta", "password": "pass123"}, 
+          {"user": "pallavi", "password": "pass234"}]
+  databases: ["moodle", "wordpress"]

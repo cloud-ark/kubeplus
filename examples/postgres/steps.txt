@@ -1,0 +1,68 @@
+Postgres
+---------
+
+In this example we will deploy a Postgres Operator to manage life-cycle actions on Postgres instances.
+
+Setup:
+-------
+- Download Minikube, download Helm
+  - The example has been tested on minikube-0.25 and minikube-0.28
+
+
+Steps:
+-------
+
+1) minikube start --memory 4096
+
+2) helm init
+
+3) git clone https://github.com/cloud-ark/kubeplus.git
+
+4) cd kubeplus
+
+5) Wait till Helm Pod is running
+   - kubectl get pods -n kube-system
+
+6) Once Helm Pod is ready, deploy Kubeplus
+   - kubectl apply -f deploy/
+
+7) Wait till kubeplus is ready (4/4 Ready containers)
+   - kubectl get pods
+
+8) cd examples/postgres
+
+9) Deploy Postgres Operator
+   - kubectl create -f postgres-operator.yaml
+
+10) Wait till Postgres Operator Pod is ready
+     - kubectl get pods
+
+11) Find information about Postgres Custom Kind registered by Postgres Operator   
+    - kubectl get operators
+    - kubectl describe operators postgres-operator
+    - kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres" | python -m jston.tool
+      --> You should see OpenAPI Spec for Postgres custom kind as output
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec" | python -m jston.tool
+
+12) Deploy Postgres1 instance
+    - kubectl create -f postgres1.yaml
+    - kubectl get pods (Wait till Postgres Pod is ready)
+    - Verify database created and initialized successfully
+      - Install Postgres command-line tool (psql)
+      - kubectl describe postgres postgres1
+      - psql -h <minikube ip> -p <port> -U <username> -d <db-name>
+        - port: available from output of kubectl describe
+        - username: defined in postgres1.yaml
+        - db-name: defined in postgres1.yaml
+        - password: when prompted, enter password specified in postgres1.yaml
+    - Get composition tree of Postgres1
+      - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Postgres&instance=postgres1" | python -mjson.tool
+
+13) Test Life-cycle actions (execute and verify)
+    - kubectl apply -f add-user.yaml
+    - kubectl apply -f delete-user.yaml
+    - kubectl apply -f modify-password.yaml
+    - kubectl apply -f add-db.yaml
+    - kubectl apply -f delete-db.yaml
+
