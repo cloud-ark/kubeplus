@@ -123,17 +123,33 @@ KubePlus Architecture
 Try it
 =======
 
-Minikube
+We provide two examples that you can try - Postgres and Moodle.
+
+Postgres
 ---------
 
-Detailed steps are available in `kubeplus-steps.txt`__.
+Follow steps in `examples/postgres/steps.txt`__.
 
-.. _steps: https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-steps.txt
+.. _postgressteps: https://github.com/cloud-ark/kubeplus/blob/master/examples/postgres/steps.txt
 
-__ steps_
+__ postgressteps_
 
 
-Here is a summary:
+Moodle
+-------
+
+Follow steps in `examples/moodle/steps.txt`__.
+
+.. _moodlesteps: https://github.com/cloud-ark/kubeplus/blob/master/examples/moodle/steps.txt
+
+__ moodlesteps_
+
+
+
+Quick try
+-----------
+
+Here is a summary of deploying Postgres Operator.
 
 
 **1) Install KubePlus (by cluster administrator)**
@@ -249,15 +265,6 @@ f) Explain custom Kinds
 
    ``kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"  | python -m json.tool``
 
-
-Real cluster:
---------------
-
-- Moodle
-
-  - Deploy Moodle Operator and then create Moodle Instance on a EC2 instance
-
-    - Follow examples/moodle/steps.txt
 
 
 Operator Development Guidelines

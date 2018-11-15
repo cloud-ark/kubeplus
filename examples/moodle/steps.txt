@@ -1,7 +1,23 @@
-#helm init
-#kubectl apply -f kubeplus/deploy/
+Moodle
+-------
 
-Download minikube-0.25, download helm
+Moodle is an open source e-learning platform (https://moodle.org/).
+
+In this example we will deploy Moodle platform on Kubernetes. 
+We will use a Moodle Operator to create Moodle platform instances as code.
+Moodle supports various plugins. Moodle Operator takes the list of plugins to be installed 
+as declarative input in the Moodle Custom Resource Spec. The Operator installs the plugins at appropriate
+location within the Moodle installation. Check moodle1.yaml to see an example of how
+plugins are specified in the Custom Resource Spec. Check update-moodle1.yaml to see
+an example of how to specify installation of additional plugins on an existing Moodle instance.
+
+Setup:
+-------
+- Download Minikube, download Helm
+  - The example has been tested on minikube-0.25 and minikube-0.28
+
+Steps:
+-------
 
 1) minikube start --memory 4096
 
@@ -12,125 +28,73 @@ Download minikube-0.25, download helm
 4) cd kubeplus
 
 5) Wait till Helm Pod is running
-
    - kubectl get pods -n kube-system
 
 6) Once Helm Pod is ready, deploy Kubeplus
-
    - kubectl apply -f deploy/
 
 7) Wait till kubeplus is ready (4/4 Ready containers)
-  
    - kubectl get pods
 
-8) Update moodle-operator.yaml with minikube ip
+8) cd examples/moodle
 
+9) Update moodle-operator.yaml with minikube ip
    - minikube ip
-
    - vi moodle-operator.yaml --> set HOST_IP to value of minikube ip
 
-9) Deploy Moodle Operator
-
+10) Deploy Moodle Operator
    - kubectl create -f moodle-operator.yaml
 
-10) Wait till Moodle Operator pod is ready
-
+11) Wait till Moodle Operator pod is ready
    - kubectl get pods
 
-11) Deploy Moodle1 instance
-    - kubectl create -f examples/moodle/moodle1-mysql.yaml
-    - kubectl get pods (Wait will mysql pod is ready)
-    - kubectl create -f examples/moodle/moodle1.yaml
-    - kubectl get pods (It will take about 5/6 minutes for Moodle Pod to become ready)
+12) Find information about Moodle Custom Kind registered by Moodle Operator
+    - kubectl get operators
+    - kubectl describe operators moodle-operator
+    - kubectl describe customresourcedefinition moodles.moodlecontroller.kubeplus
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle" | python -m json.tool
+      --> You should see OpenAPI Spec for Moodle custom kind as output
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle.MoodleSpec" | python -m json.tool
+
+13) Deploy Moodle1 instance
+    - First deploy MySQL as database for the Moodle instance
+      - kubectl create -f moodle1-mysql.yaml
+      - kubectl get pods (Wait will mysql pod is ready)
+    - Next create Moodle instance
+      - kubectl create -f moodle1.yaml
+      - kubectl get pods (It will take about 5/6 minutes for Moodle Pod to become ready)
     - Once Moodle Pod is ready, 
       - kubectl describe moodles moodle1
       - Navigate to the IP URL of moodle1 instance
-        - Login using 'admin' and 'password1' as login credentials
+        - Login using 'admin' and 'password1' as login credentials (these are specified in moodle1.yaml)
+    - Find composition tree of Moodle1 instance
+      - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1" | python -m json.tool
+    - Check installed plugins
+      - As part of creating moodle instance, we install the 'profilecohort' plugin.
+        Check the custom resource specification moodle1.yaml to see this definition.
+        - Once logged in to the Moodle instance you will see a message to update Moodle database 
+          for 'profilecohort' plugin.
+        - Select that option to complete Plugin installation
+        - Navigate to -> Administration -> Plugins -> Plugins Overview
+        - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
-12) Deploy Moodle2 instance
-    - kubectl create -f examples/moodle/moodle2-mysql.yaml
-    - kubectl get pods (Wait will mysql pod is ready)
-    - kubectl create -f examples/moodle/moodle2.yaml
+14) Update Moodle Deployment to install new Plugin
+    - We will install 'wiris' plugin on 'moodle1' Moodle instance
+    - kubectl apply -f update-moodle1.yaml
+
+    - Once moodle1 instance is Ready, refresh the URL
+
+    - You will see a message to update Moodle database for 'wiris' plugin
+    - Select that option to complete Plugin installation
+      - Navigate to -> Administration -> Plugins -> Plugins Overview
+      - You should see 'profilecohort' and 'wiris' plugins in the 'Additional plugins' list
+
+15) Deploy Moodle2 instance
+    - kubectl create -f moodle2-mysql.yaml
+    - kubectl get pods (Wait will MySQL Pod is ready)
+    - kubectl create -f moodle2.yaml
     - kubectl get pods (It will take about 5/6 minutes for Moodle Pod to become ready)
     - Once Moodle Pod is ready, 
       - kubectl describe moodles moodle2
       - Navigate to the IP URL of moodle2 instance
         - Login using 'admin' and 'password1' as login credentials
-
-
-
-----------------------------------------------------------------------------------------
-
-
-1) Create a AWS EC2 instance: t2.xlarge (4vCPUs, 16GB memory, 40 GB disk, Ubuntu 18.04)
-
-2) Update the security group to allow traffic on port 80 from 0.0.0.0/0
-
-3) Login
-
-4) Switch user to root:
-
-   ``sudo su -``
-
-5) git clone https://github.com/cloud-ark/kubeplus.git
-
-6) cd kubeplus
-
-7) ./setup-test-cluster.sh
-
-8) cd $HOME/goworkspace/src/k8s.io/kubernetes
-
-9) Edit hack/local-up-cluster.sh to include following:
-
-   - NODE_PORT_RANGE:"1-32000"
-
-   - ENABLE_HOSTPATH_PROVISIONER: "true"
-
-10) Start cluster
-
-   - export PATH=$PATH:/usr/local/go/bin
-
-   - export KUBERNETES_PROVIDER=local 
-
-   - nohup hack/local-up-cluster.sh &
-
-11) Start Helm
-
-    - export PATH=$PATH:$HOME/goworkspace/src/k8s.io/kubernetes/cluster
-
-    - pushd ~/kubeplus
-
-    - ./setup-helm.sh
-
-12) Deploy Kubeplus
-
-    - kubectl.sh apply -f deploy
-
-    - kubectl.sh get pods (wait till all KubePlus containers are READY)
-
-
-13) Update moodle-operator.yaml with value of HOST_IP (public IP). Then,
-- kubectl.sh create -f moodle-operator.yaml
-- kubectl.sh get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle" | python -m json.tool
-- kubectl.sh create -f moodle-mysql.yaml
-- kubectl.sh get pods
-
-14) Once MySQL Pod is running and READY (1/1),
-- kubectl.sh create -f moodle1.yaml
-- kubectl.sh get pods
-
-It may take about 5/6 minutes for Moodle Pod to become ready.
-
-15) Once Moodle Pod is ready,
-- kubectl.sh describe moodle moodle1
-
-Moodle instance status will contain IP address.
-Open it in browser. If the deployment is successful
-you should see Moodle login page.
-Login using username 'admin' and password defined in moodle1.yaml
-Then,
-
-16) Check Moodle composition tree
-
-- kubectl.sh get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1" | python -m json.tool
-
