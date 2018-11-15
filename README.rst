@@ -123,7 +123,7 @@ KubePlus Architecture
 Try it
 =======
 
-We provide two examples that you can try - Postgres and Moodle.
+We provide three sample Operators that you can try - Postgres, Moodle, MySQL (built from Oracle MySQL Operator).
 
 Postgres
 ---------
@@ -145,11 +145,21 @@ Follow steps in `examples/moodle/steps.txt`__.
 __ moodlesteps_
 
 
+MySQL
+-----
+
+Follow steps in `examples/mysql/steps.txt`__.
+
+.. _mysqlsteps: https://github.com/cloud-ark/kubeplus/blob/master/examples/mysql/steps.txt
+
+__ mysqlsteps_
+
+
 
 Quick try
 -----------
 
-Here is a summary of deploying Postgres Operator.
+Here is summary of deploying Postgres Operator.
 
 
 **1) Install KubePlus (by cluster administrator)**

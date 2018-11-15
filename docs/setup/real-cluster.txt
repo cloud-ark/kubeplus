@@ -12,7 +12,7 @@
 
 6) cd kubeplus
 
-7) ./setup-test-cluster.sh
+7) ./scripts/setup-test-cluster.sh
 
 8) cd $HOME/goworkspace/src/k8s.io/kubernetes
 
@@ -36,7 +36,7 @@
 
     - pushd ~/kubeplus
 
-    - ./setup-helm.sh
+    - ./scripts/setup-helm.sh
 
 12) Deploy Kubeplus
 

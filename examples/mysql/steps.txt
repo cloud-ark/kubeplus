@@ -1,0 +1,74 @@
+MySQL Operator
+---------------
+
+In this example we will deploy Oracle MySQL Operator (https://github.com/oracle/mysql-operator).
+
+
+Setup:
+-------
+- Download Minikube, download Helm
+  - The example has been tested on minikube-0.25 and minikube-0.28
+
+
+Steps:
+-------
+
+1) minikube start --memory 4096
+
+2) helm init
+
+3) git clone https://github.com/cloud-ark/kubeplus.git
+
+4) cd kubeplus
+
+5) Wait till Helm Pod is running
+   - kubectl get pods -n kube-system
+
+6) Once Helm Pod is ready, deploy Kubeplus
+   - kubectl apply -f deploy/
+
+7) Wait till kubeplus is ready (4/4 Ready containers)
+   - kubectl get pods
+
+8) cd examples/mysql
+
+9) Deploy MySQL Operator
+   - kubectl create -f mysql-operator.yaml
+
+10) Wait till MySQL Operator Pod is ready. This Operator is deployed in namespace 'mysql-operator'
+    - kubectl get ns
+    - kubectl get pods -n mysql-operator
+
+11) Find information about various Custom Kinds registered by Oracle MySQL Operator
+    - kubectl get operators
+    - kubectl describe operators mysql-operator-0.2.1
+    - kubectl describe customresourcedefinition mysqlclusters.mysql.oracle.com
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Cluster" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Cluster.ClusterSpec" | python -m json.tool
+    - kubectl describe operators mysql-operator-0.2.1
+    - kubectl describe customresourcedefinition mysqlbackups.mysql.oracle.com
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup.BackupSpec" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup.BackupSpec.StorageProvider" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup.BackupSpec.StorageProvider.S3StorageProvider" | python -m json.tool
+    - kubectl describe operators mysql-operator-0.2.1
+    - kubectl describe customresourcedefinition mysqlrestores.mysql.oracle.com
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Restore" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Restore.RestoreSpec" | python -m json.tool
+    - kubectl describe operators mysql-operator-0.2.1
+    - kubectl describe customresourcedefinition mysqlbackupschedules.mysql.oracle.com
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=BackupSchedule" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=BackupSchedule.BackupScheduleSpec" | python -m json.tool
+
+
+12) Verify MySQL cluster
+    - Wait till MySQL Pods are running 
+      - kubectl get pods (there should be three pods mysql-0, mysql-1, mysql-2)
+
+    - Retrieve password to connect to the cluster
+      - kubectl -n default get mysqlclusters
+      - kubectl -n default get secret mysql-root-password -o jsonpath="{.data.password}" | base64 --decode
+
+    - Connect to the cluster
+      - kubectl run mysql-client --image=mysql:5.7 -it --rm --restart=Never \
+        > -- mysql -h mysql -uroot -p<password-from-previous-step-output> -e 'SELECT 1'
