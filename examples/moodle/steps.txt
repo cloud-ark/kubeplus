@@ -1,5 +1,5 @@
-Moodle
--------
+Moodle Operator
+---------------
 
 Moodle is an open source e-learning platform (https://moodle.org/).
 

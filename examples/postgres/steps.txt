@@ -1,5 +1,5 @@
-Postgres
----------
+Postgres Operator
+-----------------
 
 In this example we will deploy a Postgres Operator to manage life-cycle actions on Postgres instances.
 
