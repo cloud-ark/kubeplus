@@ -1,0 +1,26 @@
+Deploy Multiple Operators to create a custom PaaS
+-------------------------------------------------
+
+a) Install Minikube, Helm and KubePlus (follow ../moodle/steps.txt)
+
+b) Deploy multiple Operators through single YAML file
+   - kubectl create -f paas.yaml
+
+c) Check deployed operators
+   - kubectl get operators
+
+d) Describe Operators
+   - kubectl describe operators postgres-operator
+   - kubectl describe operators moodle-operator
+   - kubectl describe operators mysql-operator-0.2.1
+
+e) Find out custom resource Kinds registered by Operators
+   - kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
+   - kubectl describe customresourcedefinition moodles.moodlecontroller.kubeplus
+
+f) Explain custom Kinds
+   - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres"  | python -m json.tool
+   - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec"  | python -m json.tool
+   - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec.UserSpec"  | python -m json.tool
+   - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"  | python -m json.tool
+

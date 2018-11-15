@@ -155,6 +155,17 @@ Follow steps in `examples/mysql/steps.txt`__.
 __ mysqlsteps_
 
 
+Multiple Operators
+-------------------
+
+Follow steps in `examples/multiple-operators/steps.txt`__.
+
+.. _multipleoperatorssteps: https://github.com/cloud-ark/kubeplus/blob/master/examples/mysql/steps.txt
+
+__ multipleoperatorssteps_
+
+
+
 
 Quick try
 -----------
@@ -189,11 +200,11 @@ Wait till all 4 containers come up and are in 'Running' state (4/4 READY).
 a) Once core KubePlus is READY, Kubernetes cluster administrators define Kubernetes Operators to be installed in yaml files (e.g.: Postgres_, MySQL_, Moodle_) 
 and use following kubectl commands:
 
-.. _Postgres: https://github.com/cloud-ark/kubeplus/blob/master/postgres-operator.yaml
+.. _Postgres: https://github.com/cloud-ark/kubeplus/blob/master/examples/postgres/postgres-operator.yaml
 
-.. _MySQL: https://github.com/cloud-ark/kubeplus/blob/master/mysql-operator-chart-0.2.1.yaml
+.. _MySQL: https://github.com/cloud-ark/kubeplus/blob/master/examples/mysql/mysql-operator-chart-0.2.1.yaml
 
-.. _Moodle: https://github.com/cloud-ark/kubeplus/blob/master/moodle-operator.yaml
+.. _Moodle: https://github.com/cloud-ark/kubeplus/blob/master/examples/moodle/moodle-operator.yaml
 
 
 b) Deploy/install Operators:
@@ -204,7 +215,6 @@ b) Deploy/install Operators:
 c) Find out all the installed Operators:
 
   ``$ kubectl get operators``
-
 
 
 **3) Create Application Platform as Code (by application developer)**
@@ -237,43 +247,6 @@ e) Find out dynamic composition tree for Postgres custom resource instance:
 
   ``$ kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Postgres&instance=postgres1" | python -mjson.tool``
 
-
-Deploy Multiple Operators to create a custom PaaS
--------------------------------------------------
-
-a) Install Helm and KubePlus like above
-
-b) Deploy multiple Operators through single YAML file
-
-   ``$ kubectl create -f paas.yaml``
-
-c) Check deployed operators
-
-   ``$ kubectl get operators``
-
-d) Describe Operators
-
-   ``$ kubectl describe operators postgres-operator``
-
-   ``$ kubectl describe operators moodle-operator``
-
-   ``$ kubectl describe operators mysql-operator-0.2.1``
-
-e) Find out custom resource Kinds registered by Operators
-
-    ``$ kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus``
-
-    ``$ kubectl describe customresourcedefinition moodles.moodlecontroller.kubeplus``
-
-f) Explain custom Kinds
-
-   ``kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres"  | python -m json.tool``
-   
-   ``kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec"  | python -m json.tool``
-
-   ``kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec.UserSpec"  | python -m json.tool``
-
-   ``kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"  | python -m json.tool``
 
 
 
