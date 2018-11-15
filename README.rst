@@ -36,16 +36,7 @@ and enables creating application Platforms as Code. Using KubePlus Platform Kit,
 We bring consistency of usage across multiple Operators with our Operator development guidelines_.
 Teams can Build their Own PaaSes on Kubernetes selecting required Operators packaged as Helm charts.
 
-We are maintaining a `repository of Operators`__ that follow the guidelines. You can use Operators
-from it or create your own Operator and use it with KubePlus. We can also help with checking
-your Operators against the guidelines. Just open an issue on the repository with link to your Operator
-code and we will provide you feedback on it.
-
 .. _guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
-
-.. _repository: https://github.com/cloud-ark/operatorcharts/
-
-__ repository_
 
 
 .. image:: ./docs/KubePlus-Flow.jpg
@@ -127,7 +118,11 @@ KubePlus Architecture
 Try it
 =======
 
-We provide three sample Operators that you can try - Postgres, Moodle, MySQL (built from Oracle MySQL Operator).
+We provide three sample Operators that you can try - Postgres, Moodle, MySQL (derived from `Oracle MySQL Operator`__).
+
+.. _oraclemysql: https://github.com/cloud-ark/mysql-operator
+
+__ oraclemysql_
 
 Postgres
 ---------
@@ -201,7 +196,7 @@ Wait till all 4 containers come up and are in 'Running' state (4/4 READY).
 **2) Create custom PaaS (by cluster administrator)**
 
 
-a) Once core KubePlus is READY, Kubernetes cluster administrators define Kubernetes Operators to be installed in yaml files (e.g.: Postgres_, MySQL_, Moodle_) 
+a) Once KubePlus is READY, Kubernetes cluster administrators define Kubernetes Operators to be installed in yaml files (e.g.: Postgres_, MySQL_, Moodle_) 
 and use following kubectl commands:
 
 .. _Postgres: https://github.com/cloud-ark/kubeplus/blob/master/examples/postgres/postgres-operator.yaml
@@ -253,25 +248,17 @@ e) Find out dynamic composition tree for Postgres custom resource instance:
 
 
 
-
-Operator Development Guidelines
-================================
-
-Checkout_ our guidelines for developing Operators.
-These guidelines are based on our study of various Operators written by the community
-and through our experience of building Operators ourselves along with discovery_ and provenance_ tools for Kubernetes.
-
-.. _Checkout: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
-
-.. _discovery: https://github.com/cloud-ark/kubediscovery
-
-.. _provenance: https://github.com/cloud-ark/kubeprovenance
-
-
 Available Operators
---------------------
+====================
 
-https://github.com/cloud-ark/operatorcharts
+We are maintaining a `repository of Operators`__ that follow the guidelines. You can use Operators
+from it or create your own Operator and use it with KubePlus. We can also help with checking
+your Operators against the guidelines. Just open an issue on the repository with link to your Operator
+code and we will provide you feedback on it.
+
+.. _repository: https://github.com/cloud-ark/operatorcharts/
+
+__ repository_
 
 
 If you are interested in building your own operators, you can follow steps here_.
