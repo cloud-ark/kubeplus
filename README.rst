@@ -34,12 +34,16 @@ and enables creating application Platforms as Code. Using KubePlus Platform Kit,
   introduced by the installed Operators.
 
 We bring consistency of usage across multiple Operators with our Operator development guidelines_.
-Teams can Build their Own PaaSes on Kubernetes selecting required Operators 
-from our `repository of certified Operators`__ packaged as Helm charts.
+Teams can Build their Own PaaSes on Kubernetes selecting required Operators packaged as Helm charts.
+
+We are maintaining a `repository of Operators`__ that follow the guidelines. You can use Operators
+from it or create your own Operator and use it with KubePlus. We can also help with checking
+your Operators against the guidelines. Just open an issue on the repository with link to your Operator
+code and we will provide you feedback on it.
 
 .. _guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
-.. _repository: https://github.com/cloud-ark/operatorcharts/blob/master/index.yaml
+.. _repository: https://github.com/cloud-ark/operatorcharts/
 
 __ repository_
 

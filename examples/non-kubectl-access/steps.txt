@@ -1,0 +1,41 @@
+Use curl to interact with KubePlus
+-----------------------------------
+
+1. Deploy Postgres Operator (follow steps in ../postgres/steps.txt)
+
+2. Start Proxy
+   - kubectl proxy --port=8080 &
+
+3. Find out information about Postgres Custom Kind
+   - curl "http://localhost:8080/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres" | python -m json.tool
+
+   - curl "http://localhost:8080/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec" | python -m json.tool
+
+   - curl "http://localhost:8080/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec.UserSpec" | python -m json.tool
+
+
+
+Use Python to interact with KubePlus
+-------------------------------------
+
+1. Deploy Postgres Operator (follow steps in ../postgres/steps.txt)
+
+2. Start Proxy
+   - kubectl proxy --port=8080 &
+
+3. Create Python VirtualEnv
+   - virtualenv -p python3 python3venv
+
+4. Start virtualenv
+   - source python3venv/bin/activate
+
+5. Install requests library
+   - pip install requests
+
+6. Find out information about Postgres Custom Kind
+   - python
+   >>> import requests
+   >>> r = requests.get("http://localhost:8080/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres")
+   >>> r.json()
+   
+
