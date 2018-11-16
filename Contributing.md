@@ -1,6 +1,6 @@
-# Contibuting to KubePlus
+# Contributing to KubePlus
 
-We would love your contributions to KubePlus. The process is simple as outlined below:
+We would love your contributions. The process is simple as outlined below:
 
 
 ## Feature requests:
