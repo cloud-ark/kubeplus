@@ -274,10 +274,11 @@ You can also use tools like kubebuilder_ or `Operator SDK`__ to build your Opera
 __ sdk_
 
 
-Issues
-======
+Issues/Suggestions
+===================
 
-Suggestions/Issues are welcome_.
+Follow `contributing guidelines`__ to submit bug reports or feature requests.
 
-.. _welcome: https://github.com/cloud-ark/kubeplus/issues
+.. _contributing: https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md
 
+__ contributing_
