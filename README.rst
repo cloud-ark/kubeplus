@@ -174,15 +174,6 @@ Here is summary of deploying Postgres Operator.
 
 **1) Install KubePlus (by cluster administrator)**
 
-KubePlus requires Helm to be installed on the cluster.
-
-Install Helm:
-
-  ``$ helm init``
-
-Once tiller pod is Running (kubectl get pods -n kube-system), install KubePlus.
-We provide deployment YAMLs for deploying KubePlus.
-
 
   ``$ kubectl apply -f deploy/``
 
@@ -191,7 +182,10 @@ Check KubePlus is ready
   ``$ kubectl get pods``
 
 KubePlus consists of 4 containers - operator-manager, operator-deployer, kube-discovery-apiserver, etcd.
-Wait till all 4 containers come up and are in 'Running' state (4/4 READY).
+KubePlus also deploys Tiller. 
+
+Wait till all 4 KubePlus containers and Tiller Pod is in 'Running' state.
+
 
 **2) Create custom PaaS (by cluster administrator)**
 
