@@ -17,10 +17,32 @@ d) Describe Operators
 e) Find out custom resource Kinds registered by Operators
    - kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
    - kubectl describe customresourcedefinition moodles.moodlecontroller.kubeplus
+   - kubectl describe customresourcedefinition mysqlbackupschedules.mysql.oracle.com
+   - kubectl describe customresourcedefinition mysqlclusters.mysql.oracle.com
+   - kubectl describe customresourcedefinition mysqlbackups.mysql.oracle.com
+   - kubectl describe customresourcedefinition mysqlrestores.mysql.oracle.com
+
 
 f) Explain custom Kinds
    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres"  | python -m json.tool
    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec"  | python -m json.tool
    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec.UserSpec"  | python -m json.tool
    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"  | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup.BackupSpec" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup.BackupSpec.StorageProvider" | python -m\
+ json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup.BackupSpec.StorageProvider.S3StoragePro\
+vider" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Cluster" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Cluster.ClusterSpec" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Restore" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Restore.RestoreSpec" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=BackupSchedule" | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=BackupSchedule.BackupScheduleSpec" | python -m\
+ json.tool
+
+
+
+
 
