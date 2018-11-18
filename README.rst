@@ -3,8 +3,8 @@ KubePlus
 =========
 
 KubePlus is a software toolkit that delivers `Platform as Code`__ experience on Kubernetes.
-Platform-as-Code offers composable and repeatable way of creating application platforms.
-This offers required flexibility along with simplicity in creating application platforms leveraging Kubernetes API extensions (also known as Operators). 
+Platform-as-Code offers composable and repeatable way of creating application platforms
+leveraging Kubernetes API extensions, also known as Operators. 
 
 .. _pac: https://medium.com/@cloudark/evolution-of-paases-to-platform-as-code-in-kubernetes-world-74464b0013ca
 
@@ -46,12 +46,6 @@ Teams can Build their Own PaaSes on Kubernetes selecting required Operators pack
    :align: center
 
 
-Demo
-====
-
-https://drive.google.com/file/d/1jDptIWM8fiAorlZdW-pwOMttxAQAZHIR/view
-
-
 Usage
 ======
 
@@ -76,31 +70,33 @@ standard Kubernetes CLI (kubectl) and YAML definition format to manage their pla
 Value of KubePlus
 ==================
 
-*1) Uniformity between native and custom Kubernetes resources*
-
-Our Operator development guidelines are designed to ensure custom resources become 
-first-class entities of Kubernetes. 
-
-*2) No new CLI to learn*
+*--> No new CLI to learn*
 
 KubePlus does not introduce any new CLI. Users can work with the same Kubernetes native interfaces like kubectl and YAML to leverage KubePlus functionality.
 
 
-*3) Eliminate out-of-band platform automation*
+*--> Eliminate out-of-band platform automation*
 
 Kubernetes Operators embed platform element life-cycle actions directly in Kubernetes. An example of a Kubernetes Operator can be Postgres Operator that 
 embeds life-cycle actions such as create a database, add user to the database, change password of a user etc.
 Such Operators leverage Kubernetes's strength of control loop (current state -> desired state) eliminating additional out-of-band automation.
 
 
-*4) Common language between Devs and Ops*
+*--> Uniformity between native and custom Kubernetes resources*
+
+Our Operator development guidelines are designed to ensure custom resources become 
+first-class entities of Kubernetes. 
+
+
+*--> Discovery of custom resources*
+
+KubePlus installs an additional component, KubePlus Discovery API Server, on your Kubernetes cluster to improve usability of custom Operators. This improves Platform-as-Code experience for application developers.
+
+
+*--> Common language between Devs and Ops*
 
 KubePlus leverages kubectl for management of Operators by Ops and their consumption by Devs. This makes Kubernetes YAMLs as the common language between Devs and Ops. 
 
-
-*5) Discovery of custom resources*
-
-KubePlus installs an additional component, KubePlus Discovery API Server, on your Kubernetes cluster to improve usability of custom Operators. This improves Platform-as-Code experience for application developers.
 
 
 KubePlus Architecture
@@ -139,6 +135,14 @@ The 'composition' endpoint is used by application developers for obtaining compo
 .. _upstreamexplain: https://github.com/kubernetes/kubernetes/pull/67205
 
 __ upstreamexplain_
+
+
+Demo
+====
+
+Concept demo: https://youtu.be/Fbr1LNqvGRE
+
+Working demo: https://drive.google.com/file/d/1jDptIWM8fiAorlZdW-pwOMttxAQAZHIR/view
 
 
 Try it
