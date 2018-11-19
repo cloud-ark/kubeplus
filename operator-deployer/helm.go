@@ -98,7 +98,7 @@ func setupConnection() error {
 }
 
 func main() {
-	settings.TillerNamespace = "default"
+	settings.TillerNamespace = "kube-system"
 	settings.Home = "/.helm"
 	settings.TillerConnectionTimeout = 300
 

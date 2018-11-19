@@ -14,28 +14,30 @@ Steps:
 
 1) minikube start --memory 4096
 
-2) git clone https://github.com/cloud-ark/kubeplus.git
+2) helm init
 
-3) cd kubeplus
+3) git clone https://github.com/cloud-ark/kubeplus.git
 
-4) Wait till Helm Pod is running
+4) cd kubeplus
+
+5) Wait till Tiller Pod is running
    - kubectl get pods -n kube-system
 
-5) Once Helm Pod is ready, deploy Kubeplus
+6) Once Tiller Pod is ready, deploy Kubeplus
    - kubectl apply -f deploy/
 
-6) Wait till kubeplus is ready (4/4 Ready containers)
+7) Wait till kubeplus is ready (4/4 Ready containers)
    - kubectl get pods
 
-7) cd examples/postgres
+8) cd examples/postgres
 
-8) Deploy Postgres Operator
+9) Deploy Postgres Operator
    - kubectl create -f postgres-operator.yaml
 
-9) Wait till Postgres Operator Pod is ready
+10) Wait till Postgres Operator Pod is ready
      - kubectl get pods
 
-10) Find information about Postgres Custom Kind registered by Postgres Operator   
+11) Find information about Postgres Custom Kind registered by Postgres Operator   
     - kubectl get operators
     - kubectl describe operators postgres-operator
     - kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
@@ -43,7 +45,7 @@ Steps:
       --> You should see OpenAPI Spec for Postgres custom kind as output
     - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec" | python -m json.tool
 
-11) Deploy Postgres1 instance
+12) Deploy Postgres1 instance
     - kubectl create -f postgres1.yaml
     - kubectl get pods (Wait till Postgres Pod is ready)
     - Verify database created and initialized successfully
@@ -57,12 +59,13 @@ Steps:
     - Get composition tree of Postgres1
       - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Postgres&instance=postgres1" | python -mjson.tool
 
-12) Test Life-cycle actions (execute and verify)
+13) Test Life-cycle actions (execute and verify)
     - kubectl apply -f add-user.yaml
     - kubectl apply -f delete-user.yaml
     - kubectl apply -f modify-password.yaml
     - kubectl apply -f add-db.yaml
     - kubectl apply -f delete-db.yaml
+
 
 Troubleshooting
 ----------------
@@ -73,4 +76,4 @@ Troubleshooting
    - kubectl get pod <kubeplus-pod> -c kube-discovery-apiserver
 
 2) Check Helm Deployments
-   - helm list --tiller-namespace default
+   - helm list
