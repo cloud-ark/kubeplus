@@ -201,9 +201,18 @@ Quick try
 
 Here is summary of deploying Postgres Operator.
 
+KubePlus leverages Helm's Tiller component for deploying Operator charts.
+So first you want to install Tiller.
 
-**1) Install KubePlus (by cluster administrator)**
+**1) Install Helm/Tiller (by cluster administrator)**
 
+  ``$ helm init``
+
+Check Tiller Pod is ready
+
+   ``$ kubectl get pods -n kube-system``
+
+**2) Install KubePlus (by cluster administrator)**
 
   ``$ kubectl apply -f deploy/``
 
@@ -217,7 +226,7 @@ KubePlus also deploys Tiller.
 Wait till all 4 KubePlus containers and Tiller Pod is in 'Running' state.
 
 
-**2) Create custom PaaS (by cluster administrator)**
+**3) Create custom PaaS (by cluster administrator)**
 
 
 a) Once KubePlus is READY, Kubernetes cluster administrators define Kubernetes Operators to be installed in yaml files (e.g.: Postgres_, MySQL_, Moodle_) 
@@ -240,7 +249,7 @@ c) Find out all the installed Operators:
   ``$ kubectl get operators``
 
 
-**3) Create Application Platform as Code (by application developer)**
+**4) Create Application Platform as Code (by application developer)**
 
 Kubernetes application developers can create/delete/update/list the newly added 
 custom resources by using kubectl CLI using following commands:
