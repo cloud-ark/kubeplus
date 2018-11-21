@@ -6,4 +6,4 @@ spec:
   name: moodle-operator
   chartURL: https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.0.1.tgz?raw=true
   values:
-    HOST_IP: 192.168.99.102
+    HOST_IP: 192.168.99.100
