@@ -51,7 +51,8 @@ Steps:
     - Verify database created and initialized successfully
       - Install Postgres command-line tool (psql)
       - kubectl describe postgres postgres1
-      - psql -h <minikube ip> -p <port> -U <username> -d <db-name>
+      - MINIKUBE_IP=`minikube ip` (if using Minikube)
+      - psql -h $MINIKUBE_IP -p <port> -U <username> -d <db-name>
         - port: available from output of kubectl describe
         - username: defined in postgres1.yaml
         - db-name: defined in postgres1.yaml
