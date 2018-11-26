@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
+        metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/helm/pkg/helm"
 	helm_env "k8s.io/helm/pkg/helm/environment"
@@ -160,8 +161,10 @@ func main() {
 					if releaseName != "" {
 						err1 := deleteChart(helmClient, releaseName)
 						if err1 != nil {
-							fmt.Printf("Error deleting chart %s %s", releaseName, err1)
+						   fmt.Printf("Error deleting chart %s %s", releaseName, err1)
 						}
+						// Delete Helm Release ConfigMap
+						deleteHelmReleaseConfigMap(releaseName)
 
 						// Delete Chart URL from deployedCharts
 						newChartList := make([]string, 0)
@@ -252,6 +255,20 @@ func main() {
 		} // If len() || len()
 		time.Sleep(time.Second * 5)
 	}
+}
+
+func deleteHelmReleaseConfigMap(releaseName string) {
+
+     _, kubeclientset, err := getKubeClient()
+     if err != nil {
+     	fmt.Printf("Error: %v", err)
+     }
+
+     configMapName := releaseName + ".v1"
+     err1 := kubeclientset.CoreV1().ConfigMaps("kube-system").Delete(configMapName, &metav1.DeleteOptions{})
+     if err1 != nil {
+        fmt.Printf("Error in deleting Helm ConfigMap:%s\n", err1.Error())
+     }
 }
 
 func getReleaseName(resourceKey string) string {
