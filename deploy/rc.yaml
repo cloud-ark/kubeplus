@@ -22,11 +22,6 @@ spec:
         image: lmecld/operator-manager:latest
         imagePullPolicy: IfNotPresent
         command: [ "/operator-manager"]
-        env:
-        - name: HOST_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
       - name: operator-deployer
         image: lmecld/operator-deployer:latest
         imagePullPolicy: IfNotPresent
