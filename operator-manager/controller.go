@@ -507,36 +507,77 @@ func storeEtcd(resourceKey string, resourceData interface{}) {
 }
 
 func uploadOperatorOpenAPISpec(chartURL string, kubeclientset kubernetes.Interface) string {
-	extractOperatorChart(chartURL)
+	extractOperatorChart(chartURL, kubeclientset)
 	chartConfigMapName := createConfigMap(chartURL, kubeclientset)
 	return chartConfigMapName
 }
 
-func extractOperatorChart(chartURL string) {
-	chartName, _ := parseChartNameVersion(chartURL)
+func extractOperatorChart(chartURL string, kubeclient kubernetes.Interface) {
 
-	chartTarFile := chartName + ".tar"
-	fmt.Printf("Chart tgz file name:%s\n", chartTarFile)
-	out, err := os.Create(chartTarFile)
-	defer out.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	resp, err := http.Get(chartURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer resp.Body.Close()
+	var chartName, chartTarFile string
+	var out *os.File
+	var err error
 
 	var buf bytes.Buffer
-	buf1, err1 := ioutil.ReadAll(resp.Body)
-	if err1 != nil {
-		log.Fatal(err1)
-	}
 
-	buf.Write(buf1)
+	if !strings.HasPrefix(chartURL, "https") {
+	     namespace := "default"
+     	     configMapName := chartURL
+	     parts := strings.Split(chartURL, ":")
+     	     if len(parts) > 1 {
+             	namespace = parts[0]
+        	configMapName = parts[1]
+     	     }
+     	     configMap, err := kubeclient.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
+
+     	     if err != nil {
+             	fmt.Printf("Error:%s\n", err.Error())
+     	     }
+     	     configMapData := configMap.Data
+
+	     var charttgz []byte
+     	     for k := range configMapData {
+	     	 chartTarFile = k
+		 chartName = strings.TrimSuffix(k, ".tgz")
+             	 charttgz = []byte(configMapData[k])
+     	     }
+	     buf.Write(charttgz)
+
+	     out, err = os.Create(chartTarFile)
+	     defer out.Close()
+	     if err != nil {
+	     	log.Fatal(err)
+	     }
+
+	     //ioutil.WriteFile(chartTarFile, charttgz, 0644)
+
+	} else {
+
+	  chartName, _ = parseChartNameVersion(chartURL)
+
+	  chartTarFile = chartName + ".tar"
+	  fmt.Printf("Chart tgz file name:%s\n", chartTarFile)
+
+	  out, err = os.Create(chartTarFile)
+	  defer out.Close()
+	  if err != nil {
+	     log.Fatal(err)
+	  }
+
+	  resp, err := http.Get(chartURL)
+	  if err != nil {
+	     log.Fatal(err)
+	  }
+
+	  defer resp.Body.Close()
+
+	  buf1, err1 := ioutil.ReadAll(resp.Body)
+	  if err1 != nil {
+	     log.Fatal(err1)
+	  }
+
+	  buf.Write(buf1)
+	}
 
 	zr, err := gzip.NewReader(&buf)
 	if err != nil {
@@ -544,7 +585,6 @@ func extractOperatorChart(chartURL string) {
 	}
 
 	fmt.Println("Read tgz file in buffer")
-
 	fmt.Printf("Name: %s\nComment: %s\nModTime: %s\n\n", zr.Name, zr.Comment, zr.ModTime.UTC())
 
 	if _, err := io.Copy(out, zr); err != nil {

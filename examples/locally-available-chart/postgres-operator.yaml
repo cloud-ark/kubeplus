@@ -1,0 +1,9 @@
+apiVersion: operatorcontroller.kubeplus/v1
+kind: Operator
+metadata:
+  name: postgres-operator
+spec:
+  name: postgres-operator
+  chartURL: postgres-crd-v2-chart
+
+

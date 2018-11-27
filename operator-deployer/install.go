@@ -29,16 +29,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
+	//"compress/gzip"
 
 	"github.com/Masterminds/sprig"
 	"github.com/ghodss/yaml"
+	"k8s.io/client-go/kubernetes"
 
+        metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/downloader"
 	"k8s.io/helm/pkg/getter"
@@ -167,16 +171,28 @@ func (v *valueFiles) Set(value string) error {
 }
 
 // Original newInsallCmd changed and reduced to work with operator-deployer
-func installChart(c helm.Interface, out io.Writer, chartName string, chartValues []byte) (error, []string, string) {
+func installChart(kubeclient kubernetes.Interface, c helm.Interface, out io.Writer, chartName string, chartValues []byte) (error, []string, string) {
 	inst := &installCmd{
 		out:    out,
 		client: c,
 	}
 
-	cp, err := locateChartPath(inst.repoURL, inst.username, inst.password, chartName, inst.version, inst.verify, inst.keyring,
+	//Check if chartName starts with 'https' or not. If not, then we assume that
+	//the chart is locally available and registered as a configmap.
+	//See: #https://github.com/cloud-ark/kubeplus/issues/125
+	var cp string
+	var err error
+	if !strings.HasPrefix(chartName, "https") {
+	   cp, err = downloadChartFromConfigMap(kubeclient, chartName)
+	   if err != nil {
+	      fmt.Printf("Error: %v", err)
+	   }
+	} else {
+		cp, err = locateChartPath(inst.repoURL, inst.username, inst.password, chartName, inst.version, inst.verify, inst.keyring,
 		inst.certFile, inst.keyFile, inst.caFile)
-	if err != nil {
-		fmt.Printf("Error: %v", err)
+		if err != nil {
+		   fmt.Printf("Error: %v", err)
+		}
 	}
 	inst.chartPath = cp
 	fmt.Printf("Chart PATH:%s\n", cp)
@@ -189,6 +205,63 @@ func installChart(c helm.Interface, out io.Writer, chartName string, chartValues
 		return err1, []string{}, releaseName
 	}
 	return nil, crds, releaseName
+}
+
+func downloadChartFromConfigMap(kubeclient kubernetes.Interface, chartName string) (string, error) {
+
+     namespace := "default"
+     configMapName := chartName
+     parts := strings.Split(chartName, ":")
+     if len(parts) > 1 {
+     	namespace = parts[0]
+	configMapName = parts[1]
+     }
+     configMap, err := kubeclient.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
+
+     if err != nil {
+     	fmt.Printf("Error:%s\n", err.Error())
+     }
+
+     fmt.Println("ConfigMap:%v", configMap)
+
+     configMapData := configMap.Data
+
+     var charttgz []byte
+     var chartTarGZName string
+     for k := range configMapData {
+     	 chartTarGZName = k
+     	 charttgz = []byte(configMapData[k])
+     }     
+
+     // Save charttgz at following location /.helm/cache/archive/<chartName>
+     chartTarFile := "/.helm/cache/archive/" + chartTarGZName //+ chartName + ".tar"
+     fmt.Printf("Chart Location:%s\n", chartTarFile)
+     out, err := os.Create(chartTarFile)
+     defer out.Close()
+     if err != nil {
+     	log.Fatal(err)
+     }
+
+     ioutil.WriteFile(chartTarFile, charttgz, 0644)
+
+     /*
+     var buf bytes.Buffer
+     buf.Write(charttgz)
+     zr, err := gzip.NewReader(&buf)
+     if err != nil {
+     	log.Fatal(err)
+     }
+     fmt.Println("Read tgz file in buffer")
+     fmt.Printf("Name: %s\nComment: %s\nModTime: %s\n\n", zr.Name, zr.Comment, zr.ModTime.UTC())
+     if _, err := io.Copy(out, zr); err != nil {
+     	log.Fatal(err)
+     }
+     fmt.Println("Saving tgz buffer to file")
+     if err := zr.Close(); err != nil {
+     	log.Fatal(err)
+     } */
+
+     return chartTarFile, err
 }
 
 func (i *installCmd) run(rawVals []byte) (error, []string, string) {

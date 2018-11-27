@@ -82,7 +82,7 @@ func newDeleteCmd(c helm.Interface, out io.Writer, chartName string) *cobra.Comm
 		SuggestFor: []string{"remove", "rm"},
 		Short:      "given a release name, delete the release from Kubernetes",
 		Long:       deleteDesc,
-		PreRunE:    func(_ *cobra.Command, _ []string) error { return setupConnection() },
+		//PreRunE:    func(_ *cobra.Command, _ []string) error { return setupConnection() },
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("command 'delete' requires a release name")

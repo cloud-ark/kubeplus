@@ -77,7 +77,7 @@ func getKubeClient() (*rest.Config, kubernetes.Interface, error) {
 	return cfg, kubeClient, nil
 }
 
-func setupConnection() error {
+func setupConnection() (error, kubernetes.Interface) {
 	var errToReturn error
 	//if settings.TillerHost == "" {
 	config, client, err := getKubeClient()
@@ -95,7 +95,7 @@ func setupConnection() error {
 	settings.TillerHost = fmt.Sprintf("localhost:%d", tunnel.Local)
 	fmt.Println("Created tunnel using local port:", tunnel.Local)
 	//}
-	return errToReturn
+	return errToReturn, client
 }
 
 func main() {
@@ -119,7 +119,7 @@ func main() {
 
 		if len(newOperators) > 0 || len(operatorsToDelete) > 0 {
 
-			connectionError := setupConnection()
+			connectionError, kubeclient := setupConnection()
 			if connectionError == nil {
 
 				options := []helm.Option{helm.Host(settings.TillerHost), helm.ConnectTimeout(settings.TillerConnectionTimeout)}
@@ -220,7 +220,7 @@ func main() {
 							panic(err)
 						}
 						fmt.Printf("ChartValues:%v\n", chartValues)
-						err1, crds, releaseName := installChart(helmClient, out, chartURL, chartValues)
+						err1, crds, releaseName := installChart(kubeclient, helmClient, out, chartURL, chartValues)
 						if err1 != nil {
 							fmt.Println("%%%%%%%%%")
 							fmt.Printf("Error: %v", err1)

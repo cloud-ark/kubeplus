@@ -1,0 +1,4 @@
+
+1) kubectl create configmap postgres-crd-v2-chart --from-file=postgres-crd-v2-chart-0.0.2.tgz
+
+2) kubectl create -f postgres-operator.yaml
