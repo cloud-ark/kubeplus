@@ -6,7 +6,7 @@ In this example we will deploy a Postgres Operator to manage life-cycle actions 
 Setup:
 -------
 - Download Minikube, download Helm
-  - The example has been tested on minikube-0.25 and minikube-0.28
+  - The example has been tested on minikube-0.25, minikube-0.28, minikube-0.30
 
 
 Steps:
