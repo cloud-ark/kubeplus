@@ -14,7 +14,7 @@ an example of how to specify installation of additional plugins on an existing M
 Setup:
 -------
 - Download Minikube, download Helm
-  - The example has been tested on minikube-0.25 and minikube-0.28
+  - The example has been tested on minikube-0.25, minikube-0.28, minikube-0.30
 
 Steps:
 -------
@@ -38,17 +38,13 @@ Steps:
 
 8) cd examples/moodle
 
-9) Update moodle-operator.yaml with minikube ip
-   - minikube ip
-   - vi moodle-operator.yaml --> set HOST_IP to value of minikube ip
-
-10) Deploy Moodle Operator
+9) Deploy Moodle Operator
    - kubectl create -f moodle-operator.yaml
 
-11) Wait till Moodle Operator pod is ready
+10) Wait till Moodle Operator pod is ready
    - kubectl get pods
 
-12) Find information about Moodle Custom Kind registered by Moodle Operator
+11) Find information about Moodle Custom Kind registered by Moodle Operator
     - kubectl get operators
     - kubectl describe operators moodle-operator
     - kubectl describe customresourcedefinition moodles.moodlecontroller.kubeplus
@@ -56,7 +52,7 @@ Steps:
       --> You should see OpenAPI Spec for Moodle custom kind as output
     - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle.MoodleSpec" | python -m json.tool
 
-13) Deploy Moodle1 instance
+12) Deploy Moodle1 instance
     - First deploy MySQL as database for the Moodle instance
       - kubectl create -f moodle1-mysql.yaml
       - kubectl get pods (Wait will mysql pod is ready)
@@ -69,6 +65,14 @@ Steps:
         - Login using 'admin' and 'password1' as login credentials (these are specified in moodle1.yaml)
     - Find composition tree of Moodle1 instance
       - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1" | python -m json.tool
+    - Login to Moodle Instance
+      - Update /etc/hosts with <minikube-ip> moodle1. Example:
+        - 192.168.99.100 moodle1
+        - You can find minikube ip using: "minikube ip" command
+    - Check Moodle1 instance
+      - kubectl describe moodle moodle1
+        - The URL of Moodle instance should be available from Status field from above output
+        - Open the URL in the browser
     - Check installed plugins
       - As part of creating moodle instance, we install the 'profilecohort' plugin.
         Check the custom resource specification moodle1.yaml to see this definition.
@@ -78,7 +82,7 @@ Steps:
         - Navigate to -> Administration -> Plugins -> Plugins Overview
         - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
-14) Update Moodle Deployment to install new Plugin
+13) Update Moodle Deployment to install new Plugin
     - We will install 'wiris' plugin on 'moodle1' Moodle instance
     - kubectl apply -f update-moodle1.yaml
 
@@ -89,15 +93,22 @@ Steps:
       - Navigate to -> Administration -> Plugins -> Plugins Overview
       - You should see 'profilecohort' and 'wiris' plugins in the 'Additional plugins' list
 
-15) Deploy Moodle2 instance
+14) Deploy Moodle2 instance
     - kubectl create -f moodle2-mysql.yaml
     - kubectl get pods (Wait will MySQL Pod is ready)
     - kubectl create -f moodle2.yaml
     - kubectl get pods (It will take about 5/6 minutes for Moodle Pod to become ready)
     - Once Moodle Pod is ready, 
       - kubectl describe moodles moodle2
-      - Navigate to the IP URL of moodle2 instance
-        - Login using 'admin' and 'password1' as login credentials
+    - Login to Moodle Instance
+      - Update /etc/hosts with <minikube-ip> moodle2. Example:
+        - 192.168.99.100 moodle2
+        - You can find minikube ip using: "minikube ip" command
+    - Check Moodle2 instance
+      - kubectl describe moodle moodle2
+        - The URL of Moodle instance should be available from Status field from above output
+        - Open the URL in the browser
+          - Login using 'admin' and 'password1' as login credentials
 
 
 Troubleshooting
