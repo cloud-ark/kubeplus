@@ -184,7 +184,7 @@ Multiple Operators
 
 Follow steps in `examples/multiple-operators/steps.txt`__.
 
-.. _multipleoperatorssteps: https://github.com/cloud-ark/kubeplus/blob/master/examples/mysql/steps.txt
+.. _multipleoperatorssteps: https://github.com/cloud-ark/kubeplus/blob/master/examples/multiple-operators/steps.txt
 
 __ multipleoperatorssteps_
 
@@ -195,12 +195,12 @@ Quick try
 
 Here is summary of deploying Postgres Operator.
 
-**1) Install Minikube (v0.30.0) and Helm (v2.11.0)
+Install Minikube (v0.30.0) and Helm (v2.11.0)
 
 KubePlus leverages Helm's Tiller component for deploying Operator charts.
 So first you want to install Tiller.
 
-**2) Install Helm/Tiller (by cluster administrator)**
+**1) Install Helm/Tiller (by cluster administrator)**
 
   ``$ helm init``
 
@@ -208,7 +208,7 @@ Check Tiller Pod is ready
 
    ``$ kubectl get pods -n kube-system``
 
-**3) Install KubePlus (by cluster administrator)**
+**2) Install KubePlus (by cluster administrator)**
 
   ``$ kubectl apply -f deploy/``
 
@@ -221,7 +221,7 @@ KubePlus consists of 4 containers - operator-manager, operator-deployer, kube-di
 Wait till all 4 KubePlus containers and Tiller Pod is running.
 
 
-**4) Create custom PaaS (by cluster administrator)**
+**3) Create custom PaaS (by cluster administrator)**
 
 
 a) Once KubePlus is READY, Kubernetes cluster administrators define Kubernetes Operators to be installed in yaml files (e.g.: Postgres_, MySQL_, Moodle_) 
@@ -244,7 +244,7 @@ c) Find out all the installed Operators:
   ``$ kubectl get operators``
 
 
-**5) Create Application Platform as Code (by application developer)**
+**4) Create Application Platform as Code (by application developer)**
 
 Kubernetes application developers can create/delete/update/list the newly added 
 custom resources by using kubectl CLI using following commands:
