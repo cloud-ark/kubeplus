@@ -13,8 +13,7 @@ an example of how to specify installation of additional plugins on an existing M
 
 Setup:
 -------
-- Download Minikube, download Helm
-  - The example has been tested on minikube-0.25, minikube-0.28, minikube-0.30 and helm version 2.11.0
+- Download Minikube (v0.30.0), download Helm (v2.11.0)
 
 Steps:
 -------
@@ -112,6 +111,13 @@ Steps:
         - Open the URL in the browser
           - Login using 'admin' as username and retrieve password from moodle2 secret as described 
             in step 12.
+
+15) Cleanup
+    - kubectl delete -f moodle1.yaml
+    - kubectl delete -f moodle1-mysql.yaml
+    - kubectl delete -f moodle2.yaml
+    - kubectl delete -f moodle2-mysql.yaml
+    - kubectl delete -f moodle-operator.yaml
 
 
 Troubleshooting

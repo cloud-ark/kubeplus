@@ -2,12 +2,14 @@ Postgres Operator
 -----------------
 
 In this example we will deploy a Postgres Operator to manage life-cycle actions on Postgres instances.
+Note that the Postgres Custom Resource Spec defines various fields such as username, password,
+database name, which the Operator works with to setup a Postgres instance.
+It is possible to update the Operator such that password creation is embedded within it.
+For example of Operator managing passwords, check the Moodle example.
 
 Setup:
 -------
-- Download Minikube, download Helm
-  - The example has been tested on minikube-0.25, minikube-0.28, minikube-0.30
-
+- Download Minikube (v0.30.0), download Helm (v2.11.0)
 
 Steps:
 -------
@@ -66,6 +68,13 @@ Steps:
     - kubectl apply -f modify-password.yaml
     - kubectl apply -f add-db.yaml
     - kubectl apply -f delete-db.yaml
+
+14) Cleanup
+    - kubectl delete -f postgres1.yaml
+    - kubectl delete -f postgres-operator.yaml
+    - Verify
+      - kubectl get pods
+        -> postgres instance pod and postgres-operator pod should be deleted
 
 
 Troubleshooting
