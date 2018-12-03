@@ -6,8 +6,7 @@ In this example we will deploy Oracle MySQL Operator (https://github.com/oracle/
 
 Setup:
 -------
-- Download Minikube, download Helm
-  - The example has been tested on minikube-0.25 and minikube-0.28
+- Download Minikube (v0.30.0), download Helm (v2.11.0)
 
 
 Steps:
