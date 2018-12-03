@@ -14,7 +14,7 @@ an example of how to specify installation of additional plugins on an existing M
 Setup:
 -------
 - Download Minikube, download Helm
-  - The example has been tested on minikube-0.25, minikube-0.28, minikube-0.30
+  - The example has been tested on minikube-0.25, minikube-0.28, minikube-0.30 and helm version 2.11.0
 
 Steps:
 -------
@@ -59,20 +59,16 @@ Steps:
     - Next create Moodle instance
       - kubectl create -f moodle1.yaml
       - kubectl get pods (It will take about 5/6 minutes for Moodle Pod to become ready)
-    - Once Moodle Pod is ready, 
-      - kubectl describe moodles moodle1
-      - Navigate to the IP URL of moodle1 instance
-        - Login using 'admin' and 'password1' as login credentials (these are specified in moodle1.yaml)
-    - Find composition tree of Moodle1 instance
-      - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1" | python -m json.tool
-    - Login to Moodle Instance
+    - Once Moodle Pod is ready, login to the Moodle instance
       - Update /etc/hosts with <minikube-ip> moodle1. Example:
         - 192.168.99.100 moodle1
         - You can find minikube ip using: "minikube ip" command
-    - Check Moodle1 instance
-      - kubectl describe moodle moodle1
-        - The URL of Moodle instance should be available from Status field from above output
-        - Open the URL in the browser
+      - Retrieve Moodle instance's admin password
+	- kubectl describe moodles moodle1
+        - kubectl get secret moodle1 -o jsonpath="{.data.adminPassword}" | base64 --decode
+          - Secret name is available in the output of 'describe' command
+      - Navigate to the URL of moodle1 instance (available in the output of 'describe' command)
+        - Login using 'admin' as username and password retrieved earlier from secret
     - Check installed plugins
       - As part of creating moodle instance, we install the 'profilecohort' plugin.
         Check the custom resource specification moodle1.yaml to see this definition.
@@ -82,11 +78,17 @@ Steps:
         - Navigate to -> Administration -> Plugins -> Plugins Overview
         - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
+    - Find composition tree of Moodle1 instance
+      - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1" | python -m json.tool
+
+
 13) Update Moodle Deployment to install new Plugin
     - We will install 'wiris' plugin on 'moodle1' Moodle instance
     - kubectl apply -f update-moodle1.yaml
 
-    - Once moodle1 instance is Ready, refresh the URL
+    - Wait for Moodle instance to become Ready
+      - kubectl describe moodle moodle1
+      - Once moodle1 instance is Ready, refresh the URL in the browser
 
     - You will see a message to update Moodle database for 'wiris' plugin
     - Select that option to complete Plugin installation
@@ -108,7 +110,8 @@ Steps:
       - kubectl describe moodle moodle2
         - The URL of Moodle instance should be available from Status field from above output
         - Open the URL in the browser
-          - Login using 'admin' and 'password1' as login credentials
+          - Login using 'admin' as username and retrieve password from moodle2 secret as described 
+            in step 12.
 
 
 Troubleshooting

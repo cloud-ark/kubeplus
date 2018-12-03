@@ -4,6 +4,5 @@ metadata:
   name: moodle1
 spec:
   name: moodle1
-  adminPassword: password1
   plugins: ["profilecohort", "wiris"]
 
