@@ -32,11 +32,11 @@ Steps:
 8) cd examples/mysql
 
 9) Deploy MySQL Operator
-   - kubectl create -f mysql-operator.yaml
+   - kubectl create -f mysql-operator-chart-0.2.1.yaml
 
 10) Wait till MySQL Operator Pod is ready. This Operator is deployed in namespace 'mysql-operator'
     - kubectl get ns
-    - kubectl get pods -n mysql-operator
+    - kubectl get pods -n mysql-operator-0.2.1
 
 11) Find information about various Custom Kinds registered by Oracle MySQL Operator
     - kubectl get operators
