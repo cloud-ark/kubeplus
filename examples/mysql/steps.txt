@@ -36,7 +36,7 @@ Steps:
 
 10) Wait till MySQL Operator Pod is ready. This Operator is deployed in namespace 'mysql-operator'
     - kubectl get ns
-    - kubectl get pods -n mysql-operator-0.2.1
+    - kubectl get pods -n mysql-operator
 
 11) Find information about various Custom Kinds registered by Oracle MySQL Operator
     - kubectl get operators
@@ -62,7 +62,7 @@ Steps:
 
 12) Verify MySQL cluster
     - Wait till MySQL Pods are running 
-      - kubectl get pods (there should be three pods mysql-0, mysql-1, mysql-2)
+      - kubectl get pods (there should be mysql pods displayed)
 
     - Retrieve password to connect to the cluster
       - kubectl -n default get mysqlclusters
