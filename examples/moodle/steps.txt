@@ -18,32 +18,40 @@ Setup:
 Steps:
 -------
 
-1) minikube start --memory 4096
+1) Create Kubernetes Cluster
+   - minikube start --memory 4096 (only if using minikube)
 
-2) helm init
+   - (Experimental) If working with Managed Kubernetes cluster (such as DigitalOcean), create a single node cluster, download the cluster 
+     config file and save it in your ~/.kube directory with the name 'config' (e.g.: ~/.kube/config)
 
-3) git clone https://github.com/cloud-ark/kubeplus.git
+2) git clone https://github.com/cloud-ark/kubeplus.git
 
-4) cd kubeplus
+3) cd kubeplus
 
-5) Wait till Tiller Pod is running
+4) Setup Helm Service Account
+   - kubectl create -f helm.yaml
+
+5) Setup Helm
+   - helm init --service-account helm
+
+6) Wait till Tiller Pod is running
    - kubectl get pods -n kube-system
 
-6) Once Helm Pod is ready, deploy Kubeplus
+7) Once Helm Pod is ready, deploy Kubeplus
    - kubectl apply -f deploy/
 
-7) Wait till kubeplus is ready (4/4 Ready containers)
+8) Wait till kubeplus is ready (4/4 Ready containers)
    - kubectl get pods
 
-8) cd examples/moodle
+9) cd examples/moodle
 
-9) Deploy Moodle Operator
+10) Deploy Moodle Operator
    - kubectl create -f moodle-operator.yaml
 
-10) Wait till Moodle Operator pod is ready
+11) Wait till Moodle Operator pod is ready
    - kubectl get pods
 
-11) Find information about Moodle Custom Kind registered by Moodle Operator
+12) Find information about Moodle Custom Kind registered by Moodle Operator
     - kubectl get operators
     - kubectl describe operators moodle-operator
     - kubectl describe customresourcedefinition moodles.moodlecontroller.kubeplus
@@ -51,7 +59,7 @@ Steps:
       --> You should see OpenAPI Spec for Moodle custom kind as output
     - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle.MoodleSpec" | python -m json.tool
 
-12) Deploy Moodle1 instance
+13) Deploy Moodle1 instance
     - First deploy MySQL as database for the Moodle instance
       - kubectl create -f moodle1-mysql.yaml
       - kubectl get pods (Wait will mysql pod is ready)
@@ -59,9 +67,11 @@ Steps:
       - kubectl create -f moodle1.yaml
       - kubectl get pods (It will take about 5/6 minutes for Moodle Pod to become ready)
     - Once Moodle Pod is ready, login to the Moodle instance
-      - Update /etc/hosts with <minikube-ip> moodle1. Example:
+      - Update /etc/hosts with <cluster node ip, or minikube-ip> moodle1. Example:
         - 192.168.99.100 moodle1
         - You can find minikube ip using: "minikube ip" command
+        - If using Managed Kubernetes, find out the cluster node ip by refering to appropriate documentation
+          from the provider.
       - Retrieve Moodle instance's admin password
 	- kubectl describe moodles moodle1
         - kubectl get secret moodle1 -o jsonpath="{.data.adminPassword}" | base64 --decode
@@ -74,14 +84,14 @@ Steps:
         - Once logged in to the Moodle instance you will see a message to update Moodle database 
           for 'profilecohort' plugin.
         - Select that option to complete Plugin installation
+        - Go back to the Administration screen and fill out the profile form. Then,
         - Navigate to -> Administration -> Plugins -> Plugins Overview
         - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
     - Find composition tree of Moodle1 instance
       - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1" | python -m json.tool
 
-
-13) Update Moodle Deployment to install new Plugin
+14) Update Moodle Deployment to install new Plugin
     - We will install 'wiris' plugin on 'moodle1' Moodle instance
     - kubectl apply -f update-moodle1.yaml
 
@@ -94,7 +104,7 @@ Steps:
       - Navigate to -> Administration -> Plugins -> Plugins Overview
       - You should see 'profilecohort' and 'wiris' plugins in the 'Additional plugins' list
 
-14) Deploy Moodle2 instance
+15) Deploy Moodle2 instance
     - kubectl create -f moodle2-mysql.yaml
     - kubectl get pods (Wait will MySQL Pod is ready)
     - kubectl create -f moodle2.yaml
@@ -112,7 +122,7 @@ Steps:
           - Login using 'admin' as username and retrieve password from moodle2 secret as described 
             in step 12.
 
-15) Cleanup
+16) Cleanup
     - kubectl delete -f moodle1.yaml
     - kubectl delete -f moodle1-mysql.yaml
     - kubectl delete -f moodle2.yaml
