@@ -81,12 +81,13 @@ Steps:
     - Check installed plugins
       - As part of creating moodle instance, we install the 'profilecohort' plugin.
         Check the custom resource specification moodle1.yaml to see this definition.
-        - Once logged in to the Moodle instance you will see a message to update Moodle database 
+        - Once logged in to the Moodle instance, hit 'Site Administration'. This will show a message to update Moodle database 
           for 'profilecohort' plugin.
-        - Select that option to complete Plugin installation
-        - Go back to the Administration screen and fill out the profile form. Then,
-        - Navigate to -> Administration -> Plugins -> Plugins Overview
-        - You should see 'profilecohort' plugin in the 'Additional plugins' list
+        - Select that option to complete Plugin installation. You should see a 'success' message when the plugin is installed.
+        - Hit the 'contine' button. This will take you to the main screen. Fill out the profile and then hit 'update profile'.
+        - Then 
+          - Navigate to -> Administration -> Plugins -> Plugins Overview
+          - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
     - Find composition tree of Moodle1 instance
       - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1" | python -m json.tool
