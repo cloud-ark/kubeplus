@@ -1,18 +1,35 @@
 # Operator Guidelines
 
-Kubernetes Operators extend Kubernetes API to manage third-party software as native Kubernetes objects. 
-Number of Operators are being built for platform elements like databases, queues, loggers, etc. 
-We are seeing more and more fit-for-purpose application platforms being created by composing multiple Operators together.
+Kubernetes Operators extend Kubernetes API to manage third-party software as native Kubernetes objects.
+Number of Operators are being built today. They range from application-specific Operators to
+deploy and manage traditional web applications like Moodle, Wordpress, Odoo on Kubernetes, 
+to Operators that manage platform elements like MySQL, Postgres, Redis, MongoDB, Kafka, Prometheus, Logstash, etc.
+to run on Kubernetes. Consequently, we are seeing a new trend where fit-for-purpose application platforms 
+are being created by composing multiple such Operators together on a Kubernetes cluster.
 
-While working on such a custom platform for one of our customers, we observed challenges that arise when using multiple Operators together. Moreover we reflected on the usability of Operators while building tools that work on multiple Operators 
-e.g.: tools for [discovery](https://github.com/cloud-ark/kubediscovery) and [lineage tracking](https://github.com/cloud-ark/kubeprovenance)
-of Custom Resources created by Operators. Examples of such usability challenges can be:
+While working on one such custom platform for one of our customers, we observed following 
+challenges when using multiple Operators together.
 
-  * Some of the Operators introduce new CLIs. Usability becomes an issue when end users have to learn multiple CLIs to use more than one Operators in a cluster.
+  * CLI overload: Some of the Operators introduce new CLIs. Usability becomes an issue when end users have to learn multiple CLIs to use more than one Operators in a cluster.
 
-  * Some of the Operator type definitions do not follow OpenAPI Specification. This makes it hard to generate documentation for custom resources similar to native Kubernetes resources.
+  * API diversity: When using multiple Operators, it becomes a challenge for application developers 
+to discover the capabilities of the various Custom Resources available in the Cluster —
+what all Custom Resources are available? what are their attributes? how to use them?
+Application developers can go to each Operator’s documentation to find this information, 
+but this is not a user-friendly approach.
 
-Our study of existing community Operators from this perspective led us to come up with Operator development guidelines that will improve overall usability of Operators. The primary goal of these guidelines is : cluster admin should be able to easily compose multiple Operators together to form a platform stack; and application developers should be able to discover and consume Operators effortlessly.
+  * Interoperability: Another challenge is how different Custom Resources work together. 
+For instance, a MySQL Custom Resource and a Backup Custom Resource both may work with Volumes. 
+How to ensure that both these Custom Resources are using the same Volume in their operations?
+
+There is much diversity in how Operators are implemented today. These guidelines are our attempt
+to formalize a basic set of rules that Operator developers can follow while developing their Operators.
+We have developed these guidelines after studying existing community Operators and building few Operators,
+and some related tools, ourselves. If followed, such Operators will provide consistent usage experience to end users 
+(cluster administrators and application developers). Specifically, cluster admins will be able to 
+easily compose multiple Operators together to form a platform stack;
+and application developers will be able to discover and consume Custom Resources from different
+Operators effortlessly.
 
 The guidelines are divided into three sections - design guidelines, implementation guidelines and packaging guidelines.
 
@@ -35,17 +52,18 @@ The guidelines are divided into three sections - design guidelines, implementati
 
 [7) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#7-use-configmap-or-annotation-or-spec-definition-for-custom-resource-configurables)
 
-[8) Declare underlying resources created by Custom Resource as Annotation on CRD registration YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#8-define-underlying-resources-created-by-custom-resource-as-annotation-on-crd-registration-yaml)
+[8) Declare underlying resources created by Custom Resource as Annotation on CRD registration YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#8-declare-underlying-resources-created-by-custom-resource-as-annotation-on-crd-registration-yaml)
 
-[9) Make your Custom Resource type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#9-make-your-custom-resource-type-definitions-compliant-with-kube-openapi)
+[9) Make your Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-make-your-custom-resource-type-definitions-compliant-with-kube-openapi)
+
+[10) Document names and labels needed to be used with Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-document-names-and-labels-needed-to-be-used-with-custom-resources)
 
 ## Packaging guidelines
 
-[10) Generate Kube OpenAPI Spec for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-generate-kube-openapi-spec-for-your-custom-resources)
+[11) Generate Kube OpenAPI Spec for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-generate-kube-openapi-spec-for-your-custom-resources)
 
-[11) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-package-operator-as-helm-chart)
+[12) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#12-package-operator-as-helm-chart)
 
-Detailed guidelines:
 
 # Design guidelines
 
@@ -151,11 +169,12 @@ also makes it possible to build tools like [kubediscovery](https://github.com/cl
 that show Object composition tree for custom resource instances built leveraging this information.
 
 
-## 9) Make your Custom Resource type definitions compliant with Kube OpenAPI
+## 9) Make your Custom Resource Type definitions compliant with Kube OpenAPI
 
-Kubernetes API details are documented using Swagger v1.2 and OpenAPI. [Kube OpenAPI](https://github.com/kubernetes/kube-openapi) supports a subset of OpenAPI features to satisfy kubernetes use-cases. As Operators extend Kubernetes API, it is important to follow Kube OpenAPI features to provide consistent user experience. Following actions are required to comply with Kube OpenAPI.
+Kubernetes API details are documented using Swagger v1.2 and OpenAPI. [Kube OpenAPI](https://github.com/kubernetes/kube-openapi) supports a subset of OpenAPI features to satisfy kubernetes use-cases. As Operators extend Kubernetes API, it is important to follow Kube OpenAPI features to provide consistent user experience.
+Following actions are required to comply with Kube OpenAPI.
 
-Add documentation on your type definition and on the various fields in it.
+Add documentation on your custom resource Type definition and on the various fields in it.
 The field names need to be defined using following pattern:
 Kube OpenAPI name validation rules expect the field name in Go code and field name in JSON to be exactly 
 same with just the first letter in different case (Go code requires CamelCase, JSON requires camelCase).
@@ -168,20 +187,30 @@ When defining the types corresponding to your custom resources, you should use k
   }
 ```
 
+
+## 10) Document names and labels needed to be used with Custom Resources
+
+You may have special requirements for naming your custom resource instances or some of their
+Spec properties. Similarly you may requirements related to the labels that need to be added on them.
+Document this information with OpenAPI Spec annotations that you will define for your Type definitions. 
+That way this information will help application developers when they are trying to compose/use your custom resources 
+alongside custom resources from other Operators.
+
+
 # Packaging guidelines
 
-## 10) Generate Kube OpenAPI Spec for your Custom Resources
+## 11) Generate Kube OpenAPI Spec for your Custom Resources
 
 We have developed a [tool](https://github.com/cloud-ark/kubeplus/tree/master/openapi-spec-generator) that you can use for generating Kube OpenAPI Spec for your custom resources. 
 It wraps code available in [kube-openapi repository](https://github.com/kubernetes/kube-openapi) 
 in an easy to use script. You can use this tool to generate OpenAPI Spec for your custom resources.
 The generated Kube OpenAPI Spec documentation for sample Postgres custom resource is 
 [here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/openapispec.json).
-The OpenAPI Spec for your Operator provides a single place where documentation is available for the entire type
+The OpenAPI Spec for your Operator provides a single place where documentation is available for the entire Type
 definition hierarchy for the custom resources defined by your Operator.
 
 
-## 11) Package Operator as Helm Chart
+## 12) Package Operator as Helm Chart
 
 Create a Helm chart for your Operator. The chart should include two things:
 
