@@ -54,7 +54,7 @@ The guidelines are divided into three sections - design guidelines, implementati
 
 [8) Declare underlying resources created by Custom Resource as Annotation on CRD registration YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#8-declare-underlying-resources-created-by-custom-resource-as-annotation-on-crd-registration-yaml)
 
-[9) Make your Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-make-your-custom-resource-type-definitions-compliant-with-kube-openapi)
+[9) Make your Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#9-make-your-custom-resource-type-definitions-compliant-with-kube-openapi)
 
 [10) Document names and labels needed to be used with Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-document-names-and-labels-needed-to-be-used-with-custom-resources)
 
