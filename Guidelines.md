@@ -1,16 +1,16 @@
-# Operator Guidelines
+# Operator Development Guidelines
 
 Kubernetes Operators extend Kubernetes API to manage third-party software as native Kubernetes objects.
-Number of Operators are being built today. They range from application-specific Operators to
-deploy and manage traditional web applications like Moodle, Wordpress, Odoo on Kubernetes, 
-to Operators that manage platform elements like MySQL, Postgres, Redis, MongoDB, Kafka, Prometheus, Logstash, etc.
+Various Operators are being built today for variety of softwares such as 
+MySQL, Postgres, Redis, MongoDB, Kafka, Prometheus, Logstash, Moodle, Wordpress, Odoo, etc.
 to run on Kubernetes. Consequently, we are seeing a new trend where fit-for-purpose application platforms 
 are being created by composing multiple such Operators together on a Kubernetes cluster.
 
-While working on one such custom platform for one of our customers, we observed following 
+While working on a custom platform for one of our customers, we observed following 
 challenges when using multiple Operators together.
 
-  * CLI overload: Some of the Operators introduce new CLIs. Usability becomes an issue when end users have to learn multiple CLIs to use more than one Operators in a cluster.
+  * CLI overload: Some of the Operators introduce new CLIs. 
+Usability becomes an issue when end users have to learn multiple CLIs to use more than one Operators in a cluster.
 
   * API diversity: When using multiple Operators, it becomes a challenge for application developers 
 to discover the capabilities of the various Custom Resources available in the Cluster —
@@ -56,7 +56,7 @@ The guidelines are divided into three sections - design guidelines, implementati
 
 [9) Make your Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#9-make-your-custom-resource-type-definitions-compliant-with-kube-openapi)
 
-[10) Document names and labels needed to be used with Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-document-names-and-labels-needed-to-be-used-with-custom-resources)
+[10) Document naming convention and labels needed to be used with Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-document-naming-convention-and-labels-needed-to-be-used-with-custom-resources)
 
 ## Packaging guidelines
 
@@ -188,13 +188,13 @@ When defining the types corresponding to your custom resources, you should use k
 ```
 
 
-## 10) Document names and labels needed to be used with Custom Resources
+## 10) Document naming convention and labels needed to be used with Custom Resources
 
 You may have special requirements for naming your custom resource instances or some of their
-Spec properties. Similarly you may requirements related to the labels that need to be added on them.
+Spec properties. Similarly you may have requirements related to the labels that need to be added on them.
 Document this information with OpenAPI Spec annotations that you will define for your Type definitions. 
 That way this information will help application developers when they are trying to compose/use your custom resources 
-alongside custom resources from other Operators.
+with custom resources from other Operators.
 
 
 # Packaging guidelines
