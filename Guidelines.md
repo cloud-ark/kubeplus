@@ -44,7 +44,7 @@ The guidelines are divided into three sections - design guidelines, implementati
 
 [4) Prefer to register CRDs as part of Operator Helm chart rather than in code](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#4-prefer-to-register-crds-as-part-of-operator-helm-chart-rather-than-in-code)
 
-[5) Make Operator's ETCD dependency, if any, configurable(https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#5-make-operator's-etcd-dependency-if-any-configurable)
+[5) Make Operator ETCD dependency configurable(https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#5-make-operator's-etcd-dependency-if-any-configurable)
 
 ## Implementation guidelines
 
@@ -117,7 +117,7 @@ Registering CRDs as part of Operator Helm Chart rather than in your Operator cod
   * It is easy to modify and/or evolve the CRD by just updating the Chart.
 
 
-## 5) Make Operator's ETCD dependency, if any, configurable
+## 5) Make Operator ETCD dependency configurable
 
 If your Operator needs ETCD for its storage then its best to make this dependency configurable through your 
 Operator Helm Chart. This will allow Platform engineers installing your Operator along with other Operators to
