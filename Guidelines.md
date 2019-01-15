@@ -44,25 +44,27 @@ The guidelines are divided into three sections - design guidelines, implementati
 
 [4) Prefer to register CRDs as part of Operator Helm chart rather than in code](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#4-prefer-to-register-crds-as-part-of-operator-helm-chart-rather-than-in-code)
 
+[5) Make Operator's ETCD dependency, if any, configurable(https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#5-make-operator's-etcd-dependency-if-any-configurable)
+
 ## Implementation guidelines
 
-[5) Set OwnerReferences for underlying resources owned by your Custom Resource](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#5-set-ownerreferences-for-underlying-resources-owned-by-your-custom-resource)
+[6) Set OwnerReferences for underlying resources owned by your Custom Resource](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#5-set-ownerreferences-for-underlying-resources-owned-by-your-custom-resource)
 
-[6) Use Helm chart or ConfigMap for Operator configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#6-use-helm-chart-or-configmap-for-operator-configurables)
+[7) Use Helm chart or ConfigMap for Operator configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#6-use-helm-chart-or-configmap-for-operator-configurables)
 
-[7) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#7-use-configmap-or-annotation-or-spec-definition-for-custom-resource-configurables)
+[8) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#7-use-configmap-or-annotation-or-spec-definition-for-custom-resource-configurables)
 
-[8) Declare underlying resources created by Custom Resource as Annotation on CRD registration YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#8-declare-underlying-resources-created-by-custom-resource-as-annotation-on-crd-registration-yaml)
+[9) Declare underlying resources created by Custom Resource as Annotation on CRD registration YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#8-declare-underlying-resources-created-by-custom-resource-as-annotation-on-crd-registration-yaml)
 
-[9) Make your Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#9-make-your-custom-resource-type-definitions-compliant-with-kube-openapi)
+[10) Make your Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#9-make-your-custom-resource-type-definitions-compliant-with-kube-openapi)
 
-[10) Document naming convention and labels needed to be used with Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-document-naming-convention-and-labels-needed-to-be-used-with-custom-resources)
+[11) Document naming convention and labels needed to be used with Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-document-naming-convention-and-labels-needed-to-be-used-with-custom-resources)
 
 ## Packaging guidelines
 
-[11) Generate Kube OpenAPI Spec for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-generate-kube-openapi-spec-for-your-custom-resources)
+[12) Generate Kube OpenAPI Spec for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-generate-kube-openapi-spec-for-your-custom-resources)
 
-[12) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#12-package-operator-as-helm-chart)
+[13) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#12-package-operator-as-helm-chart)
 
 
 # Design guidelines
@@ -115,9 +117,19 @@ Registering CRDs as part of Operator Helm Chart rather than in your Operator cod
   * It is easy to modify and/or evolve the CRD by just updating the Chart.
 
 
+## 5) Make Operator's ETCD dependency, if any, configurable
+
+If your Operator needs ETCD for its storage then its best to make this dependency configurable through your 
+Operator Helm Chart. This will allow Platform engineers installing your Operator along with other Operators to
+decide the best way to use ETCD. If there are multiple Operators needing ETCD then by making this configurable
+you will allow Platform Engineer to decide whether they want to provide separate ETCD instance to each Operator
+or use a shared ETCD instance between all of them. It is possible Platform Engineer may use ETCD Operator
+to provision ETCD instances. Your Operator code should not depend on how ETCD instance is made available to it.
+
+
 # Implementation guidelines
 
-## 5) Set OwnerReferences for underlying resources owned by your Custom Resource
+## 6) Set OwnerReferences for underlying resources owned by your Custom Resource
 
 A custom resource instance will typically create one or more other Kubernetes resource instances, such as Deployment, Service, Secret etc., as part of its instantiation. Here this custom resource is the owner of its underlying resources that it manages. Custom controller should be written to set OwnerReference on such managed Kubernetes resources. They are key for correct garbage collection of custom resources. OwnerReferences also help with finding composition tree of your custom resource instances. 
 
@@ -126,7 +138,7 @@ Here are some examples of Operators that use OwnerReferences: [Etcd Operator](ht
 [MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/pkg/resources/services/service.go#L34).
 
 
-## 6) Use Helm chart or ConfigMap for Operator configurables
+## 7) Use Helm chart or ConfigMap for Operator configurables
 
 Typically Operators will need to support some form of customization. For example, 
 [this MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/tutorial.md#configuration) supports following customization settings: whether to deploy
@@ -136,7 +148,7 @@ such parameters. If not, use ConfigMap for this purpose. This guideline ensures 
 can interact and use the Operator using Kubernetes native's interfaces.
 
 
-## 7) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables
+## 8) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables
 
 An Operator generally needs to take configuration parameter as inputs 
 for the underlying resource that it is managing through its custom resource such as a database.
@@ -151,7 +163,7 @@ Any of these approaches should be fine based on your Operator design.
 Similar to guideline #6, this guideline ensures that application developers can interact and use Custom Resources using Kubernetes's native interfaces.
 
 
-## 8) Declare underlying resources created by Custom Resource as Annotation on CRD registration YAML
+## 9) Declare underlying resources created by Custom Resource as Annotation on CRD registration YAML
 
 Use an annotation on the Custom Resource Definition to specify the underlying Kubernetes resources that will be created and managed by the Custom Resource. An example of this can be seen for our sample Postgres Custom Resource Definition below:
 
@@ -169,7 +181,7 @@ also makes it possible to build tools like [kubediscovery](https://github.com/cl
 that show Object composition tree for custom resource instances built leveraging this information.
 
 
-## 9) Make your Custom Resource Type definitions compliant with Kube OpenAPI
+## 10) Make your Custom Resource Type definitions compliant with Kube OpenAPI
 
 Kubernetes API details are documented using Swagger v1.2 and OpenAPI. [Kube OpenAPI](https://github.com/kubernetes/kube-openapi) supports a subset of OpenAPI features to satisfy kubernetes use-cases. As Operators extend Kubernetes API, it is important to follow Kube OpenAPI features to provide consistent user experience.
 Following actions are required to comply with Kube OpenAPI.
@@ -188,7 +200,7 @@ When defining the types corresponding to your custom resources, you should use k
 ```
 
 
-## 10) Document naming convention and labels needed to be used with Custom Resources
+## 11) Document naming convention and labels needed to be used with Custom Resources
 
 You may have special requirements for naming your custom resource instances or some of their
 Spec properties. Similarly you may have requirements related to the labels that need to be added on them.
@@ -199,7 +211,7 @@ with custom resources from other Operators.
 
 # Packaging guidelines
 
-## 11) Generate Kube OpenAPI Spec for your Custom Resources
+## 12) Generate Kube OpenAPI Spec for your Custom Resources
 
 We have developed a [tool](https://github.com/cloud-ark/kubeplus/tree/master/openapi-spec-generator) that you can use for generating Kube OpenAPI Spec for your custom resources. 
 It wraps code available in [kube-openapi repository](https://github.com/kubernetes/kube-openapi) 
@@ -210,7 +222,7 @@ The OpenAPI Spec for your Operator provides a single place where documentation i
 definition hierarchy for the custom resources defined by your Operator.
 
 
-## 12) Package Operator as Helm Chart
+## 13) Package Operator as Helm Chart
 
 Create a Helm chart for your Operator. The chart should include two things:
 
