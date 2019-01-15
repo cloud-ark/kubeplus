@@ -48,23 +48,23 @@ The guidelines are divided into three sections - design guidelines, implementati
 
 ## Implementation guidelines
 
-[6) Set OwnerReferences for underlying resources owned by your Custom Resource](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#5-set-ownerreferences-for-underlying-resources-owned-by-your-custom-resource)
+[6) Set OwnerReferences for underlying resources owned by your Custom Resource](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#6-set-ownerreferences-for-underlying-resources-owned-by-your-custom-resource)
 
-[7) Use Helm chart or ConfigMap for Operator configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#6-use-helm-chart-or-configmap-for-operator-configurables)
+[7) Use Helm chart or ConfigMap for Operator configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#7-use-helm-chart-or-configmap-for-operator-configurables)
 
-[8) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#7-use-configmap-or-annotation-or-spec-definition-for-custom-resource-configurables)
+[8) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#8-use-configmap-or-annotation-or-spec-definition-for-custom-resource-configurables)
 
-[9) Declare underlying resources created by Custom Resource as Annotation on CRD registration YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#8-declare-underlying-resources-created-by-custom-resource-as-annotation-on-crd-registration-yaml)
+[9) Declare underlying resources created by Custom Resource as Annotation on CRD registration YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#9-declare-underlying-resources-created-by-custom-resource-as-annotation-on-crd-registration-yaml)
 
-[10) Make your Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#9-make-your-custom-resource-type-definitions-compliant-with-kube-openapi)
+[10) Make your Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-make-your-custom-resource-type-definitions-compliant-with-kube-openapi)
 
-[11) Document naming convention and labels needed to be used with Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-document-naming-convention-and-labels-needed-to-be-used-with-custom-resources)
+[11) Document naming convention and labels needed to be used with Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-document-naming-convention-and-labels-needed-to-be-used-with-custom-resources)
 
 ## Packaging guidelines
 
-[12) Generate Kube OpenAPI Spec for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-generate-kube-openapi-spec-for-your-custom-resources)
+[12) Generate Kube OpenAPI Spec for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#12-generate-kube-openapi-spec-for-your-custom-resources)
 
-[13) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#12-package-operator-as-helm-chart)
+[13) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#13-package-operator-as-helm-chart)
 
 
 # Design guidelines
