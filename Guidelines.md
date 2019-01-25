@@ -43,7 +43,7 @@ The guidelines are divided into three sections - design guidelines, implementati
 
 [3) Decide your Custom Resource Metrics Collection strategy](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#3-decide-your-custom-resource-metrics-collection-strategy)
 
-[4) Prefer to register CRDs as part of Operator Helm chart rather than in code](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#4-prefer-to-register-crds-as-part-of-operator-helm-chart-rather-than-in-code)
+[4) Register CRDs as part of Operator Helm chart rather than in code](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#4-register-crds-as-part-of-operator-helm-chart-rather-than-in-code)
 
 [5) Make Operator ETCD dependency configurable](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#5-make-operator-etcd-dependency-configurable)
 
@@ -115,7 +115,7 @@ to build the required metrics. Separately, you can consider exposing the collect
 in Prometheus format as well.
 
 
-## 4) Prefer to register CRDs as part of Operator Helm chart rather than in code
+## 4) Register CRDs as part of Operator Helm chart rather than in code
 
 Registering CRDs as part of Operator Helm Chart rather than in your Operator code has following advantages:
 
