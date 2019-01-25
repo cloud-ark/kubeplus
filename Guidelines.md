@@ -5,9 +5,9 @@ Various Operators are being built today for variety of softwares such as
 MySQL, Postgres, Airflow, Redis, MongoDB, Kafka, Prometheus, Logstash, Moodle, Wordpress, Odoo, etc.
 to run on Kubernetes. Consequently, we are seeing a new trend where fit-for-purpose application platforms 
 are being created by composing multiple such Operators together on a Kubernetes cluster.
+The Custom Resources introduced by different Operators can be used to create custom application Platforms as Code.
 
-While working on a custom platform for one of our customers, we observed following 
-challenges when using multiple Operators together.
+While working in this space we have observed following challenges when using multiple Operators together.
 
   * CLI overload: Some of the Operators introduce new CLIs. 
 Usability becomes an issue when end users have to learn multiple CLIs to use more than one Operators in a cluster.
