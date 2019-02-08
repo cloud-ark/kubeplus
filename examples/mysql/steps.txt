@@ -14,31 +14,35 @@ Steps:
 
 1) minikube start --memory 4096
 
-2) helm init
+2) git clone https://github.com/cloud-ark/kubeplus.git
 
-3) git clone https://github.com/cloud-ark/kubeplus.git
+3) cd kubeplus
 
-4) cd kubeplus
+4) Setup Helm Service Account
+   - kubectl create -f helm.yaml
 
-5) Wait till Tiller Pod is running
+5) Setup Helm
+   - helm init --service-account helm
+
+6) Wait till Tiller Pod is running
    - kubectl get pods -n kube-system
 
-6) Once Tiller Pod is ready, deploy Kubeplus
+7) Once Tiller Pod is ready, deploy Kubeplus
    - kubectl apply -f deploy/
 
-7) Wait till kubeplus is ready (4/4 Ready containers)
+8) Wait till kubeplus is ready (4/4 Ready containers)
    - kubectl get pods
 
-8) cd examples/mysql
+9) cd examples/mysql
 
-9) Deploy MySQL Operator
+10) Deploy MySQL Operator
    - kubectl create -f mysql-operator-chart-0.2.1.yaml
 
-10) Wait till MySQL Operator Pod is ready. This Operator is deployed in namespace 'mysql-operator'
+11) Wait till MySQL Operator Pod is ready. This Operator is deployed in namespace 'mysql-operator'
     - kubectl get ns
     - kubectl get pods -n mysql-operator
 
-11) Find information about various Custom Kinds registered by Oracle MySQL Operator
+12) Find information about various Custom Kinds registered by Oracle MySQL Operator
     - kubectl get operators
     - kubectl describe operators mysql-operator-0.2.1
     - kubectl describe customresourcedefinition mysqlclusters.mysql.oracle.com
@@ -59,8 +63,13 @@ Steps:
     - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=BackupSchedule" | python -m json.tool
     - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=BackupSchedule.BackupScheduleSpec" | python -m json.tool
 
+13) Setup Service account for MySQL Operator
+    - kubectl apply -f mysql-operator-sa.yaml
 
-12) Verify MySQL cluster
+14) Create MySQL Cluster resource
+    - kubectl create -f mysql-cluster.yaml
+
+15) Verify MySQL cluster
     - Wait till MySQL Pods are running 
       - kubectl get pods (there should be mysql pods displayed)
 
