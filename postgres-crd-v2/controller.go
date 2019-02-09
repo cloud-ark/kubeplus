@@ -70,6 +70,9 @@ const (
 
 var (
 	PGPASSWORD  = "mysecretpassword"
+
+	POSTGRES_PORT_BASE = 32000
+	POSTGRES_PORT      int
 )
 
 // Controller is the controller implementation for Foo resources
@@ -351,6 +354,10 @@ func (c *Controller) syncHandler(key string) error {
 	var databases []string
 	var users []postgresv1.UserSpec
 
+	POSTGRES_PORT = POSTGRES_PORT_BASE
+	POSTGRES_PORT_BASE = POSTGRES_PORT_BASE + 1
+
+
 	// Get the deployment with the name specified in Foo.spec
 	_, err = c.deploymentsLister.Deployments(foo.Namespace).Get(deploymentName)
 	// If the resource doesn't exist, we'll create it
@@ -607,6 +614,7 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 					Name:       "my-port",
 					Port:       5432,
 					TargetPort: apiutil.FromInt(5432),
+					NodePort:   int32(POSTGRES_PORT),
 					Protocol:   apiv1.ProtocolTCP,
 				},
 			},
@@ -614,6 +622,7 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 				"app": deploymentName,
 			},
 			Type: apiv1.ServiceTypeNodePort,
+			//Type: apiv1.ServiceTypeClusterIP,
 		},
 	}
 
@@ -632,9 +641,9 @@ func createDeployment(foo *postgresv1.Postgres, c *Controller) (string, string, 
 	nodePort1 := result1.Spec.Ports[0].NodePort
 	nodePort := fmt.Sprint(nodePort1)
 	fmt.Printf("Node Port:%s\n", nodePort)
+	//servicePort := nodePort
 	servicePort := "5432"
 	fmt.Printf("Service Port:%s\n", servicePort)
-	//servicePort := nodePort
 
 	//time.Sleep(time.Second * 5)
 
