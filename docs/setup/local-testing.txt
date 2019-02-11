@@ -1,0 +1,40 @@
+Make sure your GO PATH is correctly set.
+
+1. Do following steps inside your Go workspace inside github.com directory:
+   - git clone https://github.com/cloud-ark/kubeplus.git
+   - git clone https://github.com/cloud-ark/kubediscovery.git
+
+2. Enable Minikube<-> local docker interaction
+   - eval $(minikube docker-env)
+
+3. Delete previous images
+   - docker rmi operator-manager:latest
+   - docker rmi operator-deployer:latest
+   - docker rmi kube-discovery-apiserver:latest
+
+4. cd kubeplus
+
+5. Build Operator Manager Docker Image 
+   - cd operator-manager
+   - ./build-local-deploy-artifacts.sh
+
+6. Build Operator Deployer Docker Image
+   - cd ../operator-deployer
+   - ./build-local-deploy-artifacts.sh
+
+7. Build Discovery API Server Docker Image
+   - cd ../../kubediscovery
+   - ./build-local-discovery-artifacts.sh
+
+8. Update rc.yaml to include the built Docker images
+   - cd kubeplus/deploy
+   - Open rc.yaml
+   - Modify lmecld/operator-manager:latest to operator-manager:latest
+   - Modify lmecld/operator-deployer:latest to operator-deployer:latest
+   - Modify lmecld/kube-discovery-apiserver:latest to kube-discovery-apiserver:latest
+
+9. Deploy KubePlus
+   - cd ../kubeplus
+   - Follow the steps for deploying Postgres Operator and verify
+
+
