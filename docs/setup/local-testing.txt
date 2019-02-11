@@ -14,7 +14,7 @@ Make sure your GO PATH is correctly set.
 
 4. cd kubeplus
 
-5. Build Operator Manager Docker Image 
+5. Build Operator Manager Docker Image
    - cd operator-manager
    - ./build-local-deploy-artifacts.sh
 
@@ -36,5 +36,3 @@ Make sure your GO PATH is correctly set.
 9. Deploy KubePlus
    - cd ../kubeplus
    - Follow the steps for deploying Postgres Operator and verify
-
-
