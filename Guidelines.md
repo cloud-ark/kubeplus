@@ -76,10 +76,10 @@ and documentation guidelines.
 
 ## Documentation guidelines
 
-[15) Document how your Operator uses namespaes](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#15-document-how-your-operator-uses-namespaces)
+[15) Document how your Operator uses namespaces](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#15-document-how-your-operator-uses-namespaces)
 
 
-[16) Document Service Account usage of your Operator](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#16-document-service-account-usage-of-your-Operator)
+[16) Document Service Account usage of your Operator](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#16-document-service-account-usage-of-your-operator)
 
 
 # Design guidelines
@@ -291,7 +291,7 @@ CloudARK [sample Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/m
 
 # Documentation guidelines
 
-## 15) Document how your Operator uses namespaes
+## 15) Document how your Operator uses namespaces
 
 For Operator developers it is critical to consider how their Operator works with/uses namespaces. There are at least four options:
 
