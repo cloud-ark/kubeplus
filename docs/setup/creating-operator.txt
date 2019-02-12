@@ -1,0 +1,43 @@
+Here are the steps that one needs to follow towards generating your own CRD/Operator code.
+
+## Generating Client/Listers/Informers:
+For generating the client/listers/informers, etc. the first step is to create specific directory structure and define specific files in it. Here is that structure and the required files:
+
+* pkg/apis/some-controller-name/register.go
+* pkg/apis/some-controller-name/v1/doc.go
+* pkg/apis/some-controller-name/v1/types.go
+* pkg/client
+* pkg/signals
+
+Following are detailed steps:
+
+1. Choose a name for your CRD's group name -- say 'postgrescontroller'
+2. Create pkg/apis/'CRD group name' directory
+3. cd pkg/apis/'CRD group name'
+4. Inside this directory create register.go to register the group name. When registering the name, choose some qualifier (example, in https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/pkg/apis/postgrescontroller/register.go we have used "kubeplus" as the qualifier name.).
+5. Create v1 directory inside pkg/apis/'CRD group name'
+6. cd pkg/apis/'CRD group name'/v1
+7. Create doc.go. Make sure you set the "+groupName=." in line 20 of doc.go. Leave line 21 as it is. See https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/pkg/apis/postgrescontroller/v1/doc.go
+8. Copy https://github.com/cloud-ark/kubeplus/tree/master/operator manager/pkg/apis/operatorcontroller/v1/register.go into pkg/apis//v1/.
+   Make appropriate changes to this file.
+9. Define your CRD spec in types.go
+10. Nothing else needs to be created in the pkg/apis directory
+11. Create pkg/client directory. Nothing needs to be created inside the client directory -- leave it empty.
+12. Create pkg/signals directory and just copy all the files from https://github.com/cloud-ark/kubeplus/tree/master/postgres-crd-v2/pkg/signals into pkg/signals. You don't need to modify anything in any of these files.
+13. Go inside the hack/ directory.
+14. Edit update-codegen.sh to include the path of your folder
+15. Copy Gopkg.lock and Gopkg.toml from
+    https://github.com/cloud-ark/kubeplus/tree/master/operator-manager
+16. Install Go dependencies
+    dep ensure (this will create the vendor folder)
+17. mkdir vendor/k8s.io/code-generator/hack
+18. cp hack/boilerplate.go.txt vendor/k8s.io/code-generator/hack/.
+19. From the main directory of your CRD code execute following:
+    ./hack/update-codegen.sh
+
+## Running the controller:
+1. In the controller.go (and other go files), include the CRD client/listers/informers etc. with appropriate path. See https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/controller.go#L47 for an example.
+2. go run *.go -kubeconfig=$HOME/.kube/config
+
+## Reference:
+[kubernetes/sample-controller#13](https://github.com/kubernetes/sample-controller/issues/13)
