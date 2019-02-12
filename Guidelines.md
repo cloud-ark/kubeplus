@@ -32,7 +32,8 @@ easily compose multiple Operators together to form a platform stack;
 and application developers will be able to discover and consume Custom Resources from different
 Operators effortlessly.
 
-The guidelines are divided into three sections - design guidelines, implementation guidelines and packaging guidelines.
+The guidelines are divided into four sections - design guidelines, implementation guidelines, packaging guidelines
+and documentation guidelines.
 
 
 ## Design guidelines
@@ -72,6 +73,13 @@ The guidelines are divided into three sections - design guidelines, implementati
 
 
 [14) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#14-package-operator-as-helm-chart)
+
+## Documentation guidelines
+
+[15) Document how your Operator uses namespaes](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#15-document-how-your-operator-uses-namespaces)
+
+
+[16) Document Service Account usage of your Operator](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#16-document-service-account-usage-of-your-Operator)
 
 
 # Design guidelines
@@ -280,6 +288,29 @@ CloudARK [sample Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/m
 
   * Kube OpenAPI Spec for your custom resources. The Spec will be useful as reference documentation and can be leveraged by different tools.
 
+
+# Documentation guidelines
+
+## 15) Document how your Operator uses namespaes
+
+For Operator developers it is critical to consider how their Operator works with/uses namespaces. There are at least four options:
+
+  * Operator runs in default namespace and Custom Resources are created in default namespace.
+
+  * Operator runs in default namespace but Custom Resources can be created in non-default namespaces.
+
+  * Operator runs in a non-default namespace and Custom Resources are created in default namepsace.
+
+  * Operator runs in a non-default namespace and Custom Resources can be created in non-default namespaces.
+
+Given these options, it will help consumers of your Operator if there is a clear documentation of how namespaces 
+are used by your Operator.
+
+
+## 16) Document Service Account usage of your Operator
+
+Your Operator may be using default service account or some specific service account. Moreover, the service account
+may need to be granted specific permissions. Clearly document the service account needs of your Operator.
 
 
 ## Evaluation of community Operators
