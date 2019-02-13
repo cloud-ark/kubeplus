@@ -1,0 +1,13 @@
+apiVersion: apiregistration.k8s.io/v1beta1
+kind: APIService
+metadata:
+  name: v1.kubeplus.cloudark.io
+spec:
+  insecureSkipTLSVerify: true
+  group: kubeplus.cloudark.io
+  groupPriorityMinimum: 1000
+  versionPriority: 15
+  service:
+    name: api
+    namespace: default
+  version: v1
