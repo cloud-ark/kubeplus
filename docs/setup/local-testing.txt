@@ -36,3 +36,4 @@ Make sure your GO PATH is correctly set.
 9. Deploy KubePlus
    - cd ../kubeplus
    - Follow the steps for deploying Postgres Operator and verify
+
