@@ -16,8 +16,7 @@ KubePlus Platform Toolkit
 
 `Kubernetes Operators`__ extend Kubernetes API to manage
 third-party software as native Kubernetes objects. Today, number of Operators are
-being built for middlewares like databases, queues, loggers, etc. This has led to
-tremendous choice in the platform elements for building application platforms.
+being built for middlewares like databases, queues, loggers, etc.
 Current popular approach is to ‘self-assemble’ platform stacks using Kubernetes Operators of
 choice. This requires significant efforts and there is 
 lack of consistent user experience across multiple Operators.
@@ -188,6 +187,16 @@ Follow steps in `examples/multiple-operators/steps.txt`__.
 
 __ multipleoperatorssteps_
 
+
+KubePlus and Helm
+==================
+
+KubePlus does not replace Helm. In fact, in the current version of KubePlus, the 'Operator' CRD depends on Helm for deploying a chart. In the next version of KubePlus we are planning to make Helm use integral part of KubePlus usage. The Helm charts will be appropriately enhanced with the discovery information that will be served by KubePlus Discovery API Server. We will be also deprecating the 'Operator' Custom Resource and depend on using Helm directly for Operator installations. As an early example of directly using Helm try
+the steps in `examples/moodle-with-presslabs/steps.txt`__
+
+.. _moodlewithpresslabs: https://github.com/cloud-ark/kubeplus/blob/master/examples/moodle-with-presslabs/steps.txt
+
+__ moodlewithpresslabs_
 
 
 Quick try
