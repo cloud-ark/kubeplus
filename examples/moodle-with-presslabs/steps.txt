@@ -1,0 +1,97 @@
+Moodle Operator
+---------------
+
+Moodle is an open source e-learning platform (https://moodle.org/).
+
+This example demonstrates deploying multiple Moodle Platform stacks on Kubernetes.
+A Moodle platform stack is created from Custom Resources for Moodle and Mysqlcluster.
+We will use Moodle Operator from CloudARK and MySQL Operator from PressLabs
+(https://github.com/presslabs/mysql-operator).
+
+Moodle supports various plugins. Moodle Operator takes the list of plugins to be installed 
+as declarative input in the Moodle Custom Resource Spec. The Operator installs the plugins at appropriate
+location within the Moodle installation. Check namespace1/moodle1.yaml to see an example of how
+plugins are specified in the Custom Resource Spec. 
+
+Setup:
+-------
+- Download Minikube (v0.34.0), download Helm (v2.11.0)
+
+Steps:
+-------
+
+1) Create Kubernetes Cluster
+   - minikube start --memory 4096
+   - (Experimental) If working with Managed Kubernetes cluster (such as DigitalOcean), 
+     create a single node cluster, download the cluster config file and save it in 
+     your ~/.kube directory with the name 'config' (e.g.: ~/.kube/config)
+
+2) Setup Helm
+   - helm init
+
+3) Wait till Tiller Pod is running
+   - kubectl get pods -n kube-system
+
+4) Once Helm Pod is ready, deploy Moodle and MySQL Operators
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.2.2.tgz?raw=true
+
+5) Wait till both Operator Pods are ready
+   - kubectl get pods
+
+6) Deploy Moodle Platform Stack in namespace1
+   - cd namespace1
+   - kubectl create ns namespace1
+   
+   - Create MysqlCluster Custom Resource instance
+     - kubectl create -f cluster1-secret.yaml
+     - kubectl create -f cluster1.yaml
+
+   - Wait till MysqlCluster pods are ready
+     - kubectl get pods -n namespace1
+
+   - Once MysqlCluster pods are ready, deploy Moodle
+     - kubectl create -f moodle1.yaml
+  
+   - Wail till Moodle Pod is ready (It will take about 5/6 minutes for Moodle Pod to become ready)
+     - kubectl get pods -n namespace1
+
+   - Login to Moodle Instance
+       - Update /etc/hosts with <minikube ip or cluster node ip> moodle1. Example:
+         - 192.168.99.100 moodle1
+         - You can find minikube ip using: "minikube ip" command
+         - If using Managed Kubernetes, find out the cluster node ip by refering to appropriate documentation
+           from the provider.
+         - Retrieve Moodle instance's admin password
+	   - kubectl describe moodles moodle1 -n namespace1
+             - Note down the secret name and Moodle instance URL
+         - kubectl get secret moodle1 -n namespace1 -o jsonpath="{.data.adminPassword}" | base64 --decode
+         - Navigate to the URL of moodle1 instance (available in the output of 'describe' command)
+           - Login using 'admin' as username and password retrieved earlier from 'kubectl get secret' command
+    - Check installed plugins
+      - As part of creating moodle instance, we install the 'profilecohort' plugin.
+        Check the custom resource specification moodle1.yaml to see this definition.
+        - Once logged in to the Moodle instance, hit 'Site Administration'. 
+          This will show a message to update Moodle database for 'profilecohort' plugin.
+        - Select that option to complete Plugin installation. 
+          You should see a 'success' message when the plugin is installed.
+        - Hit the 'contine' button. This will take you to the main screen. 
+          Fill out the profile and then hit 'update profile'.
+        - Then 
+          - Navigate to -> Administration -> Plugins -> Plugins Overview
+          - You should see 'profilecohort' plugin in the 'Additional plugins' list
+
+
+7) Deploy Moodle2 instance in namespace2
+    - cd ../namespace2
+    - Repeat steps from 6 for namespace2
+
+
+Troubleshooting
+----------------
+
+1) Get Moodle Operator logs
+   - kubectl logs <moodle-operator-pod>
+
+2) Check Helm Deployments
+   - helm list
