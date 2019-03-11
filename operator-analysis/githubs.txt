@@ -1,0 +1,2 @@
+https://github.com/strimzi/strimzi-kafka-operator.git
+https://github.com/banzaicloud/logging-operator.git
