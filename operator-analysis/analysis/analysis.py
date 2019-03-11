@@ -3,7 +3,7 @@ from logzero import logger
 from git import Repo
 import os
 import shutil
-
+import re
 class Guidelines:
     def __init__(self, repo_name):
         self.repo_name = repo_name
@@ -39,9 +39,9 @@ def analyze_multiple(inpf, outf):
         logger.info(f'Cloning {repo_name} . . .')
         clone(repo)
         logger.info(f'Analyzing . . .')
-        run_analysis(repo_name, outf)
+        # run_analysis(repo_name, outf)
+        search_for_key(repo_name,b'validation:')
         logger.info(f'Finished Analysis . . .')
-
         logger.info(f'Cleaning up {repo_name} . . .')
         delete(repo_name)
     inpf.close()
@@ -60,6 +60,18 @@ def run_analysis(repo_name, output_file):
     output_file.write(f'\t12. {"Satisfied" if t.run_test12() else "Not Satisfied"}\n')
     output_file.write(f'\t14. {"Satisfied" if t.run_test14() else "Not Satisfied"}\n')
     return
+
+def search_for_key(repo_name, regex):
+    match=False
+    for root, dirs, files in os.walk(repo_name):
+        for file in files:
+            f = open(root+"/"+file, 'rb')
+            filetext = f.read()
+            match = re.search(regex, filetext)
+            if match is not None:
+                match=True
+            f.close()
+    return match
 
 def clone(git_repo):
     cwd = os.getcwd()
