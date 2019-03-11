@@ -74,6 +74,27 @@ func (o Etcdreader) GetList(resourceKey string) ([]string, error) {
 	return currentList, nil
 }
 
+// GetMap ...
+// Method to Get a map for a key
+func (o Etcdreader) GetMap(resourceKey string) (map[string]interface{}, error) {
+	c, err := getClient(o.EtcdServiceURL)
+	kapi := client.NewKeysAPI(c)
+
+	valuesMap := make(map[string]interface{}, 0)
+	var currentMapString string
+
+	resp, err1 := kapi.Get(context.Background(), resourceKey, nil)
+	if err1 != nil {
+		return nil, err1
+	} else {
+		currentMapString = resp.Node.Value
+		if err = json.Unmarshal([]byte(currentMapString), &valuesMap); err != nil {
+			return nil, err
+		}
+	}
+	return valuesMap, nil
+}
+
 // Store ...
 // Method to Store a value for a key
 func (o Etcdwriter) Store(resourceKey, resourceData string) error {
@@ -116,6 +137,30 @@ func (o Etcdwriter) StoreList(resourceKey string, dataList []string) error {
 		return err
 	}
 	return nil
+}
+
+// StoreMap ...
+// Method to Store a Map for a key in json format
+func (o Etcdwriter) StoreMap(resourceKey string, resourceData map[string]interface{}) error {
+	c, err := getClient(o.EtcdServiceURL)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	kapi := client.NewKeysAPI(c)
+
+	jsonData, err := json.Marshal(&resourceData)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	jsonDataString := string(jsonData)
+	_, err = kapi.Set(context.Background(), resourceKey, jsonDataString, nil)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	return err
 }
 
 // Delete ...

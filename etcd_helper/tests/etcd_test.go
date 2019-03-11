@@ -79,7 +79,7 @@ func TestDeleteKey(t *testing.T) {
 	assert.Equal(t, "", str, "A Delete of one key/val pair stored using Store")
 }
 
-func TestDelete3(t *testing.T) {
+func TestDeleteSingleValWithKey(t *testing.T) {
 	dataList := []string{"database1"}
 	wrtr.StoreList("postgres4", dataList)
 
@@ -94,4 +94,29 @@ func TestDelete3(t *testing.T) {
 	str, err := rdr.Get("postgres4")
 	assert.Equal(t, err.Error()[0:18], "100: Key not found", "The key should be deleted")
 	assert.Equal(t, "", str, "A Delete of a key/val pair stored as a list with StoreList")
+}
+
+func TestStoreMap(t *testing.T) {
+	dataMap := make(map[string]interface{}, 0)
+	dataMap["someKey"] = "someValue"
+
+	wrtr.StoreMap("chartValues", dataMap)
+
+	myMap, err := rdr.GetMap("chartValues")
+
+	if err != nil {
+		fmt.Printf("Err: %s\n", err)
+		t.Fail()
+	}
+	v, ok := myMap["someKey"]
+	if !ok {
+		fmt.Printf("Err: %s\n", "Did not properly store a map")
+		t.Fail()
+	}
+	myVal, ok := v.(string)
+	if !ok {
+		fmt.Printf("Err: %s\n", "Did not properly store a map")
+		t.Fail()
+	}
+	assert.Equal(t, "someValue", myVal, "The retrieved data from etcd must match the Map that is stored")
 }
