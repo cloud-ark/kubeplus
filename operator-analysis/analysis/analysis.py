@@ -1,23 +1,32 @@
 #!/usr/bin/env python3
 from logzero import logger
-from git import Repo
-import os
-import shutil
-import re
+from analysis.utils import *
+
 class Guidelines:
     def __init__(self, repo_name):
         self.repo_name = repo_name
-    def run_test4(self):
-        return False
-    def run_test7(self):
-        return False
-    def run_test11(self):
-        return False
-    def run_test12(self):
-        return False
-    def run_test14(self):
-        return False
+    def test_crd_registered_in_helm_chart(self):
 
+        return False
+    def test_owner_references_set(self):
+        owner_ref_regex = b'OwnerReferences'
+        has_owner_ref = search_for_key(self.repo_name,owner_ref_regex)
+        return has_owner_ref
+
+    def test_kube_openapi_annotations_on_typedefs(self):
+        api_annotations_regex = b'k8s:openapi-gen=true'
+        has_kube_api_annotation = search_for_key(self.repo_name,api_annotations_regex)
+        return has_kube_api_annotation
+
+    def test_has_custom_resource_validation(self):
+        validation_regex = b'validation:'
+        has_validation = search_for_key(self.repo_name,validation_regex)
+        return has_validation
+
+    def test_helm_chart_exists(self):
+        file_name = "Chart.yaml"
+        has_chart = search_for_file(self.repo_name,file_name)
+        return has_chart
 
 
 def resolve(args):
@@ -26,59 +35,39 @@ def resolve(args):
     elif args.list:
         inpf = open(args.list, 'r')
         outf = open('results.txt', 'w')
-        analyze_multiple(inpf,outf)
+        analyze(inpf,outf)
     return
 
-def analyze_single():
-    return
-
-def analyze_multiple(inpf, outf):
+def analyze(inpf, outf):
     for line in inpf:
-        repo = line.strip("\n")
-        repo_name = get_repo_name(repo)
+        repo_git = line.strip("\n")
+        repo_name = get_repo_name(repo_git)
         logger.info(f'Cloning {repo_name} . . .')
-        clone(repo)
-        logger.info(f'Analyzing . . .')
-        # run_analysis(repo_name, outf)
-        search_for_key(repo_name,b'validation:')
-        logger.info(f'Finished Analysis . . .')
+        clone(repo_git)
+        run_analysis(repo_git, repo_name, outf)
         logger.info(f'Cleaning up {repo_name} . . .')
         delete(repo_name)
     inpf.close()
     outf.close()
     return
 
-def get_repo_name(repo):
-    return repo.split("/")[-1].strip(".git")
-
-def run_analysis(repo_name, output_file):
-    output_file.write(f'Operator: {repo_name}\n')
+def run_analysis(repo_link, repo_name, output_file):
     t = Guidelines(repo_name=repo_name)
-    output_file.write(f'\t4. {"Satisfied" if t.run_test4() else "Not Satisfied"}\n')
-    output_file.write(f'\t7. {"Satisfied" if t.run_test7() else "Not Satisfied"}\n')
-    output_file.write(f'\t11. {"Satisfied" if t.run_test11() else "Not Satisfied"}\n')
-    output_file.write(f'\t12. {"Satisfied" if t.run_test12() else "Not Satisfied"}\n')
-    output_file.write(f'\t14. {"Satisfied" if t.run_test14() else "Not Satisfied"}\n')
-    return
+    logger.info(f'Operator: {repo_name}')
+    crd_registered_in_helm_chart = "satisfied" if t.test_crd_registered_in_helm_chart() else "not satisfied"
+    owner_references_set = "satisfied" if t.test_owner_references_set() else "not satisfied"
+    kube_openapi_annotations_on_type_definitions = "satisfied" if t.test_kube_openapi_annotations_on_typedefs() else "not satisfied"
+    custom_resource_spec_validation = "satisfied" if t.test_has_custom_resource_validation() else "not satisfied"
+    helm_chart_exists = "satisfied" if t.test_helm_chart_exists() else "not satisfied"
+    logger.info(f'\tcrd_registered_in_helm_chart: {crd_registered_in_helm_chart}')
+    logger.info(f'\towner_references_set: {owner_references_set}')
+    logger.info(f'\tkube_openapi_annotations_on_type_definitions: {kube_openapi_annotations_on_type_definitions}')
+    logger.info(f'\tcustom_resource_spec_validation: {custom_resource_spec_validation}')
+    logger.info(f'\thelm_chart_exists: {helm_chart_exists}')
 
-def search_for_key(repo_name, regex):
-    match=False
-    for root, dirs, files in os.walk(repo_name):
-        for file in files:
-            f = open(root+"/"+file, 'rb')
-            filetext = f.read()
-            match = re.search(regex, filetext)
-            if match is not None:
-                match=True
-            f.close()
-    return match
-
-def clone(git_repo):
-    cwd = os.getcwd()
-    repo_name = get_repo_name(git_repo)
-    Repo.clone_from(git_repo, str(cwd)+"/"+repo_name)
-    return
-
-def delete(repo_name):
-    shutil.rmtree(repo_name)
+    output_file.write("%s, crd_registered_in_helm_chart: %s, owner_references_set: %s, \
+kube_openapi_annotations_on_type_definitions: %s, custom_resource_spec_validation: %s, \
+helm_chart_exists: %s " %(repo_link, \
+                    crd_registered_in_helm_chart, owner_references_set, custom_resource_spec_validation,
+                    custom_resource_spec_validation, helm_chart_exists))
     return
