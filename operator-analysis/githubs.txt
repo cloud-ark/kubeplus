@@ -3,3 +3,4 @@ https://github.com/banzaicloud/logging-operator.git
 https://github.com/GoogleCloudPlatform/spark-on-k8s-operator.git
 https://github.com/GoogleCloudPlatform/airflow-operator.git
 https://github.com/spotahome/redis-operator.git
+https://github.com/instaclustr/cassandra-operator.git

@@ -9,6 +9,7 @@ from logzero import logger
 
 from analysis import analysis
 
+
 def main(args):
     """ Main entry point of the app """
     logger.info(args)
@@ -20,8 +21,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--list")
 
-    parser.add_argument("-g", "--github")
-
+    # TODO: use logger if verbosity set?
     parser.add_argument(
         "-v",
         "--verbose",
