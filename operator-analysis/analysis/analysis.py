@@ -3,6 +3,7 @@ from logzero import logger
 from analysis.utils import clone, search_for_key, search_for_file, \
     get_repo_name, delete, search_for_folder_with_file
 import os
+import traceback
 
 
 class Guidelines:
@@ -59,9 +60,18 @@ def analyze(inputs_file):
     for line in inpf:
         repo_git = line.strip("\n")
         repo_name = get_repo_name(repo_git)
-        clone(repo_git)
-        run_analysis(repo_git, repo_name, outf)
-        delete(repo_name)
+        try:
+            clone(repo_git)
+            run_analysis(repo_git, repo_name, outf)
+            delete(repo_name)
+        except Exception as e:
+            traceback.print_exc()
+            logger.error(e)
+            if os.path.exists(repo_name):
+                delete(repo_name)
+            inpf.close()
+            outf.close()
+            return
 
     inpf.close()
     outf.close()
@@ -69,7 +79,8 @@ def analyze(inputs_file):
 
 
 def run_analysis(repo_link, repo_name, output_file):
-    """Runs the analysis for a single repository,
+    """
+    Runs the analysis for a single repository,
     calling each guideline test. This assumes it was cloned
     into a folder called repo_name, which is used mutually by
     clone and this method.
