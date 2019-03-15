@@ -13,7 +13,7 @@ def collect_operators_runner():
     user = os.getenv("USER")
     passwd = os.getenv("PASSWORD")
     g = Github(user, passwd)
-    pagin_of_repo = g.search_repositories("kubernetes+operators")
+    pagination_of_repo = g.search_repositories("kubernetes+operators")
     with open("alloperators.txt", 'w') as outf:
         for repo in pagination_of_repo:
             # name = repo.name
