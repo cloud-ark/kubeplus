@@ -16,7 +16,6 @@ def collect_operators_runner():
     pagination_of_repo = g.search_repositories("kubernetes+operators")
     with open("alloperators.txt", 'w') as outf:
         for repo in pagination_of_repo:
-            # name = repo.name
             clone_url = repo.clone_url
             last_commit = repo.pushed_at
             num_contributors = repo.get_contributors().totalCount
