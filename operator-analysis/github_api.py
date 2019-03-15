@@ -8,14 +8,14 @@ from logzero import logger
 def collect_operators_runner():
     """ Runner entry point, outputs alloperators.txt file."""
     logger.info(f'Using github api to collect all operators')
-    logger.info('For api access, reading form $USER and $PASSWORD env vars..')
-    logger.info('Please make sure these are set.')
+    logger.info('For api access, reading from $USER and $PASSWORD env vars..')
+    logger.info('Please set these to your github user and passwd.')
     user = os.getenv("USER")
     passwd = os.getenv("PASSWORD")
     g = Github(user, passwd)
     pagin_of_repo = g.search_repositories("kubernetes+operators")
     with open("alloperators.txt", 'w') as outf:
-        for repo in pagin_of_repo:
+        for repo in pagination_of_repo:
             # name = repo.name
             clone_url = repo.clone_url
             last_commit = repo.pushed_at
