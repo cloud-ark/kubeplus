@@ -8,7 +8,6 @@ from analysis import analysis
 def main(args):
     """ Main entry point of the app """
     logger.info(f'Arguments passed: {args}')
-    # collect_operators_runner()
     analysis.analyze(args.inputs)
 
 

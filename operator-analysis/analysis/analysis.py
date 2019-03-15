@@ -64,11 +64,8 @@ def analyze(inputs_file):
     outf = open('results.txt', 'w')
     for line in inpf:
         repo_git = None
-        # If loading the output of github/main.py, alloperators.txt
-        if "clone_url:" in line:
-            repo_git = line.split(",")[0].replace("clone_url:", "")
-        else:
-            repo_git = line.strip("\n")
+        # loading the output format of github/main.py, alloperators.txt
+        repo_git = line.split(",")[0].replace("clone_url:", "")
         repo_name = get_repo_name(repo_git)
         try:
             clone(repo_git)
