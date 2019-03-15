@@ -4,6 +4,7 @@ from analysis.utils import clone, search_for_key, search_for_file, \
     get_repo_name, delete, search_for_folder_with_file
 import os
 import traceback
+import re
 
 
 class Guidelines:
@@ -15,23 +16,26 @@ class Guidelines:
             return False
 
         helm_dir = search_for_folder_with_file(self.repo_name, "Chart.yaml")
-        customresource = b'kind: CustomResourceDefinition'
+        customresource = re.compile(b'kind: CustomResourceDefinition')
         return search_for_key(helm_dir, customresource, ".yaml")
 
     def test_owner_references_set(self):
-        owner_ref_regex = b'OwnerReferences'
-        has_owner_ref = search_for_key(self.repo_name, owner_ref_regex, ".go")
+        owner_ref_regex = re.compile(b'OwnerReferences?', re.IGNORECASE)
+        has_owner_ref = search_for_key(self.repo_name, owner_ref_regex, ".go",
+                                       "vendor")
         return has_owner_ref
 
     def test_kube_openapi_annotations_on_typedefs(self):
-        api_annotations_regex = b'k8s:openapi-gen=true'
+        api_annotations_regex = re.compile(b'// \\+k8s:openapi-gen=true')
         has_kube_api_annotation = search_for_key(self.repo_name,
-                                                 api_annotations_regex, ".go")
+                                                 api_annotations_regex, ".go",
+                                                 "vendor")
         return has_kube_api_annotation
 
     def test_has_custom_resource_validation(self):
-        validation_regex = b'validation\\:'
-        has_validation = search_for_key(self.repo_name, validation_regex, ".yaml")
+        validation_regex = re.compile(b'validation:')
+        has_validation = search_for_key(self.repo_name, validation_regex,
+                                        ".yaml")
         return has_validation
 
     def test_helm_chart_exists(self):

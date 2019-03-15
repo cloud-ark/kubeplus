@@ -34,7 +34,7 @@ def search_for_folder_with_file(repo_name, file_name):
     return None
 
 
-def search_for_key(repo_name, regex_key, extension=None):
+def search_for_key(repo_name, regex_key, extension=None, ignore_dir=None):
     for root, dirs, files in os.walk(repo_name):
         for file in files:
             if extension is None:
@@ -44,6 +44,8 @@ def search_for_key(repo_name, regex_key, extension=None):
                     if match is not None:
                         return True
             elif file.endswith(extension):
+                if ignore_dir is not None and ignore_dir in root:
+                    continue
                 with open(root+"/"+file, 'rb') as f:
                     filetext = f.read()
                     match = re.search(regex_key, filetext)
