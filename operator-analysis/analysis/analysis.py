@@ -25,12 +25,12 @@ class Guidelines:
     def test_kube_openapi_annotations_on_typedefs(self):
         api_annotations_regex = b'k8s:openapi-gen=true'
         has_kube_api_annotation = search_for_key(self.repo_name,
-                                                 api_annotations_regex)
+                                                 api_annotations_regex, ".go")
         return has_kube_api_annotation
 
     def test_has_custom_resource_validation(self):
-        validation_regex = b'validation:'
-        has_validation = search_for_key(self.repo_name, validation_regex)
+        validation_regex = b'validation\\:'
+        has_validation = search_for_key(self.repo_name, validation_regex, ".yaml")
         return has_validation
 
     def test_helm_chart_exists(self):
@@ -38,6 +38,9 @@ class Guidelines:
 
 
 def _has_helm(repo_name):
+    """Helper method to check whether a operator
+    repository has helm set up
+    """
     helm_dir = search_for_folder_with_file(repo_name, "Chart.yaml")
     if helm_dir is None:
         return False
@@ -49,15 +52,10 @@ def _has_helm(repo_name):
     return True
 
 
-def resolve(args):
-    if args.list:
-        inpf = open(args.list, 'r')
-        outf = open('results.txt', 'w')
-        analyze(inpf, outf)
-    return
-
-
-def analyze(inpf, outf):
+def analyze(inputs_file):
+    """Main loop that analyzes each line in inputs_file"""
+    inpf = open(inputs_file, 'r')
+    outf = open('results.txt', 'w')
     for line in inpf:
         repo_git = line.strip("\n")
         repo_name = get_repo_name(repo_git)
@@ -71,6 +69,11 @@ def analyze(inpf, outf):
 
 
 def run_analysis(repo_link, repo_name, output_file):
+    """Runs the analysis for a single repository,
+    calling each guideline test. This assumes it was cloned
+    into a folder called repo_name, which is used mutually by
+    clone and this method.
+    """
     t = Guidelines(repo_name=repo_name)
     logger.info(f'Operator: {repo_name}')
 

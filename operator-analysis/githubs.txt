@@ -1,6 +1,7 @@
-https://github.com/strimzi/strimzi-kafka-operator.git
-https://github.com/banzaicloud/logging-operator.git
+https://github.com/mongodb/mongodb-enterprise-kubernetes.git
 https://github.com/GoogleCloudPlatform/spark-on-k8s-operator.git
 https://github.com/GoogleCloudPlatform/airflow-operator.git
 https://github.com/spotahome/redis-operator.git
 https://github.com/instaclustr/cassandra-operator.git
+https://github.com/astronomer/airflow-operator.git
+https://github.com/upmc-enterprises/elasticsearch-operator.git
