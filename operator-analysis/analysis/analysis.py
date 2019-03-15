@@ -17,7 +17,8 @@ class Guidelines:
 
         helm_dir = search_for_folder_with_file(self.repo_name, "Chart.yaml")
         customresource = re.compile(b'kind: CustomResourceDefinition')
-        return search_for_key(helm_dir, customresource, ".yaml")
+        return search_for_key(helm_dir, customresource, ".yaml",
+                              "vendor")
 
     def test_owner_references_set(self):
         owner_ref_regex = re.compile(b'OwnerReferences?', re.IGNORECASE)
@@ -35,7 +36,7 @@ class Guidelines:
     def test_has_custom_resource_validation(self):
         validation_regex = re.compile(b'validation:')
         has_validation = search_for_key(self.repo_name, validation_regex,
-                                        ".yaml")
+                                        ".yaml", "vendor")
         return has_validation
 
     def test_helm_chart_exists(self):
@@ -62,7 +63,7 @@ def analyze(inputs_file):
     inpf = open(inputs_file, 'r')
     outf = open('results.txt', 'w')
     for line in inpf:
-        repo_git = line.strip("\n")
+        repo_git = line.split(",")[0].replace("clone_url:", "")
         repo_name = get_repo_name(repo_git)
         try:
             clone(repo_git)
