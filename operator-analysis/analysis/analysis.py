@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from logzero import logger
 from analysis.utils import clone, search_for_key, search_for_file, \
-    get_repo_name, delete, search_for_folder_with_file
+    get_repo_name, delete, search_for_folders_with_file
 import os
 import traceback
 import re
@@ -15,28 +15,32 @@ class Guidelines:
         if not _has_helm(self.repo_name):
             return False
 
-        helm_dir = search_for_folder_with_file(self.repo_name, "Chart.yaml")
+        helm_dirs = search_for_folders_with_file(self.repo_name, "Chart.yaml")
         customresource = re.compile(b'kind: CustomResourceDefinition')
-        return search_for_key(helm_dir, customresource, ".yaml",
-                              "vendor")
+        for dir in helm_dirs:
+            if search_for_key(dir, customresource, extension=".yaml",
+                              ignore_dir="vendor"):
+                return True
+        return False
 
     def test_owner_references_set(self):
         owner_ref_regex = re.compile(b'OwnerReferences?', re.IGNORECASE)
-        has_owner_ref = search_for_key(self.repo_name, owner_ref_regex, ".go",
-                                       "vendor")
+        has_owner_ref = search_for_key(self.repo_name, owner_ref_regex,
+                                       extension=".go", ignore_dir="vendor")
         return has_owner_ref
 
     def test_kube_openapi_annotations_on_typedefs(self):
         api_annotations_regex = re.compile(b'// \\+k8s:openapi-gen=true')
         has_kube_api_annotation = search_for_key(self.repo_name,
-                                                 api_annotations_regex, ".go",
-                                                 "vendor")
+                                                 api_annotations_regex,
+                                                 extension=".go",
+                                                 ignore_dir="vendor")
         return has_kube_api_annotation
 
     def test_has_custom_resource_validation(self):
         validation_regex = re.compile(b'validation:')
         has_validation = search_for_key(self.repo_name, validation_regex,
-                                        ".yaml", "vendor")
+                                        extension=".yaml", ignore_dir="vendor")
         return has_validation
 
     def test_helm_chart_exists(self):
@@ -47,15 +51,14 @@ def _has_helm(repo_name):
     """Helper method to check whether a operator
     repository has helm set up
     """
-    helm_dir = search_for_folder_with_file(repo_name, "Chart.yaml")
-    if helm_dir is None:
+    helm_dirs = search_for_folders_with_file(repo_name, "Chart.yaml")
+    if not helm_dirs:
         return False
 
-    stat_result = os.stat(os.getcwd() + "/" + helm_dir + "/templates")
-    if stat_result is None:
-        return False
-
-    return True
+    for dir in helm_dirs:
+        if os.path.isdir(os.getcwd() + "/" + dir + "/templates"):
+            return True
+    return False
 
 
 def analyze(inputs_file):

@@ -26,12 +26,13 @@ def search_for_file(repo_name, file_name,):
     return False
 
 
-def search_for_folder_with_file(repo_name, file_name):
+def search_for_folders_with_file(repo_name, file_name):
+    folders = []
     for root, dirs, files in os.walk(repo_name):
         for file in files:
             if file_name == file:
-                return root
-    return None
+                folders.append(root)
+    return folders
 
 
 def search_for_key(repo_name, regex_key, extension=None, ignore_dir=None):
