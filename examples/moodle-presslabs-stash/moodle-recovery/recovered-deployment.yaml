@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: stash-recover
+  name: stash-recovered
+  namespace: namespace1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stash-recovered
+  template:
+    metadata:
+      labels:
+        app: stash-recovered
+      name: busybox
+    spec:
+      containers:
+      - args:
+        - sleep
+        - "3600"
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        name: busybox
+        volumeMounts:
+        - mountPath: /opt/moodledata
+          name: moodle-data
+      restartPolicy: Always
+      volumes:
+      - name: moodle-data
+        persistentVolumeClaim:
+          claimName: stash-recovered

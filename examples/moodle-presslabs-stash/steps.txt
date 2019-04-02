@@ -1,0 +1,172 @@
+Setup and Deploy KubePlus
+-----
+
+0) Install aws-cli, enter your access-keys
+    - curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+    - unzip awscli-bundle.zip
+    - sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+    - aws configure
+
+1) Make an s3 bucket
+    - aws s3 mb s3://stash-testing34
+
+2) Start Minikube
+    - minikube start --memory 4096 --cpus=2
+
+4) Go to KubePlus location
+    - cd kubeplus
+
+8) Deploy KubePlus pod
+    - kubectl apply -f deploy/
+
+
+Start helm and install operators
+-----------
+
+1) Setup
+    - helm init
+
+2) Wait till Tiller Pod is running
+    - kubectl get pods -n kube-system
+
+3) Install presslabs-mysql-operator  and stash operator(note openapispec.json needs to be added to deploy with kubeplus)
+
+helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5.tgz?raw=true
+helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.3.tgz?raw=true
+
+4) Change directory
+    - cd examples/moodle-presslabs-stash
+
+5) Deploy moodle operator
+    - kubectl apply -f moodle-operator.yaml
+
+6) Check they are created
+    - kubectl get pods
+
+
+Create backups of Moodle
+-----------
+1) Deploy Moodle Platform Stack in namespace1
+   - cd namespace1
+   - kubectl create ns namespace1
+
+   - Create MysqlCluster Custom Resource instance
+     - kubectl create -f cluster1-secret.yaml
+     - kubectl create -f cluster1.yaml
+
+   - Wait till MysqlCluster pods are ready
+     - kubectl get pods -n namespace1
+
+   - Once MysqlCluster pods are ready, deploy Moodle
+     - kubectl create -f moodle1.yaml
+
+   - Wait till Moodle Pod is ready (It will take about 5/6 minutes for Moodle Pod to become ready)
+     - kubectl get pods -n namespace1
+
+   - Login to Moodle Instance
+       - Update /etc/hosts with <minikube ip or cluster node ip> moodle1. Example:
+         - 192.168.99.100 moodle1
+         - You can find minikube ip using: "minikube ip" command
+         - If using Managed Kubernetes, find out the cluster node ip by refering to appropriate documentation
+           from the provider.
+         - Retrieve Moodle instance's admin password
+	   - kubectl describe moodles moodle1 -n namespace1
+             - Note down the secret name and Moodle instance URL
+         - kubectl get secret moodle1 -n namespace1 -o jsonpath="{.data.adminPassword}" | base64 --decode
+         - Navigate to the URL of moodle1 instance (available in the output of 'describe' command)
+           - Login using 'admin' as username and password retrieved earlier from 'kubectl get secret' command
+    - Check installed plugins
+      - As part of creating moodle instance, we install the 'profilecohort' plugin.
+        Check the custom resource specification moodle1.yaml to see this definition.
+        - Once logged in to the Moodle instance, hit 'Site Administration'.
+          This will show a message to update Moodle database for 'profilecohort' plugin.
+        - Select that option to complete Plugin installation.
+          You should see a 'success' message when the plugin is installed.
+        - Hit the 'contine' button. This will take you to the main screen.
+          Fill out the profile and then hit 'update profile'.
+        - Then
+          - Navigate to -> Administration -> Plugins -> Plugins Overview
+          - You should see 'profilecohort' plugin in the 'Additional plugins' list
+    - Create a new course
+        - Go to Site home
+        - Add a new course
+        - Fill in the fields and
+            Upload an image > Upload a file
+        - Save and return
+
+2) See the composition of Moodle instance, checking for deployment name, should be moodle1
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1&namespace=namespace1" | python -mjson.tool
+
+3) Add a label to the Moodle deployment
+    - kubectl label -n namespace1 deployments moodle1 app=moodle-deploy
+
+4) Add base64 encoded access keys to s3-secret.yaml
+    Edit your keys s3-secret.yaml
+
+    for AWS_ACCESS_KEY_ID:
+    - echo your_access_key | base64
+    for AWS_SECRET_ACCESS_KEY:
+    - echo your_secret_access_code | base64
+    for RESTIC_PASSWORD:
+    - echo 'canbeanything' | base64
+
+5) Apply secret
+    - kubectl apply -f s3-secret.yaml
+
+6) Start taking backups
+    - kubectl apply -f restic-moodle.yaml
+
+7. Validate that it is taking backups (may take one minute)
+    - aws s3 ls s3://stash-testing34/stash1/deployment/moodle1/
+
+
+Recover a snapshot
+-----------
+
+1) Check available snapshots, pick one
+    - kubectl get snapshots -n namespace1 -l repository=deployment.moodle1
+
+2) Create PersistentVolumeClaim
+    - kubectl create -f pvc.yaml
+
+3) Change line 10 in recovery.yaml to the snapshot from step 1.
+    - snapshot: deployment.moodle1-b3ae042b
+
+4. Create the recovery, which stores the snapshot into that PersistentVolumeClaim
+    - kubectl create -f recovery.yaml
+
+5. Created a dummy deployment with that snapshot data
+    - kubectl create -f recovered-deployment.yaml
+
+6. Check that the recovery worked
+    - get stash deployment name for kubectl exec
+        - kubectl get pods -n namespace1
+
+    - kubectl exec stash-recovered-77475d6b6b-5fp27 -n namespace1 -- ls -l /opt/moodledata/filedir
+    Or to enter into the container:
+    - kubectl exec moodle1-d798c74bd-6czqz -it -n namespace1 -- /bin/bash
+
+
+Clean up
+---------
+1. Remove aws bucket
+    - aws s3 rb s3://stash-testing34 --force
+2. Delete everything
+    - cd ../
+    - kubectl delete -f namespace1/moodle1.yaml
+    - kubectl delete -f namepsace1/cluster1-secret.yaml
+    - kubectl delete -f namespace1/cluster1.yaml
+    - kubectl delete -f moodle-recovery/recovered-deployment.yaml
+    - kubectl delete -f moodle-recovery/recovery.yaml
+    - kubectl delete -f moodle-recovery/pvc.yaml
+    - kubectl delete -f moodle-backup/s3-secret.yaml
+    - kubectl delete -f moodle-backup/restic-moodle.yaml
+    - kubectl delete namespace namespace1
+
+    - kubectl delete -f moodle-operator.yaml
+    - helm list
+        - find name to delete mysql-operator and stash operator
+    - helm delete _some_name_sql
+    - helm delete _some_name_stash
+    - cd ../../
+    - kubectl delete -f deploy

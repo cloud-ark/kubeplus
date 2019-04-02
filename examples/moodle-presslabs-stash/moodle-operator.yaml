@@ -1,0 +1,7 @@
+apiVersion: operatorcontroller.kubeplus/v1
+kind: Operator
+metadata:
+  name: moodle-operator
+spec:
+  name: moodle-operator
+  chartURL: https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.2.2.tgz?raw=true

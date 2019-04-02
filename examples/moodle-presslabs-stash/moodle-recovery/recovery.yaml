@@ -1,0 +1,16 @@
+apiVersion: stash.appscode.com/v1alpha1
+kind: Recovery
+metadata:
+  name: s3-recovery-specific-snapshot
+  namespace: namespace1
+spec:
+  repository:
+    name: deployment.moodle1
+    namespace: namespace1
+  snapshot: deployment.moodle1-b3ae042b
+  paths:
+  - /opt/moodledata
+  recoveredVolumes:
+  - mountPath: /opt/moodledata
+    persistentVolumeClaim:
+      claimName: stash-recovered
