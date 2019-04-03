@@ -100,8 +100,10 @@ Create backups of Moodle
 3) Add a label to the Moodle deployment
     - kubectl label -n namespace1 deployments moodle1 app=moodle-deploy
 
-4) Add base64 encoded access keys to s3-secret.yaml
-    Edit your keys s3-secret.yaml
+4. cd ../moodle-backup
+
+5) Add base64 encoded access keys to s3-secret.yaml
+    Edit your keys in s3-secret.yaml
 
     for AWS_ACCESS_KEY_ID:
     - echo your_access_key | base64
@@ -110,18 +112,19 @@ Create backups of Moodle
     for RESTIC_PASSWORD:
     - echo 'canbeanything' | base64
 
-5) Apply secret
+6) Apply secret
     - kubectl apply -f s3-secret.yaml
 
-6) Start taking backups
+7) Start taking backups
     - kubectl apply -f restic-moodle.yaml
 
-7. Validate that it is taking backups (may take one minute)
+8. Validate that it is taking backups (may take one minute)
     - aws s3 ls s3://stash-testing34/stash1/deployment/moodle1/
 
 
 Recover a snapshot
 -----------
+0) cd ../moodle-recovery
 
 1) Check available snapshots, pick one
     - kubectl get snapshots -n namespace1 -l repository=deployment.moodle1
@@ -132,13 +135,13 @@ Recover a snapshot
 3) Change line 10 in recovery.yaml to the snapshot from step 1.
     - snapshot: deployment.moodle1-b3ae042b
 
-4. Create the recovery, which stores the snapshot into that PersistentVolumeClaim
+4) Create the recovery, which stores the snapshot into that PersistentVolumeClaim
     - kubectl create -f recovery.yaml
 
-5. Created a dummy deployment with that snapshot data
+5) Created a dummy deployment with that snapshot data
     - kubectl create -f recovered-deployment.yaml
 
-6. Check that the recovery worked
+6) Check that the recovery worked
     - get stash deployment name for kubectl exec
         - kubectl get pods -n namespace1
 
@@ -149,9 +152,9 @@ Recover a snapshot
 
 Clean up
 ---------
-1. Remove aws bucket
+1) Remove aws bucket
     - aws s3 rb s3://stash-testing34 --force
-2. Delete everything
+2) Delete everything
     - cd ../
     - kubectl delete -f namespace1/moodle1.yaml
     - kubectl delete -f namepsace1/cluster1-secret.yaml
