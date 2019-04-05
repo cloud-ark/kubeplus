@@ -104,11 +104,11 @@ Create backups of Moodle
     Edit your keys s3-secret.yaml
 
     for AWS_ACCESS_KEY_ID:
-    - echo your_access_key | base64
+    - echo -n "your_access_key" | base64
     for AWS_SECRET_ACCESS_KEY:
-    - echo your_secret_access_code | base64
+    - echo -n "your_secret_access_code" | base64
     for RESTIC_PASSWORD:
-    - echo 'canbeanything' | base64
+    - echo -n "canbeanything" | base64
 
 5) Apply secret
     - kubectl apply -f s3-secret.yaml
