@@ -1,76 +1,69 @@
 package main
 
 import (
-	"flag"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/coreos/etcd/client"
 	"log"
 	"time"
 
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
-    "k8s.io/client-go/tools/clientcmd"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"k8s.io/client-go/rest"
 )
 
 var (
-	masterURL  string
-	kubeconfig string
 	etcdServiceURL string
 )
 
 func getCRDDetailsFromAPIServer() error {
 
-		etcdServiceURL = "http://localhost:2379"
+	etcdServiceURL = "http://localhost:2379"
 
-		cfg, _ := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
-		crdClient, _ := apiextensionsclientset.NewForConfig(cfg)
+	cfg, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
 
-		crdList, err := crdClient.CustomResourceDefinitions().List(metav1.ListOptions{})
+	crdClient, _ := apiextensionsclientset.NewForConfig(cfg)
+
+	crdList, err := crdClient.CustomResourceDefinitions().List(metav1.ListOptions{})
+	if err != nil {
+		fmt.Errorf("Error:%s\n", err)
+		return err
+	}
+	for _, crd := range crdList.Items {
+		crdName := crd.ObjectMeta.Name
+		crdObj, err := crdClient.CustomResourceDefinitions().Get(crdName, metav1.GetOptions{})
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
 			return err
 		}
-		for _, crd := range crdList.Items {
-			crdName := crd.ObjectMeta.Name
-			crdObj, err := crdClient.CustomResourceDefinitions().Get(crdName, metav1.GetOptions{})
-			if err != nil {
-				fmt.Errorf("Error:%s\n", err)
-				return err
-			}
-			group := crdObj.Spec.Group
-			version := crdObj.Spec.Version
-			endpoint := "apis/" + group + "/" + version
-			kind := crdObj.Spec.Names.Kind
-			plural := crdObj.Spec.Names.Plural
+		group := crdObj.Spec.Group
+		version := crdObj.Spec.Version
+		endpoint := "apis/" + group + "/" + version
+		kind := crdObj.Spec.Names.Kind
+		plural := crdObj.Spec.Names.Plural
 
-			objectMeta := crdObj.ObjectMeta
-			//fmt.Printf("Object Meta:%v\n", objectMeta)
-			//name := objectMeta.GetName()
-			//namespace := objectMeta.GetNamespace()
-			annotations := objectMeta.GetAnnotations()
+		objectMeta := crdObj.ObjectMeta
+		//name := objectMeta.GetName()
+		//namespace := objectMeta.GetNamespace()
+		annotations := objectMeta.GetAnnotations()
 
-			//composition := make([]string, 0)
-			compositionString := annotations["composition"]
-			/*composition1 := strings.Split(compositionString, ",")
-			for _, elem := range composition1 {
-				elem = strings.TrimSpace(elem)
-				composition = append(composition, elem)
-			}
-			*/
+		var crdDetailsMap = make(map[string]interface{})
+		crdDetailsMap["kind"] = kind
+		crdDetailsMap["endpoint"] = endpoint
+		crdDetailsMap["plural"] = plural
+		crdDetailsMap["composition"] = annotations["composition"]
+		crdDetailsMap["implementation_choices"] = annotations["implementation_choices"]
+		crdDetailsMap["usage"] = annotations["usage"]
+		crdDetailsMap["openapispec"] = annotations["openapispec"]
 
-			//fmt.Printf("Group:%s, Version:%s, Kind:%s, Plural:%s, Endpoint:%s, Composition:%s\n", 
-			//	group, version, kind, plural, endpoint, composition)
-
-			var crdDetailsMap = make(map[string]interface{})
-			crdDetailsMap["kind"] = kind
-			crdDetailsMap["endpoint"] = endpoint
-			crdDetailsMap["plural"] = plural
-			crdDetailsMap["composition"] = compositionString
-
-			//crdName := "postgreses.postgrescontroller.kubeplus"
-			storeEtcd("/crds/"+crdName, crdDetailsMap)
+		//crdName := "postgreses.postgrescontroller.kubeplus"
+		storeEtcd("/crds/"+crdName, crdDetailsMap)
 	}
 	return nil
 }
@@ -91,15 +84,11 @@ func storeEtcd(resourceKey string, resourceData interface{}) {
 	}
 	kapi := client.NewKeysAPI(c)
 
-	//fmt.Printf("Setting %s->%s\n",resourceKey, jsonDataString)
 	_, err1 := kapi.Set(context.Background(), resourceKey, jsonDataString, nil)
 	if err1 != nil {
 		log.Fatal(err1)
-	} else {
-		//log.Printf("Set is done. Metadata is %q\n", resp.Node.Value)
 	}
 }
-
 
 func main() {
 	flag.Parse()

@@ -27,10 +27,10 @@ spec:
 #        imagePullPolicy: IfNotPresent
 #        command: [ "/operator-deployer"]
       - name: operator-discovery-helper
-        image: lmecld/operator-discovery-helper:latest
+        image: operator-discovery-helper:latest
         imagePullPolicy: IfNotPresent
         command: [ "/operator-discovery-helper"]
       - name: kube-discovery-apiserver
-        image: lmecld/kube-discovery-apiserver:latest
+        image: kube-discovery-apiserver:latest
         imagePullPolicy: IfNotPresent
         command: [ "/kube-discovery-apiserver", "--etcd-servers=http://localhost:2379" ]
