@@ -7,7 +7,7 @@ spec:
   repository:
     name: deployment.moodle1
     namespace: namespace1
-  snapshot: deployment.moodle1-b3ae042b
+  snapshot: deployment.moodle1-6c44fea7
   paths:
   - /opt/moodledata
   recoveredVolumes:
