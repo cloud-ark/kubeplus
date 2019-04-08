@@ -32,13 +32,19 @@ Start helm and install operators
 3) Install presslabs-mysql-operator  and stash operator(note openapispec.json needs to be added to deploy with kubeplus)
 
 helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5.tgz?raw=true
-helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.3.tgz?raw=true
+helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.4.tgz?raw=true
+helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.3.0.tgz?raw=true
 
-4) Change directory
+4. Find more information like how-to use, Spec properties, etc. for each Kind
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/man?kind=Moodle"
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/man?kind=Recovery"
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/man?kind=Restic"
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/man?kind=MysqlCluster"
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"  | python -m json.tool
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
+
+5) Change directory
     - cd examples/moodle-presslabs-stash
-
-5) Deploy moodle operator
-    - kubectl apply -f moodle-operator.yaml
 
 6) Check they are created
     - kubectl get pods
@@ -138,16 +144,23 @@ Recover a snapshot
 4) Create the recovery, which stores the snapshot into that PersistentVolumeClaim
     - kubectl create -f recovery.yaml
 
-5) Created a dummy deployment with that snapshot data
-    - kubectl create -f recovered-deployment.yaml
+5) Delete the moodle instance
+    - kubectl delete moodle moodle1 -n namespace1
 
-6) Check that the recovery worked
-    - get stash deployment name for kubectl exec
-        - kubectl get pods -n namespace1
+5) Delete moodle operator
+    - kubectl delete deployment moodle-operator-deployment
 
-    - kubectl exec stash-recovered-77475d6b6b-5fp27 -n namespace1 -- ls -l /opt/moodledata/filedir
-    Or to enter into the container:
-    - kubectl exec moodle1-d798c74bd-6czqz -it -n namespace1 -- /bin/bash
+6) Redeploy moodle operator
+    - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.3.0.tgz?raw=true
+
+7) Recover the moodle instance with the backup volume
+    - kubectl create -f moodle1-recovered.yaml
+
+8) Visit moodle1:32000 (may take a few minutes)
+    - Log in, and verify that all uploaded images are there!
+    - Courses you added with an image should be there
+    - Private files that students created should be there
+    - Note: this backs up uploaded files
 
 
 Clean up
