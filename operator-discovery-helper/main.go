@@ -57,10 +57,10 @@ func getCRDDetailsFromAPIServer() error {
 		crdDetailsMap["kind"] = kind
 		crdDetailsMap["endpoint"] = endpoint
 		crdDetailsMap["plural"] = plural
-		crdDetailsMap["composition"] = annotations["composition"]
-		crdDetailsMap["implementation_choices"] = annotations["implementation_choices"]
-		crdDetailsMap["usage"] = annotations["usage"]
-		crdDetailsMap["openapispec"] = annotations["openapispec"]
+		crdDetailsMap["composition"] = annotations["platform-as-code/composition"]
+		crdDetailsMap["constants"] = annotations["platform-as-code/constants"]
+		crdDetailsMap["usage"] = annotations["platform-as-code/usage"]
+		crdDetailsMap["openapispec"] = annotations["platform-as-code/openapispec"]
 
 		//crdName := "postgreses.postgrescontroller.kubeplus"
 		storeEtcd("/crds/"+crdName, crdDetailsMap)
