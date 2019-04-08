@@ -158,6 +158,12 @@
 
 [[projects]]
   branch = "master"
+  name = "k8s.io/api"
+  packages = ["core/v1"]
+  revision = "8fc60343b75c9ba9a2b9c7cb5fc3b9c5e9b90158"
+
+[[projects]]
+  branch = "master"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/resource",
@@ -214,6 +220,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a3543fc3bb81fe77e80e942b2354069e3eaed084575fd58e10db3c45b7f3766f"
+  inputs-digest = "c641e7efbfe9e6318f9c962eb0465c89c58143f30edb89049ed5e1edef78bd70"
   solver-name = "gps-cdcl"
   solver-version = 1

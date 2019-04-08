@@ -6,12 +6,16 @@ Moodle is an open source e-learning platform (https://moodle.org/).
 This example demonstrates deploying multiple Moodle Platform stacks on Kubernetes.
 A Moodle platform stack is created from Custom Resources for Moodle and Mysqlcluster.
 We will use Moodle Operator from CloudARK and MySQL Operator from PressLabs
-(https://github.com/presslabs/mysql-operator).
+(https://github.com/presslabs/mysql-operator) to create Moodle Platform stacks.
 
 Moodle supports various plugins. Moodle Operator takes the list of plugins to be installed 
 as declarative input in the Moodle Custom Resource Spec. The Operator installs the plugins at appropriate
 location within the Moodle installation. Check namespace1/moodle1.yaml to see an example of how
-plugins are specified in the Custom Resource Spec. 
+plugins are specified in the Custom Resource Spec.
+
+For database, Moodle instance uses the MysqlCluster instance. The database connection endpoints
+are specified in Moodle Custom Resource Spec. The endpoints consist of name of the MysqlCluster Custom
+Resource instance and name of the Secret storing the password.
 
 Setup:
 -------
@@ -33,13 +37,32 @@ Steps:
    - kubectl get pods -n kube-system
 
 4) Once Helm Pod is ready, deploy Moodle and MySQL Operators
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5.tgz?raw=true
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.2.2.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-1.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.2.4.tgz?raw=true
 
-5) Wait till both Operator Pods are ready
+5) Install KubePlus
+   - git clone https://github.com/cloud-ark/kubeplus.git
+   - cd kubeplus
+   - kubectl apply -f deploy
+
+6) Wait till both Operator Pods are ready
    - kubectl get pods
 
-6) Deploy Moodle Platform Stack in namespace1
+7) Find available Custom Resources
+   - kubectl get customresourcedefinitions
+
+8) Find the Custom Resource Kind names
+   - kubectl describe customresourcedfinitions
+   - kubectl describe customresourcedefinitions moodles.moodlecontroller.kubeplus
+   - kubectl describe customresourcedefinitions mysqlclusters.mysql.presslabs.org
+
+9) Find more information like how-to use, Spec properties, etc. for each Kind
+   - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/man?kind=MysqlCluster"
+   - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/man?kind=Moodle"
+   - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"  | python -m json.tool
+   - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
+
+10) Deploy Moodle Platform Stack in namespace1
    - cd namespace1
    - kubectl create ns namespace1
    
@@ -81,10 +104,12 @@ Steps:
           - Navigate to -> Administration -> Plugins -> Plugins Overview
           - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
+11) Check the composition of Moodle instance
+    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1&namespace=namespace1" | python -mjson.tool
 
-7) Deploy Moodle2 instance in namespace2
+12) Deploy Moodle2 instance in namespace2
     - cd ../namespace2
-    - Repeat steps from 6 for namespace2
+    - Repeat steps from 10 for namespace2
 
 
 Troubleshooting

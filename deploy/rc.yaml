@@ -18,27 +18,19 @@ spec:
       containers:
       - name: etcd
         image: quay.io/coreos/etcd:v3.2.18
-      - name: operator-manager
-        image: lmecld/operator-manager:latest
+#      - name: operator-manager
+#        image: lmecld/operator-manager:latest
+#        imagePullPolicy: IfNotPresent
+#        command: [ "/operator-manager"]
+#      - name: operator-deployer
+#        image: lmecld/operator-deployer:latest
+#        imagePullPolicy: IfNotPresent
+#        command: [ "/operator-deployer"]
+      - name: operator-discovery-helper
+        image: lmecld/operator-discovery-helper:0.3.0
         imagePullPolicy: IfNotPresent
-        command: [ "/operator-manager"]
-      - name: operator-deployer
-        image: lmecld/operator-deployer:latest
-        imagePullPolicy: IfNotPresent
-        command: [ "/operator-deployer"]
+        command: [ "/operator-discovery-helper"]
       - name: kube-discovery-apiserver
-        image: lmecld/kube-discovery-apiserver:latest
+        image: lmecld/kube-discovery-apiserver:0.2.0
         imagePullPolicy: IfNotPresent
         command: [ "/kube-discovery-apiserver", "--etcd-servers=http://localhost:2379" ]
----
-apiVersion: apiextensions.k8s.io/v1beta1
-kind: CustomResourceDefinition
-metadata:
-  name: operators.operatorcontroller.kubeplus
-spec:
-  group: operatorcontroller.kubeplus
-  version: v1
-  names:
-    kind: Operator
-    plural: operators
-  scope: Namespaced
