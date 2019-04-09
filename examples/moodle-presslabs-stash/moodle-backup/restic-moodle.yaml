@@ -9,7 +9,7 @@ spec:
       app: moodle-deploy
   fileGroups:
   - path: /opt/moodledata
-    retentionPolicyName: 'keep-last-5'
+    retentionPolicyName: 'keep-last-10'
   backend:
     s3:
       endpoint: 's3.amazonaws.com'
@@ -21,6 +21,6 @@ spec:
   - mountPath: /opt/moodledata
     name: moodle-data
   retentionPolicies:
-  - name: 'keep-last-5'
-    keepLast: 5
+  - name: 'keep-last-10'
+    keepLast: 10
     prune: true

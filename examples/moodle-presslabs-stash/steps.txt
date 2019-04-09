@@ -16,7 +16,7 @@ Setup and Deploy KubePlus
 4) Go to KubePlus location
     - cd kubeplus
 
-8) Deploy KubePlus pod
+5) Deploy KubePlus pod
     - kubectl apply -f deploy/
 
 
@@ -29,17 +29,15 @@ Start helm and install operators
 2) Wait till Tiller Pod is running
     - kubectl get pods -n kube-system
 
-3) Install presslabs-mysql-operator  and stash operator(note openapispec.json needs to be added to deploy with kubeplus)
-
+3) Install presslabs-mysql-operator, moodle operator and stash operator
 helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5.tgz?raw=true
-helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.4.tgz?raw=true
 helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.3.0.tgz?raw=true
+helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.4.tgz?raw=true
 
 4. Find more information like how-to use, Spec properties, etc. for each Kind
     - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
     - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Recovery"
     - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Restic"
-    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=MysqlCluster"
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
 
@@ -53,20 +51,21 @@ helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-oper
 Create backups of Moodle
 -----------
 1) Deploy Moodle Platform Stack in namespace1
-   - cd namespace1
+   - cd moodle-backup
    - kubectl create ns namespace1
 
-   - Create MysqlCluster Custom Resource instance
+   - Create MysqlCluster Custom Resource instance. It takes backups every minute.
      - kubectl create -f cluster1-secret.yaml
+     - kubectl create -f backups-aws-secret.yaml
      - kubectl create -f cluster1.yaml
 
-   - Wait till MysqlCluster pods are ready
+   - Wait until MysqlCluster pod is Ready - 4/4
      - kubectl get pods -n namespace1
 
    - Once MysqlCluster pods are ready, deploy Moodle
      - kubectl create -f moodle1.yaml
 
-   - Wait till Moodle Pod is ready (It will take about 5/6 minutes for Moodle Pod to become ready)
+   - Wait till Moodle Pod is ready 1/1 (It will take about 5/6 minutes for Moodle Pod to become ready)
      - kubectl get pods -n namespace1
 
    - Login to Moodle Instance
@@ -106,9 +105,7 @@ Create backups of Moodle
 3) Add a label to the Moodle deployment
     - kubectl label -n namespace1 deployments moodle1 app=moodle-deploy
 
-4. cd ../moodle-backup
-
-5) Add base64 encoded access keys to s3-secret.yaml
+4) Add base64 encoded access keys to s3-secret.yaml
     Edit your keys in s3-secret.yaml
 
     for AWS_ACCESS_KEY_ID:
@@ -116,41 +113,52 @@ Create backups of Moodle
     for AWS_SECRET_ACCESS_KEY:
     - echo -n "your_secret_access_code" | base64
     for RESTIC_PASSWORD:
-    - echo -n "canbeanything" | base64
+    - echo -n "changeit" | base64
 
-6) Apply secret
+5) Apply AWS s3 secret
     - kubectl apply -f s3-secret.yaml
 
-7) Start taking backups
+6) Start taking backups
     - kubectl apply -f restic-moodle.yaml
 
-8. Validate that it is taking backups (may take one minute)
+7. Wait until MysqlCluster pod is Ready - 2/2
+    - kubectl get pods -n namespace1
+
+8. You may Validate that it is taking backups (may take one minute)
     - aws s3 ls s3://stash-testing34/stash1/deployment/moodle1/
 
 
 Recover a snapshot
 -----------
-0) cd ../moodle-recovery
+1) cd ../moodle-recovery
 
-1) Check available snapshots, pick one
-    - kubectl get snapshots -n namespace1 -l repository=deployment.moodle1
+2)  - Check available moodle backups, Pick one.
+        - kubectl get snapshots -n namespace1 -l repository=deployment.moodle1
+            Change recovery.yaml L10 to the snapshot you picked.
+            - snapshot: deployment.moodle1-b3ae042b
+    -  Check available mysqlCluster backups. Pick one
+        - aws s3 ls s3://stash-testing34/mysql-backups/
+            Change cluster2-recovered.yaml L9 to the mysqlbackup you picked:
+            - initBucketURI: s3://stash-testing34/mysql-backups/cluster1-2019-04-09T19:56:01.xbackup.gz
 
-2) Create PersistentVolumeClaim
+3) Create PersistentVolumeClaim
     - kubectl create -f pvc.yaml
 
-3) Change line 10 in recovery.yaml to the snapshot from step 1.
-    - snapshot: deployment.moodle1-b3ae042b
-
-4) Create the recovery, which stores the snapshot into that PersistentVolumeClaim
+4) Create the Recovery, which stores the snapshot into that PersistentVolumeClaim.
     - kubectl create -f recovery.yaml
 
-5) Recover the moodle instance with the backup volume
+5) Create the MysqlCluster
+    - kubectl create -f backups-aws-secret.yaml
+    - kubectl create -f cluster2-secret.yaml
+    - kubectl create -f cluster2-recovered.yaml
+
+6) Recover the moodle instance with the backup volume
     - kubectl create -f moodle2-recovered.yaml
 
-6) - Update /etc/hosts with <minikube ip or cluster node ip> moodle2. Example:
-        - 192.168.99.100 moodle2
+7) - Update /etc/hosts with <minikube ip or cluster node ip> moodle2. Example:
+        - (minikube ip) moodle2
 
-7) Visit moodle2:32001 (may take a few minutes)
+8) Visit moodle2:32001 (may take a few minutes)
     - Log in, and verify that all uploaded images are there!
     - Courses you added with an image should be there
     - Private files that students created should be there
@@ -162,20 +170,21 @@ Clean up
     - aws s3 rb s3://stash-testing34 --force
 2) Delete everything
     - cd ../
-    - kubectl delete -f namespace1/moodle1.yaml
-    - kubectl delete -f namepsace1/cluster1-secret.yaml
-    - kubectl delete -f namespace1/cluster1.yaml
-    - kubectl delete -f moodle-recovery/recovered-deployment.yaml
+    - kubectl delete moodle moodle1 -n namespace1
+    - kubectl delete moodle moodle2 -n namespace1
+    - kubectl delete -f moodle-backup/restic-moodle.yaml
+    - kubectl delete -f moodle-backup/cluster1.yaml
+    - kubectl delete -f moodle-recovery/cluster2-recovered.yaml
     - kubectl delete -f moodle-recovery/recovery.yaml
     - kubectl delete -f moodle-recovery/pvc.yaml
-    - kubectl delete -f moodle-backup/s3-secret.yaml
-    - kubectl delete -f moodle-backup/restic-moodle.yaml
     - kubectl delete namespace namespace1
-
-    - kubectl delete -f moodle-operator.yaml
+    - kubectl delete mysqlbackups.mysql.presslabs.org --all -n namespace1
+    - kubectl delete secrets --all -n namespace1
+    - kubectl delete secrets --all -n namespace2
     - helm list
-        - find name to delete mysql-operator and stash operator
+        - find name to delete mysql operator, moodle operator and stash operator
     - helm delete _some_name_sql
+    - helm delete _some_name_moodle
     - helm delete _some_name_stash
     - cd ../../
     - kubectl delete -f deploy

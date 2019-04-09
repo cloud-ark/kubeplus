@@ -1,0 +1,10 @@
+apiVersion: mysql.presslabs.org/v1alpha1
+kind: MysqlCluster
+metadata:
+  name: cluster2
+  namespace: namespace1
+spec:
+  replicas: 1
+  secretName: cluster2-secret
+  initBucketURI: s3://stash-testing34/mysql-backups/cluster1-2019-04-10T17:51:01.xbackup.gz
+  initBucketSecretName: backups-aws-secret
