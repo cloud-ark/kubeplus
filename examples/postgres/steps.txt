@@ -43,9 +43,9 @@ Steps:
     - kubectl get operators
     - kubectl describe operators postgres-operator
     - kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Postgres" | python -m json.tool
       --> You should see OpenAPI Spec for Postgres custom kind as output
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Postgres.PostgresSpec" | python -m json.tool
 
 12) Deploy Postgres1 instance
     - kubectl create -f postgres1.yaml
@@ -60,7 +60,7 @@ Steps:
         - db-name: defined in postgres1.yaml
         - password: when prompted, enter password specified in postgres1.yaml
     - Get composition tree of Postgres1
-      - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Postgres&instance=postgres1" | python -mjson.tool
+      - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Postgres&instance=postgres1" | python -mjson.tool
 
 13) Test Life-cycle actions (execute and verify)
     - kubectl apply -f add-user.yaml

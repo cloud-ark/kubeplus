@@ -46,22 +46,22 @@ Steps:
     - kubectl get operators
     - kubectl describe operators mysql-operator-0.2.1
     - kubectl describe customresourcedefinition mysqlclusters.mysql.oracle.com
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Cluster" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Cluster.ClusterSpec" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Cluster" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Cluster.ClusterSpec" | python -m json.tool
     - kubectl describe operators mysql-operator-0.2.1
     - kubectl describe customresourcedefinition mysqlbackups.mysql.oracle.com
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup.BackupSpec" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup.BackupSpec.StorageProvider" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup.BackupSpec.StorageProvider.S3StorageProvider" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Backup" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Backup.BackupSpec" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Backup.BackupSpec.StorageProvider" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Backup.BackupSpec.StorageProvider.S3StorageProvider" | python -m json.tool
     - kubectl describe operators mysql-operator-0.2.1
     - kubectl describe customresourcedefinition mysqlrestores.mysql.oracle.com
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Restore" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Restore.RestoreSpec" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Restore" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Restore.RestoreSpec" | python -m json.tool
     - kubectl describe operators mysql-operator-0.2.1
     - kubectl describe customresourcedefinition mysqlbackupschedules.mysql.oracle.com
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=BackupSchedule" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=BackupSchedule.BackupScheduleSpec" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=BackupSchedule" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=BackupSchedule.BackupScheduleSpec" | python -m json.tool
 
 13) Setup Service account for MySQL Operator
     - kubectl apply -f mysql-operator-sa.yaml
