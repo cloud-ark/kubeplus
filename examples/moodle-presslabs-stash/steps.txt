@@ -144,23 +144,16 @@ Recover a snapshot
 4) Create the recovery, which stores the snapshot into that PersistentVolumeClaim
     - kubectl create -f recovery.yaml
 
-5) Delete the moodle instance
-    - kubectl delete moodle moodle1 -n namespace1
+5) Recover the moodle instance with the backup volume
+    - kubectl create -f moodle2-recovered.yaml
 
-5) Delete moodle operator
-    - kubectl delete deployment moodle-operator-deployment
+6) - Update /etc/hosts with <minikube ip or cluster node ip> moodle2. Example:
+        - 192.168.99.100 moodle2
 
-6) Redeploy moodle operator
-    - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.3.0.tgz?raw=true
-
-7) Recover the moodle instance with the backup volume
-    - kubectl create -f moodle1-recovered.yaml
-
-8) Visit moodle1:32000 (may take a few minutes)
+7) Visit moodle2:32001 (may take a few minutes)
     - Log in, and verify that all uploaded images are there!
     - Courses you added with an image should be there
     - Private files that students created should be there
-    - Note: this backs up uploaded files
 
 
 Clean up
