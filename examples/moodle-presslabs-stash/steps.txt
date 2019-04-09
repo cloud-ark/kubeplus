@@ -36,12 +36,12 @@ helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-opera
 helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.3.0.tgz?raw=true
 
 4. Find more information like how-to use, Spec properties, etc. for each Kind
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/man?kind=Moodle"
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/man?kind=Recovery"
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/man?kind=Restic"
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/man?kind=MysqlCluster"
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"  | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
+    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Recovery"
+    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Restic"
+    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=MysqlCluster"
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
 
 5) Change directory
     - cd examples/moodle-presslabs-stash
@@ -101,7 +101,7 @@ Create backups of Moodle
         - Save and return
 
 2) See the composition of Moodle instance, checking for deployment name, should be moodle1
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/composition?kind=Moodle&instance=moodle1&namespace=namespace1" | python -mjson.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=namespace1" | python -mjson.tool
 
 3) Add a label to the Moodle deployment
     - kubectl label -n namespace1 deployments moodle1 app=moodle-deploy

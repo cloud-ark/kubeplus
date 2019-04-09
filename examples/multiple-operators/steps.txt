@@ -24,22 +24,22 @@ Deploy Multiple Operators to create a custom PaaS
 
 
 6) Explain custom Kinds
-   - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres"  | python -m json.tool
-   - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec"  | python -m json.tool
-   - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec.UserSpec"  | python -m json.tool
-   - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Moodle"  | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup.BackupSpec" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup.BackupSpec.StorageProvider" | python -m\
+   - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Postgres"  | python -m json.tool
+   - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Postgres.PostgresSpec"  | python -m json.tool
+   - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Postgres.PostgresSpec.UserSpec"  | python -m json.tool
+   - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Backup" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Backup.BackupSpec" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Backup.BackupSpec.StorageProvider" | python -m\
  json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Backup.BackupSpec.StorageProvider.S3StoragePro\
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Backup.BackupSpec.StorageProvider.S3StoragePro\
 vider" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Cluster" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Cluster.ClusterSpec" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Restore" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=Restore.RestoreSpec" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=BackupSchedule" | python -m json.tool
-    - kubectl get --raw "/apis/kubeplus.cloudark.io/v1/explain?kind=BackupSchedule.BackupScheduleSpec" | python -m\
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Cluster" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Cluster.ClusterSpec" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Restore" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Restore.RestoreSpec" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=BackupSchedule" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=BackupSchedule.BackupScheduleSpec" | python -m\
  json.tool
 
 

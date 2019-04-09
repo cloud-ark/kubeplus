@@ -7,11 +7,11 @@ Use curl to interact with KubePlus
    - kubectl proxy --port=8080 &
 
 3. Find out information about Postgres Custom Kind
-   - curl "http://localhost:8080/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres" | python -m json.tool
+   - curl "http://localhost:8080/apis/platform-as-code/v1/explain?kind=Postgres" | python -m json.tool
 
-   - curl "http://localhost:8080/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec" | python -m json.tool
+   - curl "http://localhost:8080/apis/platform-as-code/v1/explain?kind=Postgres.PostgresSpec" | python -m json.tool
 
-   - curl "http://localhost:8080/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres.PostgresSpec.UserSpec" | python -m json.tool
+   - curl "http://localhost:8080/apis/platform-as-code/v1/explain?kind=Postgres.PostgresSpec.UserSpec" | python -m json.tool
 
 
 
@@ -35,7 +35,7 @@ Use Python to interact with KubePlus
 6. Find out information about Postgres Custom Kind
    - python
    >>> import requests
-   >>> r = requests.get("http://localhost:8080/apis/kubeplus.cloudark.io/v1/explain?kind=Postgres")
+   >>> r = requests.get("http://localhost:8080/apis/platform-as-code/v1/explain?kind=Postgres")
    >>> r.json()
    
 
