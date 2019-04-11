@@ -11,9 +11,6 @@ leveraging Kubernetes API extensions, also known as Operators.
 __ pac_
 
 
-Kubernetes Operators
-=====================
-
 `Kubernetes Operators`__ extend Kubernetes API to manage
 third-party software as native Kubernetes objects. Today, number of Operators are
 being built for middlewares like databases, queues, loggers, etc.
@@ -49,21 +46,20 @@ KubePlus Usage
 
 KubePlus is designed with 3 user personas in mind. 
 
-*1. Operator developer*
+*1. Operator Developer/Curator*
 
 Operator developer/curator uses our guidelines_ when developing their Operator.
+This includes - creating Helm chart for the Operator, registering CRD as part of the Helm chart,
+and adding Platform-as-Code annotations on their CRD definition.
 
-*2. Cluster Administrator*
+*2. DevOps Engineer*
 
 Cluster Administrator uses Helm to deploy required Operators.
 
-*3. Application developer*
+*3. Application Developer*
 
 Application developer uses kubectl to discover information about available Custom Resources
 and then uses Kubernetes YAMLs to create their application platform stacks.
-
-KubePlus does not introduce any new CLI. KubePlus users continue to use the
-standard Kubernetes CLI (kubectl, helm) and YAML definition format to manage their platforms.
 
  
 .. image:: ./docs/KubePlus-Platform-Kit.jpg
@@ -74,31 +70,88 @@ standard Kubernetes CLI (kubectl, helm) and YAML definition format to manage the
 Value of KubePlus
 ==================
 
-*1. No new CLI*
-
-KubePlus does not introduce any new CLI. Teams use kubectl and Kubernetes YAMLs to create platforms as Code.
-
-*2. One platform experience*
+*1. One platform experience*
 
 Our Operator guidelines_ ensure one platform experience with uniform discovery, documentation and support across multiple Operators.
 
+
+*2. No new CLI*
+
+KubePlus does not introduce any new CLI. 
+Teams continue to use standard CLIs (kubectl, helm) and YAML definition format to manage their platforms.
+
+
 *3. Eliminate ad-hoc scripts*
 
-Kubernetes Operators embed platform specific workflows as Kubernetes objects and eliminate out-of-band custom automation. 
+KubePlus helps create application platforms leveraging Custom Resources from different Operators 
+eliminating out-of-band custom platform automation.
 
 
 KubePlus Architecture
 ======================
 
-KubePlus primarily consists of an aggregated API Server that provides ability to discover static and runtime information about Custom Resources available in a Cluster. Towards helping application developers to create their application platforms as Code, we expose platform-as-code endpoints through this API server 
-Three endpoints are supported currently -  'man', 'explain' and 'composition'. 
+KubePlus streamlines the process around discovering static and runtime information about Custom Resources
+introduced by installed Operators in a cluster. Static information consists of - how-to-use guides for a Custom Resource, any code level assumptions made by an Operator, OpenAPI Spec definitions for a Custom Resource, etc. Runtime information consists of identifying Kubernetes's native resources created as part of instantiating a Custom Resource instance.
+
+-----------------------------
+Platform-as-Code Annotations
+-----------------------------
+
+KubePlus uses annotations as a mechanism to include static and dynamic information as part of Custom Resource Definition. These annotations on Moodle Custom Resource Definition are shown below:
+
+.. code-block:: yaml
+
+   apiVersion: apiextensions.k8s.io/v1beta1
+   kind: CustomResourceDefinition
+   metadata:
+     name: moodles.moodlecontroller.kubeplus
+     annotations:
+       platform-as-code/usage: moodle-operator-usage.usage
+       platform-as-code/constants: moodle-operator-implementation-details.implementation_choices
+       platform-as-code/openapispec: moodle-openapispec.openapispec
+       platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
+   spec:
+     group: moodlecontroller.kubeplus
+     version: v1
+     names:
+       kind: Moodle
+       plural: moodles
+     scope: Namespaced
+
+
+platform-as-code/usage annotation is used to define usage information for the Custom Resource.
+
+platform-as-code/constants annotation is used to surface any code level assumptions that an Operator might have made.
+
+platform-as-code/openapispec annotation is used to define OpenAPI Spec for the Custom Resource.
+
+platform-as-code/composition annotation is used to define Kubernetes's native objects that are created by the Operator as part of instantiating instances of that Custom Resource.
+
+The values for 'usage', 'constants', 'openapispec' annotations are names of ConfigMaps that store the corresponding data. Creating these ConfigMaps is the responsibility of Operator developer/curator.
+Don't forget to package these ConfigMaps along with your Helm Chart. Here is example of Moodle_ Helm Chart
+with these annotations and ConfigMaps.
+
+.. _Moodle: https://github.com/cloud-ark/kubeplus-operators/tree/master/moodle/moodle-operator-chart/templates
+
+The values in 'composition' annotation are used by KubePlus in building dynamic composition tree of Kubernetes's native resources that are created as part of instantiating a Custom Resource.
+
+
+----------------------------
+Platform-as-Code Endpoints
+----------------------------
+
+To make it easy for application developers to discover static and runtime information about Custom Resources in a cluster, KubePlus exposes following endpoints as custom subresources - 'man', 'explain' and 'composition'. 
+
+These endpoints are implemented using Kubernetes's aggregated API Server. 
 
 The 'man' endpoint provides capability to find 'man page' like information about Custom Resources.
+It essentially exposes the information packaged in 'usage' and 'constants' annotations.
 
 The 'explain' endpoint is used to discover Spec of Custom Resources. 
-In KubePlus we provide a tool based on kube-openapi library to generate OpenAPI Spec for your Custom Resources. 
+It exposes the information packaged in 'openapispec' annotation. 
 
-The 'composition' endpoint is used by application developers for discovering the runtime composition tree of native Kubernetes resources that are created as part of provisioning Custom Resources. 
+The 'composition' endpoint is used by application developers for discovering the runtime composition tree of native Kubernetes resources that are created as part of provisioning Custom Resources.
+It uses listing of native resources available in 'composition' annotation, along with OwnerReferences, to build this tree.
 
 Examples of possible future endpoints are: 'provenance', 'functions', and 'configurables'. We look forward to inputs from the community on what additional information on Custom Resources you would like to get from such endpoints.
 
@@ -126,7 +179,9 @@ Available Operators
 
 We are maintaining a `repository of Operators`__ that follow the Operator development guidelines_. 
 You can use Operators from this repository, or create your own Operator and use it with KubePlus. 
-We can also help with checking your Operators against the guidelines. Just open an issue on the repository with link to your Operator code and we will provide you feedback on it.
+Make sure to add the platform-as-code annotations mentioned above to enable your Operator consumers to easily find static and runtime information about your Custom Resources right through kubectl.
+
+We can also help checking your Operators against the guidelines. Just open an issue on the repository with link to your Operator code and we will provide you feedback on it.
 
 .. _repository: https://github.com/cloud-ark/operatorcharts/
 
