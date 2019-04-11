@@ -3,9 +3,9 @@ Moodle Operator
 
 Moodle is an open source e-learning platform (https://moodle.org/).
 
-In this example we will deploy Moodle platform on Kubernetes. 
+In this example we will deploy Moodle platform on Kubernetes.
 We will use a Moodle Operator to create Moodle platform instances as code.
-Moodle supports various plugins. Moodle Operator takes the list of plugins to be installed 
+Moodle supports various plugins. Moodle Operator takes the list of plugins to be installed
 as declarative input in the Moodle Custom Resource Spec. The Operator installs the plugins at appropriate
 location within the Moodle installation. Check moodle1.yaml to see an example of how
 plugins are specified in the Custom Resource Spec. Check update-moodle1.yaml to see
@@ -21,7 +21,7 @@ Steps:
 1) Create Kubernetes Cluster
    - minikube start --memory 4096 (only if using minikube)
 
-   - (Experimental) If working with Managed Kubernetes cluster (such as DigitalOcean), create a single node cluster, download the cluster 
+   - (Experimental) If working with Managed Kubernetes cluster (such as DigitalOcean), create a single node cluster, download the cluster
      config file and save it in your ~/.kube directory with the name 'config' (e.g.: ~/.kube/config)
 
 2) git clone https://github.com/cloud-ark/kubeplus.git
@@ -40,24 +40,23 @@ Steps:
 7) Once Helm Pod is ready, deploy Kubeplus
    - kubectl apply -f deploy/
 
-8) Wait till kubeplus is ready (4/4 Ready containers)
+8) Wait till kubeplus is ready (3/3 Ready containers)
    - kubectl get pods
 
 9) cd examples/moodle
 
 10) Deploy Moodle Operator
-   - kubectl create -f moodle-operator.yaml
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.3.0.tgz?raw=true
 
 11) Wait till Moodle Operator pod is ready
    - kubectl get pods
 
 12) Find information about Moodle Custom Kind registered by Moodle Operator
-    - kubectl get operators
-    - kubectl describe operators moodle-operator
-    - kubectl describe customresourcedefinition moodles.moodlecontroller.kubeplus
+    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle" | python -m json.tool
       --> You should see OpenAPI Spec for Moodle custom kind as output
-    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec" | python -m json.tool
+    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
+    - kubectl describe customresourcedefinition moodles.moodlecontroller.kubeplus
 
 13) Deploy Moodle1 instance
     - First deploy MySQL as database for the Moodle instance
@@ -81,11 +80,11 @@ Steps:
     - Check installed plugins
       - As part of creating moodle instance, we install the 'profilecohort' plugin.
         Check the custom resource specification moodle1.yaml to see this definition.
-        - Once logged in to the Moodle instance, hit 'Site Administration'. This will show a message to update Moodle database 
+        - Once logged in to the Moodle instance, hit 'Site Administration'. This will show a message to update Moodle database
           for 'profilecohort' plugin.
         - Select that option to complete Plugin installation. You should see a 'success' message when the plugin is installed.
         - Hit the 'contine' button. This will take you to the main screen. Fill out the profile and then hit 'update profile'.
-        - Then 
+        - Then
           - Navigate to -> Administration -> Plugins -> Plugins Overview
           - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
@@ -110,7 +109,7 @@ Steps:
     - kubectl get pods (Wait will MySQL Pod is ready)
     - kubectl create -f moodle2.yaml
     - kubectl get pods (It will take about 5/6 minutes for Moodle Pod to become ready)
-    - Once Moodle Pod is ready, 
+    - Once Moodle Pod is ready,
       - kubectl describe moodles moodle2
     - Login to Moodle Instance
       - Update /etc/hosts with <minikube-ip> moodle2. Example:
@@ -120,7 +119,7 @@ Steps:
       - kubectl describe moodle moodle2
         - The URL of Moodle instance should be available from Status field from output of above command
         - Open the URL in the browser
-          - Login using 'admin' as username and retrieve password from moodle2 secret as described 
+          - Login using 'admin' as username and retrieve password from moodle2 secret as described
             in step 12.
 
 16) Cleanup
