@@ -30,36 +30,28 @@ Steps:
 7) Once Tiller Pod is ready, deploy Kubeplus
    - kubectl apply -f deploy/
 
-8) Wait till kubeplus is ready (4/4 Ready containers)
+8) Wait till kubeplus is ready (3/3 Ready containers)
    - kubectl get pods
 
 9) cd examples/mysql
 
 10) Deploy MySQL Operator
-   - kubectl create -f mysql-operator-chart-0.2.1.yaml
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-chart-0.2.1.tgz?raw=true
 
 11) Wait till MySQL Operator Pod is ready. This Operator is deployed in namespace 'mysql-operator'
     - kubectl get ns
     - kubectl get pods -n mysql-operator
 
 12) Find information about various Custom Kinds registered by Oracle MySQL Operator
-    - kubectl get operators
-    - kubectl describe operators mysql-operator-0.2.1
     - kubectl describe customresourcedefinition mysqlclusters.mysql.oracle.com
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Cluster" | python -m json.tool
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Cluster.ClusterSpec" | python -m json.tool
-    - kubectl describe operators mysql-operator-0.2.1
-    - kubectl describe customresourcedefinition mysqlbackups.mysql.oracle.com
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Backup" | python -m json.tool
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Backup.BackupSpec" | python -m json.tool
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Backup.BackupSpec.StorageProvider" | python -m json.tool
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Backup.BackupSpec.StorageProvider.S3StorageProvider" | python -m json.tool
-    - kubectl describe operators mysql-operator-0.2.1
-    - kubectl describe customresourcedefinition mysqlrestores.mysql.oracle.com
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Restore" | python -m json.tool
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Restore.RestoreSpec" | python -m json.tool
-    - kubectl describe operators mysql-operator-0.2.1
-    - kubectl describe customresourcedefinition mysqlbackupschedules.mysql.oracle.com
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=BackupSchedule" | python -m json.tool
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=BackupSchedule.BackupScheduleSpec" | python -m json.tool
 
@@ -70,7 +62,7 @@ Steps:
     - kubectl create -f mysql-cluster.yaml
 
 15) Verify MySQL cluster
-    - Wait till MySQL Pods are running 
+    - Wait till MySQL Pods are running
       - kubectl get pods (there should be mysql pods displayed)
 
     - Retrieve password to connect to the cluster
@@ -91,4 +83,3 @@ Troubleshooting
 
 2) Check Helm Deployments
    - helm list
-
