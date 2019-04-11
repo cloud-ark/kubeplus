@@ -5,7 +5,7 @@ metadata:
   labels:
     app: postgres-operator
 spec:
-  replicas: 1 
+  replicas: 1
   selector:
     matchLabels:
       app: postgres-operator
@@ -30,7 +30,10 @@ kind: CustomResourceDefinition
 metadata:
   name: postgreses.postgrescontroller.kubeplus
   annotations:
-    composition: Deployment, Service
+    platform-as-code/composition: Deployment, Service
+    platform-as-code/constants: postgres-operator-implementation-details.implementation_choices
+    platform-as-code/usage: postgres-operator-usage.usage
+    platform-as-code/openapispec: postgres-openapispec.openapispec
 spec:
   group: postgrescontroller.kubeplus
   version: v1

@@ -1,0 +1,171 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: postgres-operator-implementation-details
+data:
+  implementation_choices: |
+    Postgres Port not able to be user-specified:
+        Implementation is:
+        POSTGRES_PORT_BASE(instance) = 32000 + (existing instances)
+
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: postgres-operator-usage
+data:
+  usage: |
+    Supports
+        - Creating user and password when Postgres instance is created
+        - Create database at the time of Postgres instance creation
+        - Can initialize the database with some data
+        - Create new database on an already created Postgres instance
+        - Modify user password on an existing Postgres instance
+
+    The 'initcommands' attribute should be used to specify any table creation and
+    data insert commands. See kubeplus/postgres-crd-v2/artifacts/examples/initializeclient.yaml for example.
+
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: postgres-openapispec
+data:
+  openapispec: |
+     {
+      "swagger": "2.0",
+      "info": {
+       "title": "OpenAPI Doc Generator",
+       "version": "0.0.1"
+      },
+      "paths": {},
+      "definitions": {
+       "typedir.Postgres": {
+        "description": "Postgres is a specification for a Postgres resource",
+        "required": [
+         "spec",
+         "status"
+        ],
+        "properties": {
+         "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+          "type": "string"
+         },
+         "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+          "type": "string"
+         },
+         "spec": {
+          "$ref": "#/definitions/typedir.PostgresSpec"
+         },
+         "status": {
+          "$ref": "#/definitions/typedir.PostgresStatus"
+         }
+        }
+       },
+       "typedir.PostgresSpec": {
+        "description": "PostgresSpec is the spec for a Postgres resource",
+        "required": [
+         "deploymentName",
+         "image",
+         "replicas",
+         "users",
+         "databases",
+         "commands"
+        ],
+        "properties": {
+         "commands": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         },
+         "databases": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         },
+         "deploymentName": {
+          "type": "string"
+         },
+         "image": {
+          "type": "string"
+         },
+         "replicas": {
+          "type": "integer",
+          "format": "int32"
+         },
+         "users": {
+          "type": "array",
+          "items": {
+           "$ref": "#/definitions/typedir.UserSpec"
+          }
+         }
+        }
+       },
+       "typedir.PostgresStatus": {
+        "description": "PostgresStatus is the status for a Postgres resource",
+        "required": [
+         "availableReplicas",
+         "actionHistory",
+         "users",
+         "databases",
+         "verifyCommand",
+         "serviceIP",
+         "servicePort",
+         "status"
+        ],
+        "properties": {
+         "actionHistory": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         },
+         "availableReplicas": {
+          "type": "integer",
+          "format": "int32"
+         },
+         "databases": {
+          "type": "array",
+          "items": {
+           "type": "string"
+          }
+         },
+         "serviceIP": {
+          "type": "string"
+         },
+         "servicePort": {
+          "type": "string"
+         },
+         "status": {
+          "type": "string"
+         },
+         "users": {
+          "type": "array",
+          "items": {
+           "$ref": "#/definitions/typedir.UserSpec"
+          }
+         },
+         "verifyCommand": {
+          "type": "string"
+         }
+        }
+       },
+       "typedir.UserSpec": {
+        "required": [
+         "user",
+         "password"
+        ],
+        "properties": {
+         "password": {
+          "type": "string"
+         },
+         "user": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
