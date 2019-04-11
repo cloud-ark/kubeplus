@@ -144,11 +144,24 @@ To make it easy for application developers to discover static and runtime inform
 
 These endpoints are implemented using Kubernetes's aggregated API Server. 
 
+.. code-block:: bash
+
+   $ kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
+
 The 'man' endpoint provides capability to find 'man page' like information about Custom Resources.
 It essentially exposes the information packaged in 'usage' and 'constants' annotations.
 
+.. code-block:: bash
+
+   $ kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
+   $ kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
+
 The 'explain' endpoint is used to discover Spec of Custom Resources. 
 It exposes the information packaged in 'openapispec' annotation. 
+
+.. code-block:: bash
+
+   $ kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=namespace1" | python -mjson.tool
 
 The 'composition' endpoint is used by application developers for discovering the runtime composition tree of native Kubernetes resources that are created as part of provisioning Custom Resources.
 It uses listing of native resources available in 'composition' annotation, along with OwnerReferences, to build this tree.
