@@ -28,21 +28,21 @@ Steps:
 6) Once Tiller Pod is ready, deploy Kubeplus
    - kubectl apply -f deploy/
 
-7) Wait till kubeplus is ready (4/4 Ready containers)
+7) Wait till kubeplus is ready (3/3 Ready containers)
    - kubectl get pods
 
 8) cd examples/postgres
 
 9) Deploy Postgres Operator
-   - kubectl create -f postgres-operator.yaml
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/postgres-crd-v2-chart-0.0.3.tgz?raw=true
 
 10) Wait till Postgres Operator Pod is ready
      - kubectl get pods
 
-11) Find information about Postgres Custom Kind registered by Postgres Operator   
-    - kubectl get operators
-    - kubectl describe operators postgres-operator
+11) Find information about Postgres Custom Kind registered by Postgres Operator
     - kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
+    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Postgres"
+    - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Postgres&instance=postgres1" | python -mjson.tool
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Postgres" | python -m json.tool
       --> You should see OpenAPI Spec for Postgres custom kind as output
     - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Postgres.PostgresSpec" | python -m json.tool
@@ -71,7 +71,8 @@ Steps:
 
 14) Cleanup
     - kubectl delete -f postgres1.yaml
-    - kubectl delete -f postgres-operator.yaml
+    - helm list
+    - helm delete chart_name
     - Verify
       - kubectl get pods
         -> postgres instance pod and postgres-operator pod should be deleted
@@ -87,4 +88,3 @@ Troubleshooting
 
 2) Check Helm Deployments
    - helm list
-
