@@ -6,19 +6,18 @@ metadata:
 spec:
   replicas: 1
   secretName: cluster1-secret
+  backupSchedule: "1 * * * *"
+  backupURL: s3://stash-testing34/mysql-backups
+  backupSecretName: backups-aws-secret
+  backupScheduleJobsHistoryLimit: 2
+
+
   # mysqlVersion: 5.7
   # initBucketURI: gs://bucket_name/backup.xtrabackup.gz
   # initBucketSecretName:
 
   ## PodDisruptionBudget
   # minAvailable: 1
-
-  ## For recurrent backups set backupSchedule with a cronjob expression
-  # backupSchedule:
-  # backupURL: s3://bucket_name/
-  # backupSecretName:
-  # backupScheduleJobsHistoryLimit:
-
 
   ## Configs that will be added to my.cnf for cluster
   # mysqlConf:
