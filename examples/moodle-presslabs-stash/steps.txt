@@ -1,5 +1,7 @@
 Setup and Deploy KubePlus
------
+--------------------------
+
+In the following steps we first create a Moodle instance, populate it with some data, and then take its back up. Moodle uses both relational database and file system for storage. 
 
 0) Install aws-cli, enter your access-keys
     - curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
@@ -7,21 +9,30 @@ Setup and Deploy KubePlus
     - sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
     - aws configure
 
-1) Make an s3 bucket
+1) Make an s3 bucket. Chose a unique name for the bucket. In this example we have
+   chosen the bucket name as 'stash-testing34'
     - aws s3 mb s3://stash-testing34
+   You will need to use this bucket name in following files:
+   - moodle-backup/cluster1.yaml, moodle-backup/restic-moodle.yaml
+   - moodle-recovery/cluster2-recovered.yaml
 
-2) Start Minikube
+2) Download Minikube (v0.34.0), download Helm (v2.11.0)
+
+3) Start Minikube 
     - minikube start --memory 4096 --cpus=2
 
 4) Go to KubePlus location
     - cd kubeplus
 
-5) Deploy KubePlus pod
+5) Deploy KubePlus
     - kubectl apply -f deploy/
+
+6) Verify KubePlus is running (3/3)
+    - kubectl get pods
 
 
 Start helm and install operators
------------
+---------------------------------
 
 1) Setup
     - helm init
@@ -34,39 +45,54 @@ helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-opera
 helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.3.0.tgz?raw=true
 helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.4.tgz?raw=true
 
-4. Find more information like how-to use, Spec properties, etc. for each Kind
-    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
-    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Recovery"
-    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Restic"
-    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
-    - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
 
-5) Change directory
+Create Moodle instance and take its backups
+--------------------------------------------
+
+0) Change directory
     - cd examples/moodle-presslabs-stash
 
-6) Check they are created
-    - kubectl get pods
-
-
-Create backups of Moodle
------------
 1) Deploy Moodle Platform Stack in namespace1
    - cd moodle-backup
    - kubectl create ns namespace1
 
-   - Create MysqlCluster Custom Resource instance. It takes backups every minute.
-     - kubectl create -f cluster1-secret.yaml
-     - kubectl create -f backups-aws-secret.yaml
-     - kubectl create -f cluster1.yaml
+   - Create MysqlCluster Custom Resource instance.
+     - Find how to use MysqlCluster Custom Resource
+       - kubectl get --raw "/apis/platform-as-code/v1/man?kind=MysqlCluster"
+
+     We are also going to configure periodic backups for this Cluster as part of the Spec definition. 
+     Setting up the Cluster involves three things:
+     a. Creating a Secret that represents MysqlCluster's root user password
+       - kubectl create -f cluster1-secret.yaml
+     b. Creating a Secret that is used for representing AWS credentials
+       - Add your aws_access_key_id and aws_secret_access_key from ~/.aws/credentials
+         into backups-aws-secret.yaml file. Then create the Secret for these credentials.
+       - kubectl create -f backups-aws-secret.yaml
+     c. Referencing above two Secret objects in the MysqlCluster Spec definition.
+       - Make sure the names of above two Secrets are referenced in MysqlCluster Spec.
+         The Secret for root user password is referenced in the Spec property: secretName
+         The Secret for AWS is referenced in the Spec property: backupSecretName
+       - kubectl create -f cluster1.yaml
 
    - Wait until MysqlCluster pod is Ready - 4/4
      - kubectl get pods -n namespace1
 
    - Once MysqlCluster pods are ready, deploy Moodle
+
+     - Find how to use Moodle Custom Resource
+       - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
+
+     - Find out Spec properties of Moodle Custom Resource
+       - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
+       - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
+
+     - In the Moodle Spec you need to reference the MysqlCluster endpoints so that Moodle can
+       use the MysqlCluster. The relevant Spec properties are: mysqlSQLServiceName, mysqlUserName, mysqlUserPassword. The value of mysqlServiceName should be name of the MysqlCluster resource with '-mysql-master' appended to it. The value of mysqlUserName should be 'root'. The value of mysqlUserPassword should be name of the MysqlCluster's root user password with the key of the data appended to it. All these values are already populated in moodle1.yaml. If you change the names of MysqlCluster resource or the corresponding Secret object for the username, then make sure to update moodle1.yaml.
+
      - kubectl create -f moodle1.yaml
 
-   - Wait till Moodle Pod is ready 1/1 (It will take about 5/6 minutes for Moodle Pod to become ready)
-     - kubectl get pods -n namespace1
+     - Wait till Moodle Pod is ready 1/1 (It will take about 5/6 minutes for Moodle Pod to become ready)
+       - kubectl get pods -n namespace1
 
    - Login to Moodle Instance
        - Update /etc/hosts with <minikube ip or cluster node ip> moodle1. Example:
@@ -74,10 +100,10 @@ Create backups of Moodle
          - You can find minikube ip using: "minikube ip" command
          - If using Managed Kubernetes, find out the cluster node ip by refering to appropriate documentation
            from the provider.
-         - Retrieve Moodle instance's admin password
-	   - kubectl describe moodles moodle1 -n namespace1
-             - Note down the secret name and Moodle instance URL
-         - kubectl get secret moodle1 -n namespace1 -o jsonpath="{.data.adminPassword}" | base64 --decode
+         - Retrieve Moodle instance's admin password. The Moodle Operator creates a password and stores that in a Secret Object. 
+	       - kubectl describe moodles moodle1 -n namespace1
+             - Note down name of the Secret object and Moodle instance URL
+           - kubectl get secret moodle1 -n namespace1 -o jsonpath="{.data.adminPassword}" | base64 --decode
          - Navigate to the URL of moodle1 instance (available in the output of 'describe' command)
            - Login using 'admin' as username and password retrieved earlier from 'kubectl get secret' command
     - Check installed plugins
@@ -99,13 +125,26 @@ Create backups of Moodle
             Upload an image > Upload a file
         - Save and return
 
-2) See the composition of Moodle instance, checking for deployment name, should be moodle1
+2) In order to take Volume backup we are going to use Custom Resources from the Stash Operator.
+   Stash Operator defines the 'Restic' Custom Resource for this purpose. 
+   Find out how to use the Restic Custom Resource:
+   - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Restic"
+
+   - Restic Custom Resource needs two things as input. First, the mount path of the Volume that needs to be backed up. Second, the Deployment in which the Volume is mounted needs to be given some label and that label needs to be specified in the Restic Custom Resource's selector. 
+
+   - Use the 'man' endpoint for Moodle Kind to find the Volume mount path that the Moodle Operator uses for the Moodle data volume.
+    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
+
+   - Use the 'composition' endpoint for moodle1 instance to find the name of the Deployment object that is created as part of creating moodle1 Custom Resource instance.
     - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=namespace1" | python -mjson.tool
 
 3) Add a label to the Moodle deployment
     - kubectl label -n namespace1 deployments moodle1 app=moodle-deploy
 
-4) Add base64 encoded access keys to s3-secret.yaml
+4) Update the restic-moodle.yaml with the Volume mount path from step 2 and the label added in step 3
+   (lines 9, 11, 21)
+
+5) Add base64 encoded access keys to s3-secret.yaml
     Edit your keys in s3-secret.yaml
 
     for AWS_ACCESS_KEY_ID:
@@ -115,50 +154,68 @@ Create backups of Moodle
     for RESTIC_PASSWORD:
     - echo -n "changeit" | base64
 
-5) Apply AWS s3 secret
+6) Update restic-moodle.yaml with S3 details:
+   - S3 bucket name (spec property: spec.backend.s3.bucket)
+   - S3 secret name (spec property: spec.backend.storageSecretName)
+
+7) Apply AWS s3 secret
     - kubectl apply -f s3-secret.yaml
 
-6) Start taking backups
+8) Start taking backups
     - kubectl apply -f restic-moodle.yaml
 
-7. Wait until MysqlCluster pod is Ready - 2/2
-    - kubectl get pods -n namespace1
-
-8. You may Validate that it is taking backups (may take one minute)
+9) Validate that Volume backups are happening (may take one minute)
     - aws s3 ls s3://stash-testing34/stash1/deployment/moodle1/
+
+10) Validate that Database backups are happening
+    - aws s3 ls s3://stash-testing34/mysql-backups/
+
+In steps 9 and 10 make sure to use the bucket name that you created during setup.
 
 
 Recover a snapshot
------------
+-------------------
+
 1) cd ../moodle-recovery
 
-2)  - Check available moodle backups, Pick one.
-        - kubectl get snapshots -n namespace1 -l repository=deployment.moodle1
-            Change recovery.yaml L10 to the snapshot you picked.
-            - snapshot: deployment.moodle1-b3ae042b
-    -  Check available mysqlCluster backups. Pick one
-        - aws s3 ls s3://stash-testing34/mysql-backups/
-            Change cluster2-recovered.yaml L9 to the mysqlbackup you picked:
-            - initBucketURI: s3://stash-testing34/mysql-backups/cluster1-2019-04-09T19:56:01.xbackup.gz
+
+2) We are going to use the 'Recovery' Custom Resource from Stash Operator to recover the Volume.
+   - Check how to use the 'Recovery' Custom Resource
+     - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Recovery"
+   The Stash Operator recovers the Volume in a PersistentVolumeClaim.
 
 3) Create PersistentVolumeClaim
     - kubectl create -f pvc.yaml
 
-4) Create the Recovery, which stores the snapshot into that PersistentVolumeClaim.
+4) Check available Moodle volume backups, Pick one.
+    - kubectl get snapshots -n namespace1 -l repository=deployment.moodle1
+      - Change recovery.yaml L10 to the snapshot you picked.
+        - snapshot: deployment.moodle1-b3ae042b
+
+5) Check available MysqlCluster backups. Pick one
+    - aws s3 ls s3://stash-testing34/mysql-backups/
+        Change cluster2-recovered.yaml L9 to the mysqlbackup you picked:
+        - initBucketURI: s3://stash-testing34/mysql-backups/cluster1-2019-04-09T19:56:01.xbackup.gz
+
+6) Create the Recovery object. It stores the snapshot into that PersistentVolumeClaim.
+   Update the Recovery Custom Resource definition (in recovery.yaml) with the name of the PersistentVolumeClaim
+   that you created in step 3 (in line 16)
     - kubectl create -f recovery.yaml
 
-5) Create the MysqlCluster
-    - kubectl create -f backups-aws-secret.yaml
+7) Create the new MysqlCluster from backed up Database data
     - kubectl create -f cluster2-secret.yaml
     - kubectl create -f cluster2-recovered.yaml
 
-6) Recover the moodle instance with the backup volume
+8) Recover the Moodle instance with backed up Volume. Specify the name of the PersistentVolumeClaim in the Spec property PVCVolumeName in moodle2-recovered.yaml
     - kubectl create -f moodle2-recovered.yaml
 
-7) - Update /etc/hosts with <minikube ip or cluster node ip> moodle2. Example:
+9) Wait for moodle2 instance to come up:
+   - kubectl describe moodles moodle2 -n namespace1
+
+10) - Update /etc/hosts with <minikube ip or cluster node ip> moodle2. Example:
         - (minikube ip) moodle2
 
-8) Visit moodle2:32001 (may take a few minutes)
+11) Visit moodle2:32001 (may take a few minutes)
     - Log in, and verify that all uploaded images are there!
     - Courses you added with an image should be there
     - Private files that students created should be there
