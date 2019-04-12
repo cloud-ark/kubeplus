@@ -1,8 +1,12 @@
-=========
-KubePlus
-=========
+==========================
+KubePlus Platform toolkit
+==========================
 
-KubePlus Platform toolkit delivers `Platform as Code`__ experience on Kubernetes.
+KubePlus Platform toolkit enables discovery of Kubernetes Operators installed in a Cluster
+and the Custom Resources they support.
+
+Application developers use KubePlus in building their application platforms as Code.
+
 Platform-as-Code offers composable and repeatable way of creating application platforms
 leveraging Kubernetes API extensions, also known as Operators. 
 
@@ -54,44 +58,37 @@ and adding Platform-as-Code annotations on their CRD definition.
 
 *2. DevOps Engineer*
 
-Cluster Administrator uses Helm to deploy required Operators.
+DevOps Engineers/Cluster Administrators use Helm to deploy required Operators.
 
 *3. Application Developer*
 
 Application developer uses kubectl to discover information about available Custom Resources
 and then uses Kubernetes YAMLs to create their application platform stacks.
 
- 
-.. image:: ./docs/KubePlus-Platform-Kit.jpg
-   :scale: 75%
-   :align: center
 
-
-Value of KubePlus
+Design Philosophy
 ==================
 
-*1. One platform experience*
+When developing KubePlus we have following these two design principles:
 
-Our Operator guidelines_ ensure one platform experience with uniform discovery, documentation and support across multiple Operators.
+*1. No new CLI*
 
-
-*2. No new CLI*
-
-KubePlus does not introduce any new CLI. 
+KubePlus does not introduce any new CLI.
 Teams continue to use standard CLIs (kubectl, helm) and YAML definition format to manage their platforms.
 
+*1. No new input format*
 
-*3. Eliminate ad-hoc scripts*
+KubePlus does not introduce any new input format (such as a new Spec).
+Any and all the information is packaged using ConfigMaps.
 
-KubePlus helps create application platforms leveraging Custom Resources from different Operators 
-eliminating out-of-band custom platform automation.
+Our Operator guidelines_ ensure one platform experience with uniform discovery, documentation and usage across multiple Operators.
 
 
 KubePlus Architecture
 ======================
 
 KubePlus streamlines the process around discovering static and runtime information about Custom Resources
-introduced by installed Operators in a cluster. Static information consists of - how-to-use guides for a Custom Resource, any code level assumptions made by an Operator, OpenAPI Spec definitions for a Custom Resource, etc. Runtime information consists of identifying Kubernetes's native resources created as part of instantiating a Custom Resource instance.
+introduced by installed Operators in a cluster. Static information consists of: a) how-to-use guides for a Custom Resource, b) any code level assumptions made by an Operator, c) OpenAPI Spec definitions for a Custom Resource, etc. Runtime information consists of Kubernetes's native resources created as part of instantiating a Custom Resource instance.
 
 -----------------------------
 Platform-as-Code Annotations
@@ -119,13 +116,25 @@ KubePlus uses annotations as a mechanism to include static and dynamic informati
      scope: Namespaced
 
 
-platform-as-code/usage annotation is used to define usage information for the Custom Resource.
+.. code-block:: bash
+   platform-as-code/usage 
 
-platform-as-code/constants annotation is used to surface any code level assumptions that an Operator might have made.
+The 'usage' annotation is used to define usage information for the Custom Resource.
 
-platform-as-code/openapispec annotation is used to define OpenAPI Spec for the Custom Resource.
+.. code-block:: bash
+   platform-as-code/constants 
 
-platform-as-code/composition annotation is used to define Kubernetes's native objects that are created by the Operator as part of instantiating instances of that Custom Resource.
+The 'constants' annotation is used to surface any code level assumptions that an Operator might have made.
+
+.. code-blocK:: bash
+   platform-as-code/openapispec 
+
+The 'openapispec' annotation is used to define OpenAPI Spec for the Custom Resource.
+
+.. code-block:: bash
+   platform-as-code/composition 
+
+The 'composition' annotation is used to define Kubernetes's native objects that are created by the Operator as part of instantiating instances of that Custom Resource.
 
 The values for 'usage', 'constants', 'openapispec' annotations are names of ConfigMaps that store the corresponding data. Creating these ConfigMaps is the responsibility of Operator developer/curator.
 Don't forget to package these ConfigMaps along with your Helm Chart. Here is example of Moodle_ Helm Chart
