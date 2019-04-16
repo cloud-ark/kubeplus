@@ -30,20 +30,21 @@ Steps:
      create a single node cluster, download the cluster config file and save it in 
      your ~/.kube directory with the name 'config' (e.g.: ~/.kube/config)
 
-2) Setup Helm
-   - helm init
-
-3) Wait till Tiller Pod is running
-   - kubectl get pods -n kube-system
-
-4) Once Helm Pod is ready, deploy Moodle and MySQL Operators
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-1.tgz?raw=true
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.2.4.tgz?raw=true
-
-5) Install KubePlus
+2) Install KubePlus
    - git clone https://github.com/cloud-ark/kubeplus.git
    - cd kubeplus
    - kubectl apply -f deploy
+
+3) Setup Helm
+   - kubectl create -f helm-rbac-config.yaml
+   - helm init --service-account tiller
+
+4) Wait till Tiller Pod is running
+   - kubectl get pods -n kube-system
+
+5) Once Helm Pod is ready, deploy Moodle and MySQL Operators
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-1.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.2.4.tgz?raw=true
 
 6) Wait till both Operator Pods are ready
    - kubectl get pods
@@ -52,9 +53,8 @@ Steps:
    - kubectl get customresourcedefinitions
 
 8) Find the Custom Resource Kind names
-   - kubectl describe customresourcedfinitions
-   - kubectl describe customresourcedefinitions moodles.moodlecontroller.kubeplus
    - kubectl describe customresourcedefinitions mysqlclusters.mysql.presslabs.org
+   - kubectl describe customresourcedefinitions moodles.moodlecontroller.kubeplus
 
 9) Find more information like how-to use, Spec properties, etc. for each Kind
    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=MysqlCluster"

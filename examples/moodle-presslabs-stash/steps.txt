@@ -35,13 +35,14 @@ Start helm and install operators
 ---------------------------------
 
 1) Setup
-    - helm init
+    - kubectl create -f helm-rbac-config.yaml
+    - helm init --service-account tiller
 
 2) Wait till Tiller Pod is running
     - kubectl get pods -n kube-system
 
 3) Install presslabs-mysql-operator, moodle operator and stash operator
-helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5.tgz?raw=true
+helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-1.tgz?raw=true
 helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.3.0.tgz?raw=true
 helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.4.tgz?raw=true
 
