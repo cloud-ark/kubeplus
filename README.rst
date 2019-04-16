@@ -37,12 +37,14 @@ Operator developer/curator uses our guidelines_ when developing their Operator.
 
 *2. DevOps Engineer*
 
-DevOps Engineers/Cluster Administrators use Helm to deploy required Operators to create a custom PaaS.
+DevOps Engineer/Cluster Administrator uses Helm to deploy required Operators to create their custom PaaS. We provide_ Operators that adhere to our guidelines_ that you can use.
+
+.. _provide: https://github.com/cloud-ark/operatorcharts/
 
 *3. Application Developer*
 
 Application developer uses kubectl to discover information about available Custom Resources
-and then uses Kubernetes YAMLs to create their application platform stacks.
+and then uses Kubernetes YAMLs to create their application platforms as Code.
 
 
 Design Philosophy
@@ -50,16 +52,17 @@ Design Philosophy
 
 When developing KubePlus we have followed these two design principles:
 
-*1. No new CLI*
-
-KubePlus does not introduce any new CLI.
-Teams continue to use standard CLIs such as 'kubectl' and 'helm' to manage their platforms.
-
-*2. No new input format*
+*1. No new input format*
 
 KubePlus does not introduce any new input format, such as a new Spec, to enable Operator installation
-and Custom Resource discovery. Operator installation is done in standard way using Helm.
-Custom Resource information discovery is enabled via annotations and ConfigMaps.
+or Custom Resource discovery. Operator installation is done in standard way using Helm.
+Custom Resource information discovery is enabled via annotations, ConfigMaps, and custom sub-resources. 
+
+
+*2. No new CLI*
+
+KubePlus does not introduce any new CLI.
+Teams continue to use standard CLIs such as 'kubectl' and 'helm' to build and manage their platforms.
 
 
 KubePlus Architecture
@@ -73,27 +76,7 @@ Platform-as-Code Annotations
 -----------------------------
 
 KubePlus uses annotations on Custom Resource Definitions to include the required information.
-As an example, the annotations on Moodle Custom Resource Definition are shown below:
-
-.. code-block:: yaml
-
-   apiVersion: apiextensions.k8s.io/v1beta1
-   kind: CustomResourceDefinition
-   metadata:
-     name: moodles.moodlecontroller.kubeplus
-     annotations:
-       platform-as-code/usage: moodle-operator-usage.usage
-       platform-as-code/constants: moodle-operator-implementation-details.implementation_choices
-       platform-as-code/openapispec: moodle-openapispec.openapispec
-       platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
-   spec:
-     group: moodlecontroller.kubeplus
-     version: v1
-     names:
-       kind: Moodle
-       plural: moodles
-     scope: Namespaced
-
+Following annotations are currently supported:
 
 .. code-block:: bash
 
@@ -117,31 +100,52 @@ The 'openapispec' annotation is used to define OpenAPI Spec for a Custom Resourc
 
    platform-as-code/composition 
 
-The 'composition' annotation is used to list Kubernetes's native objects that are created by an Operator as part of instantiating instances of a Custom Resource.
+The 'composition' annotation is used to list Kubernetes's native resoruces that are created by an Operator as part of instantiating instances of a Custom Resource.
 
 The values for 'usage', 'constants', 'openapispec' annotations are names of ConfigMaps that store the corresponding data. Creating these ConfigMaps is the responsibility of Operator developer/curator.
-Don't forget to package these ConfigMaps along with your Helm Chart. Here is example of Moodle_ Helm Chart
-with these annotations and ConfigMaps.
+Don't forget to package these ConfigMaps along with your Helm Chart. Here is example of Moodle_ Helm Chart with these annotations and ConfigMaps.
 
 .. _Moodle: https://github.com/cloud-ark/kubeplus-operators/tree/master/moodle/moodle-operator-chart/templates
 
 The values in 'composition' annotation are used by KubePlus in building dynamic composition tree of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
 
 
+As an example, these annotations on Moodle Custom Resource Definition are shown below:
+
+.. code-block:: yaml
+
+   apiVersion: apiextensions.k8s.io/v1beta1
+   kind: CustomResourceDefinition
+   metadata:
+     name: moodles.moodlecontroller.kubeplus
+     annotations:
+       platform-as-code/usage: moodle-operator-usage.usage
+       platform-as-code/constants: moodle-operator-implementation-details.implementation_choices
+       platform-as-code/openapispec: moodle-openapispec.openapispec
+       platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
+   spec:
+     group: moodlecontroller.kubeplus
+     version: v1
+     names:
+       kind: Moodle
+       plural: moodles
+     scope: Namespaced
+
+
 ----------------------------
 Platform-as-Code Endpoints
 ----------------------------
 
-To make it easy for application developers to discover static and runtime information about Custom Resources, KubePlus exposes following endpoints as custom subresources - 'man', 'explain' and 'composition'. 
+To make it easy for application developers to discover static and runtime information about Custom Resources, KubePlus exposes following endpoints as custom sub-resources - 'man', 'explain' and 'composition'. 
 
-These endpoints are implemented using Kubernetes's aggregated API Server. 
+These endpoints are implemented using Kubernetes's aggregated API Server.
 
 .. code-block:: bash
 
    $ kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
 
 The 'man' endpoint provides capability to find 'man page' like information about Custom Resources.
-It essentially exposes the information packaged in 'usage' and 'constants' annotations.
+It essentially exposes the information packaged in 'usage' and 'constants' annotations on a CRD.
 
 .. code-block:: bash
 
@@ -149,7 +153,7 @@ It essentially exposes the information packaged in 'usage' and 'constants' annot
    $ kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
 
 The 'explain' endpoint is used to discover Spec of Custom Resources. 
-It exposes the information packaged in 'openapispec' annotation. 
+It exposes the information packaged in 'openapispec' annotation on a CRD.
 
 .. code-block:: bash
 
@@ -163,9 +167,9 @@ Examples of possible future endpoints are: 'provenance', 'functions', and 'confi
 Demo
 ====
 
-Concept demo: https://youtu.be/Fbr1LNqvGRE
+See KubePlus in action_.
 
-Working demo: https://drive.google.com/file/d/1jDptIWM8fiAorlZdW-pwOMttxAQAZHIR/view
+.. _action: https://youtu.be/wj-orvFzUoM
 
 
 Try it
@@ -180,7 +184,7 @@ Available Operators
 ====================
 
 We are maintaining a `repository of Operators`_ that follow the Operator development guidelines_. 
-You can use Operators from this repository, or create your own Operator and use it with KubePlus. 
+You can use Operators from this repository or create your own Operator and use it with KubePlus. 
 Make sure to add the platform-as-code annotations mentioned above to enable your Operator consumers to easily find static and runtime information about your Custom Resources right through kubectl.
 
 We can also help checking your Operators against the guidelines. Just open an issue on the repository with link to your Operator code and we will provide you feedback on it.
