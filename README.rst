@@ -2,21 +2,19 @@
 KubePlus Platform toolkit
 ==========================
 
-KubePlus Platform toolkit streamlines the process of composing multiple Kubernetes Operators into a custom PaaS, and enables creating application Platforms as Code. It supports discovering usage and runtime information about Custom Resources introduced by various Operators in your Cluster. 
+KubePlus Platform toolkit simplifies discovery and use of Kubernetes Operators and their Custom Resources to create application Platforms as Code. It supports discovering static as well as dynamic runtime information about Custom Resources introduced by various Operators in your Cluster.
 
 `Kubernetes Operators`_ extend Kubernetes API to manage
 third-party software as native Kubernetes objects. Today, number of Operators are
 being built for middlewares like databases, queues, loggers, etc.
 Current popular approach is to ‘self-assemble’ platform stacks using Kubernetes Operators of
-choice. This requires significant efforts and there is 
-lack of consistent user experience across multiple Operators.
+choice. This requires significant efforts to discover capabilities of each Operator and the Custom Resources that it supports; and there is lack of consistent user experience across multiple Operators.
 
 .. _Kubernetes Operators: https://coreos.com/operators/
 
 
-KubePlus bring consistency of usage across multiple Operators with our Operator development guidelines_.
-They ensure one platform experience with uniform discovery, documentation and usage across multiple Operators.
-Teams can 'Build their Own PaaSes' on Kubernetes selecting required Operators packaged as Helm charts.
+KubePlus Platform toolkit, a) provides Operator developers a set of Operator development guidelines_ to enable creating Operators such as they are consistent to use alongside other Operators, b) leverages standard installation tools like Helm to install Operators, and c) provides kubectl based mechanisms for application developers to discover static and runtime information about Custom Resources.
+Application developers can create their application platform stack using various Custom Resources.
 
 .. _guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
@@ -26,10 +24,10 @@ Teams can 'Build their Own PaaSes' on Kubernetes selecting required Operators pa
    :align: center
 
 
-KubePlus Usage
-===============
+Usage
+======
 
-KubePlus is designed with 3 user personas in mind. 
+KubePlus Platform toolkit is designed with 3 user personas in mind. 
 
 *1. Operator Developer/Curator*
 
@@ -44,19 +42,19 @@ DevOps Engineer/Cluster Administrator uses Helm to deploy required Operators to 
 *3. Application Developer*
 
 Application developer uses kubectl to discover information about available Custom Resources
-and then uses Kubernetes YAMLs to create their application platforms as Code.
+and then creates their application platforms as Code composing various Custom Resources.
 
 
 Design Philosophy
 ==================
 
-When developing KubePlus we have followed these two design principles:
+When developing KubePlus Platform toolkit we have followed these design principles:
 
 *1. No new input format*
 
 KubePlus does not introduce any new input format, such as a new Spec, to enable Operator installation
 or Custom Resource discovery. Operator installation is done in standard way using Helm.
-Custom Resource information discovery is enabled via annotations, ConfigMaps, and custom sub-resources. 
+Custom Resource information discovery is enabled via annotations, ConfigMaps, and custom sub-resources using Kubernetes aggregated API server. 
 
 
 *2. No new CLI*
@@ -69,7 +67,7 @@ KubePlus Architecture
 ======================
 
 KubePlus streamlines the process of discovering static and runtime information about Custom Resources
-introduced by various Operators in a cluster. Static information consists of: a) how-to-use guides for Custom Resources supported by an Operator, b) any code level assumptions made by an Operator, c) OpenAPI Spec definitions for a Custom Resource. Runtime information consists of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
+introduced by various Operators in a cluster. Static information consists of: a) how-to-use guides for Custom Resources supported by an Operator, b) any code level assumptions made by an Operator, c) OpenAPI Spec definitions for a Custom Resource. An example of runtime information is identification of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
 
 -----------------------------
 Platform-as-Code Annotations
@@ -136,7 +134,9 @@ As an example, these annotations on Moodle Custom Resource Definition are shown 
 Platform-as-Code Endpoints
 ----------------------------
 
-To make it easy for application developers to discover static and runtime information about Custom Resources, KubePlus exposes following endpoints as custom sub-resources - 'man', 'explain' and 'composition'. 
+For application developers our goal is to be able to find out information about Custom Resources directly using kubectl -- similar to how Unix man pages work.
+
+Towards that end KubePlus exposes following endpoints as custom sub-resources - 'man', 'explain' and 'composition'. 
 
 These endpoints are implemented using Kubernetes's aggregated API Server.
 
