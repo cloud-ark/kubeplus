@@ -67,117 +67,107 @@ function create_kubeplus(){
     echo ""
 }
 function create_operator(){
-    echo "Creating postgres-operator ..."
-    kubectl create -f $PROJECT_HOME/examples/postgres/postgres-operator.yaml
+    echo "Creating moodle-operator ..."
+    helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.3.0.tgz?raw=true
     timeout=240
     sleep_time=3
     loops=$((timeout/sleep_time))
     count=0
-    result=$(kubectl -n default get pods -lapp=postgres-operator  -o jsonpath="$JSONPATH" 2>&1 | grep "Ready=True")
+    result=$(kubectl -n default get pods -lapp=moodle-operator  -o jsonpath="$JSONPATH" 2>&1 | grep "Ready=True")
     pod=`kubectl get pods | grep kubeplus | awk '{print $1'}`
     while ! [[ "$result" ]]; do
         if [[ "$count" -gt $loops ]]; then
-            echo "Unable to create a postgres operator."
+            echo "Unable to create moodle operator."
             echo ""
-            echo "Operator deployer logs: "
-            kubectl logs $pod -c operator-deployer
+            echo "kube discovery logs: "
+            kubectl logs $pod -c kube-discovery-apiserver
             echo ""
-            echo "Operator manager logs: "
-            kubectl logs $pod -c operator-manager
+            echo "discovery helper logs: "
+            kubectl logs $pod -c operator-discovery-helper
             exit 1
         fi
-        result=$(kubectl -n default get pods -lapp=postgres-operator  -o jsonpath="$JSONPATH" 2>&1 | grep "Ready=True")
+        result=$(kubectl -n default get pods -lapp=moodle-operator  -o jsonpath="$JSONPATH" 2>&1 | grep "Ready=True")
         echo $result
         sleep $sleep_time
-        echo "Waiting for postgres-operator..."
+        echo "Waiting for moodle-operator..."
         kubectl get pods -n default
         echo ""
         count=$((count + 1))
     done
-    echo "Successfully deployed postgres-operator!"
+    echo "Successfully deployed moodle-operator!"
     echo ""
 }
-function create_postgres(){
-    echo "Creating postgres instance ..."
-    kubectl create -f $PROJECT_HOME/examples/postgres/postgres1.yaml
-    timeout=600
-    sleep_time=3
-    loops=$((timeout/sleep_time))
-    count=0
-    result=$(kubectl -n default get pods -lapp=postgres1  -o jsonpath="$JSONPATH" 2>&1 | grep "Ready=True")
-    pod=`kubectl get pods | grep -v postgres-operator | grep postgres | awk '{print $1}'`
-    while ! [[ "$result" ]]; do
-        if [[ "$count" -gt $loops ]]; then
-            echo "Unable to create postgres."
-            echo ""
-            echo "Operator logs: "
-            kubectl logs $pod
-            exit 1
-        fi
-        result=$(kubectl -n default get pods -lapp=postgres1  -o jsonpath="$JSONPATH" 2>&1 | grep "Ready=True")
-        echo $result
-        sleep $sleep_time
-        echo "Creating postgres ..."
-        kubectl get pods -n default
-        count=$((count + 1))
-    done
-    echo "Successfully created postgres instance!"
-    echo ""
+function test_explain() {
+    echo "Testing explain endpoint ..."
+    kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
+    resp=`curl -i "http://localhost:8080/apis/platform-as-code/v1/explain?kind=Moodle" | sed -e 1q | awk '{print $2}'`
+    if [ $resp -eq 200 ]; then
+        echo "Successfully called explain endpoint!"
+        echo ""
+    else
+        echo "Unable to call explain endpoint!"
+        echo ""
+        exit 1
+    fi
+
+    kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
+    curl -i "http://localhost:8080/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"
+    if [ $? -eq 0 ]; then
+        echo "Successfully called explain endpoint!"
+        echo ""
+    else
+        echo "Unable to call explain endpoint!"
+        echo ""
+        exit 1
+    fi
+
 }
-function delete_postgres() {
-    echo "Deleting postgres instance ..."
-    kubectl delete -f $PROJECT_HOME/examples/postgres/postgres1.yaml
-    timeout=240
-    sleep_time=3
-    loops=$((timeout/sleep_time))
-    count=0
-    result=$(kubectl -n default get pods -lapp=postgres1  -o jsonpath="$JSONPATH" 2>&1 | grep "Ready=True")
-    pod=`kubectl get pods | grep -v postgres-operator | grep postgres | awk '{print $1}'`
-    while [[ "$result" ]]; do
-        if [[ "$count" -gt $loops ]]; then
-            echo "Unable to delete postgres."
-            echo ""
-            echo "Operator logs: "
-            kubectl logs $pod
-            exit 1
-        fi
-        result=$(kubectl -n default get pods -lapp=postgres1  -o jsonpath="$JSONPATH" 2>&1 | grep "Ready=True")
-        sleep $sleep_time
-        echo "Deleting postgres..."
-        kubectl get pods -n default
-        count=$((count + 1))
-    done
-    echo "Successfully deleted postgres instance!"
-    echo ""
+function test_man() {
+    echo "Testing man endpoint ..."
+    kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
+    resp=`curl -i "http://localhost:8080/apis/platform-as-code/v1/man?kind=Moodle" | sed -e 1q | awk '{print $2}'`
+    if [ $resp -eq 200 ]; then
+        echo "Successfully called man endpoint!"
+        echo ""
+    else
+        echo "Unable to call man endpoint!"
+        echo ""
+        exit 1
+    fi
 }
 function delete_operator() {
-    echo "Deleting postgres operator ..."
-    kubectl delete -f $PROJECT_HOME/examples/postgres/postgres-operator.yaml
+    echo "Deleting moodle operator ..."
+    operator=`helm list| grep moodle-operator-chart-0.3.0 | awk '{print $1'}`
+    helm delete $operator --purge
+    if [ $? -ne 0 ]; then
+        echo "Unable to delete moodle operator."
+        exit 1
+    fi
     timeout=240
     sleep_time=3
     loops=$((timeout/sleep_time))
     count=0
-    result=$(kubectl -n default get pods -lapp=postgres-operator  -o jsonpath="$JSONPATH" 2>&1 | grep "Ready=True")
+    result=$(kubectl -n default get pods -lapp=moodle-operator  -o jsonpath="$JSONPATH" 2>&1 | grep "Ready=True")
     pod=`kubectl get pods | grep kubeplus | awk '{print $1'}`
 
     while [[ "$result" ]]; do
         if [[ "$count" -gt $loops ]]; then
-            echo "Unable to delete postgres operator."
+            echo "Unable to delete moodle operator."
             echo ""
-            echo "Operator deployer logs: "
-            kubectl logs $pod -c operator-deployer
+            echo "kube discovery logs: "
+            kubectl logs $pod -c kube-discovery-apiserver
             echo ""
-            echo "Operator manager logs: "
-            kubectl logs $pod -c operator-manager
+            echo "discovery helper logs: "
+            kubectl logs $pod -c operator-discovery-helper
             exit 1
         fi
-        result=$(kubectl -n default get pods -lapp=postgres-operator -o jsonpath="$JSONPATH" 2>&1 | grep "Ready=True")
+        result=$(kubectl -n default get pods -lapp=moodle-operator -o jsonpath="$JSONPATH" 2>&1 | grep "Ready=True")
         sleep $sleep_time
-        echo "Deleting postgres operator..."
+        echo "Deleting moodle operator..."
         kubectl get pods -n default
         count=$((count + 1))
     done
-    echo "Successfully deleted postgres operator!"
+    echo "Successfully deleted moodle operator!"
     echo ""
 }
 function delete_kubeplus() {
@@ -204,8 +194,8 @@ function delete_kubeplus() {
 
 declare -fxr create_kubeplus
 declare -fxr create_operator
-declare -fxr create_postgres
-declare -fxr delete_postgres
+declare -fxr test_explain
+declare -fxr test_man
 declare -fxr delete_operator
 declare -fxr delete_kubeplus
 
@@ -213,10 +203,12 @@ declare -fxr delete_kubeplus
 kube_manager
 kube_dns
 helm_init
+kubectl proxy --port=8080 &
 retry 3 create_kubeplus
 retry 3 create_operator
-retry 3 create_postgres
-retry 3 delete_postgres
+retry 3 test_explain
+retry 3 test_man
 retry 3 delete_operator
 retry 3 delete_kubeplus
+
 echo "TESTS PASSED! No non-zero error codes."
