@@ -19,7 +19,7 @@ Application developers can create their application platform stacks using variou
 .. _guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
 
-.. image:: ./docs/KubePlus-Flow.jpg
+.. image:: ./docs/KubePlus-Flow-1.png
    :scale: 75%
    :align: center
 
