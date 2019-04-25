@@ -20,7 +20,7 @@ Application developers can create their application platform stacks using variou
 
 
 .. image:: ./docs/Kubeplus-flow-2.png
-   :scale: 75%
+   :scale: 25%
    :align: center
 
 
