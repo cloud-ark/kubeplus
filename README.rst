@@ -19,7 +19,7 @@ Application developers can create their application platform stacks using variou
 .. _guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
 
-.. image:: ./docs/KubePlus-Flow-1.png
+.. image:: ./docs/KubePlus-flow-1.png
    :scale: 75%
    :align: center
 
@@ -35,7 +35,7 @@ Operator developer uses our guidelines_ when developing their Operators.
 
 *2. DevOps Engineer*
 
-DevOps Engineer/Cluster Administrator uses Helm to deploy required Operators to create their custom PaaS. We provide_ Operators that adhere to our guidelines_ that you can use.
+DevOps Engineer/Cluster Administrator uses Helm to deploy required Operators to create their custom PaaS. We provide_ Operators that adhere to our guidelines that you can use.
 
 .. _provide: https://github.com/cloud-ark/operatorcharts/
 
