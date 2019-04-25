@@ -19,9 +19,9 @@ Application developers can create their application platform stacks using variou
 .. _guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
 
-.. image:: ./docs/Kubeplus-flow-2.png
-   :scale: 25%
-   :align: center
+.. .. image:: ./docs/Kubeplus-flow-2.png
+..   :scale: 25%
+..   :align: center
 
 
 Usage
