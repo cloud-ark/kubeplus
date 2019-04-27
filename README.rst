@@ -4,9 +4,11 @@ KubePlus Platform toolkit
 
 KubePlus Platform toolkit simplifies discovery and use of Kubernetes Operators and Custom Resources in a cluster.
 
-Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes API to manage third-party software as native Kubernetes objects. Today, number of Operators are
+Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run and manage third-party software directly on Kubernetes. Today, number of Operators are
 being built for middlewares like databases, queues, ssl certificates, etc.
-The Custom Resources introduced by Operators represent 'platform elements' -- their Spec definitions  encapsulate some higher-level workflow actions on the underlying infrastructure resource that they are managing (database, queue, ssl certificate, etc.). A novel approach for building platforms on Kubernetes is to construct a platform stack from multiple Custom Resources, essentially building  platform as Code. 
+The Custom Resources introduced by Operators essentially represent 'platform elements' as their Spec definitions encapsulate some higher-level workflow actions on the underlying infrastructure resource that they are managing (database, queue, ssl certificate, etc.). A novel approach for building platforms on Kubernetes is to construct a platform stack from multiple Custom Resources, essentially building platforms as Code.
+
+Platform as Code approach provides true portability across Cloud providers as your entire platform stack is running on Kubernetes. It also enables Kubernetes YAML to become common language between Operations team and application development teams.
 
 .. _Operators: https://coreos.com/operators/
 
@@ -32,9 +34,9 @@ Operator developers use `discoverability and interoperability guidelines`_ when 
 
 *2. DevOps Engineer*
 
-DevOps Engineer/Cluster Administrator uses standard tools such as 'kubectl' or 'helm' to deploy required Operators in a cluster. We provide `Operators_` that you can use.
+DevOps Engineer/Cluster Administrator uses standard tools such as 'kubectl' or 'helm' to deploy required Operators in a cluster. We `provide`_ Operators that you can use.
 
-.. _Operators: https://github.com/cloud-ark/operatorcharts/
+.. _provide: https://github.com/cloud-ark/operatorcharts/
 
 You also deploy KubePlus in your cluster so that application developers can discover information about various Custom Resources.
 
