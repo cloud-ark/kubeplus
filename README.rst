@@ -180,6 +180,15 @@ mentioned above. You can use Operators from this repository or create your own O
 .. _repository of Operators: https://github.com/cloud-ark/operatorcharts/
 
 
+RoadMap
+========
+
+Here are our road map items:
+
+1. Automated and programmatic discovery and binding between Custom Resources.
+2. Integrating Kubeprovenance functionality into KubePlus.
+3. Improving operator-analysis to check conformance of Operators with guidelines.
+4. Tracking of entire platform stacks as a whole.
 
 Issues/Suggestions
 ===================
