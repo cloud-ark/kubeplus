@@ -2,19 +2,16 @@
 KubePlus Platform toolkit
 ==========================
 
-KubePlus Platform toolkit simplifies discovery and use of Kubernetes Operators and Custom Resources to create application Platforms as Code. It supports discovering static as well as dynamic runtime information about Custom Resources introduced by various Operators in your Cluster.
+KubePlus Platform toolkit simplifies discovery and use of Kubernetes Operators and Custom Resources in a cluster. Specifically, it supports discovering static as well as dynamic runtime information about Custom Resources. This information is necessary and useful when creating application platform stacks by assembling various Custom Resources together (platforms 'as code').
 
-`Kubernetes Operators`_ extend Kubernetes API to manage
-third-party software as native Kubernetes objects. Today, number of Operators are
-being built for middlewares like databases, queues, loggers, etc.
-Current popular approach is to ‘self-assemble’ platform stacks using Kubernetes Operators of
-choice. This requires significant efforts to discover capabilities of each Operator and the Custom Resources that it supports; and there is lack of consistent user experience across multiple Operators.
+Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes API to manage third-party software as native Kubernetes objects. Today, number of Operators are
+being built for middlewares like databases, queues, ssl certificates, etc.
+The Custom Resources introduced by Operators represent 'platform elements' -- their Spec definitions  encapsulate some higher-level workflow actions on the underlying infrastructure resource that they are managing (database, queue, ssl certificate, etc.). A novel approach for building platforms on Kubernetes is to construct a platform stack from multiple Custom Resources, essentially building the platform as Code. 
 
-.. _Kubernetes Operators: https://coreos.com/operators/
+.. _Operators: https://coreos.com/operators/
 
+The main challenge in this approach is interoperability between Custom Resources from different Operators. KubePlus Platform toolkit solves this challenge by standardizing on how application developers can easily discover and use various Custom Resources simply from 'kubectl' command-line. Specifically, it provides a way for application developers to obtain 'man page' like static information and 'pstree' like dynamic information for Custom Resources directly from 'kubectl'. Equipped with this information application developers can then create their platform stacks with correct YAML definitions of various Custom and native Kubernetes resources.
 
-KubePlus Platform toolkit, a) provides Operator developers a set of guidelines_ to enable creating Operators such that they are consistent to use alongside other Operators, b) leverages standard installation tools like Helm to install Operators, and c) provides kubectl based mechanisms for application developers to discover static and runtime information about Custom Resources.
-Application developers can create their application platform stacks using various Custom Resources.
 
 .. _guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
@@ -31,7 +28,7 @@ KubePlus Platform toolkit is designed with 3 user personas in mind.
 
 *1. Operator Developer*
 
-Operator developer uses our guidelines_ when developing their Operators.
+Operator developer uses our guidelines_ when developing their Operators. These guidelines enable creating Operators such that they are consistent to use alongside other Operators in a cluster.
 
 *2. DevOps Engineer*
 
@@ -42,25 +39,7 @@ DevOps Engineer/Cluster Administrator uses Helm to deploy required Operators to 
 *3. Application Developer*
 
 Application developer uses kubectl to discover information about available Custom Resources
-and then creates their application platforms as Code composing various Custom Resources.
-
-
-Design Philosophy
-==================
-
-When developing KubePlus Platform toolkit we have followed these design principles:
-
-*1. No new input format*
-
-KubePlus does not introduce any new input format, such as a new Spec, for Operator installation
-or Custom Resource discovery. Operator installation is done in standard way using Helm.
-Custom Resource information discovery is enabled via annotations, ConfigMaps, and custom sub-resources using Kubernetes aggregated API server.
-
-
-*2. No new CLI*
-
-KubePlus does not introduce any new CLI.
-Teams continue to use standard CLIs such as 'kubectl' and 'helm' to build and manage their platforms.
+and then creates their application platforms as Code composing various Custom Resources together.
 
 
 KubePlus Architecture
@@ -70,11 +49,13 @@ KubePlus streamlines the process of discovering static and runtime information a
 introduced by various Operators in a cluster. Static information consists of: a) how-to-use guides for Custom Resources supported by an Operator, b) any code level assumptions made by an Operator, c) OpenAPI Spec definitions for a Custom Resource. Runtime information consists of: a) identification of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance, 
 b) historical information about declarative actions performed on Custom Resource instances.
 
+KubePlus does not introduce any new input format, such as a new Spec, for Custom Resource discovery. Discovery is enabled via annotations, ConfigMaps, and custom sub-resources.
+
 -----------------------------
 Platform-as-Code Annotations
 -----------------------------
 
-KubePlus uses annotations on Custom Resource Definitions towards providing static and runtime information about Custom Resources. Following annotations are currently supported:
+KubePlus defines following annotations, which need to be set on Custom Resource Definitions (CRDs)
 
 .. code-block:: bash
 
@@ -94,18 +75,17 @@ The 'constants' annotation is used to surface any code level assumptions made by
 
 The 'openapispec' annotation is used to define OpenAPI Spec for a Custom Resource.
 
+The values for 'usage', 'constants', 'openapispec' annotations are names of ConfigMaps that store the corresponding data. Creating these ConfigMaps is the responsibility of Operator developer.
+Don't forget to package these ConfigMaps along with your Operator Helm Chart. Here_ is an example of Moodle Helm Chart with these annotations and ConfigMaps.
+
+.. _Here: https://github.com/cloud-ark/kubeplus-operators/tree/master/moodle/moodle-operator-chart/templates
+
+
 .. code-block:: bash
 
    platform-as-code/composition 
 
-The 'composition' annotation is used to list Kubernetes's native resources that are created by an Operator as part of instantiating instances of a Custom Resource.
-
-The values for 'usage', 'constants', 'openapispec' annotations are names of ConfigMaps that store the corresponding data. Creating these ConfigMaps is the responsibility of Operator developer.
-Don't forget to package these ConfigMaps along with your Helm Chart. Here_ is example of Moodle Helm Chart with these annotations and ConfigMaps.
-
-.. _Here: https://github.com/cloud-ark/kubeplus-operators/tree/master/moodle/moodle-operator-chart/templates
-
-The values in 'composition' annotation are used by KubePlus in building dynamic composition tree of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
+The 'composition' annotation is used to define Kubernetes's native resources that are created by an Operator as part of instantiating instances of a Custom Resource. KubePlus uses this list, along with OwnerReferences, to build dynamic composition tree of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
 
 
 Annotations on Moodle Custom Resource Definition are shown below:
@@ -134,9 +114,7 @@ Annotations on Moodle Custom Resource Definition are shown below:
 Platform-as-Code Endpoints
 ----------------------------
 
-Application developers are able to find out information about Custom Resources directly using kubectl -- similar to how Unix 'man' and 'pstree' commands work.
-
-Towards that end KubePlus exposes following endpoints as custom sub-resources - 'man', 'explain' and 'composition'. 
+Towards enabling application developers to discover information about Custom Resources directly from kubectl, KubePlus exposes following endpoints as custom sub-resources - 'man', 'explain' and 'composition'. 
 
 These endpoints are implemented using Kubernetes's aggregated API Server.
 
@@ -186,8 +164,6 @@ Available Operators
 We are maintaining a `repository of Operators`_ that follow the Operator development guidelines_. 
 You can use Operators from this repository, or create your own Operator and use it with KubePlus. 
 Make sure to add the platform-as-code annotations mentioned above to enable your Operator consumers to easily find static and runtime information about your Custom Resources right through kubectl.
-
-We can also help checking your Operators against the guidelines. Just open an issue on the repository with link to your Operator code and we will provide feedback on it.
 
 .. _repository of Operators: https://github.com/cloud-ark/operatorcharts/
 
