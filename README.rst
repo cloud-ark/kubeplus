@@ -4,45 +4,20 @@ KubePlus Platform toolkit
 
 KubePlus Platform toolkit simplifies discovery and use of Kubernetes Operators and Custom Resources in a cluster.
 
-Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run and manage third-party software directly on Kubernetes. Today, number of Operators are
+Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party software directly on Kubernetes. Today, number of Operators are
 being built for middlewares like databases, queues, ssl certificates, etc.
-The Custom Resources introduced by Operators essentially represent 'platform elements' as their Spec definitions encapsulate some higher-level workflow actions on the underlying infrastructure resource that they are managing (database, queue, ssl certificate, etc.). A novel approach for building platforms on Kubernetes is to construct a platform stack from multiple Custom Resources, essentially building platforms as Code.
-
-Platform as Code approach provides true portability across Cloud providers as your entire platform stack is running on Kubernetes. It also enables Kubernetes YAML to become common language between Operations team and application development teams.
+The Custom Resources introduced by Operators essentially represent 'platform elements' as encapsulate some high-level workflow actions on the underlying infrastructure resource which they are managing (database, queue, ssl certificate, etc.). A novel approach for building platforms on Kubernetes is to construct a platform stack from multiple Custom Resources from different Operators.
 
 .. _Operators: https://coreos.com/operators/
 
-The main challenge in this approach is interoperability between Custom Resources from different Operators. KubePlus Platform toolkit solves this challenge by standardizing on how application developers can easily discover and use Custom Resources. Specifically, it provides a way for application developers to obtain 'man page' like static information and 'pstree' like dynamic information for Custom Resources directly from 'kubectl'. Equipped with this information application developers can then create their platform stacks with correct YAML definitions of various Custom and native Kubernetes resources.
+The main challenge in this approach is interoperability between Custom Resources from different Operators. KubePlus Platform toolkit focuses on solving this challenge by standardizing on how application developers can easily discover and use Custom Resources in a cluster. Specifically, it provides a way for application developers to obtain 'man page' like static information, and 'pstree' like dynamic information for Custom Resources directly through 'kubectl'. Equipped with this information application developers can then create their platform stacks with correct YAML definitions of various Custom Resources.
+
+Platform stacks thus defined 'as Code' using Custom Resources provide true portability across Cloud providers and across different environments as the entire stack is running on Kubernetes. It also enables Kubernetes YAML to become the common language between Operations teams and application development teams.
 
 
-.. _discoverability and interoperability guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
-
-
-.. .. image:: ./docs/Kubeplus-flow-2.png
-..   :scale: 25%
-..   :align: center
-
-
-Usage
-======
-
-KubePlus Platform toolkit is designed with 3 user personas in mind. 
-
-*1. Operator Developer*
-
-Operator developers use `discoverability and interoperability guidelines`_ when developing their Operators. These guidelines enable creating Operators such that they are discoverable and consistent to use alongside other Operators in a cluster.
-
-*2. DevOps Engineer*
-
-DevOps Engineer/Cluster Administrator uses standard tools such as 'kubectl' or 'helm' to deploy required Operators in a cluster. We `provide`_ Operators that you can use.
-
-.. _provide: https://github.com/cloud-ark/operatorcharts/
-
-You also deploy KubePlus in your cluster so that application developers can discover information about various Custom Resources.
-
-*3. Application Developer*
-
-Application developers use kubectl to discover and create their application platforms as Code composing various Custom Resources together.
+.. image:: ./docs/KubePlus-Flow.jpg
+   :scale: 25%
+   :align: center
 
 
 KubePlus Architecture
@@ -50,7 +25,7 @@ KubePlus Architecture
 
 KubePlus streamlines the process of discovering static and runtime information about Custom Resources
 introduced by various Operators in a cluster. Static information consists of: a) how-to-use guides for Custom Resources supported by an Operator, b) any code level assumptions made by an Operator, c) OpenAPI Spec definitions for a Custom Resource. Runtime information consists of: a) identification of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance, 
-b) historical information about declarative actions performed on Custom Resource instances.
+b) history of declarative actions performed on Custom Resource instances.
 
 KubePlus does not introduce any new input format, such as a new Spec, for Custom Resource discovery. Discovery is enabled via annotations, ConfigMaps, and custom endpoints.
 
@@ -88,7 +63,7 @@ Don't forget to package these ConfigMaps along with your Operator Helm Chart. He
 
    platform-as-code/composition 
 
-The 'composition' annotation is used to define Kubernetes's native resources that are created as part of instantiating a Custom Resource. KubePlus uses this list, along with OwnerReferences, to build dynamic composition tree of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
+The 'composition' annotation is used to define Kubernetes's native resources that are created as part of instantiating a Custom Resource instance. KubePlus uses the values in this annotations along with OwnerReferences, to build dynamic composition tree of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
 
 As an example, annotations on Moodle Custom Resource Definition are shown below:
 
@@ -127,32 +102,65 @@ These endpoints are implemented using Kubernetes's aggregated API Server.
 The 'man' endpoint is used to find out 'man page' like information about Custom Resources.
 It essentially exposes the information packaged in 'usage' and 'constants' annotations on a CRD.
 
+.. image:: ./docs/Moodle-man.png
+   :scale: 25%
+   :align: center
+
+
 .. code-block:: bash
 
    $ kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
    $ kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
 
+
 The 'explain' endpoint is used to discover Spec of Custom Resources. 
 It exposes the information packaged in 'openapispec' annotation on a CRD.
+
+.. image:: ./docs/Moodle-explain.png
+   :scale: 25%
+   :align: center
+
+
 
 .. code-block:: bash
 
    $ kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=namespace1" | python -mjson.tool
 
+
 The 'composition' endpoint is used by application developers for discovering the runtime composition tree of native Kubernetes resources that are created as part of provisioning a Custom Resource instance.
 It uses listing of native resources available in 'composition' annotation and Custom Resource OwnerReferences to build this tree.
+
+.. image:: ./docs/Moodle-composition.png
+   :scale: 25%
+   :align: center
+
 
 Examples of possible future endpoints are: 'provenance', 'functions', and 'configurables'. We look forward to inputs from the community on what additional information on Custom Resources you would like to get from such endpoints.
 
 
-Recommendations:
-=================
+Usage
+======
 
-1. If you are Operator developer, consider adding Platform-as-Code annotations to your CRDs. This will make the Custom Resources easily discoverable for your users.
+.. _discoverability and interoperability guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
-2. If you are Cluster Administrator, consider deploying KubePlus in your cluster.
 
-3. If you are Application developer, use the Platform-as-Code endpoints to discover static and runtime information about Custom Resources in your cluster.
+*1. Operator Developer*
+
+Operator developers use `discoverability and interoperability guidelines`_ when developing their Operators. These guidelines enable creating Operators such that they are discoverable and consistent to use alongside other Operators in a cluster. This includes adding Platform-as-Code annotations to the CRDs.
+
+*2. DevOps Engineer*
+
+DevOps Engineers/Cluster Administrators uses standard tools such as 'kubectl' or 'helm' to deploy required Operators in a cluster. We `provide`_ Operators that you can use.
+
+.. _provide: https://github.com/cloud-ark/operatorcharts/
+
+Additionally they deploy KubePlus in their cluster so that application developers can discover and use various Custom Resources efficiently.
+
+*3. Application Developer*
+
+Application developers use Platform-as-Code endpoints with kubectl to discover static and runtime information about Custom Resources in their cluster. They can then build their platform stacks 
+composing various Custom Resources together.
+
 
 
 Demo
@@ -185,10 +193,13 @@ RoadMap
 
 Here are our road map items:
 
-1. Automated and programmatic discovery and binding between Custom Resources.
-2. Integrating Kubeprovenance functionality into KubePlus.
+1. Automated discovery and binding between Custom Resources.
+2. Integrating Kubeprovenance_ functionality into KubePlus.
 3. Improving operator-analysis to check conformance of Operators with guidelines.
-4. Tracking of entire platform stacks as a whole.
+4. Tracking and visualizing entire platform stacks.
+
+.. _Kubeprovenance: https://github.com/cloud-ark/kubeprovenance
+
 
 Issues/Suggestions
 ===================
