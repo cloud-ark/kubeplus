@@ -6,18 +6,18 @@ KubePlus Platform toolkit simplifies discovery and use of Kubernetes Operators a
 
 Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party software directly on Kubernetes. Today, number of Operators are
 being built for middlewares like databases, queues, ssl certificates, etc.
-The Custom Resources introduced by Operators essentially represent 'platform elements' as encapsulate some high-level workflow actions on the underlying infrastructure resource which they are managing (database, queue, ssl certificate, etc.). A novel approach for building platforms on Kubernetes is to construct a platform stack from multiple Custom Resources from different Operators.
+The Custom Resources introduced by Operators essentially represent 'platform elements' as they encapsulate some high-level workflow actions on the underlying infrastructure resource which they are managing (database, queue, ssl certificate, etc.). A novel approach for building platforms on Kubernetes is to construct a platform stack from multiple Custom Resources from different Operators.
 
 .. _Operators: https://coreos.com/operators/
 
 The main challenge in this approach is interoperability between Custom Resources from different Operators. KubePlus Platform toolkit focuses on solving this challenge by standardizing on how application developers can easily discover and use Custom Resources in a cluster. Specifically, it provides a way for application developers to obtain 'man page' like static information, and 'pstree' like dynamic information for Custom Resources directly through 'kubectl'. Equipped with this information application developers can then create their platform stacks with correct YAML definitions of various Custom Resources.
 
-Platform stacks thus defined 'as Code' using Custom Resources provide true portability across Cloud providers and across different environments as the entire stack is running on Kubernetes. It also enables Kubernetes YAML to become the common language between Operations teams and application development teams.
+Platform stacks thus defined 'as Code' using Custom Resources provide true portability across Cloud providers, and across different environments as the entire stack is running on Kubernetes. It also enables Kubernetes YAML to become the common language between Operations teams and application development teams.
 
 
-.. image:: ./docs/KubePlus-Flow.jpg
-   :scale: 25%
-   :align: center
+.. .. image:: ./docs/KubePlus-Flow.jpg
+..   :scale: 25%
+..   :align: center
 
 
 KubePlus Architecture
