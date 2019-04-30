@@ -10,9 +10,9 @@ The Custom Resources introduced by Operators essentially represent 'platform ele
 
 .. _Operators: https://coreos.com/operators/
 
-The main challenge in this approach is interoperability between Custom Resources from different Operators. KubePlus Platform toolkit focuses on solving this challenge by standardizing on how application developers can easily discover and use Custom Resources in a cluster. Specifically, it provides a way for application developers to obtain 'man page' like static information, and 'pstree' like dynamic information for Custom Resources directly through 'kubectl'. Equipped with this information application developers can then create their platform stacks with correct YAML definitions of various Custom Resources.
+The main challenge in this approach is interoperability between Custom Resources from different Operators. KubePlus Platform toolkit focuses on solving this challenge by standardizing on how application developers can easily discover and use Custom Resources in a cluster. Equipped with this information application developers can then create their platform stacks with correct YAML definitions of various Custom Resources.
 
-Platform stacks thus defined 'as Code' using Custom Resources provide true portability across Cloud providers, and across different environments as the entire stack is running on Kubernetes. It also enables Kubernetes YAML to become the common language between Operations teams and application development teams.
+Platform stacks thus defined 'as Code' using Custom Resources provide true portability across Cloud providers, and across different environments, as the entire stack is running on Kubernetes. It also enables Kubernetes YAML to become the common language between Operations teams and application development teams.
 
 
 .. .. image:: ./docs/KubePlus-Flow.jpg
@@ -23,11 +23,9 @@ Platform stacks thus defined 'as Code' using Custom Resources provide true porta
 KubePlus Architecture
 ======================
 
-KubePlus streamlines the process of discovering static and runtime information about Custom Resources
-introduced by various Operators in a cluster. Static information consists of: a) how-to-use guides for Custom Resources supported by an Operator, b) any code level assumptions made by an Operator, c) OpenAPI Spec definitions for a Custom Resource. Runtime information consists of: a) identification of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance, 
-b) history of declarative actions performed on Custom Resource instances.
+KubePlus standardizes the process of integration and discovery of static and runtime information about Custom Resources managed by Operators. Static information consists of: a) how-to-use guides for Custom Resources, b) any code level assumptions made by an Operator, c) OpenAPI Spec definitions for a Custom Resource. Runtime information consists of: a) identification of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance, b) history of declarative actions performed on Custom Resource instances.
 
-KubePlus does not introduce any new input format, such as a new Spec, for Custom Resource discovery. Discovery is enabled via annotations, ConfigMaps, and custom endpoints.
+KubePlus uses annotations, ConfigMaps, and custom endpoints to enable the discovery process.
 
 -----------------------------
 Platform-as-Code Annotations
@@ -63,7 +61,7 @@ Don't forget to package these ConfigMaps along with your Operator Helm Chart. He
 
    platform-as-code/composition 
 
-The 'composition' annotation is used to define Kubernetes's native resources that are created as part of instantiating a Custom Resource instance. KubePlus uses the values in this annotations along with OwnerReferences, to build dynamic composition tree of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
+The 'composition' annotation is used to define Kubernetes's native resources that are created as part of instantiating a Custom Resource instance. KubePlus uses the values in this annotation along with OwnerReferences, to build dynamic composition tree of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
 
 As an example, annotations on Moodle Custom Resource Definition are shown below:
 
