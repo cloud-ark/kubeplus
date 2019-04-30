@@ -104,8 +104,13 @@ Create Moodle instance and take its backups
        - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
 
      - In the Moodle Spec you need to reference the MysqlCluster endpoints so that Moodle can
-       use the MysqlCluster. The relevant Spec properties are: mysqlSQLServiceName, mysqlUserName, mysqlUserPassword. The value of mysqlServiceName should be name of the MysqlCluster resource with '-mysql-master' appended to it. The value of mysqlUserName should be 'root'. The value of mysqlUserPassword should be name of the MysqlCluster's root user password with the key of the data appended to it. All these values are already populated in moodle1.yaml. If you change the names of MysqlCluster resource or the corresponding Secret object for the username, then make sure to update moodle1.yaml.
+       use the MysqlCluster. The relevant Spec properties are: mysqlSQLServiceName, mysqlUserName, mysqlUserPassword. 
+       The value of mysqlServiceName should be name of the MysqlCluster resource with '-mysql-master' appended to it. 
+       The value of mysqlUserName should be 'root'. 
+       The value of mysqlUserPassword should be name of the MysqlCluster's root user password with the key of the data appended to it. 
+       All these values are already populated in moodle1.yaml. If you change the names of MysqlCluster resource or the corresponding Secret object for the username, then make sure to update moodle1.yaml.
 
+     - If you have registered domain name then add that in moodle1 Spec as 'domainName' attribute.
      - kubectl create -f moodle1.yaml
 
      - Wait till Moodle Pod is ready 1/1 (It will take about 5/6 minutes for Moodle Pod to become ready)
@@ -146,7 +151,8 @@ Create Moodle instance and take its backups
    Find out how to use the Restic Custom Resource:
    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Restic"
 
-   - Restic Custom Resource needs two things as input. First, the mount path of the Volume that needs to be backed up. Second, the Deployment in which the Volume is mounted needs to be given some label and that label needs to be specified in the Restic Custom Resource's selector.
+   - Restic Custom Resource needs two things as input. First, the mount path of the Volume that needs to be backed up. 
+   Second, the Deployment in which the Volume is mounted needs to be given some label and that label needs to be specified in the Restic Custom Resource's selector.
 
    - Use the 'man' endpoint for Moodle Kind to find the Volume mount path that the Moodle Operator uses for the Moodle data volume.
     - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
