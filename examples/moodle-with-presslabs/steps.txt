@@ -44,7 +44,7 @@ Steps:
 
 5) Once Helm Pod is ready, deploy Moodle and MySQL Operators
    - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-1.tgz?raw=true
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.2.4.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.4.tgz?raw=true
 
 6) Wait till both Operator Pods are ready
    - kubectl get pods
@@ -74,6 +74,7 @@ Steps:
      - kubectl get pods -n namespace1
 
    - Once MysqlCluster pods are ready, deploy Moodle
+     - If you have registered a DomainName then update Moodle Spec to include 'domainName' attribute, e.g.: 'domainName: www.moodle1.net'. Otherwise, leave it empty
      - kubectl create -f moodle1.yaml
   
    - Wail till Moodle Pod is ready (It will take about 5/6 minutes for Moodle Pod to become ready)
