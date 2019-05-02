@@ -129,7 +129,7 @@ Actual steps (Minikube):
    - ln -s <path-where-you-cloned-kubeplus> kubeplus
 
 4) Install dependencies:
-   - cd $GO_WORKSPACE/github.com/cloud-ark/kubeplus
+   - cd $GO_WORKSPACE/github.com/cloud-ark/kubeplus/postgres-crd
    - dep ensure
 
 5) In one shell window run Postgres custom resource controller
