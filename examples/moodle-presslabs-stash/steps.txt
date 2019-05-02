@@ -74,7 +74,7 @@ Create Moodle instance and take its backups
        - kubectl get --raw "/apis/platform-as-code/v1/man?kind=MysqlCluster"
 
      We are also going to configure periodic backups for this Cluster as part of the Spec definition.
-     Setting up the Cluster involves three things:
+     Setting up a MysqlCluster involves three things:
      a. Creating a Secret that represents MysqlCluster's root user password
        - kubectl create -f cluster1-secret.yaml
      b. Creating a Secret that is used for representing AWS credentials
@@ -117,6 +117,7 @@ Create Moodle instance and take its backups
        - kubectl get pods -n namespace1
 
    - Login to Moodle Instance
+       - If you have working DNS name, then below steps are not required.
        - Update /etc/hosts with <minikube ip or cluster node ip> moodle1. Example:
          - 192.168.99.100 moodle1
          - You can find minikube ip using: "minikube ip" command
@@ -164,24 +165,23 @@ Create Moodle instance and take its backups
     - kubectl label -n namespace1 deployments moodle1 app=moodle-deploy
 
 4) Update the restic-moodle.yaml with the Volume mount path from step 2 and the label added in step 3
-   (lines 9, 11, 21)
+   (lines 9, 11, 21 in restic-moodle.yaml)
 
-5) Add base64 encoded access keys to s3-secret.yaml
-    Edit your keys in s3-secret.yaml
+5) Add base64 encoded values of AWS access key and access key id to s3-secret.yaml
 
     for AWS_ACCESS_KEY_ID:
-    - echo -n "your_access_key" | base64
+    - echo -n "aws_access_key_id" | base64
     for AWS_SECRET_ACCESS_KEY:
-    - echo -n "your_secret_access_code" | base64
+    - echo -n "aws_secret_access_key" | base64
     for RESTIC_PASSWORD:
     - echo -n "changeit" | base64
 
-6) Update restic-moodle.yaml with S3 details:
+6) Apply AWS s3 secret
+    - kubectl apply -f s3-secret.yaml
+
+7) Update restic-moodle.yaml with S3 details:
    - S3 bucket name (spec property: spec.backend.s3.bucket)
    - S3 secret name (spec property: spec.backend.storageSecretName)
-
-7) Apply AWS s3 secret
-    - kubectl apply -f s3-secret.yaml
 
 8) Start taking backups
     - kubectl apply -f restic-moodle.yaml
@@ -220,14 +220,13 @@ Recover a snapshot
         - initBucketURI: s3://stash-testing34/mysql-backups/cluster1-2019-04-09T19:56:01.xbackup.gz
 
 6) Create the Recovery object. It stores the snapshot into that PersistentVolumeClaim.
-   Update the Recovery Custom Resource definition (in recovery.yaml) with the name of the PersistentVolumeClaim
-   that you created in step 3 (in line 16)
+   Update the Recovery Custom Resource definition (in recovery.yaml) with the name of the PersistentVolumeClaim that you created in step 3 (in line 16)
     - kubectl create -f recovery.yaml
     Wait until the Recovery event is successful
     - kubectl describe recovery s3-recovery-specific-snapshot -n namespace1
-      -> It may take couple of minutes for this. You will see following message
-         "Recovery s3-recovery-specific-snapshot succeeded". When you see this, it means
-         the recovery is complete.
+      -> It may take couple of minutes for this. Once you see following message
+         "Recovery s3-recovery-specific-snapshot succeeded", it means recovery is complete.
+
 7) Create the new MysqlCluster from backed up data
     - kubectl create -f cluster2-secret.yaml
     - kubectl create -f cluster2-recovered.yaml
@@ -241,14 +240,17 @@ Recover a snapshot
 10) Wait for moodle2 instance to come up:
    - kubectl describe moodles moodle2 -n namespace1
 
-11) - Update /etc/hosts with <minikube ip or cluster node ip> moodle2. Example:
+11) Access moodle2 instance
+    - Following step is not required if you have a working DNS setup
+    - Update /etc/hosts with <minikube ip or cluster node ip> moodle2. Example:
         - (minikube ip) moodle2
 
 12) Visit moodle2:32001 (may take a few minutes)
-    - Log in, and verify that all uploaded images are there!
-      - kubectl get secret moodle2 -n namespace1 -o jsonpath="{.data.adminPassword}" | base64 --decode
+    - Verify that all uploaded images are there!
     - Courses you added with an image should be there
     - Private files that students created should be there
+    - Log in (not working yet)
+      - kubectl get secret moodle2 -n namespace1 -o jsonpath="{.data.adminPassword}" | base64 --decode
 
 
 Clean up
