@@ -14,6 +14,10 @@ The main challenge in this approach is interoperability between Custom Resources
 
 Platform stacks thus defined 'as Code' using Custom Resources provide true portability across Cloud providers, and across different environments, as the entire stack is running on Kubernetes. It also enables Kubernetes YAML to become the common language between Operations teams and application development teams.
 
+Read our blog post about KubePlus Platform Toolkit here_.
+
+.. _here: https://medium.com/@cloudark/kubeplus-platform-toolkit-simplify-discovery-and-use-of-kubernetes-custom-resources-85f08851188f
+
 
 .. .. image:: ./docs/KubePlus-Flow.jpg
 ..   :scale: 25%
