@@ -14,14 +14,9 @@ The main challenge in this approach is interoperability between Custom Resources
 
 Platform stacks thus defined 'as Code' using Custom Resources provide true portability across Cloud providers, and across different environments, as the entire stack is running on Kubernetes. It also enables Kubernetes YAML to become the common language between Operations teams and application development teams.
 
-Read our `blog post`_ about KubePlus Platform toolkit here.
+Read our `blog post`_ to know more about KubePlus Platform toolkit.
 
 .. _blog post: https://medium.com/@cloudark/kubeplus-platform-toolkit-simplify-discovery-and-use-of-kubernetes-custom-resources-85f08851188f
-
-
-.. image:: ./docs/KubePlus-diagram.png
-   :scale: 25%
-   :align: center
 
 
 Architecture
@@ -30,6 +25,12 @@ Architecture
 KubePlus Platform toolkit standardizes the process of integration and discovery of static and runtime information about Custom Resources managed by Operators. Static information consists of: a) how-to-use guides for Custom Resources, b) any code level assumptions made by an Operator, c) OpenAPI Spec definitions for a Custom Resource. Runtime information consists of: a) identification of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance, b) history of declarative actions performed on Custom Resource instances.
 
 KubePlus Platform toolkit uses annotations, ConfigMaps, and custom endpoints to enable the discovery process.
+
+
+.. image:: ./docs/KubePlus-diagram.png
+   :scale: 20%
+   :align: center
+
 
 -----------------------------
 Platform-as-Code Annotations
@@ -168,7 +169,7 @@ composing various Custom Resources together.
 Demo
 ====
 
-See KubePlus Platform toolkit in action_.
+KubePlus Platform toolkit in action_.
 
 .. _action: https://youtu.be/wj-orvFzUoM
 
