@@ -10,11 +10,11 @@ Towards building such platforms various Operators and their Custom Resources nee
 
 ## Design guidelines
 
-[1) Design Operator with declarative API/s and avoid inputs as imperative actions](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#1-design-your-operator-with-declarative-apis-and-avoid-inputs-as-imperative-actions)
+[1) Design Operator with declarative API/s and avoid inputs as imperative actions](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#1-design-operator-with-declarative-apis-and-avoid-inputs-as-imperative-actions)
 
 [2) Consider to use kubectl as the primary interaction mechanism](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#2-consider-to-use-kubectl-as-the-primary-interaction-mechanism)
 
-[3) Decide Custom Resource Metrics Collection strategy](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#3-decide-your-custom-resource-metrics-collection-strategy)
+[3) Decide Custom Resource Metrics Collection strategy](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#3-decide-custom-resource-metrics-collection-strategy)
 
 [4) Register CRDs as YAML Spec rather than in Operator code](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#4-register-crds-as-yaml-spec-rather-than-in-operator-code)
 
@@ -25,7 +25,7 @@ Towards building such platforms various Operators and their Custom Resources nee
 
 [6) Make Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#6-make-custom-resource-type-definitions-compliant-with-kube-openapi)
 
-[7) Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#7-define-custom-resource-spec-validation-rules-as-part-of-custom-resource-definition)
+[7) Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#7-define-custom-resource-spec-validation-rules-as-part-of-custom-resource-definition-yaml)
 
 [8) Set OwnerReferences for underlying resources owned by your Custom Resource](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#8-set-ownerreferences-for-underlying-resources-owned-by-your-custom-resource)
 
@@ -219,17 +219,21 @@ The 'usage' annotation should be used to define how-to use guide of a Custom Res
 The 'constants' annotation should be used to define Operator's implementation choices and assumption.
 The 'openapispec' annotation should be used to define the OpenAPI Spec schema for a Custom Resource.
 The 'composition' annotation should be used to specify the underlying Kubernetes resources that will be created as part of managing a Custom Resource instance. The values of the first three annotations are names of ConfigMaps with appropriate data.
-An example of this can be seen for our sample Postgres Custom Resource Definition below:
+An example of this can be seen for our sample Moodle Custom Resource Definition below:
 
 ```
+  apiVersion: apiextensions.k8s.io/v1beta1
   kind: CustomResourceDefinition
   metadata:
-    name: postgreses.postgrescontroller
+    name: moodles.moodlecontroller.kubeplus
     annotations:
-      composition: Deployment, Service
+      platform-as-code/usage: moodle-operator-usage.usage
+      platform-as-code/constants: moodle-operator-implementation-details.implementation_choices
+      platform-as-code/openapispec: moodle-openapispec.openapispec
+      platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
 ```
 
-This information is useful for application developers when figuring out how to use your Operator and its Custom Resources. Externalizing this information also makes it possible to build tools like [kubediscovery](https://github.com/cloud-ark/kubediscovery) that show Object composition tree for custom resource instances built leveraging this information.
+This information is useful for application developers when figuring out how to use your Operator and its Custom Resources. Externalizing information like that available in the 'composition' annotation makes it possible to build tools like [kubediscovery](https://github.com/cloud-ark/kubediscovery) that show Object composition tree for custom resource instances built leveraging this information.
 
 
 ## 13) Package Operator as Helm Chart
@@ -263,7 +267,7 @@ Given these options, it will help consumers of your Operator if there is a clear
 Your Operator may be using default service account or some specific service account. Moreover, the service account may need to be granted specific permissions. Clearly document the service account needs of your Operator. Include this information in the ConfigMap that you will add for the 'usage' annotation on the CRD.
 
 
-## 16) Document naming convention and labels to be used with Custom Resources
+## 16) Document naming convention and labels to be used with your Custom Resources
 
 You may have special requirements for naming your custom resource instances or some of their
 Spec properties. Similarly you may have requirements related to the labels that need to be added on them. Document this information with in the ConfigMap corresponding to the 'usage' annotation on the CRD.
