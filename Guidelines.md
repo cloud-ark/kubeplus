@@ -7,6 +7,7 @@ We are seeing a new trend where Custom Resources introduced by different Operato
 
 Towards building such platforms various Operators and their Custom Resources need to provide a consistent usage experience. We present below guidelines that ensures such an experience to end users (Cluster Administrators and Application Developers). Operators that are developed following these guidelines provide ease of installation, management, and discovery to end users who are creating application platforms leveraging them.
 
+Check out [this post](https://medium.com/@cloudark/analysis-of-open-source-kubernetes-operators-f6be898f2340) about our analysis of more than 100 open source Operators for their conformance to some of these guidelines.
 
 ## Design guidelines
 
