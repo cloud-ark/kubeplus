@@ -106,7 +106,7 @@ can be done by Cluster administrator while Operator Pod deployment can be done b
 
 ## 5) Make Operator namespace aware
 
-Your Operator should support creating resources within different namespaces rather than just in the default namespace. This will allow your Operator to support usecases where multitenancy through namespaces is sufficient (these are called 'soft' multitenancy use-cases).
+Your Operator should support creating resources within different namespaces rather than just in the default namespace. This will allow your Operator to support use-cases where multitenancy through namespaces is sufficient (these are called 'soft' multitenancy use-cases).
 
 
 ## 6) Make Custom Resource Type definitions compliant with Kube OpenAPI
@@ -171,7 +171,7 @@ validation:
 
 ## 8) Set OwnerReferences for underlying resources owned by your Custom Resource
 
-A custom resource instance will typically create one or more other Kubernetes resource instances, such as Deployment, Service, Secret etc., as part of its instantiation. Here this custom resource is the owner of its underlying resources that it manages. Custom controller should be written to set OwnerReference on such managed Kubernetes resources. They are key for correct garbage collection of custom resources. OwnerReferences also help with finding runtime composition tree of your custom resource instances.
+An Operator will typically create one or more native Kubernetes resources, such as Deployment, Service, Secret, etc., as part of instantiating a Custom Resource instance. Here this custom resource is the owner of its underlying native resources that were created by the Operator. OwnerReferences are key for correct garbage collection of custom resources. OwnerReferences also help with finding runtime composition tree of your custom resource instances.
 
 
 ## 9) Use Helm chart or ConfigMap for Operator configurables
