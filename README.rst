@@ -28,7 +28,7 @@ The main challenge in this platform-as-code approach is the interoperability bet
 
 *c) Annotation-based binding* - Are there any specific annotations that need to be added on Custom or native Kubernetes resources for an Operator to function correctly?
 
-KubePlus Platform Toolkit focuses on solving the interoperability challenge by standardizing on how can Operator developers package information about their Custom Resources using Kubernetes-native mechanisms, and how can Application developers easily discover this information directly through kubectl.
+KubePlus Platform Toolkit focuses on solving the interoperability challenge by standardizing on how  Operator developers package information about their Custom Resources using Kubernetes-native mechanisms, and how Application developers can easily discover this information directly through kubectl.
 
 
 Architecture
