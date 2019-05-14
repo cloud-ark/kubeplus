@@ -170,11 +170,7 @@ validation:
 
 ## 8) Set OwnerReferences for underlying resources owned by your Custom Resource
 
-A custom resource instance will typically create one or more other Kubernetes resource instances, such as Deployment, Service, Secret etc., as part of its instantiation. Here this custom resource is the owner of its underlying resources that it manages. Custom controller should be written to set OwnerReference on such managed Kubernetes resources. They are key for correct garbage collection of custom resources. OwnerReferences also help with finding composition tree of your custom resource instances. 
-
-Here are some examples of Operators that use OwnerReferences: [Etcd Operator](https://github.com/coreos/etcd-operator/blob/master/pkg/cluster/cluster.go#L351),
-[Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/controller.go#L508), and 
-[MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/pkg/resources/services/service.go#L34).
+A custom resource instance will typically create one or more other Kubernetes resource instances, such as Deployment, Service, Secret etc., as part of its instantiation. Here this custom resource is the owner of its underlying resources that it manages. Custom controller should be written to set OwnerReference on such managed Kubernetes resources. They are key for correct garbage collection of custom resources. OwnerReferences also help with finding runtime composition tree of your custom resource instances.
 
 
 ## 9) Use Helm chart or ConfigMap for Operator configurables
@@ -190,8 +186,7 @@ such parameters. If not, use ConfigMap for this purpose. This guideline ensures 
 
 An Operator generally needs to take configuration parameter as inputs 
 for the underlying resource that it is managing through its custom resource such as a database.
-We have seen three different approaches being used towards this in the community
-- using ConfigMaps, using Annotations, or using Spec definition itself. 
+We have seen three different approaches being used towards this in the community: using ConfigMaps, using Annotations, or using Spec definition itself. 
 Any of these approaches should be fine based on your Operator design. 
 
 [Nginx Custom Controller](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/customization) supports both ConfigMap and Annotation.
@@ -240,7 +235,7 @@ This information is useful for application developers when figuring out how to u
 
 Create a Helm chart for your Operator. The chart should include two things:
 
-  * Registration of all Custom Resources managed by the Operator. Examples of this can be seen in 
+  * All Custom Resource Definitions for Custom Resources managed by the Operator. Examples of this can be seen in 
 CloudARK [sample Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/templates/deployment.yaml) and in 
 [this MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/mysql-operator/templates/01-resources.yaml).
 
@@ -253,11 +248,11 @@ CloudARK [sample Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/m
 
 For Operator developers it is critical to consider how their Operator works with namespaces. Typically, an Operator can be installed in one of the following configurations:
 
-  * Operator runs in default namespace and Custom Resources are created in default namespace.
+  * Operator runs in the default namespace and Custom Resource instances are created in the default namespace.
 
-  * Operator runs in default namespace but Custom Resources can be created in non-default namespaces.
+  * Operator runs in the default namespace but Custom Resource instances can be created in non-default namespaces.
 
-  * Operator runs in a non-default namespace and Custom Resources can be created in non-default namespaces.
+  * Operator runs in a non-default namespace and Custom Resource instances can be created in that namespace.
 
 Given these options, it will help consumers of your Operator if there is a clear documentation of how namespaces are used by your Operator. Include this information in the ConfigMap that you will add for the 'usage' annotation on the CRD.
 
