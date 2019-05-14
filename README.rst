@@ -28,7 +28,7 @@ The main challenge in this platform-as-code approach is the interoperability bet
 
 *c) Annotation-based binding* - Are there any specific annotations that need to be added on Custom or native Kubernetes resources for an Operator to function correctly?
 
-KubePlus Platform Toolkit focuses on solving this challenge by standardizing on how Operator developers can package information about their Custom Resources using Kubernetes-native mechanisms, and how Application developers can easily discover this information directly through kubectl. 
+KubePlus Platform Toolkit focuses on solving the interoperability challenge by standardizing on how can Operator developers package information about their Custom Resources using Kubernetes-native mechanisms, and how can Application developers easily discover this information directly through kubectl.
 
 
 Architecture
@@ -39,9 +39,9 @@ KubePlus Platform Toolkit standardizes the process of defining static informatio
 KubePlus Platform Toolkit uses annotations, ConfigMaps, and custom endpoints to enable the discovery process.
 
 
-.. image:: ./docs/KubePlus-diagram.png
-   :scale: 20%
-   :align: center
+.. .. image:: ./docs/KubePlus-diagram.png
+..   :scale: 20%
+..   :align: center
 
 
 -----------------------------
@@ -152,6 +152,21 @@ It uses listing of native resources available in 'composition' annotation and Cu
 Examples of possible future endpoints are: 'provenance', 'functions', and 'configurables'. We look forward to inputs from the community on what additional information on Custom Resources you would like to get from such endpoints.
 
 
+Example of using KubePlus Platform Toolkit
+===========================================
+
+As an example of how KubePlus Platform Toolkit is useful, you can check out `Moodle Platform`_
+built from three Operators — Moodle, MySQL, and Volume backup/restore. The various Custom Resources available through these Operators are — Moodle, MysqlCluster, Restic, Recovery. KubePlus helps application developers discover following aspects of these Custom Resources:
+
+- Moodle Custom Resource YAML definition needs a specific value to bind to a MysqlCluster Custom Resource instance. Using the ‘man’ endpoint with Moodle and MysqlCluster Custom Resources as input helps here.
+
+- In order to take backup of Moodle volume, the Deployment object for that Moodle Custom Resource instance needs to be given some label and that label needs to be used in the Restic Custom Resource label selector. The ‘man’ endpoint with Moodle and Restic as inputs help here. Also, the ‘composition’ endpoint with Moodle instance as input is needed to be used.
+
+- The Moodle volume backup also needs name of the Volume that needs to be backed up. The ‘man’ endpoint with Moodle Custom Resource input helps here as it surfaces the volume name which is an implementation detail of the Moodle Operator.
+
+.. _Moodle Platform: https://github.com/cloud-ark/kubeplus/tree/master/examples/moodle-presslabs-stash
+
+
 Usage
 ======
 
@@ -172,21 +187,6 @@ DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 
 Application developers use Platform-as-Code endpoints to discover static and runtime information about Custom Resources in their cluster. Using this information they can then build their platform stacks 
 composing various Custom Resources together.
 
-
-Example of using KubePlus Platform Toolkit
-===========================================
-
-As an example of how KubePlus Platform Toolkit is useful, you can check out `Moodle Platform`_
-built from three Operators — Moodle, MySQL, and Volume backup/restore. The various Custom Resources available through these Operators are — Moodle, MysqlCluster, Restic, Recovery. KubePlus helps application developers discover following aspects of these Custom Resources:
-
-- Moodle Custom Resource YAML definition needs a specific value to bind to a MysqlCluster Custom Resource instance. The ‘man’ endpoint helps here.
-
-- In order to take backup of Moodle volume, the Deployment object for that Moodle Custom Resource instance needs to be given some label and that label needs to be used in the Restic Custom Resource 
-label selector. The ‘man’ and ‘composition’ endpoints help here.
-
-- The Moodle volume backup also needs name of the volume that needs to be backed up. ‘man’ endpoint helps here to surface the volume name which is an implementation detail of the Moodle Operator.
-
-.. _Moodle Platform: https://github.com/cloud-ark/kubeplus/tree/master/examples/moodle-presslabs-stash
 
 
 Demo
@@ -210,14 +210,14 @@ Available Operators
 
 We are maintaining a `repository of Operator helm charts`_ in which Operator CRDs are annotated with Platform-as-Code annotations.
 
-.. _repository of Operators: https://github.com/cloud-ark/operatorcharts/
+.. _repository of Operator helm charts: https://github.com/cloud-ark/operatorcharts/
 
 
 RoadMap
 ========
 
 1. Working with Operator developers to define Platform-as-Code annotations on their Operators.
-2. Automated discovery and binding between Custom Resources.
+2. Automate the binding process between Custom Resources.
 3. Integrating Kubeprovenance_ functionality into KubePlus Platform toolkit.
 4. Improving operator-analysis to check conformance of Operators with guidelines.
 5. Tracking and visualizing entire platform stacks.
