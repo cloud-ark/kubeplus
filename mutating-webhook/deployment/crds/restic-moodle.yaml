@@ -1,0 +1,26 @@
+apiVersion: stash.appscode.com/v1alpha1
+kind: Restic
+metadata:
+  name: s3-restic
+  namespace: namespace1
+spec:
+  selector:
+    matchLabels:
+      app: moodle-deploy
+  fileGroups:
+  - path: {{backup-volume}}
+    retentionPolicyName: 'keep-last-10'
+  backend:
+    s3:
+      endpoint: 's3.amazonaws.com'
+      bucket: stash-testing34
+      prefix: stash1
+    storageSecretName: s3-secret
+  schedule: '@every 1m'
+  volumeMounts:
+  - mountPath: {{backup-volume}}
+    name: moodle-data
+  retentionPolicies:
+  - name: 'keep-last-10'
+    keepLast: 10
+    prune: true

@@ -1,0 +1,23 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: mutating-webhook-example-cfg
+  labels:
+    app: admission-webhook-example
+webhooks:
+  - name: mutating-example.banzaicloud.com
+    clientConfig:
+      service:
+        name: admission-webhook-example-svc
+        namespace: default
+        path: "/mutate"
+      caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1ekNDQWMrZ0F3SUJBZ0lCQVRBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwdGFXNXAKYTNWaVpVTkJNQjRYRFRFNE1EZ3lNekUwTlRrek0xb1hEVEk0TURneU1URTBOVGt6TTFvd0ZURVRNQkVHQTFVRQpBeE1LYldsdWFXdDFZbVZEUVRDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBT3JPCndJV1JvdUlsL1IzOExqM3RCWDU2bXZsMWZLdUhLMmZwWXRRZGJmVEowT3lLYW5ValkvdE12TEM0Z2t6cXYyZ0YKdWZoVUEvZHRRWmpkL0J0bU1nTUYvMUNTM0FhMGF5RjVNUFA3S1NXZFpRd2tGemhRTkpqa2h5L3A4ZndxVVNadgpkZFBJNkJkcmJNN0ZNdzNpOHRoY1RrcDRCbTJ4SjVPS3R4SzhXN0ltSGZOekJrVjFJemtHVGovNmlwRnFIcUZsCm1OZUxqQjIza3RGVytKbENENTh3MlBENnVvYm15R3c4cnFDT0s5cWVYZkdJamNId29HL2RIVkEzRVBIT1RMVmgKbnNVRDZXYllzS2xMKzRzM3puVmhHL2lBYVZyTDVWdWkxemhlSWNoSW9DZjhFZmdHWnFOc3hOMkhVZFVCdlN1cwpaQkdkY2JITVluc01XSC96alFzQ0F3RUFBYU5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trTUIwR0ExVWRKUVFXCk1CUUdDQ3NHQVFVRkJ3TUNCZ2dyQmdFRkJRY0RBVEFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQTBHQ1NxR1NJYjMKRFFFQkN3VUFBNElCQVFDZjlkSStJenZ2VlhGNnVnc3JYY3pUcVYveitMdTZaV1pYbFhHNjB5emxzaDdwd1E0bAp6dUVSQklNVHR5a0V6WFJobUpFWklQMW9zSEdqQUVxdGQvUGZINjBEdEFDbUJJNmFxSi96cTBML2h1bHZMQWJJCnlyV0pjY1h6VkR6L0lTdUY1UVlwdFYvL2xUQ2lVMHpRTW5DWjg1UlkyQnlTQ1Fzb0lJQnM0SEZDVDM1THZoQXYKWkE5WW84dXdzZjRVaG9Sd2JzT3BmbWhMOFlNNGo3UytSQ09pU0xRUE1aUUpYQlNxYUFWVE4zTUdaeXFORjcwYwpCcEtiWlpNZWNqNnJZMXozVGYza0hzSy9HL3J1enBLdUR5VnRLRXNkTGRGeGtkeUlpWnN5SXV6ckFhVUhIY0ZICkZwbnRkWlVkQzYrT0hmbUVvelo0YVF3ZGFkaUxydUJsRSs3ZAotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    rules:
+      # - operations: [ "CREATE" ]
+      #   apiGroups: [""]
+      #   apiVersions: ["v1"]
+      #   resources: ["pods"]
+      - operations: [ "CREATE" ]
+        apiGroups: ["mysql.presslabs.org", "moodlecontroller.kubeplus"]
+        apiVersions: ["v1alpha1", "v1"]
+        resources: ["mysqlclusters","moodles"]

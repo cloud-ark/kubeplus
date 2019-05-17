@@ -1,0 +1,23 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: mutating-webhook-example-cfg
+  labels:
+    app: admission-webhook-example
+webhooks:
+  - name: mutating-example.banzaicloud.com
+    clientConfig:
+      service:
+        name: admission-webhook-example-svc
+        namespace: default
+        path: "/mutate"
+      caBundle: ${CA_BUNDLE}
+    rules:
+      # - operations: [ "CREATE" ]
+      #   apiGroups: [""]
+      #   apiVersions: ["v1"]
+      #   resources: ["pods"]
+      - operations: [ "CREATE" ]
+        apiGroups: ["mysql.presslabs.org", "moodlecontroller.kubeplus"]
+        apiVersions: ["v1alpha1", "v1"]
+        resources: ["mysqlclusters","moodles"]
