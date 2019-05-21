@@ -7,8 +7,8 @@ metadata:
     backup-volume: /opt/moodledata
 spec:
   plugins: ["profilecohort"]
-  # <kind>.<instanceName>.<outputVariable>
-  mySQLServiceName: Fn::ImportValue(MysqlCluster.cluster1.service)
+  # <namespace>.<kind>.<instanceName>.<outputVariable>
+  mySQLServiceName: Fn::ImportValue(Default.MysqlCluster.cluster1.service)
   mySQLUserName: root
   mySQLUserPassword: cluster1-secret.ROOT_PASSWORD
   moodleAdminEmail: test@test.com

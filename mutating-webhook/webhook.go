@@ -111,6 +111,8 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	fmt.Printf("Adding annotations: %s\n", string(allAnnotations))
 	var patchOperations []patchOperation
 	patchOperations = make([]patchOperation, 0)
+	var entry Entry
+	var kind string
 	if err == nil { //annotations exist, parse them into our data structure
 		name, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
 		if err != nil {
@@ -120,7 +122,13 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 				},
 			}
 		}
-		kind, err := jsonparser.GetUnsafeString(req.Object.Raw, "kind")
+		namespace, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "namespace")
+		fmt.Printf("namespace: %s\n", namespace)
+		if err != nil {
+			name = "default"
+		}
+		fmt.Printf("namespace1: %s\n", namespace)
+		kind, err = jsonparser.GetUnsafeString(req.Object.Raw, "kind")
 		if err != nil {
 			return &v1beta1.AdmissionResponse{
 				Result: &metav1.Status{
@@ -129,7 +137,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			}
 		}
 		jsonparser.ObjectEach(allAnnotations, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-			entry := Entry{InstanceName: name, Key: string(key), Value: string(value)}
+			entry = Entry{InstanceName: name, Namespace: namespace, Key: string(key), Value: string(value)}
 
 			var entryList []Entry
 			var kindExists bool
@@ -152,7 +160,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			var resolveObj ResolveData
 			resolveObj = forResolve[i]
 			annotationPath := resolveObj.AnnotationPath
-			kind, instanceName, key, err := splitAnnotationPatch(annotationPath)
+			namespace1, kind1, instanceName1, key1, err := splitAnnotationPath(annotationPath)
 			if err != nil {
 				return &v1beta1.AdmissionResponse{
 					Result: &metav1.Status{
@@ -160,8 +168,16 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 					},
 				}
 			}
-			value, err := searchAnnotation(annotations.KindToEntry[kind], instanceName, key)
+			fmt.Printf("trying to resolve: %s %s %s %s\n", namespace1, kind1, instanceName1, key1)
+			value, err := searchAnnotation(annotations.KindToEntry[kind1], instanceName1, namespace1, key1)
 			if err != nil {
+				// Because we could not resolve one of the Fn::<path>
+				// we want to roll back our data structure by deleting the entry
+				// we just added. The store and resolve should be an atomic
+				// operation
+				deleted := annotations.Delete(entry, kind)
+				fmt.Printf("The data was deleted : %t", deleted)
+				fmt.Println(annotations)
 				return &v1beta1.AdmissionResponse{
 					Result: &metav1.Status{
 						Message: err.Error(),
@@ -188,11 +204,12 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	}
 }
 
-func searchAnnotation(entries []Entry, instanceName, key string) (string, error) {
+func searchAnnotation(entries []Entry, instanceName, namespace, key string) (string, error) {
 	for i := 0; i < len(entries); i++ {
 		entry := entries[i]
-		if entry.InstanceName == instanceName &&
-			entry.Key == key {
+		if strings.EqualFold(entry.InstanceName, instanceName) &&
+			strings.EqualFold(entry.Key, key) &&
+			strings.EqualFold(entry.Namespace, namespace) {
 			return entry.Value, nil
 		}
 	}
@@ -200,12 +217,13 @@ func searchAnnotation(entries []Entry, instanceName, key string) (string, error)
 	fmt.Printf("instance name: %s key: %s \n", instanceName, key)
 	return "", fmt.Errorf("Error annotation data was not stored, nothing to replace with. Check path.")
 }
-func splitAnnotationPatch(annotationPath string) (string, string, string, error) {
+func splitAnnotationPath(annotationPath string) (string, string, string, string, error) {
 	path := strings.Split(annotationPath, ".")
-	if len(path) != 3 {
-		return "", "", "", fmt.Errorf("AnnotationPath inside function is not of len 3")
+	if len(path) != 4 {
+		return "", "", "", "", fmt.Errorf("AnnotationPath inside function is not of len 3")
 	}
-	return path[0], path[1], path[2], nil
+	// [Namespace].[Kind].[InstanceName].[outputVariable]
+	return path[0], path[1], path[2], path[3], nil
 }
 
 // Serve method for webhook server

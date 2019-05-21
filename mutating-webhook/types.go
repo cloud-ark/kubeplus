@@ -61,6 +61,7 @@ func (s *StringStack) Peek() string {
 
 type Entry struct {
 	InstanceName string
+	Namespace    string
 	Key          string
 	Value        string
 }
@@ -78,10 +79,36 @@ func (a *StoredAnnotations) Exists(e Entry, kind string) bool {
 	}
 	for i := 0; i < len(entryList); i++ {
 		entry := entryList[i]
-		if entry.InstanceName == e.InstanceName &&
-			entry.Value == e.Value {
+		if strings.EqualFold(entry.InstanceName, e.InstanceName) &&
+			strings.EqualFold(entry.Key, e.Key) &&
+			strings.EqualFold(entry.Value, e.Value) &&
+			strings.EqualFold(entry.Namespace, e.Namespace) {
 			return true
 		}
 	}
 	return false
+}
+func (a *StoredAnnotations) Delete(e Entry, kind string) bool {
+	var entryList []Entry
+	var kindExists bool
+	if entryList, kindExists = annotations.KindToEntry[kind]; !kindExists {
+		fmt.Println("Could not delete bc kind does not exist.")
+		return false
+	}
+	var indexToDelete int
+	for i := 0; i < len(entryList); i++ {
+		entry := entryList[i]
+		if strings.EqualFold(entry.InstanceName, e.InstanceName) &&
+			strings.EqualFold(entry.Value, e.Value) &&
+			strings.EqualFold(entry.Namespace, e.Namespace) &&
+			strings.EqualFold(entry.Key, e.Key) {
+			indexToDelete = i
+			break
+		}
+	}
+	le := len(annotations.KindToEntry[kind])
+	annotations.KindToEntry[kind][indexToDelete] = annotations.KindToEntry[kind][le-1] //swap to last
+	annotations.KindToEntry[kind][le-1] = Entry{}                                      //write zero value
+	annotations.KindToEntry[kind] = annotations.KindToEntry[kind][:le-1]               //truncate
+	return true
 }

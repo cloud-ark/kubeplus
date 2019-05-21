@@ -1,5 +1,6 @@
 #!/bin/bash
-
+# original source of file (istio dev):
+# https://github.com/morvencao/kube-mutating-webhook-tutorial/blob/master/deployment/webhook-create-signed-cert.sh
 set -e
 
 usage() {

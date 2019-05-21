@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# original source of file (istio dev):
+# https://github.com/morvencao/kube-mutating-webhook-tutorial/blob/master/deployment/webhook-patch-ca-bundle.sh
 ROOT=$(cd $(dirname $0)/../../; pwd)
 
 set -o errexit
