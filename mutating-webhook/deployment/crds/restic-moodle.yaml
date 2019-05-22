@@ -6,9 +6,9 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: moodle-deploy
+      app: ​Fn::AddLabel(key/val, namespace1.Moodle.moodle1.Deployment)
   fileGroups:
-  - path: {{backup-volume}}
+  - path: /opt/moodledata
     retentionPolicyName: 'keep-last-10'
   backend:
     s3:
@@ -18,7 +18,7 @@ spec:
     storageSecretName: s3-secret
   schedule: '@every 1m'
   volumeMounts:
-  - mountPath: {{backup-volume}}
+  - mountPath: /opt/moodledata
     name: moodle-data
   retentionPolicies:
   - name: 'keep-last-10'

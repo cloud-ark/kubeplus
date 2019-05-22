@@ -32,7 +32,7 @@ delete:
 install-operators:
 	helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-1.tgz?raw=true
 	helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.3.0.tgz?raw=true
-	# helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.4.tgz?raw=true
+	helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.4.tgz?raw=true
 cluster:
 	kubectl create -f deployment/crds/secrets/cluster1-secret.yaml
 	kubectl create -f deployment/crds/cluster1.yaml
@@ -43,6 +43,16 @@ moodle:
 	kubectl create -f deployment/crds/moodle1.yaml
 delmoodle:
 	kubectl delete -f deployment/crds/moodle1.yaml
+restic:
+	kubectl create -f deployment/crds/restic-moodle.yaml
+delrestic:
+	kubectl delete -f deployment/crds/restic-moodle.yaml
+
+delall:
+	kubectl delete -f deployment/crds/secrets/cluster1-secret.yaml
+	kubectl delete -f deployment/crds/cluster1.yaml
+	kubectl delete -f deployment/crds/moodle1.yaml
+	kubectl delete -f deployment/crds/restic-moodle.yaml
 
 gen-certs:
 	# --service crd-hook-mutater --namespace default --secret webhook-tls-certificates

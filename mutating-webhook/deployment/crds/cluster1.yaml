@@ -2,9 +2,9 @@ apiVersion: mysql.presslabs.org/v1alpha1
 kind: MysqlCluster
 metadata:
   name: cluster1
+  namespace: namespace1
   annotations:
     service: cluster1-mysql-master
-
 spec:
   replicas: 1
   secretName: cluster1-secret

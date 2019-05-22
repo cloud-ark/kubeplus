@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: admission-webhook-example
-          image: gcr.io/kubernetes-dev-211403/crd-hook:1.0 
+          image: gcr.io/kubernetes-dev-211403/crd-hook:1.0
           imagePullPolicy: Always
           args:
             - -tlsCertFile=/etc/webhook/certs/cert.pem
