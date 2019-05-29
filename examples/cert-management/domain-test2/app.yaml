@@ -1,0 +1,47 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cert-example
+spec:
+  revisionHistoryLimit: 5
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cert-example
+  template:
+    metadata:
+      labels:
+        app: cert-example
+    spec:
+      containers:
+      - name: cert-example
+        image: gcr.io/kubernetes-dev-211403/example-nodejs:1.1
+        imagePullPolicy: Always
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 30001
+            scheme: HTTP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 30001
+            scheme: HTTP
+        ports:
+        - containerPort: 30001
+          protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cert-example
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 30001
+    nodePort: 30001
+  selector:
+    app: cert-example
