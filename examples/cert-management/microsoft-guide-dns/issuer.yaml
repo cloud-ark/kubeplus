@@ -1,0 +1,20 @@
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+  namespace: ingress-basic
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: 
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    route53:
+      providers:
+      - name: prod-s3
+        region: us-west-2
+
+        accessKeyID: AKIAJNOWL2HOON2URAEA
+        secretAccessKeySecretRef:
+          name: mysecret
+          key: secret-access-key
