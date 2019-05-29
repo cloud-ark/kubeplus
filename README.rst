@@ -1,10 +1,10 @@
-==========================
-KubePlus Platform Toolkit
-==========================
+========================
+KubePlus Cluster Add-on
+========================
 
-KubePlus Platform Toolkit simplifies discovery and use of Kubernetes Operators and Custom Resources *in a cluster*.
+KubePlus Cluster Add-on simplifies discovery and use of Kubernetes Operators and Custom Resources.
 
-Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party software (database, queue, volume backup/restore, etc.) directly on Kubernetes. The Custom Resources introduced by an Operator essentially represent 'platform elements' as they encapsulate high-level workflow actions to be performed on the software which the Operator is managing. 
+Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares (databases, queues, volume backup/restore, etc.) directly on Kubernetes. The Custom Resources introduced by an Operator essentially represent 'platform elements' as they encapsulate high-level workflow actions to be performed on the software that the Operator is managing. 
 Entire platform stacks can be created by assembling multiple Custom Resources together (essentially, enabling `platforms as code`_ experience).
 
 .. _Operators: https://coreos.com/operators/
@@ -12,7 +12,7 @@ Entire platform stacks can be created by assembling multiple Custom Resources to
 .. _platforms as code: https://cloudark.io/platform-as-code
 
 
-Read our `blog post`_ to know more about KubePlus Platform Toolkit.
+Read our `blog post`_ to know more about KubePlus Cluster Add-on.
 
 .. _blog post: https://medium.com/@cloudark/kubeplus-platform-toolkit-simplify-discovery-and-use-of-kubernetes-custom-resources-85f08851188f
 
@@ -24,19 +24,19 @@ The main challenge in this platform-as-code approach is the interoperability bet
 
 *a) Attribute-value based binding* - What should be the values of Spec attributes of different Custom Resources?
 
-*b) Label-based binding* - Are there Kubernetes's native resources corresponding to different Custom Resources to which labels need to be added in order for the Operators to function correctly? How to find such resources?
+*b) Label-based binding* - Are there Kubernetes's native resources corresponding to Custom Resources to which labels need to be added in order for an Operator to function correctly? How to find such resources?
 
 *c) Annotation-based binding* - Are there any specific annotations that need to be added on Custom or native Kubernetes resources for an Operator to function correctly?
 
-KubePlus Platform Toolkit focuses on solving the interoperability challenge by standardizing on how  Operator developers package information about their Custom Resources using Kubernetes-native mechanisms, and how Application developers can easily discover this information directly through kubectl.
+KubePlus focuses on solving the interoperability challenge by standardizing on how Operator developers package information about their Custom Resources using Kubernetes-native mechanisms, and how Application developers can easily discover this information directly through kubectl.
 
 
 Architecture
 =============
 
-KubePlus Platform Toolkit standardizes the process of defining static information about Custom Resources and discovering it, along with the runtime dynamic information, in Kubernetes-native manner. Static information consists of: a) how-to-use guides for Custom Resources, b) any code level assumptions made by an Operator towards handling a Custom Resource, c) OpenAPI Spec definitions for a Custom Resource. Runtime information consists of: a) identification of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance, b) history of declarative actions performed on Custom Resource instances.
+KubePlus Cluster Add-on standardizes the process of defining static information about Custom Resources and discovering static and runtime dynamic information in Kubernetes-native manner. Static information consists of: a) how-to-use guides for Custom Resources, b) any code level assumptions made by an Operator towards handling a Custom Resource, c) OpenAPI Spec definitions for a Custom Resource. Runtime information consists of: a) identification of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance, b) history of declarative actions performed on Custom Resource instances.
 
-KubePlus Platform Toolkit uses annotations, ConfigMaps, and custom endpoints to enable the discovery process.
+KubePlus Cluster Add-on uses annotations, ConfigMaps, and custom endpoints to enable the discovery process.
 
 
 .. .. image:: ./docs/KubePlus-diagram.png
@@ -48,7 +48,7 @@ KubePlus Platform Toolkit uses annotations, ConfigMaps, and custom endpoints to 
 Platform-as-Code Annotations
 -----------------------------
 
-KubePlus Platform toolkit defines following annotations, which need to be set on Custom Resource Definition (CRD) YAMLs.
+KubePlus Cluster Add-on defines following annotations that need to be set on Custom Resource Definition (CRD) YAMLs.
 
 .. code-block:: bash
 
@@ -74,7 +74,7 @@ The values for 'usage', 'constants', 'openapispec' annotations are names of Conf
 
    platform-as-code/composition 
 
-The 'composition' annotation is used to define Kubernetes's native resources that are created as part of instantiating a Custom Resource instance. KubePlus Platform toolkit uses the values in this annotation and OwnerReferences, to build dynamic composition tree of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
+The 'composition' annotation is used to define Kubernetes's native resources that are created as part of instantiating a Custom Resource instance. KubePlus Cluster Add-on uses the values in this annotation and OwnerReferences, to build dynamic composition tree of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
 
 As an example, annotations on Moodle Custom Resource Definition are shown below:
 
@@ -106,7 +106,7 @@ This Moodle CRD is part of the Moodle Operator whose Helm chart is available her
 Platform-as-Code Endpoints
 ----------------------------
 
-For kubectl-based discovery, KubePlus Platform toolkit exposes following endpoints - 'man', 'explain' and 'composition'. 
+For kubectl-based discovery, KubePlus Cluster Add-on exposes following endpoints - 'man', 'explain' and 'composition'. 
 
 These endpoints are implemented using Kubernetes's aggregated API Server.
 
@@ -152,15 +152,15 @@ It uses listing of native resources available in 'composition' annotation and Cu
 Examples of possible future endpoints are: 'provenance', 'functions', and 'configurables'. We look forward to inputs from the community on what additional information on Custom Resources you would like to get from such endpoints.
 
 
-Example of using KubePlus Platform Toolkit
-===========================================
+Example of using KubePlus Cluster Add-on
+=========================================
 
-As an example of how KubePlus Platform Toolkit is useful, you can check out `Moodle Platform`_
+As an example of how KubePlus Cluster Add-on is useful, you can check the `Moodle Platform`_
 built from three Operators — Moodle, MySQL, and Volume backup/restore. The various Custom Resources available through these Operators are — Moodle, MysqlCluster, Restic, Recovery. KubePlus helps application developers discover following aspects of these Custom Resources:
 
 - Moodle Custom Resource YAML definition needs a specific value to bind to a MysqlCluster Custom Resource instance. Using the ‘man’ endpoint with Moodle and MysqlCluster Custom Resources as input helps here.
 
-- In order to take backup of Moodle volume, the Deployment object for that Moodle Custom Resource instance needs to be given some label and that label needs to be used in the Restic Custom Resource label selector. The ‘man’ endpoint with Moodle and Restic as inputs help here. Also, the ‘composition’ endpoint with Moodle instance as input is needed to be used.
+- In order to take backup of Moodle volume, the Deployment object for that Moodle Custom Resource instance needs to be given some label and that label needs to be used in the Restic Custom Resource label selector. The ‘man’ endpoint with Moodle and Restic as inputs help here. Also, the ‘composition’ endpoint with Moodle instance as input is needed to be used to find the name of the Deployment object.
 
 - The Moodle volume backup also needs name of the Volume that needs to be backed up. The ‘man’ endpoint with Moodle Custom Resource input helps here as it surfaces the volume name which is an implementation detail of the Moodle Operator.
 
@@ -175,11 +175,11 @@ Usage
 
 *1. Operator Developer*
 
-Operator developers add above mentioned annotations on their CRD definitions. They also create the ConfigMaps with the required content. We have also developed `discoverability and interoperability guidelines`_ to help with Operator development.
+Operator developers add above mentioned annotations on their CRD definitions. They also create the ConfigMaps with the required content. We have developed `discoverability and interoperability guidelines`_ to help with Operator development.
 
 *2. DevOps Engineer*
 
-DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a cluster. Additionally, they deploy KubePlus Platform Toolkit in their cluster to enable their Application developers discover and use various Custom Resources efficiently.
+DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a cluster. Additionally, they deploy KubePlus Cluster Add-on in their cluster to enable their Application developers discover and use various Custom Resources efficiently.
 
 
 *3. Application Developer*
@@ -192,7 +192,7 @@ composing various Custom Resources together.
 Demo
 ====
 
-KubePlus Platform toolkit in action_.
+KubePlus Cluster Add-on in action_.
 
 .. _action: https://youtu.be/wj-orvFzUoM
 
@@ -216,9 +216,9 @@ We are maintaining a `repository of Operator helm charts`_ in which Operator CRD
 RoadMap
 ========
 
-1. Working with Operator developers to define Platform-as-Code annotations on their Operators.
-2. Automate the binding process between Custom Resources.
-3. Integrating Kubeprovenance_ functionality into KubePlus Platform toolkit.
+1. Automate the binding process between Custom Resources.
+2. Working with Operator developers to define Platform-as-Code annotations on their Operators.
+3. Integrating Kubeprovenance_ functionality into KubePlus Cluster Add-on.
 4. Improving operator-analysis to check conformance of Operators with guidelines.
 5. Tracking and visualizing entire platform stacks.
 
