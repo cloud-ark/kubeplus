@@ -12,8 +12,46 @@ import (
 	"strings"
 	"sync"
 
+	"k8s.io/client-go/util/retry"
+
+	// apiv1 "k8s.io/api/core/v1"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/buger/jsonparser"
 )
+
+//    You have two options to Update() this Deployment:
+//
+//    1. Modify the "deployment" variable and call: Update(deployment).
+//       This works like the "kubectl replace" command and it overwrites/loses changes
+//       made by other clients between you Create() and Update() the object.
+//    2. Modify the "result" returned by Get() and retry Update(result) until
+//       you no longer get a conflict error. This way, you can preserve changes made
+//       by other clients between Create() and Update(). This is implemented below
+//			 using the retry utility package included with client-go. (RECOMMENDED)
+//
+// More Info:
+// https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
+// https://github.com/kubernetes/client-go/blob/master/examples/create-update-delete-deployment/main.go
+func AddDeploymentLabel(key, value string, name, namespace string) {
+	deployClient := kubeClient.AppsV1().Deployments(namespace)
+
+	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		// Retrieve the latest version of Deployment before attempting update
+		// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
+		deployment, err := deployClient.Get(name, metav1.GetOptions{})
+		if err != nil {
+			panic(fmt.Errorf("Failed to get latest version of Deployment: %v", err))
+		}
+		deployment.ObjectMeta.Labels[key] = value
+		_, updateErr := deployClient.Update(deployment)
+		return updateErr
+	})
+	if retryErr != nil {
+		panic(fmt.Errorf("Update failed: %v", retryErr))
+	}
+}
 
 func ParseJson(data []byte) []ResolveData {
 	needResolving := make([]ResolveData, 0)
@@ -52,6 +90,9 @@ func ParseJsonHelper(data []byte, needResolving *[]ResolveData, stringStack *Str
 				fmt.Printf("args: %s %s\n", args[0], args[1])
 
 				keyValLabel := strings.TrimSpace(args[0])
+				keyVal := strings.Split(keyValLabel, "/")
+				key := keyVal[0]
+				val := keyVal[1]
 				fmt.Printf("LABELLLL%s\n", keyValLabel)
 				namespace, kind, crdKindName, subKind, err := ParseCompositionPath(args[1])
 				fmt.Printf("parsed: %s %s %s %s\n", namespace, kind, crdKindName, subKind)
@@ -64,18 +105,18 @@ func ParseJsonHelper(data []byte, needResolving *[]ResolveData, stringStack *Str
 				fmt.Println("****************")
 				fmt.Println(name)
 				fmt.Println(err)
+				resourceName := name[0]
 				fmt.Println("****************")
+				switch subKind {
+				case "Deployment":
 
-				// listOptions := metav1.ListOptions{
-				// 	FieldSelector: fmt.Sprintf("metadata.name=%s", name),
-				// }
-				// switch subKind {
-				// case "Deployment":
-				// 	deployment := kubeClient.AppsV1().Deployments(namespace)
-				// }
+					AddDeploymentLabel(key, val, name[0], namespace)
+
+				}
+				//found one resource that matches "Deployment"
 				needResolve := ResolveData{
 					JSONTreePath:   jsonPath,
-					AnnotationPath: name,
+					AnnotationPath: resourceName,
 					FunctionType:   AddLabel,
 				}
 				*needResolving = append(*needResolving, needResolve)
@@ -112,43 +153,64 @@ func ParseCompositionPath(compositionPath string) (string, string, string, strin
 	return path[0], path[1], path[2], path[3], nil
 }
 
-func ParseDiscoveryJSON(composition []byte, subKind string) (string, error) {
-	var subName string
+func ParseDiscoveryJSON(composition []byte, subKind string) ([]string, error) {
+	names := make([]string, 0)
+	// note that for the recursive style I do, I must pass a ptr value to the function
+	// the logic is that are that inside of ObjectEach or ArrayEach I cannot return from
+	// ParseDiscoveryJSON, since I would actually be returning from a lamba func that is
+	// defined to return err by the docs. Note you cannot have a string pointer in Go, and
+	// an array actually makes more sense when you consider the kubediscovery code
+	// (it can return multiple resources I believe)
+
+	// So the solution is to do a recursive style where I append the data and
+	// pass it along. This can be seen in the efficient fibonacci tail recursion example
+	// for example.
+	ptr := &names
 	var err error
+
+	// output from kubediscovery could be multiple resources...
+	// even if it is just one, have to loop through array to get to the {}byte part
 	jsonparser.ArrayEach(composition, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		subName, err = ParseDiscoveryJSONHelper(composition, subKind, "")
+		ParseDiscoveryJSONHelper(value, subKind, ptr)
 	})
-	return subName, err
+	fmt.Printf("subname: %v \n", *ptr)
+	return *ptr, err
 }
 
 // Finds the name of the subresource of a CRD resource
-func ParseDiscoveryJSONHelper(composition []byte, subKind string, subName string) (string, error) {
-	if len(subName) > 0 {
-		return subName, nil
-	}
+func ParseDiscoveryJSONHelper(composition []byte, subKind string, subName *[]string) error {
 	jsonparser.ObjectEach(composition, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		var name string
-		if dataType.String() == "object" {
-			fmt.Printf("key: %s\n", string(key))
-			fmt.Printf("value: %s\n", string(value))
-			kind1, _ := jsonparser.GetUnsafeString(value, "Kind")
-			name1, _ := jsonparser.GetUnsafeString(value, "Name")
-			fmt.Printf("kind: %s\n", kind1)
-			fmt.Printf("name: %s\n\n", name1)
+		if dataType.String() == "array" {
+			// go through each children object.
+			jsonparser.ArrayEach(value, func(value1 []byte, dataType jsonparser.ValueType, offset int, err error) {
+				// Debug prints
+				// kind1, _ := jsonparser.GetUnsafeString(value1, "Kind")
+				// name1, _ := jsonparser.GetUnsafeString(value1, "Name")
+				// fmt.Printf("kind: %s\n", kind1)
+				// fmt.Printf("name: %s\n", name1)
 
-			if kind, err := jsonparser.GetUnsafeString(value, "Kind"); err != nil && kind == subKind {
-				name, _ = jsonparser.GetUnsafeString(value, "Name")
-				fmt.Printf("name %s\n", name)
-				fmt.Printf("sname %s\n", subName)
-				return nil
-			}
-			ParseDiscoveryJSONHelper(value, subKind, name)
-		} else {
+				// each object in Children array is a json object
+				// looking like {Kind: deployment, name: moodle1, level: 2, namespace: default}
+
+				// if Kind key exists and it is equal to subKind, we found a resource name
+				// that matches the type. It may be possible to have multiple Ingresses or Deployments?
+				// so I return a list of strings, usually it will return one Name only. Handle by func caller.
+				if kind, err := jsonparser.GetUnsafeString(value1, "Kind"); err == nil && kind == subKind {
+					name, _ := jsonparser.GetUnsafeString(value1, "Name")
+					fmt.Printf("!!!!!!!!!!!!!!!!!!!!!!!!! %s\n", name)
+					*subName = append(*subName, name)
+					ParseDiscoveryJSONHelper(value1, subKind, subName)
+				} else { // Found a Kind that is not subKind ("Deployment") for example
+					//Continue traversing
+					ParseDiscoveryJSONHelper(value1, subKind, subName)
+				}
+			})
+		} else { //if it is a
 			return nil
 		}
 		return nil
 	})
-	return "", fmt.Errorf("Could not find a name for kind")
+	return fmt.Errorf("Could not find a name for kind")
 }
 
 func QueryAPIServer(kind, namespace, crdKindName string) []byte {

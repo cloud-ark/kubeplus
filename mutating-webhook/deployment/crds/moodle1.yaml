@@ -1,7 +1,7 @@
 apiVersion: moodlecontroller.kubeplus/v1
 kind: Moodle
 metadata:
-  name: moodle1
+  name: moodle1-dan
   namespace: namespace1
   annotations:
     backup-volume: /opt/moodledata

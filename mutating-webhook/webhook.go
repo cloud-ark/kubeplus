@@ -122,7 +122,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	fmt.Printf("request!: %s\n", string(req.Object.Raw))
 	forResolve := ParseJson(req.Object.Raw)
 
-	fmt.Printf("Toresolve: %v\n", forResolve)
+	fmt.Printf("To resolve: %v\n", forResolve)
 	for i := 0; i < len(forResolve); i++ {
 		var resolveObj ResolveData
 		resolveObj = forResolve[i]
