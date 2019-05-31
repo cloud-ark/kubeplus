@@ -58,11 +58,5 @@ gen-certs:
 	# --service crd-hook-mutater --namespace default --secret webhook-tls-certificates
 	bash ./deployment/webhook-create-signed-cert.sh
 	cat ./deployment/mutatingwebhook.yaml | ./deployment/webhook-patch-ca-bundle.sh > ./deployment/mutatingwebhook-ca-bundle.yaml
-
-configure:
-	gcloud config set account ddmoorish@gmail.com
-	gcloud auth configure-docker
-gotocloud:
-	gcloud config set account testmutatingwebhook@moodle-238621.iam.gserviceaccount.com
 clean:
 	rm crdhook

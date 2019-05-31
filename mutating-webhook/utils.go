@@ -33,10 +33,10 @@ import (
 //
 // More Info:
 // https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
-// https://github.com/kubernetes/client-go/blob/master/examples/create-update-delete-deployment/main.go
+
+// From: https://github.com/kubernetes/client-go/blob/master/examples/create-update-delete-deployment/main.go
 func AddDeploymentLabel(key, value string, name, namespace string) {
 	deployClient := kubeClient.AppsV1().Deployments(namespace)
-
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		// Retrieve the latest version of Deployment before attempting update
 		// RetryOnConflict uses exponential backoff to avoid exhausting the apiserver
@@ -44,7 +44,14 @@ func AddDeploymentLabel(key, value string, name, namespace string) {
 		if err != nil {
 			panic(fmt.Errorf("Failed to get latest version of Deployment: %v", err))
 		}
-		deployment.ObjectMeta.Labels[key] = value
+		fmt.Println(deployment.ObjectMeta.Labels)
+		if len(deployment.ObjectMeta.Labels) == 0 {
+			newLabelsMap := make(map[string]string, 0)
+			newLabelsMap[key] = value
+			deployment.ObjectMeta.Labels = newLabelsMap
+		} else {
+			deployment.ObjectMeta.Labels[key] = value
+		}
 		_, updateErr := deployClient.Update(deployment)
 		return updateErr
 	})
@@ -53,6 +60,9 @@ func AddDeploymentLabel(key, value string, name, namespace string) {
 	}
 }
 
+// This is a method that initiates the recursion
+// and creates the necessary arrays/data structs
+// then calls ParseJsonHelper
 func ParseJson(data []byte) []ResolveData {
 	needResolving := make([]ResolveData, 0)
 	stringStack := StringStack{Data: "", Mutex: sync.Mutex{}}
@@ -60,6 +70,8 @@ func ParseJson(data []byte) []ResolveData {
 	return needResolving
 }
 
+// This goes through the KubeDiscovery data, which is stored
+// and then parses each json object child one by one.
 func ParseJsonHelper(data []byte, needResolving *[]ResolveData, stringStack *StringStack) {
 	jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		if dataType.String() == "object" {
@@ -69,13 +81,13 @@ func ParseJsonHelper(data []byte, needResolving *[]ResolveData, stringStack *Str
 		} else {
 			stringStack.Push(string(key))
 			jsonPath := stringStack.Peek()
-			val := string(value)
+			val := strings.TrimSpace(string(value))
 			hasImportFunc := strings.Contains(val, "Fn::ImportValue")
 			hasLabelFunc := strings.Contains(val, "Fn::AddLabel")
 			if hasImportFunc {
-				start := len("Fn::ImportValue(")
+				start := strings.Index(val, "(")
 				end := strings.LastIndex(val, ")")
-				annotationPath := val[start:end]
+				annotationPath := val[start+1 : end]
 				needResolve := ResolveData{
 					JSONTreePath:   jsonPath,
 					AnnotationPath: annotationPath,
@@ -84,43 +96,44 @@ func ParseJsonHelper(data []byte, needResolving *[]ResolveData, stringStack *Str
 				*needResolving = append(*needResolving, needResolve)
 				stringStack.Pop()
 			} else if hasLabelFunc {
-				start := len("Fn::AddLabel(")
+				start := strings.Index(val, "(")
 				end := strings.LastIndex(val, ")")
-				args := strings.Split(val[start:end], ",")
-				fmt.Printf("args: %s %s\n", args[0], args[1])
+				args := strings.Split(val[start+1:end], ",")
+
+				fmt.Printf("key, val: %s, %s\n", args[0], args[1])
 
 				keyValLabel := strings.TrimSpace(args[0])
 				keyVal := strings.Split(keyValLabel, "/")
 				key := keyVal[0]
 				val := keyVal[1]
-				fmt.Printf("LABELLLL%s\n", keyValLabel)
 				namespace, kind, crdKindName, subKind, err := ParseCompositionPath(args[1])
-				fmt.Printf("parsed: %s %s %s %s\n", namespace, kind, crdKindName, subKind)
+				fmt.Printf("Parsed Composition Path: %s, %s, %s, %s\n", namespace, kind, crdKindName, subKind)
 				jsonData := QueryAPIServer(kind, namespace, crdKindName)
-				fmt.Printf("Results: %s\n", string(jsonData))
+				fmt.Printf("Queried KubeDiscovery: %s\n", string(jsonData))
 				if err != nil {
+					stringStack.Pop()
 					return err
 				}
 				name, err := ParseDiscoveryJSON(jsonData, subKind)
-				fmt.Println("****************")
-				fmt.Println(name)
-				fmt.Println(err)
-				resourceName := name[0]
-				fmt.Println("****************")
+				if err != nil {
+					stringStack.Pop()
+					return err
+				}
+				fmt.Printf("Found name: %s\n", name)
 				switch subKind {
 				case "Deployment":
-
-					AddDeploymentLabel(key, val, name[0], namespace)
-
+					AddDeploymentLabel(key, val, name, namespace)
 				}
 				//found one resource that matches "Deployment"
 				needResolve := ResolveData{
-					JSONTreePath:   jsonPath,
-					AnnotationPath: resourceName,
-					FunctionType:   AddLabel,
+					JSONTreePath: jsonPath,
+					Value:        val,
+					FunctionType: AddLabel,
 				}
 				*needResolving = append(*needResolving, needResolve)
 				stringStack.Pop()
+				// I would use defer here but am unsure
+				// how it works with all the recursion and returns..
 			} else {
 				stringStack.Pop()
 			}
@@ -129,7 +142,10 @@ func ParseJsonHelper(data []byte, needResolving *[]ResolveData, stringStack *Str
 	})
 }
 
+// This is to parse Annotation Paths of structure:
 // [Namespace]?.[Kind].[InstanceName].[outputVariable]
+// This is used in ImportValue Fn::
+// namespace1.MysqlCluster.cluster1.service
 func ParseAnnotationPath(annotationPath string) (string, string, string, string, error) {
 	path := strings.Split(strings.TrimSpace(annotationPath), ".")
 	if len(path) == 3 {
@@ -141,7 +157,10 @@ func ParseAnnotationPath(annotationPath string) (string, string, string, string,
 	return path[0], path[1], path[2], path[3], nil
 }
 
-// [namespace]?.[Kind].[CrdKindName].[SubKind]
+// This is to parse Composition Paths of structure:
+// [Namespace]?.[Kind].[CrdKindName].[SubKind]
+// ex: namespace1.Moodle.moodle1.Deployment
+// returns [Namespace],[Kind],[CrdKindName],[SubKind]
 func ParseCompositionPath(compositionPath string) (string, string, string, string, error) {
 	path := strings.Split(strings.TrimSpace(compositionPath), ".")
 	if len(path) == 3 { //can be len 3, namespace opttional
@@ -153,28 +172,25 @@ func ParseCompositionPath(compositionPath string) (string, string, string, strin
 	return path[0], path[1], path[2], path[3], nil
 }
 
-func ParseDiscoveryJSON(composition []byte, subKind string) ([]string, error) {
+func ParseDiscoveryJSON(composition []byte, subKind string) (string, error) {
 	names := make([]string, 0)
 	// note that for the recursive style I do, I must pass a ptr value to the function
 	// the logic is that are that inside of ObjectEach or ArrayEach I cannot return from
 	// ParseDiscoveryJSON, since I would actually be returning from a lamba func that is
-	// defined to return err by the docs. Note you cannot have a string pointer in Go, and
-	// an array actually makes more sense when you consider the kubediscovery code
-	// (it can return multiple resources I believe)
+	// defined to return err by the docs. Note you cannot have a string pointer in Go
 
-	// So the solution is to do a recursive style where I append the data and
-	// pass it along. This can be seen in the efficient fibonacci tail recursion example
-	// for example.
-	ptr := &names
-	var err error
-
-	// output from kubediscovery could be multiple resources...
-	// even if it is just one, have to loop through array to get to the {}byte part
+	namesPtr := &names
 	jsonparser.ArrayEach(composition, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		ParseDiscoveryJSONHelper(value, subKind, ptr)
+		ParseDiscoveryJSONHelper(value, subKind, namesPtr)
 	})
-	fmt.Printf("subname: %v \n", *ptr)
-	return *ptr, err
+	// Since we are querying kubedisovery using name, namespace, kind (given by the yaml path)
+	// should always return one instance. We use that logic here, the slice must be len 1
+	var name string
+	if len(names) == 1 {
+		name = names[0]
+		return name, nil
+	}
+	return "", fmt.Errorf("Name of resource was not found. Resource Kind : %s with composition data: %s", subKind, string(composition))
 }
 
 // Finds the name of the subresource of a CRD resource
@@ -197,7 +213,6 @@ func ParseDiscoveryJSONHelper(composition []byte, subKind string, subName *[]str
 				// so I return a list of strings, usually it will return one Name only. Handle by func caller.
 				if kind, err := jsonparser.GetUnsafeString(value1, "Kind"); err == nil && kind == subKind {
 					name, _ := jsonparser.GetUnsafeString(value1, "Name")
-					fmt.Printf("!!!!!!!!!!!!!!!!!!!!!!!!! %s\n", name)
 					*subName = append(*subName, name)
 					ParseDiscoveryJSONHelper(value1, subKind, subName)
 				} else { // Found a Kind that is not subKind ("Deployment") for example
@@ -213,6 +228,7 @@ func ParseDiscoveryJSONHelper(composition []byte, subKind string, subName *[]str
 	return fmt.Errorf("Could not find a name for kind")
 }
 
+// Used to query KubeDiscovery api server
 func QueryAPIServer(kind, namespace, crdKindName string) []byte {
 	serviceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
 	servicePort := os.Getenv("KUBERNETES_SERVICE_PORT")

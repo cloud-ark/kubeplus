@@ -11,7 +11,12 @@ This is similar to AWS CloudFormation, and is aiming to give operators better in
 ## Steps
 1. Generate certs
     `make gen-certs`
-2. Deploy Mutating Webhook
+2. Deploy Mutating Webhook Using Docker
+    `dep ensure`
+    Set environment variables
+    ${PROJECT_ID} -> gcr project id
+    ${IMAGE_NAME} -> crd-hook
+    `make docker`
     `make deploy`
 3. Install Operators
     `make install-operators`

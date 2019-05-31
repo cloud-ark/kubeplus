@@ -22,13 +22,29 @@ const (
 // ResolveData ...
 // Type used to store the data needed to resolve each Fn::
 // Creates a list of these in ParseJson
+// JSONTreePath: this is the path into the json object sent by kubernetes api
+//  this is found recursively while we search the json object for Fn:: declarations.
+//  and then used later in Jsonpatch object. (it needs this to know where to replace)
+// AnnotationPath: This is the path to the annotation stored in the data structure
+//  [Namespace]?.[Kind].[InstanceName].[outputVariable]
+//  used for the ImportValue functions
+// Value:
+//  this is used for the addlabel functions since we don't need to use annotationpath
+//  as the value we will replace it with are provided in the val of key/val function
+// FunctionType
+//  this is an enum of the functions we support for Fn:: in the yamls
+
 type ResolveData struct {
 	JSONTreePath   string
 	AnnotationPath string
 	FunctionType   Function
-	Argument       labelfunction
+	Value          string
 }
 
+// StringStack...
+// This is a stack I implemented that we use when recursively parsing the json
+// to track where we are in the json tree.
+// We use this to populate the JSONTreePath variable.
 type StringStack struct {
 	Data  string
 	Mutex sync.Mutex
@@ -59,6 +75,10 @@ func (s *StringStack) Peek() string {
 	return s.Data
 }
 
+// Entry ...
+// This is a single Entry in our data structure: map[<CrdKind>]-> Entries
+// we use this to store annotation data. Then we search each of these when
+// doing Fn::ImportValue
 type Entry struct {
 	InstanceName string
 	Namespace    string
@@ -66,7 +86,9 @@ type Entry struct {
 	Value        string
 }
 
-//maps kind to list of entries
+// StoredAnnotations ...
+// data structure: map[<CrdKind>]-> Entries
+// maps kind to list of entries
 type StoredAnnotations struct {
 	KindToEntry map[string][]Entry
 }
@@ -88,6 +110,7 @@ func (a *StoredAnnotations) Exists(e Entry, kind string) bool {
 	}
 	return false
 }
+
 func (a *StoredAnnotations) Delete(e Entry, kind string) bool {
 	var entryList []Entry
 	var kindExists bool

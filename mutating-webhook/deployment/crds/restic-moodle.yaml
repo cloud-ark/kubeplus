@@ -6,7 +6,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: ​Fn::AddLabel(key/val, namespace1.Moodle.moodle1.Deployment)
+      app: ​Fn::AddLabel(app/moodle1, namespace1.Moodle.moodle1-dan.Deployment)
   fileGroups:
   - path: /opt/moodledata
     retentionPolicyName: 'keep-last-10'

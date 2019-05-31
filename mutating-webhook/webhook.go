@@ -119,10 +119,10 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	})
 	fmt.Println("----- Stored data: -----")
 	fmt.Printf("Data: %v\n", annotations.KindToEntry)
-	fmt.Printf("request!: %s\n", string(req.Object.Raw))
+	fmt.Printf("Api Request!: %s\n", string(req.Object.Raw))
 	forResolve := ParseJson(req.Object.Raw)
 
-	fmt.Printf("To resolve: %v\n", forResolve)
+	fmt.Printf("Objects To Resolve: %v\n", forResolve)
 	for i := 0; i < len(forResolve); i++ {
 		var resolveObj ResolveData
 		resolveObj = forResolve[i]
@@ -139,7 +139,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 					},
 				}
 			}
-			fmt.Printf("trying to resolve: %s %s %s %s\n", namespace1, kind1, instanceName1, key1)
+			fmt.Printf("Trying to Resolve: %s %s %s %s\n", namespace1, kind1, instanceName1, key1)
 			value, err := searchAnnotation(annotations.KindToEntry[kind1], instanceName1, namespace1, key1)
 			if err != nil {
 				// Because we could not resolve one of the Fn::<path>
@@ -166,14 +166,14 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			patch := patchOperation{
 				Op:    "replace",
 				Path:  resolveObj.JSONTreePath,
-				Value: resolveObj.AnnotationPath,
+				Value: resolveObj.Value,
 			}
 			patchOperations = append(patchOperations, patch)
 		}
 
 	}
 	patchBytes, _ := json.Marshal(patchOperations)
-
+	// marshal the struct into bytes to pass into AdmissionResponse
 	return &v1beta1.AdmissionResponse{
 		Allowed: true,
 		Patch:   patchBytes,
@@ -195,7 +195,7 @@ func searchAnnotation(entries []Entry, instanceName, namespace, key string) (str
 	}
 	// Could not find the data
 	fmt.Printf("instance name: %s key: %s \n", instanceName, key)
-	return "", fmt.Errorf("Error annotation data was not stored, nothing to replace with. Check path.")
+	return "", fmt.Errorf("annotation data was not found. Check path")
 }
 
 // Serve method for webhook server
