@@ -1,4 +1,4 @@
-# Copyright 2017 The Kubernetes Authors.
+ # Copyright 2017 The Kubernetes Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@ all: docker
 
 docker:
 	# dep ensure -v
-	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o admission-webhook-example
+	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o crd-hook
 	docker build --no-cache -t gcr.io/${PROJECT_ID}/${IMAGE_NAME}:1.0 .
-	rm -rf admission-webhook-example
+	rm -rf crd-hook
 	docker push gcr.io/${PROJECT_ID}/${IMAGE_NAME}:1.0
 
 deploy:
@@ -55,8 +55,7 @@ delall:
 	kubectl delete -f deployment/crds/restic-moodle.yaml
 
 gen-certs:
-	# --service crd-hook-mutater --namespace default --secret webhook-tls-certificates
-	bash ./deployment/webhook-create-signed-cert.sh
+	bash ./deployment/webhook-create-signed-cert.sh	--service crd-hook-service --namespace default --secret webhook-tls-certificates
 	cat ./deployment/mutatingwebhook.yaml | ./deployment/webhook-patch-ca-bundle.sh > ./deployment/mutatingwebhook-ca-bundle.yaml
 clean:
 	rm crdhook

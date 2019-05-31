@@ -27,12 +27,6 @@ var (
 	defaulter = runtime.ObjectDefaulter(runtimeScheme)
 )
 
-const (
-	admissionWebhookAnnotationValidateKey = "admission-webhook-example.banzaicloud.com/validate"
-	admissionWebhookAnnotationMutateKey   = "admission-webhook-example.banzaicloud.com/mutate"
-	admissionWebhookAnnotationStatusKey   = "admission-webhook-example.banzaicloud.com/status"
-)
-
 type WebhookServer struct {
 	server *http.Server
 	// client *kubernetes.ClientSet
