@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crd-hook-deployment
+  labels:
+    app: crd-hook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crd-hook
+  template:
+    metadata:
+      labels:
+        app: crd-hook
+    spec:
+      containers:
+        - name: crd-hook
+          image: gcr.io/kubernetes-dev-211403/crd-hook:1.0
+          imagePullPolicy: Always
+          args:
+            - -tlsCertFile=/etc/webhook/certs/cert.pem
+            - -tlsKeyFile=/etc/webhook/certs/key.pem
+            - -alsologtostderr
+            - -v=4
+            - 2>&1
+          volumeMounts:
+            - name: webhook-certs
+              mountPath: /etc/webhook/certs
+              readOnly: true
+      volumes:
+        - name: webhook-certs
+          secret:
+            secretName: webhook-tls-certificates
