@@ -1,0 +1,93 @@
+Setting up SSL Endpoint using cert-manager on GKE
+-------------------------------------------------
+
+Setup:
+-------
+- Create single node GKE cluster
+- Modify cluster VM's Firewall rule to allow traffic from 0.0.0.0/0
+  -> Google Cloud Console -> VPC network -> Firewall rules -> <cluster-name>-all
+     -> Edit -> Source IP ranges -> Add 0.0.0.0/0
+- Configure your kubectl to connect to the GKE cluster
+  - gcloud container clusters get-credentials <cluster-name> --zone us-central1-a
+- Register a Domain name on AWS Route53
+- Create AWS IAM user account and download the Secret Access Key ID and Secret Access Key
+- Grant following IAM policy to your user:
+  - http://docs.cert-manager.io/en/latest/tasks/issuers/setup-acme/dns01/route53.html
+
+Steps:
+------
+1. Install Helm
+   - kubectl create -f tiller-rbac.yaml
+   - helm init --service-account tiller
+   - Wait for tiller pod to become Running
+     - kubectl get pods -n kube-system
+
+2. Install Nginx Ingress controller
+   - helm install stable/nginx-ingress --name quickstart
+
+3. Configure the Domain name with Ingress controller IP
+   - kubectl get svc
+     -> Wait till nginx-ingress-controller gets an EXTERNAL-IP
+     -> Once it is available add a Hosted Zone with Type A record with EXTERNAL-IP set
+
+4. Install cert-manager
+   - kubectl apply -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.8/deploy/manifests/00-crds.yaml
+   - kubectl create namespace cert-manager
+   - kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
+   - helm repo add jetstack https://charts.jetstack.io
+   - helm repo update
+   - helm install --name cert-manager --namespace cert-manager --version v0.8.0 jetstack/cert-manager
+
+5. Create Secret containing your base64 encoded value of Secret Access Key
+   - echo -n 'Secret-Access-Key' | base64
+     -> Add o/p in the data section of aws-secret-key.yaml
+   - kubectl create -f aws-secret-key.yaml
+
+6. Create Issuer
+   - Set accessKeyID value in issuer.yaml with your AWS Secret Access Key ID
+   - Set secretAccessKeySecretRef as follows:
+     - Set the 'name' attribute to the name of the Secret object from aws-secret-key.yaml file
+     - Set the 'key' attribute to the name of the 'data' attribute from aws-secret-key.yaml file
+   - kubectl create -f issuer.yaml
+
+7. Create Certificate
+   - Set the issuerRef to the name of issuer from previous step
+   - Set dnsNames to the Domain name that you registered in Route53
+   - Set commonName same as Domain name
+   - Set label to the value that you defined in the 'matchLabels' field of 'solvers' in issuer.yaml
+   - In the acme section, 
+     - set the provider name to the name of the provider from issuer.yaml
+     - set the domains attribute to the Domain name
+   - kubectl create -f certificate.yaml
+
+8. Wait for the Certificate to get created
+   - kubectl get certificate
+   - kubectl get pods -n cert-manager
+   - kubectl logs <cert-manager-pod> -n cert-manager
+   - Wait till certificate is Ready
+     - kubectl get certificate
+
+9. Deploy application
+   - kubectl create -f dep1.yaml
+   - kubectl create -f service1.yaml
+   - Wait for Application Pod to become ready
+     - kubectl get pods
+
+10. Create Ingress
+   - Set ingress.class: "nginx"
+   - Set the rewrite-target: "/"
+   - In the tls section set the secretName field to the value of secretName from certificate.yaml
+   - Set the Domain name for hosts and host field
+   - kubectl create -f ingress.yaml
+
+11. Access the DNS through browser
+    - You will have to add a security exception as we are using the Staging ACME server for generating the certificates.
+      These are untrusted certificates.
+    - Once exception is added, you should be able to access the application on the Domain name.
+
+12. Generating a trusted certificate
+    - Change the 'server' attribute in issuer.yaml to: https://acme-v02.api.letsencrypt.org/directory
+    - Delete the all the resources and try again.
+   
+
+

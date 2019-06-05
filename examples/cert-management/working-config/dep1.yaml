@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: example1
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: example1
+    spec:
+      containers:
+      - image: lmecld/example1:1.0
+        imagePullPolicy: Always
+        name: example1
+        ports:
+        - containerPort: 30005
