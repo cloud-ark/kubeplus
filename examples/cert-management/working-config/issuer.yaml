@@ -1,0 +1,36 @@
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Issuer
+metadata:
+  name: moodle1
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: devdatta@cloudark.io
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: moodle1-tls-secret
+    # ACME DNS-01 provider configurations
+    dns01:
+    # Here we define a list of DNS-01 providers that can solve DNS challenges
+      providers:
+      - name: moodle1-dns
+        route53:
+          region: us-east-1
+          accessKeyID: A1234
+          secretAccessKeySecretRef:
+            name: aws-secret-access-key
+            key: secret-key
+    solvers:
+    - dns01:
+        selector:
+          matchLabels:
+            use-route53-solver: "true"
+        route53:
+          region: us-east-1
+          accessKeyID: A1234
+          secretAccessKeySecretRef:
+            name: aws-secret-access-key
+            key: secret-key
+        
