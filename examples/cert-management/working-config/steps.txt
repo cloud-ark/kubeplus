@@ -80,7 +80,7 @@ Steps:
    - Set the Domain name for hosts and host field
    - kubectl create -f ingress.yaml
 
-11. Access the DNS through browser
+11. Access the DNS through browser (https://domain-name)
     - You will have to add a security exception as we are using the Staging ACME server for generating the certificates.
       These are untrusted certificates.
     - Once exception is added, you should be able to access the application on the Domain name.
