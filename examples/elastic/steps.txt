@@ -1,0 +1,67 @@
+Elastic Operator
+-----------------
+
+This example demonstrates using the Elastic Operator (https://www.elastic.co/guide/en/cloud-on-k8s/current/index.html)
+within Platform-as-Code setup. The Elasticsearch Custom Resource Definition has been enhanced with 
+Platform-as-Code annotations. These annotations make it possible to discover static and dynamic information about 
+various Custom Resource managed by the Operator.
+
+
+
+Setup:
+-------
+- Download Minikube (v0.34.0), download Helm (v2.11.0)
+
+
+Steps:
+-------
+
+1) Create Kubernetes Cluster
+   - minikube start --memory 4096
+
+2) Install KubePlus
+   - git clone https://github.com/cloud-ark/kubeplus.git
+   - cd kubeplus
+   - kubectl apply -f deploy
+
+3) Setup Helm
+   - kubectl create -f helm-rbac-config.yaml
+   - helm init --service-account tiller
+
+4) Wait till Tiller Pod is running
+   - kubectl get pods -n kube-system
+
+5) Once Tiller Pod is ready, deploy Elastic Operator
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/elastic-operator-chart-0.8.1.tgz?raw=true
+
+6) Wait till the Operator Pod is ready
+   - kubectl get ns
+   - kubectl get pods -n elastic-ns
+
+7) Find available Custom Resources
+   - kubectl get customresourcedefinitions
+
+8) Find the Custom Resource Kind name for Elasticsearch CRD
+   - kubectl describe customresourcedefinitions elasticsearches.elasticsearch.k8s.elastic.co
+
+9) Check static information such as how-to use guide for the Elasticsearch Kind
+   - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Elasticsearch"
+
+10) Deploy Elasticsearch instance
+    - kubectl create -f es.yaml
+
+11) Check dynamic information such as the native Kubernetes resources that are created by the Operator
+    for managing Elasticsearch custom resource instance
+    - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Elasticsearch&instance=quickstart"| python -mjson.tool
+
+
+
+Troubleshooting
+----------------
+
+1) Get KubePlus logs
+   - kubectl get pods
+   - kubectl logs <kubeplus-pod-name> -c kube-discovery-apiserver
+
+2) Check Helm Deployments
+   - helm list
