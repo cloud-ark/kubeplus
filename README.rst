@@ -1,54 +1,85 @@
-========================
-KubePlus Cluster Add-on
-========================
+==========================================
+KubePlus API Discovery and Binding Add-on
+==========================================
 
-KubePlus Cluster Add-on simplifies discovery and use of Kubernetes Operators and Custom Resources.
+KubePlus API Discovery and Binding Add-on enables discovery and binding of Kubernetes in-built and Custom Resources to build Platforms as-Code.
 
-Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares (databases, queues, volume backup/restore, etc.) directly on Kubernetes. The Custom Resources introduced by an Operator essentially represent 'platform elements' as they encapsulate high-level workflow actions to be performed on the software that the Operator is managing. 
-Entire platform stacks can be created by assembling multiple Custom Resources together (essentially, enabling `platforms as code`_ experience).
+Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes (databases, queues, volume backup/restore, etc.). Custom Resources introduced by an Operator essentially represent 'platform elements' as they encapsulate high-level workflow actions to be performed on the software that the Operator is managing.
+Entire platform stacks can be created by assembling Kubernetes in-built and Custom Resources.
+
+KubePlus API Discovery and Binding Add-on helps application developers in creating such platform stacks declaratively as Kubernetes YAML definitions.
 
 .. _Operators: https://coreos.com/operators/
 
 .. _platforms as code: https://cloudark.io/platform-as-code
 
-
-Read our `blog post`_ to know more about KubePlus Cluster Add-on.
+Read our `blog post`_ to understand the challenges and the architecture of KubePlus API Discovery and Binding Add-on.
 
 .. _blog post: https://medium.com/@cloudark/kubeplus-platform-toolkit-simplify-discovery-and-use-of-kubernetes-custom-resources-85f08851188f
 
 
-Custom Resource Interoperability
-=================================
+What does it do?
+=================
 
-The main challenge in this platform-as-code approach is the interoperability between Custom Resources from different Operators. Specifically, following three binding related issues arise:
+KubePlus API Discovery and Binding Add-on enables two functions over Kubernetes in-built and Custom Resource - discovery and automatic binding.
 
-*a) Attribute-value based binding* - What should be the values of Spec attributes of different Custom Resources?
+*Discovery* - This means discovering static and dynamic information about Kubernetes resources. 
+Examples of static information include - Spec properties, usage examples, any implementation-level assumption made by a Operator, how-to-use guide for Custom Resources, etc.
+In Kubernetes 'kubectl explain' command is available to discover Spec properties of in-built and Custom Resources.
+But Spec properties typically don't include other kinds of static information mentioned above.
+KubePlus API Discovery and Binding Add-on enables discovering this information through 'kubectl'.
 
-*b) Label-based binding* - Are there Kubernetes's native resources corresponding to Custom Resources to which labels need to be added in order for an Operator to function correctly? How to find such resources?
-
-*c) Annotation-based binding* - Are there any specific annotations that need to be added on Custom or native Kubernetes resources for an Operator to function correctly?
-
-KubePlus focuses on solving the interoperability challenge by standardizing on how Operator developers package information about their Custom Resources using Kubernetes-native mechanisms, and how Application developers can easily discover this information directly through kubectl.
+Examples of dynamic information include - composition tree of Kubernetes objects created as part of handling in-built or Custom Resources, permissions granted to the CRD/Operator Pod, whether Custom Resources are in use as part of a platform stack, history of declarative actions performed on resources, etc. Similar to static information, KubePlus API Discovery and Binding Add-on enables discovering this dynamic information also through 'kubectl'.
 
 
-Architecture
-=============
+*Binding* - Assembling multiple resources - in-built and Custom - to achieve different platform workflow actions requires them to be bound/tied together in specific ways. In Kubernetes 'labels', 'label selectors' and name-based dns resolution satisfy the binding needs between in-built resources. However, when using Custom Resources from different Operators these built-in mechanisms are not sufficient. Correct binding may require setting Spec properties to specific values or orchestrating actions on multiple resources.
+KubePlus API Discovery and Binding Add-on enables automating binding through input/output variables defined on annotations and referenced in Spec properties.
 
-KubePlus Cluster Add-on standardizes the process of defining static information about Custom Resources and discovering static and runtime dynamic information in Kubernetes-native manner. Static information consists of: a) how-to-use guides for Custom Resources, b) any code level assumptions made by an Operator towards handling a Custom Resource, c) OpenAPI Spec definitions for a Custom Resource. Runtime information consists of: a) identification of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance, b) history of declarative actions performed on Custom Resource instances.
 
-KubePlus Cluster Add-on uses annotations, ConfigMaps, and custom endpoints to enable the discovery process.
+Getting started
+=================
 
+Install KubePlus:
+- git clone https://github.com/cloud-ark/kubeplus.git
+- cd kubeplus
+- kubectl apply -f deploy
+- cd mutating-webhook
+- make deploy
+
+
+Working with in-built Resources
+================================
+
+You can use KubePlus Discovery and Binding Add-on even if you are not using CRDs/Operators. For in-built resources, you can use the 'composition' endpoint to discover the composition tree of in-built resources.
+
+.. code-block:: bash
+
+   $ kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Deployment&instance=*&namespace=kube-system" | python -mjson.tool
+
+
+Working with Custom Resources
+==============================
+
+
+1. `Manual discovery and binding resolution`_
+
+.. _Manual discovery and binding resolution: https://github.com/cloud-ark/kubeplus/blob/master/examples/moodle-with-presslabs/steps.txt
+
+
+2. `Automatic binding resolution`_
+
+.. _Automatic binding resolution: https://github.com/cloud-ark/kubeplus/blob/master/examples/automatic-binding-resolution/steps.txt
+
+
+How does it work?
+==================
+
+KubePlus API Discovery and Binding Add-on uses annotations, ConfigMaps, and custom endpoints to enable discovery and binding. Following annotations need to be set on Custom Resource Definition (CRD) YAMLs.
 
 .. .. image:: ./docs/KubePlus-diagram.png
 ..   :scale: 20%
 ..   :align: center
 
-
------------------------------
-Platform-as-Code Annotations
------------------------------
-
-KubePlus Cluster Add-on defines following annotations that need to be set on Custom Resource Definition (CRD) YAMLs.
 
 .. code-block:: bash
 
@@ -67,6 +98,7 @@ The 'constants' annotation is used to define any code level assumptions made by 
    platform-as-code/openapispec 
 
 The 'openapispec' annotation is used to define OpenAPI Spec for a Custom Resource.
+
 
 The values for 'usage', 'constants', 'openapispec' annotations are names of ConfigMaps that store the corresponding data. 
 
@@ -101,10 +133,6 @@ This Moodle CRD is part of the Moodle Operator whose Helm chart is available her
 
 .. _here: https://github.com/cloud-ark/kubeplus-operators/tree/master/moodle/moodle-operator-chart/templates
 
-
-----------------------------
-Platform-as-Code Endpoints
-----------------------------
 
 For kubectl-based discovery, KubePlus Cluster Add-on exposes following endpoints - 'man', 'explain' and 'composition'. 
 
@@ -149,26 +177,8 @@ It uses listing of native resources available in 'composition' annotation and Cu
    :align: center
 
 
-Examples of possible future endpoints are: 'provenance', 'functions', and 'configurables'. We look forward to inputs from the community on what additional information on Custom Resources you would like to get from such endpoints.
-
-
-Example of using KubePlus Cluster Add-on
-=========================================
-
-As an example of how KubePlus Cluster Add-on is useful, you can check the `Moodle Platform`_
-built from three Operators — Moodle, MySQL, and Volume backup/restore. The various Custom Resources available through these Operators are — Moodle, MysqlCluster, Restic, Recovery. KubePlus helps application developers discover following aspects of these Custom Resources:
-
-- Moodle Custom Resource YAML definition needs a specific value to bind to a MysqlCluster Custom Resource instance. Using the ‘man’ endpoint with Moodle and MysqlCluster Custom Resources as input helps here.
-
-- In order to take backup of Moodle volume, the Deployment object for that Moodle Custom Resource instance needs to be given some label and that label needs to be used in the Restic Custom Resource label selector. The ‘man’ endpoint with Moodle and Restic as inputs help here. Also, the ‘composition’ endpoint with Moodle instance as input is needed to be used to find the name of the Deployment object.
-
-- The Moodle volume backup also needs name of the Volume that needs to be backed up. The ‘man’ endpoint with Moodle Custom Resource input helps here as it surfaces the volume name which is an implementation detail of the Moodle Operator.
-
-.. _Moodle Platform: https://github.com/cloud-ark/kubeplus/tree/master/examples/moodle-presslabs-stash
-
-
-Usage
-======
+Platform-as-Code Practice
+===========================
 
 .. _discoverability and interoperability guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
@@ -179,12 +189,12 @@ Operator developers add above mentioned annotations on their CRD definitions. Th
 
 *2. DevOps Engineer*
 
-DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a cluster. Additionally, they deploy KubePlus Cluster Add-on in their cluster to enable their Application developers discover and use various Custom Resources efficiently.
+DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a cluster. Additionally, they deploy KubePlus API Discovery and Binding Add-on in their cluster to enable their Application developers discover and use various Custom Resources efficiently.
 
 
 *3. Application Developer*
 
-Application developers use Platform-as-Code endpoints to discover static and runtime information about Custom Resources in their cluster. Using this information they can then build their platform stacks 
+Application developers use Platform-as-Code endpoints to discover static and dynamic information about in-built and Custom Resources in their cluster. Using this information they can then build their platform stacks 
 composing various Custom Resources together.
 
 
@@ -192,17 +202,10 @@ composing various Custom Resources together.
 Demo
 ====
 
-KubePlus Cluster Add-on in action_.
+See KubePlus API Discovery and Binding Add-on in action_.
 
 .. _action: https://youtu.be/wj-orvFzUoM
 
-
-Try it
-=======
-
-Follow `these steps`_.
-
-.. _these steps: https://github.com/cloud-ark/kubeplus/blob/master/examples/moodle-with-presslabs/steps.txt
 
 
 Available Operators
@@ -216,11 +219,10 @@ We are maintaining a `repository of Operator helm charts`_ in which Operator CRD
 RoadMap
 ========
 
-1. Automate the binding process between Custom Resources.
-2. Working with Operator developers to define Platform-as-Code annotations on their Operators.
-3. Integrating Kubeprovenance_ functionality into KubePlus Cluster Add-on.
-4. Improving operator-analysis to check conformance of Operators with guidelines.
-5. Tracking and visualizing entire platform stacks.
+1. Working with Operator developers to define Platform-as-Code annotations on their Operators.
+2. Integrating Kubeprovenance_ functionality into KubePlus Cluster Add-on.
+3. Improving operator-analysis to check conformance of Operators with guidelines.
+4. Tracking and visualizing entire platform stacks.
 
 .. _Kubeprovenance: https://github.com/cloud-ark/kubeprovenance
 
