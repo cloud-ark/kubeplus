@@ -4,10 +4,7 @@ KubePlus API Discovery and Binding Add-on
 
 KubePlus API Discovery and Binding Add-on enables discovery and binding of Kubernetes in-built and Custom Resources to build Platforms as-Code.
 
-Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes (databases, queues, volume backup/restore, etc.). Custom Resources introduced by an Operator essentially represent 'platform elements' as they encapsulate high-level workflow actions to be performed on the software that the Operator is managing.
-Entire platform stacks can be created by assembling Kubernetes in-built and Custom Resources.
-
-KubePlus API Discovery and Binding Add-on helps application developers in creating such platform stacks declaratively as Kubernetes YAML definitions.
+Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Discovery and Binding Add-on helps application developers in creating platform stacks declaratively using Kubernetes in-built and Custom Resources.
 
 .. _Operators: https://coreos.com/operators/
 
@@ -21,30 +18,28 @@ Read our `blog post`_ to understand the challenges and the architecture of KubeP
 What does it do?
 =================
 
-KubePlus API Discovery and Binding Add-on enables two functions over Kubernetes in-built and Custom Resource - discovery and automatic binding.
+KubePlus API Discovery and Binding Add-on enables two functions - discovery and automatic binding for Kubernetes in-built and Custom Resources 
 
-*Discovery* - This means discovering static and dynamic information about Kubernetes resources. 
-Examples of static information include - Spec properties, usage examples, any implementation-level assumption made by a Operator, how-to-use guide for Custom Resources, etc.
-In Kubernetes 'kubectl explain' command is available to discover Spec properties of in-built and Custom Resources.
-But Spec properties typically don't include other kinds of static information mentioned above.
-KubePlus API Discovery and Binding Add-on enables discovering this information through 'kubectl'.
-
-Examples of dynamic information include - composition tree of Kubernetes objects created as part of handling in-built or Custom Resources, permissions granted to the CRD/Operator Pod, whether Custom Resources are in use as part of a platform stack, history of declarative actions performed on resources, etc. Similar to static information, KubePlus API Discovery and Binding Add-on enables discovering this dynamic information also through 'kubectl'.
+*Discovery* - Variety of static and dynamic information is associated with Kubernetes resources.
+Some examples are - Spec properties, usage examples, implementation-level assumption made by an Operator, 
+composition tree of Kubernetes resources created as part of handling in-built or Custom Resources, permissions granted to the CRD/Operator Pod, whether Custom Resources are in use as part of a platform stack, history of declarative actions performed on resources, etc. KubePlus API Discovery and Binding Add-on enables discovering all this information about in-built and Custom resources directly through 'kubectl'.
 
 
 *Binding* - Assembling multiple resources - in-built and Custom - to achieve different platform workflow actions requires them to be bound/tied together in specific ways. In Kubernetes 'labels', 'label selectors' and name-based dns resolution satisfy the binding needs between in-built resources. However, when using Custom Resources from different Operators these built-in mechanisms are not sufficient. Correct binding may require setting Spec properties to specific values or orchestrating actions on multiple resources.
-KubePlus API Discovery and Binding Add-on enables automating binding through input/output variables defined on annotations and referenced in Spec properties.
+KubePlus API Discovery and Binding Add-on enables automating binding through input/output variables defined as annotations and referenced in Spec properties.
 
 
 Getting started
 =================
 
 Install KubePlus:
-- git clone https://github.com/cloud-ark/kubeplus.git
-- cd kubeplus
-- kubectl apply -f deploy
-- cd mutating-webhook
-- make deploy
+
+::
+  - git clone https://github.com/cloud-ark/kubeplus.git
+  - cd kubeplus
+  - kubectl apply -f deploy
+  - cd mutating-webhook
+  - make deploy
 
 
 Working with in-built Resources
@@ -61,14 +56,14 @@ Working with Custom Resources
 ==============================
 
 
-1. `Manual discovery and binding resolution`_
+1. `Manual discovery and binding`_
 
-.. _Manual discovery and binding resolution: https://github.com/cloud-ark/kubeplus/blob/master/examples/moodle-with-presslabs/steps.txt
+.. _Manual discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/moodle-with-presslabs/steps.txt
 
 
-2. `Automatic binding resolution`_
+2. `Automatic discovery and binding`_
 
-.. _Automatic binding resolution: https://github.com/cloud-ark/kubeplus/blob/master/examples/automatic-binding-resolution/steps.txt
+.. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/automatic-binding-resolution/steps.txt
 
 
 How does it work?
@@ -106,7 +101,7 @@ The values for 'usage', 'constants', 'openapispec' annotations are names of Conf
 
    platform-as-code/composition 
 
-The 'composition' annotation is used to define Kubernetes's native resources that are created as part of instantiating a Custom Resource instance. KubePlus Cluster Add-on uses the values in this annotation and OwnerReferences, to build dynamic composition tree of Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
+The 'composition' annotation is used to define Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
 
 As an example, annotations on Moodle Custom Resource Definition are shown below:
 
@@ -136,8 +131,6 @@ This Moodle CRD is part of the Moodle Operator whose Helm chart is available her
 
 For kubectl-based discovery, KubePlus Cluster Add-on exposes following endpoints - 'man', 'explain' and 'composition'. 
 
-These endpoints are implemented using Kubernetes's aggregated API Server.
-
 .. code-block:: bash
 
    $ kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
@@ -158,6 +151,7 @@ It essentially exposes the information packaged in 'usage' and 'constants' annot
 
 The 'explain' endpoint is used to discover Spec of Custom Resources. 
 It exposes the information packaged in 'openapispec' annotation.
+Note if you are using Kubernetes 1.15+, 'kubectl explain <Custom Resource>' will provide similar functionality.
 
 .. image:: ./docs/Moodle-explain.png
    :scale: 25%
