@@ -19,6 +19,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/buger/jsonparser"
+
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/kubernetes"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+
 )
 
 //    You have two options to Update() this Deployment:
@@ -58,6 +63,111 @@ func AddDeploymentLabel(key, value string, name, namespace string) {
 	if retryErr != nil {
 		panic(fmt.Errorf("Update failed: %v", retryErr))
 	}
+}
+
+// This method resolves the annotation value
+func ResolveAnnotationValue(val, crName, namespace string) string {
+	fmt.Println("Inside ResolveAnnotationValue")
+
+	var resolvedValue string
+
+	start := strings.Index(val, "(")
+	end := strings.LastIndex(val, ")")
+	args := strings.Split(val[start+1:end], ":")
+
+	if len(args) == 5 {
+		fmt.Printf("resolution:%s, name:%s, annotations:%s, name:%s, property:%s\n", 
+					args[0], args[1], args[2], args[3], args[4])
+
+		hasCRD := strings.Contains(args[0], "crd")
+		if hasCRD {
+			crdName := args[1]
+			annotationName := args[3]
+			propertyName := args[4]
+			var err error
+			resolvedValue, err = parseCRDAnnotation(crdName, crName, annotationName, propertyName)
+
+			if err != nil {
+				fmt.Printf("Error:%s\n", err.Error())
+				return ""
+			}
+		}
+	} else {
+		resolvedValue = args[0]
+	}
+	fmt.Printf("Resolved Value:%s\n", resolvedValue)
+	return resolvedValue
+}
+
+
+//1. Query CRD to get all annotations
+//2. From the list of annotations, find the annotation that matches annotationName
+//3. Find the value of that annotation; the value is name of the ConfigMap.key
+//4. Read the ConfigMap with above name and use the key to get the data.
+//5. Search the data for propertyName
+//6. Get the value corresponding to the propertyName
+//7. If the propertyValue contains some functions like Fn::Join() resolve them
+//   before constructing the value
+func parseCRDAnnotation(crdName, crName, annotationName, propertyName string) (string, error) {
+
+	var propertyValue string
+	cfg, err := rest.InClusterConfig()
+	crdClient, _ := apiextensionsclientset.NewForConfig(cfg)
+
+	crdObj, err := crdClient.CustomResourceDefinitions().Get(crdName, metav1.GetOptions{})
+	if err != nil {
+		fmt.Errorf("Error:%s\n", err)
+		return "", err
+	}
+
+	annotations := crdObj.ObjectMeta.Annotations
+	fmt.Printf("CRD Annotations:%s\n", annotations)
+	annotationValue := annotations[annotationName]
+	fmt.Printf("CRD Annotations Value:%s\n", annotationValue)
+
+	args := strings.Split(annotationValue, ".")
+
+	var namespace, configMapName, configMapKey string
+	namespace = "default"
+	configMapName = strings.TrimSpace(args[0])
+	configMapKey = strings.TrimSpace(args[1])
+
+	if len(args) == 3 {
+		namespace = strings.TrimSpace(args[0])
+		configMapName = strings.TrimSpace(args[1])
+		configMapKey = strings.TrimSpace(args[2])
+	}
+
+	fmt.Printf("Namespace:%s, ConfigMapName:%s, ConfigMapKey:%s\n", namespace, configMapName, configMapKey)
+
+	kubeClient, err := kubernetes.NewForConfig(cfg)
+	configMapObj, _ := kubeClient.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
+
+	fmt.Printf("ConfigMapObj:%v\n", configMapObj)
+
+	configMapData := configMapObj.Data
+	fmt.Printf("ConfigMapData:%v\n", configMapData)
+	configMapValue := configMapData["outputs"]
+	fmt.Printf("Data:%s", configMapValue)
+
+	propertyValue = configMapValue
+
+	hasJoinFunc := strings.Contains(configMapValue, "Fn::Join")
+	if hasJoinFunc {
+		start := strings.Index(configMapValue, "(")
+		end := strings.LastIndex(configMapValue, ")")
+		args := strings.Split(configMapValue[start+1:end], ",")
+		lhs := strings.TrimSpace(string(args[0]))
+		rhs := strings.TrimSpace(string(args[1]))
+		rhs = strings.Replace(rhs, "\"", "", 2)
+		fmt.Printf("LHS:%s, RHS:%s\n", lhs, rhs)
+		if lhs == "$instance.name" {
+			propertyValue = crName + rhs
+			fmt.Printf("PropertyValue:%s\n", propertyValue)
+		}
+	}
+	fmt.Printf("Property Value:%s\n", propertyValue)
+	return propertyValue, nil
 }
 
 // This is a method that initiates the recursion

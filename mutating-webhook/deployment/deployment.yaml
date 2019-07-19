@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
         - name: crd-hook
-          image: gcr.io/kubernetes-dev-211403/crd-hook:1.0
-          imagePullPolicy: Always
+          image: lmecld/pac-mutating-admission-webhook:0.2
+          imagePullPolicy: IfNotPresent
           args:
             - -tlsCertFile=/etc/webhook/certs/cert.pem
             - -tlsKeyFile=/etc/webhook/certs/key.pem

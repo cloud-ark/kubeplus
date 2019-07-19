@@ -20,11 +20,12 @@ docker:
 	rm -rf crd-hook
 	docker push gcr.io/${PROJECT_ID}/${IMAGE_NAME}:1.0
 
-deploy:
-	kubectl create -f deployment/deployment.yaml
-	kubectl create -f deployment/service.yaml
-	cat ./deployment/mutatingwebhook.yaml | ./deployment/webhook-patch-ca-bundle.sh > ./deployment/mutatingwebhook-ca-bundle.yaml
-	kubectl create -f deployment/mutatingwebhook-ca-bundle.yaml
+deploy: gen-certs
+	kubectl apply -f deployment/mutatingwebhook-ca-bundle.yaml
+	kubectl apply -f deployment/reader-role.yaml
+	kubectl apply -f deployment/role-binding.yaml
+	kubectl apply -f deployment/deployment.yaml
+	kubectl apply -f deployment/service.yaml
 delete:
 	kubectl delete -f deployment/deployment.yaml
 	kubectl delete -f deployment/service.yaml
