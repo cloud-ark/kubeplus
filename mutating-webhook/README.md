@@ -9,6 +9,11 @@ This is similar to AWS CloudFormation, and is aiming to give operators better in
 
 
 ## Steps
+1. Deploy CRD Web hook
+   - make deploy
+
+Development:
+
 1. Generate certs
     `make gen-certs`
 2. Deploy Mutating Webhook Using Docker

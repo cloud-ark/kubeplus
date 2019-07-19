@@ -69,6 +69,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	fmt.Println(req.Kind.Kind)
 	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
 	fmt.Printf("Adding annotations: %s\n", string(allAnnotations))
+
 	var patchOperations []patchOperation
 	patchOperations = make([]patchOperation, 0)
 	var entry Entry
@@ -97,8 +98,18 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			},
 		}
 	}
+	fmt.Println("--- Annotation Values: ---")
 	jsonparser.ObjectEach(allAnnotations, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		entry = Entry{InstanceName: name, Namespace: namespace, Key: string(key), Value: string(value)}
+		var resolvedValue string
+		val := strings.TrimSpace(string(value))
+		fmt.Printf("--- value: %s\n", val)
+		hasImportFunc := strings.Contains(val, "Fn::ImportValue")
+		if !hasImportFunc {
+			resolvedValue = val
+		} else {
+			resolvedValue = ResolveAnnotationValue(val, name, namespace)
+		}
+		entry = Entry{InstanceName: name, Namespace: namespace, Key: string(key), Value: string(resolvedValue)}
 		var entryList []Entry
 		var kindExists bool
 		if entryList, kindExists = annotations.KindToEntry[kind]; !kindExists {
@@ -120,6 +131,13 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	for i := 0; i < len(forResolve); i++ {
 		var resolveObj ResolveData
 		resolveObj = forResolve[i]
+
+		// Skip processing if resolveObj is for metadata.annotations.
+		// This is because we would have already processed that.
+		partOfMetaData := strings.Contains(resolveObj.JSONTreePath, "/metadata/annotations")
+		if partOfMetaData {
+			continue
+		}
 
 		if resolveObj.FunctionType == ImportValue {
 
