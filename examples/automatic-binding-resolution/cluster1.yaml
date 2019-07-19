@@ -1,0 +1,9 @@
+apiVersion: mysql.presslabs.org/v1alpha1
+kind: MysqlCluster
+metadata:
+  name: cluster1
+  annotations:
+    outputs/service: Fn::ImportValue(crd:mysqlclusters.mysql.presslabs.org:annotations:platform-as-code/outputs:service)
+spec:
+  replicas: 1
+  secretName: cluster1-secret

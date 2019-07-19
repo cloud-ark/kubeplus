@@ -1,0 +1,115 @@
+Automatic Discovery and Binding example
+-----------------------------------------
+
+This example demonstrates how KubePlus enables automatic discovery and binding between Custom Resources.
+
+The cluster1.yaml custom resource exports 'service' variable throught its annotation.
+The moodle1.yaml custom resource refers to this 'service' variable in its Spec definition.
+The actual value exported is obtained from 'platform-as-code/outputs' annotation defined on 
+the mysqlclusters.mysql.presslabs.org CRD.
+
+Setup:
+-------
+- Download Minikube (v1.1.1), download Helm (v2.14.0)
+
+Steps:
+-------
+
+1) Create Kubernetes Cluster
+   - minikube start --memory 4096
+   - (Experimental) If working with Managed/Hosted Kubernetes cluster (such as DigitalOcean), 
+     create a single node cluster, download the cluster config file and save it in 
+     your ~/.kube directory with the name 'config' (e.g.: ~/.kube/config)
+
+2) Install KubePlus
+   - git clone https://github.com/cloud-ark/kubeplus.git
+   - cd kubeplus
+   - kubectl apply -f deploy
+   - cd mutating-webhook
+   - make deploy
+
+3) Setup Helm
+   - kubectl create -f helm-rbac-config.yaml
+   - helm init --service-account tiller
+
+4) Wait till Tiller Pod is running
+   - kubectl get pods -n kube-system
+
+5) Once Helm Pod is ready, deploy Moodle and MySQL Operators
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-2.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.4.tgz?raw=true
+
+6) Wait till both Operator Pods are ready
+   - kubectl get pods
+
+7) Find available Custom Resources
+   - kubectl get customresourcedefinitions
+
+8) Find the Custom Resource Kind names
+   - kubectl describe customresourcedefinitions mysqlclusters.mysql.presslabs.org
+   - kubectl describe customresourcedefinitions moodles.moodlecontroller.kubeplus
+
+9) Find more information like how-to use, Spec properties, etc. for each Kind
+   - kubectl get --raw "/apis/platform-as-code/v1/man?kind=MysqlCluster"
+   - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
+   - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
+   - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
+
+10) Deploy Moodle Platform Stack in namespace1
+   
+   - Create MysqlCluster Custom Resource instance
+     - kubectl create -f cluster1-secret.yaml
+     - kubectl create -f cluster1.yaml
+
+   - Wait till MysqlCluster pods are ready
+     - kubectl get pods
+
+   - Once MysqlCluster pods are ready, deploy Moodle
+     - kubectl create -f moodle1.yaml
+  
+   - Wail till Moodle Pod is ready (It will take about 5/6 minutes for Moodle Pod to become ready)
+     - kubectl get pods
+
+   - Login to Moodle Instance
+       - Update /etc/hosts with <minikube ip or cluster node ip> moodle1. Example:
+         - 192.168.99.100 moodle1
+         - You can find minikube ip using: "minikube ip" command
+         - If using Managed Kubernetes, find out the cluster node ip by refering to appropriate documentation
+           from the provider.
+         - Retrieve Moodle instance's admin password
+	   - kubectl describe moodles moodle1 -n namespace1
+             - Note down the secret name and Moodle instance URL
+         - kubectl get secret moodle1 -n namespace1 -o jsonpath="{.data.adminPassword}" | base64 --decode
+         - Navigate to the URL of moodle1 instance (available in the output of 'describe' command)
+           - Login using 'admin' as username and password retrieved earlier from 'kubectl get secret' command
+    - Check installed plugins
+      - As part of creating moodle instance, we install the 'profilecohort' plugin.
+        Check the custom resource specification moodle1.yaml to see this definition.
+        - Once logged in to the Moodle instance, hit 'Site Administration'. 
+          This will show a message to update Moodle database for 'profilecohort' plugin.
+        - Select that option to complete Plugin installation. 
+          You should see a 'success' message when the plugin is installed.
+        - Hit the 'contine' button. This will take you to the main screen. 
+          Fill out the profile and then hit 'update profile'.
+        - Then 
+          - Navigate to -> Administration -> Plugins -> Plugins Overview
+          - You should see 'profilecohort' plugin in the 'Additional plugins' list
+
+11) Check the composition of Moodle instance
+    - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=default" | python -mjson.tool
+
+
+
+Troubleshooting
+----------------
+
+1) Get Moodle Operator logs
+   - kubectl logs <moodle-operator-pod>
+
+2) Check Helm Deployments
+   - helm list
+
+3) Get KubePlus logs
+   - kubectl get pods
+   - kubectl logs <kubeplus-pod>
+   - kubectl logs <crd-hook-pod>
