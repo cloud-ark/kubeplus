@@ -94,8 +94,15 @@ The 'constants' annotation is used to define any code level assumptions made by 
 
 The 'openapispec' annotation is used to define OpenAPI Spec for a Custom Resource.
 
+.. code-blocK:: bash
 
-The values for 'usage', 'constants', 'openapispec' annotations are names of ConfigMaps that store the corresponding data. 
+   platform-as-code/outputs
+
+The 'outputs' annotation is used to define output values that will be exposed by the Operator.
+These are used in automatic binding resolution between Custom Resources.
+
+
+The values for 'usage', 'constants', 'openapispec' and 'outputs' annotations are names of ConfigMaps that store the corresponding data. 
 
 .. code-block:: bash
 
