@@ -25,7 +25,7 @@ const (
 // JSONTreePath: this is the path into the json object sent by kubernetes api
 //  this is found recursively while we search the json object for Fn:: declarations.
 //  and then used later in Jsonpatch object. (it needs this to know where to replace)
-// AnnotationPath: This is the path to the annotation stored in the data structure
+// ImportString: This is the string that represents values to be imported using ImportValue stored in the data structure
 //  [Namespace]?.[Kind].[InstanceName].[outputVariable]
 //  used for the ImportValue functions
 // Value:
@@ -36,7 +36,7 @@ const (
 
 type ResolveData struct {
 	JSONTreePath   string
-	AnnotationPath string
+	ImportString string
 	FunctionType   Function
 	Value          string
 }

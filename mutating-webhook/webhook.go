@@ -68,7 +68,6 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 
 	fmt.Println(req.Kind.Kind)
 	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
-	fmt.Printf("Adding annotations: %s\n", string(allAnnotations))
 
 	var patchOperations []patchOperation
 	patchOperations = make([]patchOperation, 0)
@@ -141,9 +140,9 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 
 		if resolveObj.FunctionType == ImportValue {
 
-			annotationPath := resolveObj.AnnotationPath
-			fmt.Printf("Annotation Path: %s\n", annotationPath)
-			namespace1, kind1, instanceName1, key1, err := ParseAnnotationPath(annotationPath)
+			importString := resolveObj.ImportString
+			fmt.Printf("Import String: %s\n", importString)
+			//namespace1, kind1, instanceName1, key1, err := ParseAnnotationPath(annotationPath)
 			if err != nil {
 				return &v1beta1.AdmissionResponse{
 					Result: &metav1.Status{
@@ -151,8 +150,10 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 					},
 				}
 			}
-			fmt.Printf("Trying to Resolve: %s %s %s %s\n", namespace1, kind1, instanceName1, key1)
-			value, err := searchAnnotation(annotations.KindToEntry[kind1], instanceName1, namespace1, key1)
+			//fmt.Printf("Trying to Resolve: %s %s %s %s\n", namespace1, kind1, instanceName1, key1)
+			//value, err := searchAnnotation(annotations.KindToEntry[kind1], instanceName1, namespace1, key1)
+			value, err := ResolveImportString(importString)
+			fmt.Printf("ImportString:%s, Resolved ImportString value:%s", importString, value)
 			if err != nil {
 				// Because we could not resolve one of the Fn::<path>
 				// we want to roll back our data structure by deleting the entry

@@ -4,7 +4,7 @@ metadata:
   name: moodle1
 spec:
   plugins: ["profilecohort"]
-  mySQLServiceName: Fn::ImportValue(default.MysqlCluster.cluster1.outputs/service)
+  mySQLServiceName: Fn::ImportValue(MysqlCluster:default.cluster1:Service(filter=master))
   mySQLUserName: root
   mySQLUserPassword: cluster1-secret.ROOT_PASSWORD
   moodleAdminEmail: test@test.com
