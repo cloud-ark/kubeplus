@@ -189,19 +189,21 @@ func ParseJsonHelper(data []byte, needResolving *[]ResolveData, stringStack *Str
 			ParseJsonHelper(value, needResolving, stringStack)
 			stringStack.Pop()
 		} else {
+			//fmt.Printf("ParseJsonHelper Key:%s\n", key)
 			stringStack.Push(string(key))
 			jsonPath := stringStack.Peek()
+			//fmt.Printf("ParseJsonHelper Jsonpath:%s\n", jsonPath)
 			val := strings.TrimSpace(string(value))
 			hasImportFunc := strings.Contains(val, "Fn::ImportValue")
 			hasLabelFunc := strings.Contains(val, "Fn::AddLabel")
 			if hasImportFunc {
 				start := strings.Index(val, "(")
 				end := strings.LastIndex(val, ")")
-				annotationPath := val[start+1 : end]
+				importString := val[start+1 : end]
 				needResolve := ResolveData{
-					JSONTreePath:   jsonPath,
-					AnnotationPath: annotationPath,
-					FunctionType:   ImportValue,
+					JSONTreePath: jsonPath,
+					ImportString: importString,
+					FunctionType: ImportValue,
 				}
 				*needResolving = append(*needResolving, needResolve)
 				stringStack.Pop()
@@ -218,13 +220,13 @@ func ParseJsonHelper(data []byte, needResolving *[]ResolveData, stringStack *Str
 				val := keyVal[1]
 				namespace, kind, crdKindName, subKind, err := ParseCompositionPath(args[1])
 				fmt.Printf("Parsed Composition Path: %s, %s, %s, %s\n", namespace, kind, crdKindName, subKind)
-				jsonData := QueryAPIServer(kind, namespace, crdKindName)
+				jsonData := QueryCompositionEndpoint(kind, namespace, crdKindName)
 				fmt.Printf("Queried KubeDiscovery: %s\n", string(jsonData))
 				if err != nil {
 					stringStack.Pop()
 					return err
 				}
-				name, err := ParseDiscoveryJSON(jsonData, subKind)
+				name, err := ParseDiscoveryJSON(jsonData, subKind, "")
 				if err != nil {
 					stringStack.Pop()
 					return err
@@ -250,6 +252,122 @@ func ParseJsonHelper(data []byte, needResolving *[]ResolveData, stringStack *Str
 		}
 		return nil
 	})
+}
+
+// This is used to Resolve the Import String to its value
+// importString can have one of the following structures:
+//	1. Fully Qualified Resource Name syntax: <Kind>:<Namespace>.<Resource-Name>
+//     -> Resolved Import String value in this case is the Resource name
+//  2. Fully Qualified sub resource name: <Kind>:<Namespace>.<Resource-Name>:<Sub-kind>(filter=<filter-predicate>)
+//     -> Resolved Import String value in this case is the name of the sub kind  resource that matches the filter predicate.
+//        Filter predicate is optional. If not specified then the resolved value is the name of the first sub kind resource.
+//  3. Fully Qualified Resource Spec property: <Kind>:<Namespace>.<Resource-Name>.<spec-properpty-name>
+func ResolveImportString(importString string) (string, error) {
+	parts := strings.Split(strings.TrimSpace(importString), ":")
+	var resolvedValue string
+	var err error
+	//fmt.Printf("Length of ImportString parts:%d\n", len(parts))
+	if len(parts) == 2 {
+		resolvedValue, err = ResolveKind(importString)
+	}
+	if len(parts) == 3 {
+		resolvedValue, err = ResolveSubKind(importString)
+	}
+
+	fmt.Printf("Resolved Value:%s\n", resolvedValue)
+	return resolvedValue, err
+}
+
+func ResolveSubKind(importString string) (string, error) {
+	parts := strings.Split(strings.TrimSpace(importString), ":")
+	kind := parts[0]
+	fqResourceName := parts[1]
+	subKind := parts[2]
+	args := strings.Split(fqResourceName, ".")
+	namespace := args[0]
+	resourceName := args[1]
+
+	filterPredicate := ""
+	// Fn::ImportValue(MysqlCluster:default.cluster1:Service(filter=master))
+	hasFilterPredicate := strings.Contains(subKind, "filter")
+	if hasFilterPredicate {
+		start := strings.Index(subKind, "(")
+		end := strings.LastIndex(subKind, ")")
+		args := strings.Split(subKind[start+1:end], "=")
+		filterPredicate = args[1]
+		fmt.Printf("Filter Predicate:%s\n", filterPredicate)
+		subKind = subKind[0:start] // remove the filter predicate
+	} 
+	// Fn::ImportValue(MysqlCluster:default.cluster1:Deployment.mountPath)
+	hasSpecProperty := strings.Contains(subKind, ".")
+	specProperty := ""
+	if hasSpecProperty {
+		args := strings.Split(subKind, ".")
+		specProperty = args[1]
+		subKind = args[0]
+	}
+
+	fmt.Printf("Kind:%s, Namespace:%s, resourceName:%s, SubKind:%s, FilterPredicate:%s", kind, namespace, resourceName, subKind, filterPredicate)
+
+	jsonData := QueryCompositionEndpoint(kind, namespace, resourceName)
+	fmt.Printf("Queried KubeDiscovery: %s\n", string(jsonData))
+	name, err := ParseDiscoveryJSON(jsonData, subKind, filterPredicate)
+	if err != nil {
+		return "", err
+	}
+	fmt.Printf("Found name: %s\n", name)
+
+	if specProperty != "" {
+		specPropertyValue := resolveSpecProperty(namespace, subKind, name, specProperty)
+		return specPropertyValue, nil
+	} else {
+		return name, nil
+	}
+}
+
+func ResolveKind(importString string) (string, error) {
+	return "Not implemented yet.", nil
+}
+
+func resolveSpecProperty(namespace, subKind, name, specProperty string) (string) {
+	resourceDetails := queryResourceDetailsEndpoint(subKind, name, namespace)
+	propertyValues := make([]string, 0)
+	propertyValuesPtr := &propertyValues
+	parsePropertyValue(resourceDetails, specProperty, propertyValuesPtr)
+	fmt.Printf("PropertyValues:%v\n", propertyValues)
+	for _, propertyValue := range propertyValues {
+		fmt.Printf("Property Value:%s\n", propertyValue)
+	}
+	// There might be multiple properties in Spec of a resource. 
+	// Right now returning the first property value.
+	// TODO: We can support "indexing" to select a specific property value to return
+	// Example: MysqlCluster:default.cluster1:StatefulSet.mountPath[0] will return first container's mounthPath
+	// whereas MysqlCluster:default.cluster1:StatefulSet.mountPath[1] will return second container's mountPath, etc.
+	if len(propertyValues) > 0 {
+		return propertyValues[0]
+	}
+	return ""
+}
+
+func parsePropertyValue(resourceDetails []byte, specProperty string, propertyValues *[]string) {
+	jsonparser.ObjectEach(resourceDetails, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		if dataType.String() == "string" {
+			//fmt.Printf("Key:%s, Value:%s\n", key, value)
+			if string(key) == specProperty {
+				*propertyValues = append(*propertyValues, string(value))
+			}
+		} 
+		if dataType.String() == "array" {
+			jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+				parsePropertyValue(value, specProperty, propertyValues)
+			})
+		}
+		if dataType.String() == "object" {
+			parsePropertyValue(value, specProperty, propertyValues)
+		}
+		return nil
+	})
+	return
 }
 
 // This is to parse Annotation Paths of structure:
@@ -282,7 +400,7 @@ func ParseCompositionPath(compositionPath string) (string, string, string, strin
 	return path[0], path[1], path[2], path[3], nil
 }
 
-func ParseDiscoveryJSON(composition []byte, subKind string) (string, error) {
+func ParseDiscoveryJSON(composition []byte, subKind string, filterPredicate string) (string, error) {
 	names := make([]string, 0)
 	// note that for the recursive style I do, I must pass a ptr value to the function
 	// the logic is that are that inside of ObjectEach or ArrayEach I cannot return from
@@ -294,8 +412,24 @@ func ParseDiscoveryJSON(composition []byte, subKind string) (string, error) {
 		ParseDiscoveryJSONHelper(value, subKind, namesPtr)
 	})
 	// Since we are querying kubedisovery using name, namespace, kind (given by the yaml path)
-	// should always return one instance. We use that logic here, the slice must be len 1
+	// There might be multiple instances of the subKind. If filterPredicate is specified, we return
+	// the first instance whose name matches the filter predicate. If filterPredicate is empty string,
+	// then we return the first name.
 	var name string
+
+	fmt.Printf("ParseDiscoveryJSON Names:%v\n", names)
+
+	if filterPredicate == "" {
+		return names[0], nil
+	} else {
+		for _, name := range names {
+			// Return the first name that matches the filterPredicate
+			if strings.Contains(name, filterPredicate) {
+				return name, nil
+			}
+		}
+	}
+
 	if len(names) == 1 {
 		name = names[0]
 		return name, nil
@@ -310,10 +444,10 @@ func ParseDiscoveryJSONHelper(composition []byte, subKind string, subName *[]str
 			// go through each children object.
 			jsonparser.ArrayEach(value, func(value1 []byte, dataType jsonparser.ValueType, offset int, err error) {
 				// Debug prints
-				// kind1, _ := jsonparser.GetUnsafeString(value1, "Kind")
-				// name1, _ := jsonparser.GetUnsafeString(value1, "Name")
-				// fmt.Printf("kind: %s\n", kind1)
-				// fmt.Printf("name: %s\n", name1)
+				//kind1, _ := jsonparser.GetUnsafeString(value1, "Kind")
+				//name1, _ := jsonparser.GetUnsafeString(value1, "Name")
+				//fmt.Printf(" ParseDiscoveryJSONHelper kind: %s\n", kind1)
+				//fmt.Printf(" ParseDiscoveryJSONHelper name: %s\n", name1)
 
 				// each object in Children array is a json object
 				// looking like {Kind: deployment, name: moodle1, level: 2, namespace: default}
@@ -338,13 +472,38 @@ func ParseDiscoveryJSONHelper(composition []byte, subKind string, subName *[]str
 	return fmt.Errorf("Could not find a name for kind")
 }
 
-// Used to query KubeDiscovery api server
-func QueryAPIServer(kind, namespace, crdKindName string) []byte {
+func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
+	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, crdKindName, namespace)
 	serviceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
 	servicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
-	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, crdKindName, namespace)
 	var url1 string
 	url1 = fmt.Sprintf("https://%s:%s/apis/platform-as-code/v1/composition?%s", serviceHost, servicePort, args)
+	body := queryAPIServer(url1)
+	return body
+}
+
+func queryResourceDetailsEndpoint(kind, name, namespace string) []byte {
+	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, name, namespace)
+	serviceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
+	servicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
+	var url1 string
+	url1 = fmt.Sprintf("https://%s:%s/apis/platform-as-code/v1/resourceDetails?%s", serviceHost, servicePort, args)
+	body := queryAPIServer(url1)
+	return body
+}
+
+func queryAPIsEndpoint(kind, namespace, crdKindName string) []byte {
+	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, crdKindName, namespace)
+	serviceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
+	servicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
+	var url1 string
+	url1 = fmt.Sprintf("https://%s:%s/apis?%s", serviceHost, servicePort, args)
+	body := queryAPIServer(url1)
+	return body
+}
+
+// Used to query KubeDiscovery api server
+func queryAPIServer(url1 string) []byte {
 	caToken := getToken()
 	caCertPool := getCACert()
 	u, err := url.Parse(url1)
@@ -374,7 +533,7 @@ func QueryAPIServer(kind, namespace, crdKindName string) []byte {
 
 	//fmt.Println(resp.Status)
 	//fmt.Println(string(resp_body))
-	//fmt.Println("Exiting queryAPIServer")
+	//fmt.Println("Exiting QueryCompositionEndpoint")
 	return resp_body
 }
 

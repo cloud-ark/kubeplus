@@ -1,0 +1,35 @@
+KubePlus Language Constructs:
+------------------------------
+
+<Built-in Resource> :: Pod | Service | ...
+
+<Custom Resource> :: Custom Resources introduced by CRDs/Operators
+
+<Type> :: <Built-in Resource> | <Custom Resource>
+
+<Resource-Name> :: metadata.name
+
+<Namespace> :: metadata.namespace
+
+<Fully Qualified Resource Name> :: <Type>:<Namespace>.<Resource-Name>:[<Built-in Resource>][(filter=<filter-predicate>)]
+-> If <Built-in Resource> is specified, then <Resource-Name> of that resource
+-> If filter predicate is specified, then <Resource-Name> of the resource whose name matches the filter predicate
+
+<Fully Qualified Property Name> :: <Type>:<Namespace>.<Resource-Name>:[<Built-in Resource>][(filter=<filter-predicate>)].<property-name>
+
+<property-name> :: Any string
+-> The Spec of the <Resource-Name> will be searched for the <property-name> and its value will be returned.
+-> If multiple values exist for <property-name> then the first one will be returned. This can be improved to support
+indexing capabilities to pick a particular property name from the list of returned properties.
+
+<Import String> :: <Fully Qualified Resource Name> | <Fully Qualified Property Name>
+
+
+Functions:
+----------
+
+1. Fn::ImportValue(<Import String>)
+   -> Replace Fn::ImportValue() definition by the value obtained by resolving <Import String>
+
+2. Fn::AddLabel(label, <Fully Qualified Resource Name>)
+   -> Add label to the specified Fully Qualified Resource Name 
