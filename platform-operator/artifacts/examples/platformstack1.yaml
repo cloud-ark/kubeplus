@@ -1,0 +1,18 @@
+apiVersion: platformstack.kubeplus/v1
+kind: PlatformStack
+metadata:
+  name: moodle1-stack
+spec:
+  labelSelector: moodle1-stack
+  stackElements:
+    - kind: Secret
+      name: cluster1-secret
+    - kind: MysqlCluster
+      name: cluster1
+      dependsOn:
+       - name: cluster1-secret
+    - kind: Moodle
+      name: moodle1
+      dependsOn:
+        - name: cluster1
+        - name: cluster1-secret
