@@ -65,6 +65,39 @@ func AddDeploymentLabel(key, value string, name, namespace string) {
 	}
 }
 
+func AddResourceLabel(addLabelDefinition string) (string, error) {
+
+	start := strings.Index(addLabelDefinition, "(")
+	end := strings.LastIndex(addLabelDefinition, ")")
+	args := strings.Split(addLabelDefinition[start+1:end], ",")
+
+	fmt.Printf("key, val: %s, %s\n", args[0], args[1])
+
+	keyValLabel := strings.TrimSpace(args[0])
+	keyVal := strings.Split(keyValLabel, "/")
+	key := keyVal[0]
+	val := keyVal[1]
+
+	kind, namespace, resourceName, subKind, _, _ := parseImportString(args[1])
+
+	//namespace, kind, crdKindName, subKind, err := ParseCompositionPath(args[1])
+	fmt.Printf("Parsed Composition Path: %s, %s, %s, %s\n", namespace, kind, resourceName, subKind)
+	jsonData := QueryCompositionEndpoint(kind, namespace, resourceName)
+	fmt.Printf("Queried KubeDiscovery: %s\n", string(jsonData))
+	name, err := ParseDiscoveryJSON(jsonData, subKind, "")
+	if err != nil {
+		return "", err
+	}
+	//found one resource that matches "Deployment"
+	fmt.Printf("Found name: %s\n", name)
+	switch subKind {
+		case "Deployment":
+		AddDeploymentLabel(key, val, name, namespace)
+	}
+
+	return val, nil
+}
+
 // This method resolves the annotation value
 func ResolveAnnotationValue(val, crName, namespace string) string {
 	fmt.Println("Inside ResolveAnnotationValue")
@@ -172,27 +205,27 @@ func parseCRDAnnotation(crdName, crName, annotationName, propertyName string) (s
 
 // This is a method that initiates the recursion
 // and creates the necessary arrays/data structs
-// then calls ParseJsonHelper
-func ParseJson(data []byte) []ResolveData {
+// then calls ParseRequestHelper
+func ParseRequest(data []byte) []ResolveData {
 	needResolving := make([]ResolveData, 0)
 	stringStack := StringStack{Data: "", Mutex: sync.Mutex{}}
-	ParseJsonHelper(data, &needResolving, &stringStack)
+	ParseRequestHelper(data, &needResolving, &stringStack)
 	return needResolving
 }
 
 // This goes through the KubeDiscovery data, which is stored
 // and then parses each json object child one by one.
-func ParseJsonHelper(data []byte, needResolving *[]ResolveData, stringStack *StringStack) {
+func ParseRequestHelper(data []byte, needResolving *[]ResolveData, stringStack *StringStack) {
 	jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		if dataType.String() == "object" {
 			stringStack.Push(string(key))
-			ParseJsonHelper(value, needResolving, stringStack)
+			ParseRequestHelper(value, needResolving, stringStack)
 			stringStack.Pop()
 		} else {
-			//fmt.Printf("ParseJsonHelper Key:%s\n", key)
+			//fmt.Printf("ParseRequestHelper Key:%s\n", key)
 			stringStack.Push(string(key))
 			jsonPath := stringStack.Peek()
-			//fmt.Printf("ParseJsonHelper Jsonpath:%s\n", jsonPath)
+			//fmt.Printf("ParseRequestHelper Jsonpath:%s\n", jsonPath)
 			val := strings.TrimSpace(string(value))
 			hasImportFunc := strings.Contains(val, "Fn::ImportValue")
 			hasLabelFunc := strings.Contains(val, "Fn::AddLabel")
@@ -208,35 +241,14 @@ func ParseJsonHelper(data []byte, needResolving *[]ResolveData, stringStack *Str
 				*needResolving = append(*needResolving, needResolve)
 				stringStack.Pop()
 			} else if hasLabelFunc {
-				start := strings.Index(val, "(")
-				end := strings.LastIndex(val, ")")
-				args := strings.Split(val[start+1:end], ",")
 
-				fmt.Printf("key, val: %s, %s\n", args[0], args[1])
+				val, err := AddResourceLabel(val)
 
-				keyValLabel := strings.TrimSpace(args[0])
-				keyVal := strings.Split(keyValLabel, "/")
-				key := keyVal[0]
-				val := keyVal[1]
-				namespace, kind, crdKindName, subKind, err := ParseCompositionPath(args[1])
-				fmt.Printf("Parsed Composition Path: %s, %s, %s, %s\n", namespace, kind, crdKindName, subKind)
-				jsonData := QueryCompositionEndpoint(kind, namespace, crdKindName)
-				fmt.Printf("Queried KubeDiscovery: %s\n", string(jsonData))
 				if err != nil {
 					stringStack.Pop()
 					return err
 				}
-				name, err := ParseDiscoveryJSON(jsonData, subKind, "")
-				if err != nil {
-					stringStack.Pop()
-					return err
-				}
-				fmt.Printf("Found name: %s\n", name)
-				switch subKind {
-				case "Deployment":
-					AddDeploymentLabel(key, val, name, namespace)
-				}
-				//found one resource that matches "Deployment"
+
 				needResolve := ResolveData{
 					JSONTreePath: jsonPath,
 					Value:        val,
@@ -278,7 +290,8 @@ func ResolveImportString(importString string) (string, error) {
 	return resolvedValue, err
 }
 
-func ResolveSubKind(importString string) (string, error) {
+func parseImportString(importString string) (string, string, string, string, string, string) {
+
 	parts := strings.Split(strings.TrimSpace(importString), ":")
 	kind := parts[0]
 	fqResourceName := parts[1]
@@ -306,6 +319,13 @@ func ResolveSubKind(importString string) (string, error) {
 		specProperty = args[1]
 		subKind = args[0]
 	}
+
+	return kind, namespace, resourceName, subKind, filterPredicate, specProperty
+}
+
+func ResolveSubKind(importString string) (string, error) {
+
+	kind, namespace, resourceName, subKind, filterPredicate, specProperty := parseImportString(importString)
 
 	fmt.Printf("Kind:%s, Namespace:%s, resourceName:%s, SubKind:%s, FilterPredicate:%s", kind, namespace, resourceName, subKind, filterPredicate)
 

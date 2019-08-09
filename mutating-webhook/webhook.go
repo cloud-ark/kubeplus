@@ -97,12 +97,23 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			},
 		}
 	}
+	fmt.Printf("Kind:%s, Name:%s, Namespace:%s\n", kind, name, namespace)
 	fmt.Println("--- Annotation Values: ---")
 	jsonparser.ObjectEach(allAnnotations, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		var resolvedValue string
+
 		val := strings.TrimSpace(string(value))
 		fmt.Printf("--- value: %s\n", val)
-		hasImportFunc := strings.Contains(val, "Fn::ImportValue")
+		hasLabelFunc := strings.Contains(val, "Fn::AddLabel")
+
+		if hasLabelFunc {
+			_, err := AddResourceLabel(val)
+			if err != nil {
+				fmt.Printf("Could not add Label: %s", val)
+			}
+		}
+		return nil
+
+		/*
 		if !hasImportFunc {
 			resolvedValue = val
 		} else {
@@ -120,11 +131,14 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		entryList = append(entryList, entry)
 		annotations.KindToEntry[kind] = entryList
 		return nil
+		*/
 	})
-	fmt.Println("----- Stored data: -----")
-	fmt.Printf("Data: %v\n", annotations.KindToEntry)
+
+	//fmt.Println("----- Stored data: -----")
+	//fmt.Printf("Data: %v\n", annotations.KindToEntry)
 	fmt.Printf("Api Request!: %s\n", string(req.Object.Raw))
-	forResolve := ParseJson(req.Object.Raw)
+
+	forResolve := ParseRequest(req.Object.Raw)
 
 	fmt.Printf("Objects To Resolve: %v\n", forResolve)
 	for i := 0; i < len(forResolve); i++ {
