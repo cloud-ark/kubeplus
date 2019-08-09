@@ -78,7 +78,7 @@ func AddResourceLabel(addLabelDefinition string) (string, error) {
 	key := keyVal[0]
 	val := keyVal[1]
 
-	kind, namespace, resourceName, subKind, _, _ := parseImportString(args[1])
+	kind, namespace, resourceName, subKind, _, _, _ := parseImportString(args[1])
 
 	//namespace, kind, crdKindName, subKind, err := ParseCompositionPath(args[1])
 	fmt.Printf("Parsed Composition Path: %s, %s, %s, %s\n", namespace, kind, resourceName, subKind)
@@ -290,7 +290,23 @@ func ResolveImportString(importString string) (string, error) {
 	return resolvedValue, err
 }
 
-func parseImportString(importString string) (string, string, string, string, string, string) {
+func parseFilterPredicate(nameProperty string) (string, string) {
+	filterPredicate := ""
+	updatedNameProperty := nameProperty
+
+	hasFilterPredicate := strings.Contains(nameProperty, "filter")
+	if hasFilterPredicate {
+		start := strings.Index(nameProperty, "(")
+		end := strings.LastIndex(nameProperty, ")")
+		args := strings.Split(nameProperty[start+1:end], "=")
+		filterPredicate = args[1]
+		fmt.Printf("Filter Predicate:%s\n", filterPredicate)
+		updatedNameProperty = nameProperty[0:start] // remove the filter predicate
+	} 
+	return filterPredicate, updatedNameProperty
+}
+
+func parseImportString(importString string) (string, string, string, string, string, string, string) {
 
 	parts := strings.Split(strings.TrimSpace(importString), ":")
 	kind := parts[0]
@@ -300,45 +316,43 @@ func parseImportString(importString string) (string, string, string, string, str
 	namespace := args[0]
 	resourceName := args[1]
 
-	filterPredicate := ""
+	nameFilterPredicate := ""
+	specPropertyFilterPredicate := ""
 	// Fn::ImportValue(MysqlCluster:default.cluster1:Service(filter=master))
-	hasFilterPredicate := strings.Contains(subKind, "filter")
-	if hasFilterPredicate {
-		start := strings.Index(subKind, "(")
-		end := strings.LastIndex(subKind, ")")
-		args := strings.Split(subKind[start+1:end], "=")
-		filterPredicate = args[1]
-		fmt.Printf("Filter Predicate:%s\n", filterPredicate)
-		subKind = subKind[0:start] // remove the filter predicate
-	} 
+	// Service or Service(filter=master) or Service.volumemount(filter=abc) or Service(filter=a).label(filter=abc)
+
 	// Fn::ImportValue(MysqlCluster:default.cluster1:Deployment.mountPath)
 	hasSpecProperty := strings.Contains(subKind, ".")
 	specProperty := ""
 	if hasSpecProperty {
 		args := strings.Split(subKind, ".")
-		specProperty = args[1]
 		subKind = args[0]
+		specProperty = args[1]
+		specPropertyFilterPredicate, specProperty = parseFilterPredicate(specProperty)
 	}
 
-	return kind, namespace, resourceName, subKind, filterPredicate, specProperty
+	nameFilterPredicate, subKind = parseFilterPredicate(subKind)
+
+	return kind, namespace, resourceName, subKind, nameFilterPredicate, specProperty, specPropertyFilterPredicate
 }
 
 func ResolveSubKind(importString string) (string, error) {
 
-	kind, namespace, resourceName, subKind, filterPredicate, specProperty := parseImportString(importString)
+	kind, namespace, resourceName, subKind, nameFilterPredicate, specProperty, specFilterPredicate := parseImportString(importString)
 
-	fmt.Printf("Kind:%s, Namespace:%s, resourceName:%s, SubKind:%s, FilterPredicate:%s", kind, namespace, resourceName, subKind, filterPredicate)
+	fmt.Printf("Kind:%s, Namespace:%s, resourceName:%s, SubKind:%s, NameFilterPredicate:%s SpecProp:%s, SpecFilter:%s", 
+		kind, namespace, resourceName, subKind, nameFilterPredicate, specProperty, specFilterPredicate)
 
 	jsonData := QueryCompositionEndpoint(kind, namespace, resourceName)
 	fmt.Printf("Queried KubeDiscovery: %s\n", string(jsonData))
-	name, err := ParseDiscoveryJSON(jsonData, subKind, filterPredicate)
+	name, err := ParseDiscoveryJSON(jsonData, subKind, nameFilterPredicate)
 	if err != nil {
 		return "", err
 	}
 	fmt.Printf("Found name: %s\n", name)
 
 	if specProperty != "" {
-		specPropertyValue := resolveSpecProperty(namespace, subKind, name, specProperty)
+		specPropertyValue := resolveSpecProperty(namespace, subKind, name, specProperty, specFilterPredicate)
 		return specPropertyValue, nil
 	} else {
 		return name, nil
@@ -349,7 +363,7 @@ func ResolveKind(importString string) (string, error) {
 	return "Not implemented yet.", nil
 }
 
-func resolveSpecProperty(namespace, subKind, name, specProperty string) (string) {
+func resolveSpecProperty(namespace, subKind, name, specProperty, specFilterPredicate string) (string) {
 	resourceDetails := queryResourceDetailsEndpoint(subKind, name, namespace)
 	propertyValues := make([]string, 0)
 	propertyValuesPtr := &propertyValues
@@ -357,14 +371,9 @@ func resolveSpecProperty(namespace, subKind, name, specProperty string) (string)
 	fmt.Printf("PropertyValues:%v\n", propertyValues)
 	for _, propertyValue := range propertyValues {
 		fmt.Printf("Property Value:%s\n", propertyValue)
-	}
-	// There might be multiple properties in Spec of a resource. 
-	// Right now returning the first property value.
-	// TODO: We can support "indexing" to select a specific property value to return
-	// Example: MysqlCluster:default.cluster1:StatefulSet.mountPath[0] will return first container's mounthPath
-	// whereas MysqlCluster:default.cluster1:StatefulSet.mountPath[1] will return second container's mountPath, etc.
-	if len(propertyValues) > 0 {
-		return propertyValues[0]
+		if strings.Contains(propertyValue, specFilterPredicate) {
+			return propertyValue
+		}
 	}
 	return ""
 }
