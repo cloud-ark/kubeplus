@@ -22,7 +22,7 @@ type PlatformStack struct {
 // +k8s:openapi-gen=true
 type PlatformStackSpec struct {
 	// LabelSelector that selects resources of that label
-	LabelSelector string `json:"labelSelector"`
+	LabelSelector map[string]string `json:"labelSelector,omitempty"` 
 	// List of stack elements that forms this Platform Stack
 	StackElements []StackElements `json:"stackElements"`
 }
@@ -32,6 +32,10 @@ type StackElements struct {
 	Kind string `json:"kind"`
 	// Name of the Resource
 	Name string `json:"name"`
+	// Namespace of the Resource
+	// If not specified then 'default' Namespace is assumed
+	// +optional
+	Namespace string `json:"namespace"`
 	// +optional
 	DependsOn []DependsOn `json:"dependsOn,omitempty"`
 }

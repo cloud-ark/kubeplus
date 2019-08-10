@@ -3,12 +3,15 @@ kind: PlatformStack
 metadata:
   name: moodle1-stack
 spec:
-  labelSelector: moodle1-stack
+  labelSelector: 
+    stack1: moodle1-stack
   stackElements:
     - kind: Secret
       name: cluster1-secret
+      namespace: default
     - kind: MysqlCluster
       name: cluster1
+      namespace: namespace1
       dependsOn:
        - name: cluster1-secret
     - kind: Moodle
