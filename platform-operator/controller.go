@@ -310,7 +310,35 @@ func (c *Controller) syncHandler(key string) error {
 
 	labelSelector := foo.Spec.LabelSelector
 
+	fmt.Printf("LabelSelector:%v\n", labelSelector)
+
+	stackElements := foo.Spec.StackElements
+
+	fmt.Printf("Label:%s\n", foo.Spec.LabelSelector)
+	fmt.Printf("StackElements:%s\n", foo.Spec.StackElements)
+
 	fmt.Printf("LabelSelector:%s\n", labelSelector)
+	for _, stackElement := range stackElements {
+		kind := stackElement.Kind
+		instance := stackElement.Name
+		namespace := "default"
+		if stackElement.Namespace != "" {
+			namespace = stackElement.Namespace
+		}
+
+		fmt.Printf("Kind:%s, Instance:%s, Namespace:%s\n", kind, instance, namespace)
+		dependsOn := stackElement.DependsOn
+		if dependsOn != nil {
+			for _, dependentInstance := range dependsOn {
+				fmt.Printf("    DependsOn:%s\n", dependentInstance)
+			}
+		}
+	}
+
+
+	for key, value := range labelSelector {
+		fmt.Printf("Key:%s, Value:%s\n", key, value)
+	}
 
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
