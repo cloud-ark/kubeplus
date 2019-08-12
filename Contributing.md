@@ -1,6 +1,6 @@
 # Contributing to KubePlus
 
-We would love your contributions. The process is simple as outlined below:
+We would love your contributions. The process is simple:
 
 
 ## Feature requests:
@@ -36,13 +36,14 @@ File an Issue with following information:
 
   * Error log output
 
-    * kubectl logs <kubeplus-pod-id> -c operator-manager
+    * kubectl logs <kubeplus-apiserver-pod>
 
-    * kubectl logs <kubeplus-pod-id> -c operator-deployer
+    * kubectl logs <kubeplus-apiserver-pod> -c kube-discovery-apiserver
 
-    * kubectl logs <kubeplus-pod-id> -c kube-discovery-apiserver
+    * kubectl logs <kubeplus-mutating-webhook-pod>
 
   * Sample YAMLs that you were using
 
-  * Image tags for operator-manager, operator-deployer, kube-discovery-apiserver 
-    from deploy/rc.yaml
+  * Image tags from deploy/rc.yaml, platform-operator/artifacts/deployment/deployment.yaml,
+    mutating-webhook/deployment/deployment.yaml, mutating-webhook-helper/deployment.yaml
+
