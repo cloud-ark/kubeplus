@@ -13,19 +13,10 @@ Discovery Manager is a Kubernetes Aggregated API Server that registers two custo
 
 Example:
 
-Find out details about a Custom Resource's Spec definition:
+Find out usage details about a Custom Resource:
 
-``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/explain?kind=Postgres"``
-
+``   $ kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"``
 
 Find out dynamic composition tree for Postgres custom resource instance:
 
-``$ kubectl get --raw "/apis/kubediscovery.cloudark.io/v1/composition?kind=Postgres&instance=postgres1" | python -mjson.tool``
-
-
-**Note:**
-
-The interface of ``kubectl get --raw`` for explain will not be needed once upstream ``kubectl explain`` 
-starts supporting custom resources.
-
-We plan to contribute kubediscovery_ code upstream towards this.
+``   $ kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=namespace1" | python -mjson.tool``

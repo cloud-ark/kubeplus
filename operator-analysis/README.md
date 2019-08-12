@@ -1,3 +1,12 @@
+# Operator Analysis tooling
+
+This repository contains the tools that we are developing for analyzing Kubernetes Operators.
+
+Current analysis results and report is available on this blog post:
+
+https://medium.com/@cloudark/analysis-of-open-source-kubernetes-operators-f6be898f2340
+
+
 # Instructions
 
 ## Run script to collect all operators on Github with metadata
