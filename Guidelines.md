@@ -90,15 +90,15 @@ collects metrics such as how many clusters were created. One option to collect s
 is to build the metrics collection inside your custom controller as done by the MySQL Operator.
 Another option is to leverage Kubernetes Audit Logs for this purpose. 
 Then you can use external tooling like [kubeprovenance](https://github.com/cloud-ark/kubeprovenance) 
-to build the required metrics. Separately, you can consider exposing the collected metrics 
-in Prometheus format as well.
+to build the required metrics. Once metrics are collected, you should consider exposing the collected metrics 
+in Prometheus format.
 
 
 ## 4) Register CRDs as YAML Spec rather than in Operator code
 
 Registering CRDs as YAML spec rather than in your Operator code has following advantage.
 Installing CRD requires Cluster-scope permission. If the CRD registration is done as YAML manifest, then it is possible to separate CRD registration from the Operator Pod deployment. CRD registration
-can be done by Cluster administrator while Operator Pod deployment can be done by a non-admin user. On the other hand, if CRD registration is done as part of your Operator code then the Operator Pod will need to be given Cluster-scope permissions.
+can be done by Cluster administrator while Operator Pod deployment can be done by a non-admin user. On the other hand, if CRD registration is done as part of your Operator code then the Operator Pod will need to be given Cluster-scope permissions. Another reason to register CRD as YAML is because kube-openapi validation can be defined as part of it.
 
 
 # Implementation guidelines
@@ -180,15 +180,18 @@ Typically Operators will need to support some form of customization. For example
 [this MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/tutorial.md#configuration) supports following customization settings: whether to deploy
 the Operator cluster-wide or within a particular namespace, which version of MySQL should be installed, etc.
 If you have created Helm Chart for your Operator then use values YAML file to specify
-such parameters. If not, use ConfigMap for this purpose. This guideline ensures that Kubernetes Administrators can interact and use the Operator using Kubernetes native's interfaces.
+such parameters. If not, use ConfigMap for this purpose. If you choose to use ConfigMap then make sure the
+name of the ConfigMap that your Operator expects is well-documented so that DevOps Engineers can create
+this ConfigMap. This guideline ensures that Kubernetes Administrators can interact and use the Operator using Kubernetes native's interfaces.
 
 
 ## 10) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables
 
 An Operator generally needs to take configuration parameter as inputs 
 for the underlying resource that it is managing through its custom resource such as a database.
-We have seen three different approaches being used towards this in the community: using ConfigMaps, using Annotations, or using Spec definition itself. 
-Any of these approaches should be fine based on your Operator design. 
+We have seen three different approaches being used towards this in the community: using ConfigMaps, using Annotations, or using Spec definition itself. Any of these approaches should be fine based on your Operator design. 
+You may end up using multiple approaches such as a ConfigMap with its name specified in the 
+Custom Resource Spec definition.
 
 [Nginx Custom Controller](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/customization) supports both ConfigMap and Annotation.
 [Oracle MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/user/clusters.md) uses ConfigMap.
@@ -213,7 +216,6 @@ definition hierarchy for the custom resources defined by your Operator.
 [Platform-as-Code annotations](https://github.com/cloud-ark/kubeplus#platform-as-code-annotations) are a standard way to package information about Custom Resources.
 The 'usage' annotation should be used to define how-to use guide of a Custom Resource.
 The 'constants' annotation should be used to define Operator's implementation choices and assumption.
-The 'openapispec' annotation should be used to define the OpenAPI Spec schema for a Custom Resource.
 The 'composition' annotation should be used to specify the underlying Kubernetes resources that will be created as part of managing a Custom Resource instance. The values of the first three annotations are names of ConfigMaps with appropriate data.
 An example of this can be seen for our sample Moodle Custom Resource Definition below:
 
@@ -225,7 +227,6 @@ An example of this can be seen for our sample Moodle Custom Resource Definition 
     annotations:
       platform-as-code/usage: moodle-operator-usage.usage
       platform-as-code/constants: moodle-operator-implementation-details.implementation_choices
-      platform-as-code/openapispec: moodle-openapispec.openapispec
       platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
 ```
 
@@ -255,18 +256,18 @@ For Operator developers it is critical to consider how their Operator works with
 
   * Operator runs in a non-default namespace and Custom Resource instances can be created in that namespace.
 
-Given these options, it will help consumers of your Operator if there is a clear documentation of how namespaces are used by your Operator. Include this information in the ConfigMap that you will add for the 'usage' annotation on the CRD.
+Given these options, it will help consumers of your Operator if there is a clear documentation of how namespaces are used by your Operator. Include this information in the ConfigMap that you will add for the 'usage' platform-as-code annotation on the CRD.
 
 
 ## 15) Document Service Account needs of your Operator
 
-Your Operator may be using default service account or some specific service account. Moreover, the service account may need to be granted specific permissions. Clearly document the service account needs of your Operator. Include this information in the ConfigMap that you will add for the 'usage' annotation on the CRD.
+Your Operator may be need to use some specific service account. Moreover, the service account may need to be granted specific permissions. Clearly document the service account needs of your Operator. Include this information in the ConfigMap that you will add for the 'usage' platform-as-code annotation on the CRD.
 
 
 ## 16) Document naming convention and labels to be used with your Custom Resources
 
 You may have special requirements for naming your custom resource instances or some of their
-Spec properties. Similarly you may have requirements related to the labels that need to be added on them. Document this information with in the ConfigMap corresponding to the 'usage' annotation on the CRD.
+Spec properties. Similarly you may have requirements related to the labels that need to be added on them. Document this information with in the ConfigMap corresponding to the 'usage' platform-as-code annotation on the CRD.
 
 
 

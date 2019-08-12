@@ -2,13 +2,12 @@
 
 **Q. What is a Kubernetes Operator?**
 
-A. Think of an [Operator](https://coreos.com/operators/) as essentially a new REST API that is added to a Kubernetes cluster's control plane. Like traditional REST APIs, it has a resource path, a resource definition and code that knows how to perform CRUD operations on that resource. In Kubernetes nomenclature, the resource path is called as the Custom Resource, resource definition is called as the Custom Resource Kind, and the code that performs CRUD operations is called Custom Controller. Most of the times no distinction is made between Custom Resource and Custom Resource Kind
+A. An [Operator](https://coreos.com/operators/) is essentially a new REST API that is added to a Kubernetes cluster's control plane. Like traditional REST APIs, it has a resource path, a resource definition and code that knows how to perform CRUD operations on that resource. In Kubernetes nomenclature, the resource path is called as the Custom Resource, resource definition is called as the Custom Resource Kind, and the code that performs CRUD operations is called Custom Controller. Most of the times no distinction is made between Custom Resource and Custom Resource Kind
 when discussing CRDs and Operators. 'Custom Resource' is used to refer to both.
 
 **Q. Why are Operators useful?**
 
-A. Operators offer Kubernetes-native way to do your platform automation by extending Kubernetes for your platform workflows. It allows Operator developers to easily share their automation with the broader community enabling composability and reuse. Ultimately this approach makes it possible to reduce in-house custom platform automation and at the same time offers a declarative way to define the platform stacks using Kubernetes YAMLs. 
-Check this post for details.
+A. Operators offer Kubernetes-native way to implement your platform automation by extending Kubernetes for your platform workflows. It allows Operator developers to easily share this automation with the broader community enabling composability and reuse. Ultimately this approach makes it possible to reduce in-house custom platform automation and at the same time offers a declarative way to define the platform stacks using Kubernetes YAMLs.
 
 **Q. How are Kubernetes Operators different than Helm charts?**
 
@@ -28,7 +27,7 @@ A. To run an Operator, you need the ‘Custom Resource Definition (CRD)’ meta 
 
 **Q. How to run an Operator in a cluster?**
 
-A. To run an Operator, you need to first create a container image of your Operator code (essentially image that packages Custom Controller code). Then use a CRD object to register into your cluster’s set of APIs, the Custom Resource API that your Operator is managing. Then create a Deployment manifest with the container image that you built. Finally, use kubectl or helm to apply/install the Deployment manifest in the cluster.
+A. To run an Operator, you need to first create a container image of your Operator code (essentially, the image that packages Custom Controller code). Then use a CRD object to register into your cluster’s set of APIs, the Custom Resource API that your Operator is managing. Then create a Deployment manifest with the container image that you built. Finally, use kubectl or helm to apply/install the Deployment manifest in the cluster.
 
 **Q. What permissions are required to deploy an Operator?**
 
@@ -56,7 +55,7 @@ A. Such Operators can be used to provision Cloud-based managed services directly
 
 **Q. Will running MySQL on Kubernetes using a MySQL Operator provide same level of robustness as a managed database service like AWS RDS or Google CloudSQL?**
 
-A. It depends on how the Operator’s code is written. You can choose from multiple available MySQL community Operators or develop your own or customize a community Operator further for your internal requirements. 
+A. It depends on how the Operator’s code is written. You can choose from multiple available MySQL community Operators or develop your own or customize a community Operator further as per your internal requirements. 
 
 **Q. Are there situations where one needs multiple Operators?**
 
@@ -68,12 +67,12 @@ A. Development and maintenance of in-house platform automation is reduced. This 
 
 **Q. What are the challenges when using multiple Operators together?**
 
-A. Primary challenge is interoperability and binding between various Custom Resources supported by Operators. We have developed KubePlus Platform Toolkit that helps with this.
+A. Primary challenge is interoperability and binding between various Custom Resources supported by Operators. We have developed KubePlus Custom Resource Discovery and Binding Add-on that helps with this process.
 
-**Q. How to use KubePlus Platform Toolkit?**
+**Q. How to use KubePlus Custom Resource Discovery and Binding Add-on?**
 
-KubePlus Platform Toolkit standardizes on two things - annotations that can be added to Custom Resource Definitions of your Operators, and custom endpoints that can be used for Custom Resource discovery. Operator developer/curator defines the annotations with appropriate values. KubePlus Platform Toolkit uses these annotations to surface information about Custom Resources through the defined custom endpoints. This enables users of Custom Resources to understand static as well as dynamic information about them which can be used in figuring out their interoperability characteristics. In short, KubePlus Platform Kit offers additional endpoints to learn more information about Custom Resources in your cluster, specially that information which is hard to extract using standard Kubernetes interfaces like “describe” or “explain”. 
-Here are examples of new endpoints enabled by KubePlus Platform Toolkit: 
+KubePlus defines three things - annotations that can be added to Custom Resource Definitions of your Operators, custom endpoints that can be used for Custom Resource discovery, and a language that can be used to glue Custom Resources together. Operator developer/curator defines the annotations with appropriate values. KubePlus Add-on uses these annotations to surface information about Custom Resources through the defined custom endpoints. This enables users of Custom Resources to understand static as well as dynamic information about them which can be used in figuring out their interoperability characteristics. 
+Here are examples of new endpoints enabled by KubePlus: 
 Use ‘man’ endpoint to find usage information about Custom Resource:
     ```kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"```
 Use ‘composition’ endpoint to find underlying resources that the custom resource is composed of:
@@ -82,7 +81,7 @@ For a detailed example check this.
 
 **Q. What are all the personas involved in developing, installing, using Operators? What tools exist for each?**
 
-A. The three personas involved are - Operator developers/Operator curators, Cluster Admins/DevOps Engineers, Application developers. The tools available for each persona are listed in following table:
+A. The three personas involved are - Operator developers/Operator curators, Cluster Admins/DevOps Engineers, Application/Microservice developers. The tools available for each persona are listed in following table:
 
 - Operator developer/Curator (Developing/Customizing Operators)
   - [sample-controller](https://github.com/kubernetes/sample-controller), [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder), [Operator SDK](https://github.com/operator-framework/operator-sdk), [Helm](https://helm.sh/)
@@ -90,8 +89,8 @@ A. The three personas involved are - Operator developers/Operator curators, Clus
 - Cluster Admin/ DevOps engineer (Installing Operator)
   - kubectl, Helm, [Operator Lifecycle Manager(OLM)](https://github.com/operator-framework/operator-lifecycle-manager)
 - Application developer (Using Custom Resources introduced by Operators)
+  - [KubePlus Custom Resource Discovery and Binding Add-on](https://github.com/cloud-ark/kubeplus) (Language and New endpoints for consuming Custom Resources introduced by Operators)
   - [Application CRD](https://github.com/kubernetes-sigs/application) (Abstracting application)
-  - [KubePlus Platform Toolkit](https://github.com/cloud-ark/kubeplus) (New endpoints for consuming Custom Resources introduced by Operators)
 
 **Q. In what language are Operators written? Is there a preferred language?**
 
@@ -103,9 +102,9 @@ A. There are Operator listing and repositories such as following: https://operat
 
 **Q. Are Operators production ready? Is there any analysis of open source Operators?**
 
-A. We have done analysis of some of the open source Operators. You can find it [here](https://medium.com/@cloudark/analysis-of-open-source-kubernetes-operators-f6be898f2340).
+A. We have done analysis of open source Operators. You can find it [here](https://medium.com/@cloudark/analysis-of-open-source-kubernetes-operators-f6be898f2340).
 
 **Q. Are there situations where Operator pattern cannot be used? Or, what is an Operator anti-pattern?**
 
 A. Operator pattern is not suitable if there is no need for monitoring and reconciling the cluster state based on some declarative input leveraging Custom Resource abstraction. 
-Operator pattern is also not suitable if actions that need to be performed on the cluster can not be translated into declarative input and instead are imperative in nature by design. For handling such requirement, you can either create a separate Pod and run it in the cluster, or if you need the functionality through kubectl then consider using Kubernetes Aggregated API Server.
+Operator pattern is also not suitable if actions that need to be performed on the cluster can not be translated into declarative input and instead are imperative in nature by design. For handling such a requirement, you can either create a separate Pod and run it in the cluster, or if you need the functionality through kubectl then consider using Kubernetes Aggregated API Server.
