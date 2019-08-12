@@ -1,5 +1,5 @@
-Moodle Operator
----------------
+Moodle Platform Stack
+----------------------
 
 Moodle is an open source e-learning platform (https://moodle.org/).
 
@@ -15,7 +15,7 @@ plugins are specified in the Custom Resource Spec.
 
 For database, Moodle instance uses the MysqlCluster instance. The database connection endpoints
 are specified in Moodle Custom Resource Spec. The endpoints consist of name of the MysqlCluster Custom
-Resource instance and name of the Secret storing the password.
+Resource instance's service and name of the Secret storing the password.
 
 Setup:
 -------
@@ -43,7 +43,7 @@ Steps:
    - kubectl get pods -n kube-system
 
 5) Once Helm Pod is ready, deploy Moodle and MySQL Operators
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-1.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz?raw=true
    - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.4.tgz?raw=true
 
 6) Wait till both Operator Pods are ready
@@ -75,7 +75,14 @@ Steps:
 
    - Once MysqlCluster pods are ready, deploy Moodle
      - If you have registered a DomainName then update Moodle Spec to include 'domainName' attribute, e.g.: 'domainName: www.moodle1.net'. Otherwise, leave it empty
-     - kubectl create -f moodle1.yaml
+
+     - Find the name of the MysqlCluster 'master' Service corresponding to the cluster1 MysqlCluster.
+       - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=MysqlCluster&instance=cluster1&namespace=namespace1" | python -mjson.tool
+
+     - Add that name in moodle1.yaml -> (in Spec.mySQLServiceName)
+
+     - Create Moodle instance
+       - kubectl create -f moodle1.yaml
   
    - Wail till Moodle Pod is ready (It will take about 5/6 minutes for Moodle Pod to become ready)
      - kubectl get pods -n namespace1

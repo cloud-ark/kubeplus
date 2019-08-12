@@ -3,10 +3,7 @@ Automatic Discovery and Binding example
 
 This example demonstrates how KubePlus enables automatic discovery and binding between Custom Resources.
 
-The cluster1.yaml custom resource exports 'service' variable throught its annotation.
-The moodle1.yaml custom resource refers to this 'service' variable in its Spec definition.
-The actual value exported is obtained from 'platform-as-code/outputs' annotation defined on 
-the mysqlclusters.mysql.presslabs.org CRD.
+The moodle1.yaml custom resource uses KubePlus language to bind to the 'master' service of cluster1 MysqlCluster custom resource instance.
 
 Setup:
 -------
