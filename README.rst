@@ -157,8 +157,7 @@ Install KubePlus:
 
 2. `Automatic discovery and binding`_
 
-.. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/automatic-binding-resolution/steps.txt
-
+.. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/platform-crd/steps.txt
 
 
 Platform-as-Code Practice
