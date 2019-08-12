@@ -8,6 +8,15 @@ The goal of this Operator is to support deployment of Operators from their Helm 
 
 This Operator is implemented as Kubernetes Custom Resource Definition (CRD). 
 
+Note
+=====
+
+Earlier versions of KubePlus used operator-deployer to deploy Operator Helm charts.
+
+Current versions of KubePlus does not use operator-deployer. It relies on Helm for Operator deployment.
+
+Then uncomment ../kubeplus/deploy/rc.yaml to include operator-deployer container as part of KubePlus rc manifest.
+
 
 How does it work?
 =================

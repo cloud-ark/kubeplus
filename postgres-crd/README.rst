@@ -2,6 +2,12 @@
 Postgres Custom Resource 
 =========================
 
+Note
+=====
+Use postgres-crd-v2
+
+
+
 This is a Kubernetes Custom Resource for Postgres.
 
 The goal of this Custom Resource Definition (CRD) is to support various life-cycle actions 
