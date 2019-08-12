@@ -10,10 +10,6 @@ Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, 
 
 .. _platforms as code: https://cloudark.io/platform-as-code
 
-Read our `blog post`_ to understand the challenges and the architecture of KubePlus Discovery and Binding Add-on.
-
-.. _blog post: https://medium.com/@cloudark/kubeplus-platform-toolkit-simplify-discovery-and-use-of-kubernetes-custom-resources-85f08851188f
-
 
 What does it do?
 =================
@@ -37,8 +33,7 @@ KubePlus is useful to anyone who works with Kubernetes Custom Resources. These c
 How does it work?
 ==================
 
-The primary components of KubePlus are an aggregated API Server, a mutating webhook, and a platform operator.
-Additionally, KubePlus provides a small language and a set of endpoints for composing Custom Resources together.
+KubePlus Discovery and Binding Add-on consists of - an aggregated API Server, a mutating webhook, and a platform operator. Additionally, KubePlus comes with a small language and a set of endpoints that help with composing Custom Resources together.
 
 KubePlus Language
 ------------------
@@ -138,6 +133,11 @@ This Moodle CRD is part of the Moodle Operator whose Helm chart is available her
 .. _here: https://github.com/cloud-ark/kubeplus-operators/tree/master/moodle/moodle-operator-chart/templates
 
 
+Read our `blog post`_ to understand the challenges and the architecture of KubePlus Discovery and Binding Add-on.
+
+.. _blog post: https://medium.com/@cloudark/kubeplus-platform-toolkit-simplify-discovery-and-use-of-kubernetes-custom-resources-85f08851188f
+
+
 Getting started
 =================
 
@@ -149,6 +149,7 @@ Install KubePlus:
    $ cd kubeplus
    $ ./deploy-kubeplus.sh
 
+Try:
 
 1. `Manual discovery and binding`_
 
@@ -222,7 +223,7 @@ We are actively looking for inputs from the community on following aspects:
 Bug reports
 ============
 
-Follow `contributing guidelines`_ to submit suggestions bug reports.
+Follow `contributing guidelines`_ to submit bug reports.
 
 .. _contributing guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md
 
