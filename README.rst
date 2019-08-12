@@ -1,6 +1,6 @@
-=============================================
-Custom Resource Discovery and Binding Add-on
-=============================================
+=================================================
+K8s Custom Resource Discovery and Binding Add-on
+=================================================
 
 KubePlus Custom Resource Discovery and Binding Add-on enables discovery and binding of Kubernetes Custom Resources to build Platforms as-Code. You can think of it as a layer that enables AWS CloudFormation like experience when working with Kubernetes Custom Resources.
 
