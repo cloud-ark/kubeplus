@@ -2,9 +2,9 @@
 KubePlus API Discovery and Binding Add-on
 ==========================================
 
-KubePlus API Discovery and Binding Add-on enables discovery and binding of Kubernetes in-built and Custom Resources to build Platforms as-Code.
+KubePlus API Discovery and Binding Add-on enables discovery and binding of Kubernetes Custom Resources to build Platforms as-Code. You can think of it as a layer that enables AWS CloudFormation like experience when working with Kubernetes Custom Resources.
 
-Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Discovery and Binding Add-on helps application developers in creating platform stacks declaratively using Kubernetes in-built and Custom Resources.
+Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Discovery and Binding Add-on helps application developers in creating platform stacks declaratively using Kubernetes Custom Resources.
 
 .. _Operators: https://coreos.com/operators/
 
@@ -18,97 +18,99 @@ Read our `blog post`_ to understand the challenges and the architecture of KubeP
 What does it do?
 =================
 
-KubePlus API Discovery and Binding Add-on enables two functions - discovery and automatic binding for Kubernetes in-built and Custom Resources 
+KubePlus API Discovery and Binding Add-on enables two functions - discovery and automatic binding for Kubernetes Custom Resources.
 
 *Discovery* - Variety of static and dynamic information is associated with Kubernetes resources.
-Some examples are - Spec properties, usage examples, implementation-level assumption made by an Operator, 
-composition tree of Kubernetes resources created as part of handling in-built or Custom Resources, permissions granted to the CRD/Operator Pod, whether Custom Resources are in use as part of a platform stack, history of declarative actions performed on resources, etc. KubePlus API Discovery and Binding Add-on enables discovering all this information about in-built and Custom resources directly through 'kubectl'.
+Some examples are - Spec properties, usage, implementation-level assumption made by an Operator, 
+composition tree of Kubernetes resources created as part of handling Custom Resources, permissions granted to the CRD/Operator Pod, whether Custom Resources are in use as part of a platform stack, history of declarative actions performed on resources, etc. KubePlus API Discovery and Binding Add-on enables discovering this type of information about Custom resources directly through 'kubectl'.
 
 
-*Binding* - Assembling multiple resources - in-built and Custom - to achieve different platform workflow actions requires them to be bound/tied together in specific ways. In Kubernetes 'labels', 'label selectors' and name-based dns resolution satisfy the binding needs between in-built resources. However, when using Custom Resources from different Operators these built-in mechanisms are not sufficient. Correct binding may require setting Spec properties to specific values or orchestrating actions on multiple resources.
-KubePlus API Discovery and Binding Add-on enables automating binding through input/output variables defined as annotations and referenced in Spec properties.
+*Binding* - Assembling multiple resources - built-in and Custom - to build platform stacks requires them to be bound/tied together in specific ways. In Kubernetes 'labels', 'label selectors' and name-based dns resolution satisfy the binding needs between built-in resources. However, when using Custom Resources from different Operators these built-in mechanisms are not sufficient. Correct binding may require setting Spec properties to specific values or orchestrating actions on multiple resources. KubePlus API Discovery and Binding Add-on enables automating binding through a minimal language that can be used to glue together different Custom Resources through their YAML definitions.
 
 
-Getting started
-=================
+Who is the target user of KubePlus?
+====================================
 
-Install KubePlus:
-
-::
-  - git clone https://github.com/cloud-ark/kubeplus.git
-  - cd kubeplus
-  - kubectl apply -f deploy
-  - cd mutating-webhook
-  - make deploy
-
-
-Working with in-built Resources
-================================
-
-You can use KubePlus Discovery and Binding Add-on even if you are not using CRDs/Operators. For in-built resources, you can use the 'composition' endpoint to discover the composition tree of in-built resources.
-
-.. code-block:: bash
-
-   $ kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Deployment&instance=*&namespace=kube-system" | python -mjson.tool
-
-
-Working with Custom Resources
-==============================
-
-
-1. `Manual discovery and binding`_
-
-.. _Manual discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/moodle-with-presslabs/steps.txt
-
-
-2. `Automatic discovery and binding`_
-
-.. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/automatic-binding-resolution/steps.txt
+KubePlus is useful to anyone who works with Kubernetes Custom Resources. These could be service developers, microservice developers, application developers, or devops engineers.
 
 
 How does it work?
 ==================
 
-KubePlus API Discovery and Binding Add-on uses annotations, ConfigMaps, and custom endpoints to enable discovery and binding. Following annotations need to be set on Custom Resource Definition (CRD) YAMLs.
+The primary components of KubePlus add-on are an aggregated API Server, a mutating webhook, and a platform operator.
+Additionally, KubePlus provides a small language and a set of endpoints for composing Custom Resources together.
+
+KubePlus Language
+------------------
+
+The main goal of KubePlus Add-on is to make it easy for Custom Resource users to define "stacks" of Custom Resources to achieve their end goals. Towards this we have defined a minimal language that can be used to glue different Custom Resources together. Currently the language supports just two functions:
+
+.. code-block:: bash
+
+   1. Fn::ImportValue(<Parameter>)
+
+This function imports value of the specified parameter into the Spec where the function is defined.
+
+.. code-block:: bash
+
+   1. Fn::AddLabel(label, <Resource>)
+
+This function adds the specified label to the specified resource.
+
+Formal grammar of the language is available in the `language doc`__.
+
+.. _language doc: https://github.com/cloud-ark/kubeplus/blob/master/docs/kubeplus-language.txt
 
 .. .. image:: ./docs/KubePlus-diagram.png
 ..   :scale: 20%
 ..   :align: center
 
+KubePlus Endpoints
+-------------------
+
+In order to perform discovery and binding, KubePlus Add-on defines following custom endpoints:
+
+.. code-block:: bash
+   kubectl get --raw "/apis/platform-as-code/v1/composition"
+
+The composition endpoint is used for obtaining runtime composition tree of Kubernetes resource instances that are created as part of handling a Custom resource instance.
+
+.. image:: ./docs/Moodle-composition.png
+   :scale: 25%
+   :align: center
+
+
+.. code-block:: bash
+   kubectl get --raw "/apis/platform-as-code/v1/man"
+
+The man endpoint is used for obtaining usage information about a Custom Resource. It is a mechanism that an Operator developer can use to expose any assumptions or usage details that go beyond the Spec properties.
+
+.. image:: ./docs/Moodle-man.png
+   :scale: 25%
+   :align: center
+
+
+These endpoints can be used manually as well as programmatically. In fact, the ``composition`` endpoint is used
+by KubePlus internally as part of handling the language constructs.
+
+
+Platform-as-Code Annotations
+-----------------------------
+
+For correct working of above endpoints following annotations need to be defined on the Custom Resource Definition (CRD) YAMLs.
+
+.. code-block:: bash
+
+   platform-as-code/composition 
+
+The 'composition' annotation is used to define Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance.
 
 .. code-block:: bash
 
    platform-as-code/usage 
 
 The 'usage' annotation is used to define usage information for a Custom Resource.
-
-.. code-block:: bash
-
-   platform-as-code/constants 
-
-The 'constants' annotation is used to define any code level assumptions made by an Operator.
-
-.. code-blocK:: bash
-
-   platform-as-code/openapispec 
-
-The 'openapispec' annotation is used to define OpenAPI Spec for a Custom Resource.
-
-.. code-blocK:: bash
-
-   platform-as-code/outputs
-
-The 'outputs' annotation is used to define output values that will be exposed by the Operator.
-These are used in automatic binding resolution between Custom Resources.
-
-
-The values for 'usage', 'constants', 'openapispec' and 'outputs' annotations are names of ConfigMaps that store the corresponding data. 
-
-.. code-block:: bash
-
-   platform-as-code/composition 
-
-The 'composition' annotation is used to define Kubernetes's native resources that are created as part of instantiating a Custom Resource instance.
+The value for 'usage' annotation is the name of the ConfigMap that stores the usage information.
 
 As an example, annotations on Moodle Custom Resource Definition are shown below:
 
@@ -120,8 +122,6 @@ As an example, annotations on Moodle Custom Resource Definition are shown below:
      name: moodles.moodlecontroller.kubeplus
      annotations:
        platform-as-code/usage: moodle-operator-usage.usage
-       platform-as-code/constants: moodle-operator-implementation-details.implementation_choices
-       platform-as-code/openapispec: moodle-openapispec.openapispec
        platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
    spec:
      group: moodlecontroller.kubeplus
@@ -136,46 +136,25 @@ This Moodle CRD is part of the Moodle Operator whose Helm chart is available her
 .. _here: https://github.com/cloud-ark/kubeplus-operators/tree/master/moodle/moodle-operator-chart/templates
 
 
-For kubectl-based discovery, KubePlus Cluster Add-on exposes following endpoints - 'man', 'explain' and 'composition'. 
+Getting started
+=================
 
-.. code-block:: bash
+Install KubePlus:
 
-   $ kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
-
-The 'man' endpoint is used to find out 'man page' like information about Custom Resources.
-It essentially exposes the information packaged in 'usage' and 'constants' annotations.
-
-.. image:: ./docs/Moodle-man.png
-   :scale: 25%
-   :align: center
+::
+  - git clone https://github.com/cloud-ark/kubeplus.git
+  - ./deploy-kubeplus.sh
 
 
-.. code-block:: bash
+1. `Manual discovery and binding`_
 
-   $ kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
-   $ kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
-
-
-The 'explain' endpoint is used to discover Spec of Custom Resources. 
-It exposes the information packaged in 'openapispec' annotation.
-Note if you are using Kubernetes 1.15+, 'kubectl explain <Custom Resource>' will provide similar functionality.
-
-.. image:: ./docs/Moodle-explain.png
-   :scale: 25%
-   :align: center
+.. _Manual discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/moodle-with-presslabs/steps.txt
 
 
-.. code-block:: bash
+2. `Automatic discovery and binding`_
 
-   $ kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=namespace1" | python -mjson.tool
+.. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/automatic-binding-resolution/steps.txt
 
-
-The 'composition' endpoint is used by Application developers for discovering the runtime composition tree of native Kubernetes resources that are created as part of provisioning a Custom Resource instance.
-It uses listing of native resources available in 'composition' annotation and Custom Resource OwnerReferences to build this tree.
-
-.. image:: ./docs/Moodle-composition.png
-   :scale: 25%
-   :align: center
 
 
 Platform-as-Code Practice
@@ -195,9 +174,8 @@ DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 
 
 *3. Application Developer*
 
-Application developers use Platform-as-Code endpoints to discover static and dynamic information about in-built and Custom Resources in their cluster. Using this information they can then build their platform stacks 
-composing various Custom Resources together.
-
+Application developers use Platform-as-Code endpoints to discover static and dynamic information about Custom Resources in their cluster. Using this information they can then build their platform stacks 
+composing various Custom Resources together using the KubePlus language.
 
 
 Demo
@@ -208,7 +186,6 @@ See KubePlus API Discovery and Binding Add-on in action_.
 .. _action: https://youtu.be/wj-orvFzUoM
 
 
-
 Available Operators
 ====================
 
@@ -217,21 +194,32 @@ We are maintaining a `repository of Operator helm charts`_ in which Operator CRD
 .. _repository of Operator helm charts: https://github.com/cloud-ark/operatorcharts/
 
 
-RoadMap
-========
+Feedback
+=========
 
-1. Working with Operator developers to define Platform-as-Code annotations on their Operators.
-2. Integrating Kubeprovenance_ functionality into KubePlus Cluster Add-on.
-3. Improving operator-analysis to check conformance of Operators with guidelines.
-4. Tracking and visualizing entire platform stacks.
+We are actively looking for inputs from the community on following aspects:
 
-.. _Kubeprovenance: https://github.com/cloud-ark/kubeprovenance
+1. Language constructs
+
+   - What additional language constructs would you like to see in KubePlus language?
+     File your suggestions as comments on `issue 319`__
+
+.. _issue 319: https://github.com/cloud-ark/kubeplus/issues/319
 
 
-Issues/Suggestions
-===================
+2. Endpoints
 
-Follow `contributing guidelines`_ to submit suggestions, bug reports or feature requests.
+   - What additional endpoints would you like to see in KubePlus API Server?
+     File your suggestions as comments on `issue 320`__
+
+.. _issue 320: https://github.com/cloud-ark/kubeplus/issues/320
+
+
+
+Bug reports
+============
+
+Follow `contributing guidelines`_ to submit suggestions bug reports.
 
 .. _contributing guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md
 
