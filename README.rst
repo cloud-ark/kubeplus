@@ -1,16 +1,16 @@
-==========================================
-KubePlus API Discovery and Binding Add-on
-==========================================
+========================================================
+KubePlus - Custom Resource Discovery and Binding Add-on
+========================================================
 
-KubePlus API Discovery and Binding Add-on enables discovery and binding of Kubernetes Custom Resources to build Platforms as-Code. You can think of it as a layer that enables AWS CloudFormation like experience when working with Kubernetes Custom Resources.
+KubePlus Custom Resource Discovery and Binding Add-on enables discovery and binding of Kubernetes Custom Resources to build Platforms as-Code. You can think of it as a layer that enables AWS CloudFormation like experience when working with Kubernetes Custom Resources.
 
-Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Discovery and Binding Add-on helps application developers in creating platform stacks declaratively using Kubernetes Custom Resources.
+Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus Discovery and Binding Add-on helps application developers in creating platform stacks declaratively using Kubernetes Custom Resources.
 
 .. _Operators: https://coreos.com/operators/
 
 .. _platforms as code: https://cloudark.io/platform-as-code
 
-Read our `blog post`_ to understand the challenges and the architecture of KubePlus API Discovery and Binding Add-on.
+Read our `blog post`_ to understand the challenges and the architecture of KubePlus Discovery and Binding Add-on.
 
 .. _blog post: https://medium.com/@cloudark/kubeplus-platform-toolkit-simplify-discovery-and-use-of-kubernetes-custom-resources-85f08851188f
 
@@ -18,7 +18,7 @@ Read our `blog post`_ to understand the challenges and the architecture of KubeP
 What does it do?
 =================
 
-KubePlus API Discovery and Binding Add-on enables two functions - discovery and automatic binding for Kubernetes Custom Resources.
+KubePlus Discovery and Binding Add-on enables two functions - discovery and automatic binding for Kubernetes Custom Resources.
 
 *Discovery* - Variety of static and dynamic information is associated with Kubernetes resources.
 Some examples are - Spec properties, usage, implementation-level assumption made by an Operator, 
@@ -31,7 +31,7 @@ composition tree of Kubernetes resources created as part of handling Custom Reso
 Who is the target user of KubePlus?
 ====================================
 
-KubePlus is useful to anyone who works with Kubernetes Custom Resources. These could be service developers, microservice developers, application developers, or devops engineers.
+KubePlus add-on is useful to anyone who works with Kubernetes Custom Resources. These could be service developers, microservice developers, application developers, or devops engineers.
 
 
 How does it work?
@@ -43,7 +43,7 @@ Additionally, KubePlus provides a small language and a set of endpoints for comp
 KubePlus Language
 ------------------
 
-The main goal of KubePlus Add-on is to make it easy for Custom Resource users to define "stacks" of Custom Resources to achieve their end goals. Towards this we have defined a minimal language that can be used to glue different Custom Resources together. Currently the language supports just two functions:
+The main goal of KubePlus add-on is to make it easy for Custom Resource users to define "stacks" of Custom Resources to achieve their end goals. Towards this we have defined a minimal language that can be used to glue different Custom Resources together. Currently the language supports just two functions:
 
 .. code-block:: bash
 
@@ -57,7 +57,7 @@ This function imports value of the specified parameter into the Spec where the f
 
 This function adds the specified label to the specified resource.
 
-Formal grammar of the language is available in the `language doc`__.
+Formal grammar of the language is available in the `language doc`_.
 
 .. _language doc: https://github.com/cloud-ark/kubeplus/blob/master/docs/kubeplus-language.txt
 
@@ -68,9 +68,10 @@ Formal grammar of the language is available in the `language doc`__.
 KubePlus Endpoints
 -------------------
 
-In order to perform discovery and binding, KubePlus Add-on defines following custom endpoints:
+In order to perform discovery and binding, KubePlus add-on defines following custom endpoints:
 
 .. code-block:: bash
+
    kubectl get --raw "/apis/platform-as-code/v1/composition"
 
 The composition endpoint is used for obtaining runtime composition tree of Kubernetes resource instances that are created as part of handling a Custom resource instance.
@@ -81,6 +82,7 @@ The composition endpoint is used for obtaining runtime composition tree of Kuber
 
 
 .. code-block:: bash
+
    kubectl get --raw "/apis/platform-as-code/v1/man"
 
 The man endpoint is used for obtaining usage information about a Custom Resource. It is a mechanism that an Operator developer can use to expose any assumptions or usage details that go beyond the Spec properties.
@@ -141,9 +143,11 @@ Getting started
 
 Install KubePlus:
 
-::
-  - git clone https://github.com/cloud-ark/kubeplus.git
-  - ./deploy-kubeplus.sh
+.. code-block:: bash
+
+   $ git clone https://github.com/cloud-ark/kubeplus.git
+   $ cd kubeplus
+   $ ./deploy-kubeplus.sh
 
 
 1. `Manual discovery and binding`_
@@ -202,7 +206,7 @@ We are actively looking for inputs from the community on following aspects:
 1. Language constructs
 
    - What additional language constructs would you like to see in KubePlus language?
-     File your suggestions as comments on `issue 319`__
+     File your suggestions as comments on `issue 319`_
 
 .. _issue 319: https://github.com/cloud-ark/kubeplus/issues/319
 
@@ -210,7 +214,7 @@ We are actively looking for inputs from the community on following aspects:
 2. Endpoints
 
    - What additional endpoints would you like to see in KubePlus API Server?
-     File your suggestions as comments on `issue 320`__
+     File your suggestions as comments on `issue 320`_
 
 .. _issue 320: https://github.com/cloud-ark/kubeplus/issues/320
 
