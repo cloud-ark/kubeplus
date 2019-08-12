@@ -20,8 +20,8 @@ package fake
 
 import (
 	clientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
-	platformstackv1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned/typed/platformstackcontroller/v1"
-	fakeplatformstackv1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned/typed/platformstackcontroller/v1/fake"
+	platformstackv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned/typed/platformstackcontroller/v1alpha1"
+	fakeplatformstackv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned/typed/platformstackcontroller/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -76,7 +76,7 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 
 var _ clientset.Interface = &Clientset{}
 
-// PlatformstackV1 retrieves the PlatformstackV1Client
-func (c *Clientset) PlatformstackV1() platformstackv1.PlatformstackV1Interface {
-	return &fakeplatformstackv1.FakePlatformstackV1{Fake: &c.Fake}
+// PlatformstackV1alpha1 retrieves the PlatformstackV1alpha1Client
+func (c *Clientset) PlatformstackV1alpha1() platformstackv1alpha1.PlatformstackV1alpha1Interface {
+	return &fakeplatformstackv1alpha1.FakePlatformstackV1alpha1{Fake: &c.Fake}
 }

@@ -26,5 +26,5 @@ set -o pipefail
 #  --output-base "$(dirname ${BASH_SOURCE})/../../.."
 $(dirname ${BASH_SOURCE})/../generate-groups.sh all \
   github.com/cloud-ark/kubeplus/platform-operator/pkg/client github.com/cloud-ark/kubeplus/platform-operator/pkg/apis \
-  "platformstackcontroller:v1"
+  "platformstackcontroller:v1alpha1"
 #  --output-base "$(dirname ${BASH_SOURCE})/../../.."

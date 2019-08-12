@@ -14,6 +14,6 @@ webhooks:
       caBundle: ${CA_BUNDLE}
     rules:
       - operations: [ "CREATE" ]
-        apiGroups: ["mysql.presslabs.org", "moodlecontroller.kubeplus", "stash.appscode.com"]
+        apiGroups: ["platformstack.kubeplus"]
         apiVersions: ["v1alpha1", "v1", "v1beta1"]
-        resources: ["mysqlclusters","moodles", "restics"]
+        resources: ["platformstacks"]

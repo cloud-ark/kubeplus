@@ -1,0 +1,9 @@
+apiVersion: mysql.presslabs.org/v1alpha1
+kind: MysqlCluster
+metadata:
+  name: cluster1
+  labels:
+    stack: moodle1-stack
+spec:
+  replicas: 1
+  secretName: cluster1-secret
