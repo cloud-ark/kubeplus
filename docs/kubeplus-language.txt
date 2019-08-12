@@ -1,11 +1,11 @@
 KubePlus Language Constructs:
 ------------------------------
 
-<Built-in Resource> :: Pod | Service | ...
+<Built-in Kind> :: Pod | Service | ...
 
-<Custom Resource> :: Custom Resources introduced by CRDs/Operators
+<Custom Kind> :: Custom Resources introduced by CRDs/Operators
 
-<Type> :: <Built-in Resource> | <Custom Resource>
+<Type> :: <Built-in Kind> | <Custom Kind>
 
 <Resource-Name> :: metadata.name
 
@@ -13,14 +13,15 @@ KubePlus Language Constructs:
 
 <Fully Qualified Resource Name> :: <Type>:<Namespace>.<Resource-Name>:[<Built-in Resource>][(filter=<filter-predicate>)]
 -> If <Built-in Resource> is specified, then <Resource-Name> of that resource
--> If filter predicate is specified, then <Resource-Name> of the resource whose name matches the filter predicate
+-> If filter predicate is specified, then <Resource-Name> of the resource whose name matches the filter predicate (anywhere) (its a String.contains() based comparison)
 
-<Fully Qualified Property Name> :: <Type>:<Namespace>.<Resource-Name>:[<Built-in Resource>][(filter=<filter-predicate>)].<property-name>
+<Fully Qualified Property Name> :: <Type>:<Namespace>.<Resource-Name>:[<Built-in Resource>][(filter=<filter-predicate>)].<property-name>[(filter=<filter-predicate>)]
+-> If filter predicate specified on <Built-in Resource> then select the Resource whose name matches the filter-predicate
+-> If filter predicate specified on <property-name> then select the Spec property whose value matches that filter-predicate
 
 <property-name> :: Any string
 -> The Spec of the <Resource-Name> will be searched for the <property-name> and its value will be returned.
--> If multiple values exist for <property-name> then the first one will be returned. This can be improved to support
-indexing capabilities to pick a particular property name from the list of returned properties.
+-> If multiple values exist for <property-name> then the first one will be returned, unless <filter-predicate> is defined.
 
 <Import String> :: <Fully Qualified Resource Name> | <Fully Qualified Property Name>
 

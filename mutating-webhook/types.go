@@ -41,6 +41,17 @@ type ResolveData struct {
 	Value          string
 }
 
+type PlatformStackData struct {
+	Name string
+	Namespace string
+}
+
+type StackElementData struct {
+	Name string
+	Kind string
+	Namespace string
+}
+
 // StringStack...
 // This is a stack I implemented that we use when recursively parsing the json
 // to track where we are in the json tree.

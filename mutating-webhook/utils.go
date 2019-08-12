@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"k8s.io/client-go/util/retry"
+	"encoding/json"
 
 	// apiv1 "k8s.io/api/core/v1"
 
@@ -20,11 +21,264 @@ import (
 
 	"github.com/buger/jsonparser"
 
+		"k8s.io/client-go/tools/clientcmd"
+
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/kubernetes"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	platformstackclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
+	platformstackv1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/platformstackcontroller/v1"
 
 )
+
+var platformStackMap map[string]PlatformStackData
+
+func init() {
+	platformStackMap = make(map[string]PlatformStackData)
+}
+
+func getResourceLabels1(req []byte) map[string]string {
+	labelMap := make(map[string]string)
+	return labelMap
+}
+
+func checkIfLabelsExist(req []byte) (bool) {
+	propertyValues := make([]string, 0)
+	propertyValuesPtr := &propertyValues
+	specProperty := "labels"
+	checkOnlyExistence := true
+	parsePropertyValue(req, specProperty, checkOnlyExistence, propertyValuesPtr)
+	fmt.Printf("PropertyValues:%v\n", propertyValues)
+	for _, propertyValue := range propertyValues {
+		fmt.Printf("Property Value:%s\n", propertyValue)
+		if propertyValue == "exists" {
+			return true
+		}
+	}
+	return false
+}
+
+func getResourceLabels(req []byte) map[string]string {
+	labelMap := make(map[string]string)
+	fmt.Printf("ResourceDetails:%s\n", string(req))
+
+	hasLabels := checkIfLabelsExist(req) 
+
+	if !hasLabels {
+		fmt.Println("No labels found")
+		return labelMap
+	} else {
+		fmt.Println("Found labels")
+		labels, _, _, err1 := jsonparser.Get(req, "metadata", "labels")
+		if err1 != nil {
+			fmt.Printf("Error:%s\n", err1)
+			return labelMap
+		}
+		fmt.Printf("Labels:%s\n", labels)
+		if err := json.Unmarshal(labels, &labelMap); err != nil {
+			fmt.Printf("Error: %s\n", err)
+		}
+		fmt.Printf("Label Map:%v\n", labelMap)
+		return labelMap
+	}
+}
+
+func CheckDependency123(kind, name, namespace string, req []byte) (bool, []StackElementData) {
+	dependencySatisfied := true
+	dependentStackElementList := make([]StackElementData, 0)
+
+	return dependencySatisfied, dependentStackElementList
+}
+
+func CheckDependency(kind, name, namespace string, req []byte) (bool, []StackElementData) {
+	dependencySatisfied := true
+	dependentStackElementList := make([]StackElementData, 0)
+
+	resourceLabelMap := getResourceLabels(req)
+	fmt.Printf("Resource Labels Map:%s\n", resourceLabelMap)
+	for key, value := range resourceLabelMap {
+		fmt.Printf("LabelKey:%s, LabelValue:%s\n", key, value)
+		platformStackObj := platformStackMap[key + ":" + value]
+
+		fmt.Printf("PlatformStackObj:%v\n", platformStackObj)
+		//if platformStackObj == nil {
+		//	continue
+		//}
+
+		platformStackName := platformStackObj.Name
+		platformStackNamespace := platformStackObj.Namespace
+
+		fmt.Printf("PlatformStackName:%s, PlatformStackNamespace:%s\n", platformStackName, platformStackNamespace)
+
+		config, err := clientcmd.BuildConfigFromFlags("", "")
+		if err != nil {
+			panic(err.Error())
+		}
+
+		var sampleclientset platformstackclientset.Interface
+		sampleclientset = platformstackclientset.NewForConfigOrDie(config)
+
+		platformstacks, err := sampleclientset.PlatformstackV1().PlatformStacks(platformStackNamespace).List(metav1.ListOptions{})
+		fmt.Printf("There are %d platformstacks in the cluster\n", len(platformstacks.Items))
+		platformStack1, err := sampleclientset.PlatformstackV1().PlatformStacks(platformStackNamespace).Get(platformStackName, metav1.GetOptions{})
+
+		if platformStack1 == nil || err != nil {
+			if platformStack1 == nil {
+				fmt.Printf("PlatformStack object not found")
+			}
+			if err != nil {
+				fmt.Printf("Encountered Error:%s\n", err.Error())
+			}
+		} else {
+			stackElements := platformStack1.Spec.StackElements
+			fmt.Printf("StackElements:%s\n", platformStack1.Spec.StackElements)
+			// Collect dependent elements
+			for _, stackElement := range stackElements {
+				elemKind := stackElement.Kind
+				elemName := stackElement.Name
+				elemNamespace := stackElement.Namespace
+				//elemNamespace := "default"
+				if elemNamespace == "" {
+					elemNamespace = "default"
+				}
+				fmt.Printf("1 Kind:%s, Instance:%s, Namespace:%s\n", elemKind, elemName, elemNamespace)
+				if elemKind == kind && elemName == name && elemNamespace == namespace {
+					dependsOn := stackElement.DependsOn
+					if dependsOn != nil {
+						for _, dependentInstance := range dependsOn {
+							fmt.Printf("    DependsOn:%s\n", dependentInstance)
+							dependentElementName := dependentInstance.Name
+							stackElementObj := StackElementData{
+								Name: dependentElementName,
+							}
+							dependentStackElementList = append(dependentStackElementList, stackElementObj)
+						}
+					}
+					break
+				}
+			}
+			// Check if dependent elements have been created or not
+			for _, stackElement := range stackElements {
+				elemKind := stackElement.Kind
+				elemName := stackElement.Name
+				elemNamespace := stackElement.Namespace
+				if elemNamespace == "" {
+					elemNamespace = "default"
+				}
+				for i, dependentStackElement := range dependentStackElementList {
+					dependentElementName := dependentStackElement.Name
+					if elemName == dependentElementName {
+						dependentStackElement = StackElementData{
+								Name: dependentElementName,
+								Namespace: elemNamespace,
+								Kind: elemKind,
+						}
+						fmt.Printf("Checking if dependency created:%s\n", dependentElementName)
+						created := checkIfResourceCreated(elemKind, elemName, elemNamespace)
+						if created {
+							// Remove the stackElement from the dependentStackElementList
+							dependentStackElementList = append(dependentStackElementList[:i], dependentStackElementList[i+1:]...)
+						} else {
+							dependencySatisfied = false
+						}
+					}
+				}
+			}
+			// Don't need to continue checking other labels
+			// dependentStackElementList is the list of stack elements that need to be created before creating the input resource
+			fmt.Printf("dependentStackElementList:%s\n", dependentStackElementList)
+			return dependencySatisfied, dependentStackElementList
+		}
+	}
+	// No label on the resource matched any PlatformStack resource labels; so just continue
+	fmt.Printf("dependencySatisfied:%v, dependentStackElementList:%s\n", dependencySatisfied, dependentStackElementList)
+	return dependencySatisfied, dependentStackElementList
+}
+
+func checkIfResourceCreated(kind, name, namespace string) bool {
+	resourceCreated := true
+	resourceDetails := queryResourceDetailsEndpoint(kind, name, namespace)
+	propertyValues := make([]string, 0)
+	propertyValuesPtr := &propertyValues
+	checkOnlyExistence := false
+	parsePropertyValue(resourceDetails, "reason", checkOnlyExistence, propertyValuesPtr)
+	fmt.Printf("PropertyValues:%v\n", propertyValues)
+	for _, propertyValue := range propertyValues {
+		fmt.Printf("Property Value:%s\n", propertyValue)
+		if strings.Contains(propertyValue, "NotFound") {
+			resourceCreated = false
+		}
+	}
+	return resourceCreated
+}
+
+func UpdatePlatformStacks(name, namespace string, req []byte) {
+	fmt.Printf(" ABC Name:%s, Namespace:%s\n", name, namespace)
+	var platformStack1 platformstackv1.PlatformStack
+	err := json.Unmarshal(req, &platformStack1)
+	if err != nil {
+	    fmt.Println(err)	
+	}
+	platformStackObj := PlatformStackData{
+		Name: name,
+		Namespace: namespace,
+	}
+	labelSelector := platformStack1.Spec.LabelSelector
+	for key, value := range labelSelector {
+		fmt.Printf("Key:%s, Value:%s\n", key, value)
+		mapKey := string(key) + ":" + string(value)
+		platformStackMap[mapKey] = platformStackObj
+	}
+}
+
+func CheckAndHandlePlatformStackResource1(name, namespace string) {
+
+	fmt.Printf("Name:%s, Namespace:%s\n", name, namespace)
+	//cfg, err := rest.InClusterConfig()
+
+	config, err := clientcmd.BuildConfigFromFlags("", "")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	var sampleclientset platformstackclientset.Interface
+	sampleclientset = platformstackclientset.NewForConfigOrDie(config)
+
+	platformStack1, err := sampleclientset.PlatformstackV1().PlatformStacks(namespace).Get(name, metav1.GetOptions{})
+	fmt.Printf("PlatformStack:%v\n", platformStack1)
+	if err != nil {
+		fmt.Errorf("Error:%s\n", err)
+	}
+
+	out, err1 := json.Marshal(&platformStack1)
+    if err1 != nil {
+        panic (err1)
+    }
+    fmt.Println(string(out))
+
+	labelSelector := platformStack1.Spec.LabelSelector
+
+
+	stackElements := platformStack1.Spec.StackElements
+
+	fmt.Printf("Label:%s\n", platformStack1.Spec.LabelSelector)
+	fmt.Printf("StackElements:%s\n", platformStack1.Spec.StackElements)
+
+	fmt.Printf("LabelSelector:%s\n", labelSelector)
+	for _, stackElement := range stackElements {
+		kind := stackElement.Kind
+		instance := stackElement.Name
+		fmt.Printf("Kind:%s, Instance:%s\n", kind, instance)
+		dependsOn := stackElement.DependsOn
+		if dependsOn != nil {
+			for _, dependentInstance := range dependsOn {
+				fmt.Printf("    DependsOn:%s\n", dependentInstance)
+			}
+		}
+	}
+
+	//fmt.Printf("PlatformStackMap:%v\n", platformStackMap)
+}
 
 //    You have two options to Update() this Deployment:
 //
@@ -367,7 +621,8 @@ func resolveSpecProperty(namespace, subKind, name, specProperty, specFilterPredi
 	resourceDetails := queryResourceDetailsEndpoint(subKind, name, namespace)
 	propertyValues := make([]string, 0)
 	propertyValuesPtr := &propertyValues
-	parsePropertyValue(resourceDetails, specProperty, propertyValuesPtr)
+	checkOnlyExistence := false
+	parsePropertyValue(resourceDetails, specProperty, checkOnlyExistence, propertyValuesPtr)
 	fmt.Printf("PropertyValues:%v\n", propertyValues)
 	for _, propertyValue := range propertyValues {
 		fmt.Printf("Property Value:%s\n", propertyValue)
@@ -378,21 +633,30 @@ func resolveSpecProperty(namespace, subKind, name, specProperty, specFilterPredi
 	return ""
 }
 
-func parsePropertyValue(resourceDetails []byte, specProperty string, propertyValues *[]string) {
+func parsePropertyValue(resourceDetails []byte, specProperty string, checkOnlyExistence bool, propertyValues *[]string) {
 	jsonparser.ObjectEach(resourceDetails, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		if dataType.String() == "string" {
 			//fmt.Printf("Key:%s, Value:%s\n", key, value)
 			if string(key) == specProperty {
-				*propertyValues = append(*propertyValues, string(value))
+				if checkOnlyExistence {
+					*propertyValues = append(*propertyValues, "exists")
+				} else {
+					*propertyValues = append(*propertyValues, string(value))
+				}
 			}
-		} 
+		}
 		if dataType.String() == "array" {
 			jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-				parsePropertyValue(value, specProperty, propertyValues)
+				parsePropertyValue(value, specProperty, checkOnlyExistence, propertyValues)
 			})
 		}
 		if dataType.String() == "object" {
-			parsePropertyValue(value, specProperty, propertyValues)
+			if string(key) == specProperty && checkOnlyExistence {
+				*propertyValues = append(*propertyValues, "exists")
+				return nil
+			} else {
+				parsePropertyValue(value, specProperty, checkOnlyExistence, propertyValues)
+			}
 		}
 		return nil
 	})

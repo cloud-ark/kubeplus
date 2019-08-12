@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ReplicationController
 metadata:
-  name: kubeplus
+  name: kubeplus-apiserver
   namespace: default
   labels:
     apiserver: "true"

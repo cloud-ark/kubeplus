@@ -40,6 +40,7 @@ type WhSvrParameters struct {
 	port     int    // webhook server port
 	certFile string // path to the x509 certificate for https
 	keyFile  string // path to the x509 private key matching `CertFile`
+	alsoLogToStderr bool 
 }
 
 type patchOperation struct {
@@ -66,7 +67,7 @@ func init() {
 func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	req := ar.Request
 
-	fmt.Println(req.Kind.Kind)
+	//fmt.Println(req.Kind.Kind)
 	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
 
 	var patchOperations []patchOperation
@@ -98,6 +99,31 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		}
 	}
 	fmt.Printf("Kind:%s, Name:%s, Namespace:%s\n", kind, name, namespace)
+
+	if kind == "PlatformStack" {
+		UpdatePlatformStacks(name, namespace, req.Object.Raw)
+	} else {
+		dependencyCreated, dependentElements := CheckDependency(kind, name, namespace, req.Object.Raw)
+		fmt.Printf("DependencyCreated:%v, dependencyElements:%v\n", dependencyCreated, dependentElements)
+
+		if !dependencyCreated {
+			errorMessage := "Dependent Resources not created:\n"
+			for _, elem := range dependentElements {
+				depName := elem.Name
+				depNamespace := elem.Namespace
+				depKind := elem.Kind
+				msg := fmt.Sprintf("   %s %s %s\n", depKind, depName, depNamespace)
+				errorMessage = errorMessage + msg
+			}
+			fmt.Printf("Error:%s\n", errorMessage)
+			return &v1beta1.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: errorMessage,
+				},
+			}
+		}
+	}
+
 	fmt.Println("--- Annotation Values: ---")
 	jsonparser.ObjectEach(allAnnotations, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 

@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"time"
+	"context"
+	"sync"
 
 	"github.com/golang/glog"
 	kubeinformers "k8s.io/client-go/informers"
@@ -16,6 +18,10 @@ import (
 	"github.com/cloud-ark/kubeplus/platform-operator/pkg/signals"
 
 	"k8s.io/client-go/rest"
+
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset" //typed/apiextensions/v1beta1"
+	apiextensionsinformers "k8s.io/apiextensions-apiserver/pkg/client/informers/externalversions"
+
 )
 
 func main() {
@@ -23,6 +29,8 @@ func main() {
 
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
+
+	ctx, cancel := context.WithCancel(context.Background())
 
 	// creates the in-cluster config
 	cfg, err := rest.InClusterConfig()
@@ -42,14 +50,39 @@ func main() {
 
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 	platformInformerFactory := informers.NewSharedInformerFactory(platformOperatorClient, time.Second*30)
+	platformController := NewPlatformController(kubeClient, platformOperatorClient, kubeInformerFactory, platformInformerFactory)
 
-	controller := NewController(kubeClient, platformOperatorClient, kubeInformerFactory, platformInformerFactory)
+	var wg sync.WaitGroup
 
-	go kubeInformerFactory.Start(stopCh)
-	go platformInformerFactory.Start(stopCh)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		platformController.Run(1, ctx.Done())
+	}()
 
-	if err = controller.Run(1, stopCh); err != nil {
+	crdClient := apiextensionsclientset.NewForConfigOrDie(cfg)
+	crdInformerFactory := apiextensionsinformers.NewSharedInformerFactory(crdClient, time.Second*30)
+
+	crdController := NewCRDController(cfg,
+		kubeClient,
+		crdInformerFactory.Apiextensions().V1beta1().CustomResourceDefinitions().Lister(),
+		crdInformerFactory)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		crdController.Run(1, ctx.Done())
+	}()
+
+	go kubeInformerFactory.Start(ctx.Done())
+	go platformInformerFactory.Start(ctx.Done())
+
+	<-stopCh
+	cancel()
+	/*
+	if err = platformController.Run(1, stopCh); err != nil {
 		glog.Fatalf("Error running controller: %s", err.Error())
 	}
+	*/
 }
 

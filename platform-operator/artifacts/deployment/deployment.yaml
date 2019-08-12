@@ -4,7 +4,7 @@ metadata:
   name: platformstacks.platformstack.kubeplus
 spec:
   group: platformstack.kubeplus
-  version: v1
+  version: v1alpha1
   names:
     kind: PlatformStack
     plural: platformstacks
@@ -13,7 +13,7 @@ spec:
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: platform-operator-deployment
+  name: kubeplus-platformoperator
 spec:
   replicas: 1 
   selector:
@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
       - name: platform-operator
-        image: lmecld/platform-operator:0.0.1
+        image: lmecld/platform-operator:0.0.2
         imagePullPolicy: Always
         command: [ "/platform-operator"]
 
