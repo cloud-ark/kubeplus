@@ -33,6 +33,10 @@ github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20190809171640-2438549fbb
 github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20190809171640-2438549fbb82/go.mod h1:e0fsEG7ge1E8TYZQz9Ng21pJTY/JBXI7FtMKU9bHloc=
 github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20190810185922-1a290fc0e1c4 h1:2kv6IWn3Eg0l36hZXK6FivN3+3GF6mmvUsdfHf9Nm48=
 github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20190810185922-1a290fc0e1c4/go.mod h1:9j2sKTUshN/ir9XvUldbJgUTq9oHxJ6kqnGGcfJ2ImE=
+github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20190812234135-095fa4274def h1:KRcVt9sCxHC+RZGmUGu5HLPdK/JMOI8DV+cVp17Ssq4=
+github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20190812234135-095fa4274def/go.mod h1:kPyfmOXoPN96On4erQzxqVXJfhgksjbHEAIK7Pha6jQ=
+github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20190813152806-dcb8617a5f01 h1:EOaQ9S1rW0+AhHEE/kQu7FHkUcb1XztvfQOfjWW5MdI=
+github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20190813152806-dcb8617a5f01/go.mod h1:kPyfmOXoPN96On4erQzxqVXJfhgksjbHEAIK7Pha6jQ=
 github.com/cloudflare/cfssl v0.0.0-20180726162950-56268a613adf/go.mod h1:yMWuSON2oQp+43nFtAV/uvKQIFpSPerB57DCt9t8sSA=
 github.com/clusterhq/flocker-go v0.0.0-20160920122132-2b8b7259d313/go.mod h1:P1wt9Z3DP8O6W3rvwCt0REIlshg1InHImaLW0t3ObY0=
 github.com/codedellemc/goscaleio v0.0.0-20170830184815-20e2ce2cf885/go.mod h1:JIHmDHNZO4tmA3y3RHp6+Gap6kFsNf55W9Pn/3YS9IY=

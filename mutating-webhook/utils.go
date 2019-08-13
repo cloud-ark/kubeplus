@@ -27,7 +27,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	platformstackclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
-	platformstackv1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/platformstackcontroller/v1"
+	platformstackv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/platformstackcontroller/v1alpha1"
 
 )
 
@@ -118,9 +118,9 @@ func CheckDependency(kind, name, namespace string, req []byte) (bool, []StackEle
 		var sampleclientset platformstackclientset.Interface
 		sampleclientset = platformstackclientset.NewForConfigOrDie(config)
 
-		platformstacks, err := sampleclientset.PlatformstackV1().PlatformStacks(platformStackNamespace).List(metav1.ListOptions{})
+		platformstacks, err := sampleclientset.PlatformstackV1alpha1().PlatformStacks(platformStackNamespace).List(metav1.ListOptions{})
 		fmt.Printf("There are %d platformstacks in the cluster\n", len(platformstacks.Items))
-		platformStack1, err := sampleclientset.PlatformstackV1().PlatformStacks(platformStackNamespace).Get(platformStackName, metav1.GetOptions{})
+		platformStack1, err := sampleclientset.PlatformstackV1alpha1().PlatformStacks(platformStackNamespace).Get(platformStackName, metav1.GetOptions{})
 
 		if platformStack1 == nil || err != nil {
 			if platformStack1 == nil {
@@ -214,7 +214,7 @@ func checkIfResourceCreated(kind, name, namespace string) bool {
 
 func UpdatePlatformStacks(name, namespace string, req []byte) {
 	fmt.Printf(" ABC Name:%s, Namespace:%s\n", name, namespace)
-	var platformStack1 platformstackv1.PlatformStack
+	var platformStack1 platformstackv1alpha1.PlatformStack
 	err := json.Unmarshal(req, &platformStack1)
 	if err != nil {
 	    fmt.Println(err)	
@@ -244,7 +244,7 @@ func CheckAndHandlePlatformStackResource1(name, namespace string) {
 	var sampleclientset platformstackclientset.Interface
 	sampleclientset = platformstackclientset.NewForConfigOrDie(config)
 
-	platformStack1, err := sampleclientset.PlatformstackV1().PlatformStacks(namespace).Get(name, metav1.GetOptions{})
+	platformStack1, err := sampleclientset.PlatformstackV1alpha1().PlatformStacks(namespace).Get(name, metav1.GetOptions{})
 	fmt.Printf("PlatformStack:%v\n", platformStack1)
 	if err != nil {
 		fmt.Errorf("Error:%s\n", err)

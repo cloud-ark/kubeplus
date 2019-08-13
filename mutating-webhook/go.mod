@@ -1,11 +1,12 @@
 require (
 	github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23
-	github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20190810185922-1a290fc0e1c4
+	github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20190813152806-dcb8617a5f01
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v0.0.0
 	k8s.io/kubernetes v1.15.0
+	k8s.io/utils v0.0.0-20190801114015-581e00157fb1 // indirect
 )
 
 replace (
