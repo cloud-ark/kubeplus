@@ -1,0 +1,79 @@
+DevOps Engineer Window:
+------------------------
+1. Deploy KubePlus
+./deploy-kubeplus.sh
+
+2. Install Operator Helm Charts - Mysql Operator, Moodle Operator
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.4.tgz?raw=true
+
+3. Check pods
+   - kubectl get pods
+
+
+Application Developer Window:
+------------------------------
+1. Check platform.yaml
+   - Highlight labelSelector
+   - Highlight Platform Elements with their dependencies
+
+2. Create platformstack
+   - kubectl create -f platform.yaml
+
+3. Try creating moodle1.yaml; Should fail because both dependencies not satisfied
+   - kubectl create -f moodle1.yaml
+
+4. Try creating cluster1.yaml; Should fail because dependency not satisfied
+   - kubectl create -f cluster1.yaml
+
+5. Create cluster1-secret
+   - kubectl create -f cluster1-secret.yaml
+
+6. Try creating moodle1.yaml; Should fail because one dependency still not satisfied
+   - kubectl create -f moodle1.yaml
+
+7. Create cluster1.yaml
+   - kubectl create -f cluster1.yaml
+
+8. Show composition tree of cluster1
+   - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=MysqlCluster&instance=cluster1&namespace=defau\
+lt" | python -mjson.tool
+
+9. From o/p of composition, highlight the Service objects
+
+10. Check if cluster1 pods are ready
+   - kubectl get pods
+
+11. Once cluster1 pods are ready, create Moodle instance
+
+12. Show Moodle instance
+    - more moodle1.yaml
+
+13. Highlight the Service name
+
+14. kubectl create -f moodle1.yaml
+
+15. kubectl describe moodles moodle1
+    - Highlight the resolved service name
+
+16. Show moodle1 composition tree
+    - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=default" | python -mjson.tool
+
+17. Show pods
+    - kubectl get pods
+
+18. Check CRD
+    - kubectl get customresourcedefinitions
+    - kubectl describe customresourcedefinitions moodles.moodlecontroller.kubeplus
+      - Check the 'platform-as-code/composition' annotation on the Moodle CRD
+    - kubectl describe customresourcedefinitions mysqlclusters.mysql.presslabs.org
+      - Check the 'platform-as-code/composition' annotation on MysqlCluster CRD
+
+19. Feedback:
+    - https://github.com/cloud-ark/kubeplus
+
+20. Thanks!!
+
+
+
+
