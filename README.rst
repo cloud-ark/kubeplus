@@ -25,7 +25,7 @@ composition tree of Kubernetes resources created as part of handling Custom Reso
 
 
 *Orchestration* - Creating platform stacks typically requires creating resources in certain order. KubePlus provides a way to define all the resources as part of a stack including their dependencies. 
-This information is used to prevent out-of-order creation of resources of a stack. Note that as per Kubernetes's level-based reconciliation philosophy, the ordering between resource creations should not matter. However, CRDs/Operators may not be written to satisfy this requirement. In such a case preventing out-of-order resource creation is helpful.
+This information is used to prevent out-of-order creation of resources of a stack. Note that as per Kubernetes's level-based reconciliation philosophy, the ordering between resource creations should not matter. However, it is possible that CRDs/Operators may not satisfy this requirement. In such a case preventing out-of-order resource creation is helpful.
 
 
 Who is the target user of KubePlus?
