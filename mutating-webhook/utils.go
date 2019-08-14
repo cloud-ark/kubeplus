@@ -83,13 +83,6 @@ func getResourceLabels(req []byte) map[string]string {
 	}
 }
 
-func CheckDependency123(kind, name, namespace string, req []byte) (bool, []StackElementData) {
-	dependencySatisfied := true
-	dependentStackElementList := make([]StackElementData, 0)
-
-	return dependencySatisfied, dependentStackElementList
-}
-
 func CheckDependency(kind, name, namespace string, req []byte) (bool, []StackElementData) {
 	dependencySatisfied := true
 	dependentStackElementList := make([]StackElementData, 0)
@@ -137,7 +130,7 @@ func CheckDependency(kind, name, namespace string, req []byte) (bool, []StackEle
 				elemKind := stackElement.Kind
 				elemName := stackElement.Name
 				elemNamespace := stackElement.Namespace
-				//elemNamespace := "default"
+
 				if elemNamespace == "" {
 					elemNamespace = "default"
 				}
