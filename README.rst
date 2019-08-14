@@ -24,7 +24,7 @@ composition tree of Kubernetes resources created as part of handling Custom Reso
 *Binding* - Assembling multiple resources - built-in and Custom - to build platform stacks requires them to be bound/tied together in specific ways. In Kubernetes 'labels', 'label selectors' and name-based dns resolution satisfy the binding needs between built-in resources. However, when using Custom Resources from different Operators these built-in mechanisms are not sufficient. Correct binding may require setting Spec properties to specific values or orchestrating actions on multiple resources. KubePlus Discovery and Binding Add-on enables automating binding through a minimal language that can be used to glue together different Custom Resources through their YAML definitions.
 
 
-*Orchestration* - Creating platform stacks typically requires creating resources in certain order. The ordering can be performed external to a system, KubePlus provides a way to define all the resources as part of a stack using a thin layer which also captures dependency and ordering information between different resources. KubePlus prevents  out-of-order creation of resources in a defined stack.
+*Orchestration* - Creating platform stacks typically requires creating resources in certain order. The ordering can be performed external to a system. KubePlus provides a way to define all the resources as part of a stack using a Custom Resource, which also captures dependency information between different resources. This information is used by KubePlus to prevent out-of-order creation of resources of a stack. Note that as per Kubernetes's level-based reconciliation philosophy, the ordering between resource creations should not matter. However, CRDs/Operators may not be written to satisfy this requirement. In such a case preventing out-of-order resource creation is helpful.
 
 
 Who is the target user of KubePlus?
@@ -97,7 +97,7 @@ by KubePlus internally as part of handling the language constructs.
 PlatformStack Operator
 -----------------------
 
-In order to define dependency and ordering relationships between different resources, KubePlus provides an Operator that defines ``PlatformStack`` Custom Resource Definition. The ordering information is used by Mutating webhook to prevent out-of-order creation of resources. In the future this Operator will be used to propagate label defined in PlatformStack's labelSelector to all the sub-resources of custom resources in that stack.
+In order to define dependency relationships between different resources, KubePlus provides an Operator that defines ``PlatformStack`` Custom Resource Definition. The dependency information is used by mutating webhook to prevent out-of-order creation of resources. In the future this Operator will be used to propagate label defined in PlatformStack's labelSelector to all the sub-resources of custom resources defined in that stack.
 
 
 Platform-as-Code Annotations
