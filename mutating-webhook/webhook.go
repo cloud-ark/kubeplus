@@ -138,26 +138,6 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			}
 		}
 		return nil
-
-		/*
-		if !hasImportFunc {
-			resolvedValue = val
-		} else {
-			resolvedValue = ResolveAnnotationValue(val, name, namespace)
-		}
-		entry = Entry{InstanceName: name, Namespace: namespace, Key: string(key), Value: string(resolvedValue)}
-		var entryList []Entry
-		var kindExists bool
-		if entryList, kindExists = annotations.KindToEntry[kind]; !kindExists {
-			entryList = make([]Entry, 0)
-		}
-		if annotations.Exists(entry, kind) {
-			return nil
-		}
-		entryList = append(entryList, entry)
-		annotations.KindToEntry[kind] = entryList
-		return nil
-		*/
 	})
 
 	//fmt.Println("----- Stored data: -----")
@@ -182,16 +162,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 
 			importString := resolveObj.ImportString
 			fmt.Printf("Import String: %s\n", importString)
-			//namespace1, kind1, instanceName1, key1, err := ParseAnnotationPath(annotationPath)
-			if err != nil {
-				return &v1beta1.AdmissionResponse{
-					Result: &metav1.Status{
-						Message: err.Error(),
-					},
-				}
-			}
-			//fmt.Printf("Trying to Resolve: %s %s %s %s\n", namespace1, kind1, instanceName1, key1)
-			//value, err := searchAnnotation(annotations.KindToEntry[kind1], instanceName1, namespace1, key1)
+
 			value, err := ResolveImportString(importString)
 			fmt.Printf("ImportString:%s, Resolved ImportString value:%s", importString, value)
 			if err != nil {
@@ -201,7 +172,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 				// operation
 				deleted := annotations.Delete(entry, kind)
 				fmt.Printf("The data was deleted : %t", deleted)
-				fmt.Println(annotations)
+				//fmt.Println(annotations)
 				return &v1beta1.AdmissionResponse{
 					Result: &metav1.Status{
 						Message: err.Error(),
