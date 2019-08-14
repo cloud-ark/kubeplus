@@ -1,5 +1,5 @@
-KubePlus Language Constructs:
-------------------------------
+KubePlus Constructs Grammar:
+-----------------------------
 
 <Built-in Kind> :: Pod | Service | ...
 
