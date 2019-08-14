@@ -14,7 +14,7 @@ Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, 
 What does it do?
 =================
 
-KubePlus Discovery and Binding Add-on enables two functions - discovery and automatic binding for Kubernetes Custom Resources.
+KubePlus Discovery and Binding Add-on enables three things - discovery, binding and orchestration of Kubernetes Custom Resources.
 
 *Discovery* - Variety of static and dynamic information is associated with Kubernetes resources.
 Some examples are - Spec properties, usage, implementation-level assumption made by an Operator, 
@@ -22,6 +22,9 @@ composition tree of Kubernetes resources created as part of handling Custom Reso
 
 
 *Binding* - Assembling multiple resources - built-in and Custom - to build platform stacks requires them to be bound/tied together in specific ways. In Kubernetes 'labels', 'label selectors' and name-based dns resolution satisfy the binding needs between built-in resources. However, when using Custom Resources from different Operators these built-in mechanisms are not sufficient. Correct binding may require setting Spec properties to specific values or orchestrating actions on multiple resources. KubePlus Discovery and Binding Add-on enables automating binding through a minimal language that can be used to glue together different Custom Resources through their YAML definitions.
+
+
+*Orchestration* - Creating platform stacks typically requires creating resources in certain order. The ordering can be performed external to a system, KubePlus provides a way to define all the resources as part of a stack using a thin layer which also captures dependency and ordering information between different resources. KubePlus prevents  out-of-order creation of resources in a defined stack.
 
 
 Who is the target user of KubePlus?
@@ -33,12 +36,12 @@ KubePlus is useful to anyone who works with Kubernetes Custom Resources. These c
 How does it work?
 ==================
 
-KubePlus Discovery and Binding Add-on consists of - an aggregated API Server, a mutating webhook, and a platform operator. Additionally, KubePlus comes with a small language and a set of endpoints that help with composing Custom Resources together.
+KubePlus Discovery and Binding Add-on consists of - an aggregated API Server, a mutating webhook, and a platform operator. Additionally, KubePlus comes with a set of functions and endpoints that help with composing Custom Resources together.
 
-KubePlus Language
+KubePlus Functions
 ------------------
 
-The main goal of KubePlus is to make it easy for Custom Resource users to define "stacks" of Custom Resources to achieve their end goals. Towards this we have defined a minimal language that can be used to glue different Custom Resources together. Currently the language supports just two functions:
+The main goal of KubePlus is to make it easy for Custom Resource users to define "stacks" of Custom Resources to achieve their end goals. Towards this we have defined certain functions that can be used to glue different Custom Resources together. 
 
 .. code-block:: bash
 
@@ -52,9 +55,9 @@ This function imports value of the specified parameter into the Spec where the f
 
 This function adds the specified label to the specified resource.
 
-Formal grammar of the language is available in the `language doc`_.
+Formal grammar of these functions is available in the `functions doc`_.
 
-.. _language doc: https://github.com/cloud-ark/kubeplus/blob/master/docs/kubeplus-language.txt
+.. _functions doc: https://github.com/cloud-ark/kubeplus/blob/master/docs/kubeplus-functions.txt
 
 .. .. image:: ./docs/KubePlus-diagram.png
 ..   :scale: 20%
@@ -89,6 +92,12 @@ The man endpoint is used for obtaining usage information about a Custom Resource
 
 These endpoints can be used manually as well as programmatically. In fact, the ``composition`` endpoint is used
 by KubePlus internally as part of handling the language constructs.
+
+
+PlatformStack Operator
+-----------------------
+
+In order to define dependency and ordering relationships between different resources, KubePlus provides an Operator that defines ``PlatformStack`` Custom Resource Definition. The ordering information is used by Mutating webhook to prevent out-of-order creation of resources. In the future this Operator will be used to propagate label defined in PlatformStack's labelSelector to all the sub-resources of custom resources in that stack.
 
 
 Platform-as-Code Annotations
@@ -133,9 +142,9 @@ This Moodle CRD is part of the Moodle Operator whose Helm chart is available her
 .. _here: https://github.com/cloud-ark/kubeplus-operators/tree/master/moodle/moodle-operator-chart/templates
 
 
-Read our `blog post`_ to understand the challenges and the architecture of KubePlus Discovery and Binding Add-on.
+Read our `blog post`_ to understand evolution of 'as-Code' systems in Kubernetes world.
 
-.. _blog post: https://medium.com/@cloudark/kubeplus-platform-toolkit-simplify-discovery-and-use-of-kubernetes-custom-resources-85f08851188f
+.. _blog post: https://medium.com/@cloudark/kubernetes-and-the-future-of-as-code-systems-b1b2de312742
 
 
 Getting started
@@ -203,9 +212,9 @@ Feedback
 
 We are actively looking for inputs from the community on following aspects:
 
-1. Language constructs
+1. Functions
 
-   - What additional language constructs would you like to see in KubePlus language?
+   - What additional functions would you like to see in KubePlus?
      File your suggestions as comments on `issue 319`_
 
 .. _issue 319: https://github.com/cloud-ark/kubeplus/issues/319
