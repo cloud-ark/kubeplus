@@ -39,8 +39,8 @@ How does it work?
 
 KubePlus Discovery and Binding Add-on consists of following components - an aggregated API Server, a mutating webhook, and a platformstack operator. Additionally, KubePlus comes with a set of functions and endpoints.
 
-.. image:: ./docs/KubePlus-components1.jpg
-   :scale: 25%mv 
+.. image:: ./docs/KubePlus-components1.jpg 
+   :scale: 25% 
    :align: center
 
 
