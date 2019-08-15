@@ -39,6 +39,11 @@ How does it work?
 
 KubePlus Discovery and Binding Add-on consists of following components - an aggregated API Server, a mutating webhook, and a platformstack operator. Additionally, KubePlus comes with a set of functions and endpoints.
 
+.. image:: ./docs/KubePlus-components.jpg
+   :scale: 25%
+   :align: center
+
+
 KubePlus Functions
 ------------------
 
@@ -177,6 +182,10 @@ Platform-as-Code Practice
 .. _discoverability and interoperability guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
 
+.. image:: ./docs/Platform-as-Code-workflow.jpg
+   :scale: 25%
+   :align: center
+
 *1. Operator Developer*
 
 Operator developers add above mentioned annotations on their CRD definitions. They also create the ConfigMaps with the required content. We have developed `discoverability and interoperability guidelines`_ to help with Operator development.
@@ -252,11 +261,15 @@ KubePlus supports runtime information resolution for sub-resources of Custom Res
 Another approach towards binding is to define a new CRD, such as ServiceBinding
 in Service Catalog. KubePlus's approach eschews introducing a new CRD for defining binding 
 related information as it adds additional complexity for application developers.
+
 For orchestration, there exists Application CRD in the community. Conceptually, KubePlus's PlatformStack CRD is
 similar to it, in that both provide a way to define a stack of resources.
-Our goal with PlatformStack CRD is to use it for other orchestration functions such as ordering, label propagation, etc. As for discovery, Kubernetes itself now supports 'kubectl explain' on Custom Resources.
-In our experience the information that is needed for correctly using Custom Resources goes beyond
-the Spec properties that 'kubectl explain' exposes. KubePlus's discovery endpoint provides a way for
+Our goal with PlatformStack CRD is to use it for other orchestration functions such as ordering, label propagation, etc. 
+
+As for discovery, Kubernetes itself now supports 'kubectl explain' on Custom Resources.
+In our experience the information that is needed for correctly using Custom Resources with other
+resources goes beyond the Spec properties that 'kubectl explain' exposes. 
+KubePlus's discovery endpoint provides a way for
 Operator developers to expose additional information that cannot be accommodated through Custom Resource Spec properties alone.
 
 
