@@ -36,11 +36,11 @@ File an Issue with following information:
 
   * Error log output
 
-    * kubectl logs <kubeplus-apiserver-pod>
+    * kubectl logs kubeplus-apiserver-pod
 
-    * kubectl logs <kubeplus-apiserver-pod> -c kube-discovery-apiserver
+    * kubectl logs kubeplus-apiserver-pod -c kube-discovery-apiserver
 
-    * kubectl logs <kubeplus-mutating-webhook-pod>
+    * kubectl logs kubeplus-mutating-webhook-pod
 
   * Sample YAMLs that you were using
 
