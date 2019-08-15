@@ -39,8 +39,8 @@ How does it work?
 
 KubePlus Discovery and Binding Add-on consists of following components - an aggregated API Server, a mutating webhook, and a platformstack operator. Additionally, KubePlus comes with a set of functions and endpoints.
 
-.. image:: ./docs/KubePlus-components.jpg
-   :scale: 25%
+.. image:: ./docs/KubePlus-components1.jpg
+   :scale: 25%mv 
    :align: center
 
 
@@ -104,6 +104,8 @@ PlatformStack Operator
 -----------------------
 
 In order to define dependency relationships between different resources, KubePlus provides an Operator that defines ``PlatformStack`` Custom Resource Definition. The dependency information is used by mutating webhook to prevent out-of-order creation of resources. In the future this Operator will be used to propagate label defined in PlatformStack's labelSelector to all the sub-resources of Custom Resources defined in that stack.
+Note that PlatformStack Operator does not actually deploy any resources defined in a stack. Resource creation
+is done by application developer using 'kubectl'.
 
 
 Platform-as-Code Annotations
