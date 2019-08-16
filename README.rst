@@ -37,11 +37,12 @@ Who is the target user of KubePlus?
 
 KubePlus is useful to anyone who works with Kubernetes Custom Resources. These could be service developers, microservice developers, application developers, or devops engineers.
 
-.. _discoverability and interoperability guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
-
 .. image:: ./docs/Platform-as-Code-workflow.jpg
    :scale: 25%
    :align: center
+
+.. _discoverability and interoperability guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
+
 
 *1. Operator Developer*
 
