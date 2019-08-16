@@ -4,7 +4,7 @@ Kubernetes API Add-on for Platform-as-Code
 
 KubePlus API Add-on enables building `Platforms as-Code`_ on Kubernetes using Custom Resources.
 It focuses on solving Kubernetes Custom Resource Discovery, Binding and Orchestration challenges
-for multi-Operator environments.
+in multi-Operator environments.
 You can think of it as a layer that enables AWS CloudFormation like experience when working 
 with Kubernetes Custom Resources.
 
@@ -36,6 +36,25 @@ Who is the target user of KubePlus?
 ====================================
 
 KubePlus is useful to anyone who works with Kubernetes Custom Resources. These could be service developers, microservice developers, application developers, or devops engineers.
+
+.. _discoverability and interoperability guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
+
+.. image:: ./docs/Platform-as-Code-workflow.jpg
+   :scale: 25%
+   :align: center
+
+*1. Operator Developer*
+
+Operator developers create Operator Helm charts enhanced with certain platform-as-code annotations (described below). We have developed `discoverability and interoperability guidelines`_ to help with Operator development.
+
+*2. DevOps Engineer/Cluster Administrator*
+
+DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a cluster. Additionally, they deploy KubePlus in their cluster to enable their Application developers discover and use various Custom Resources efficiently.
+
+*3. Application Developer*
+
+Application developers use KubePlus endpoints to create their platform stacks as-code
+composing various Custom Resources together.
 
 
 How does it work?
@@ -181,30 +200,6 @@ Try:
 
 .. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/platform-crd/steps.txt
 
-
-Platform-as-Code Practice
-===========================
-
-.. _discoverability and interoperability guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
-
-
-.. image:: ./docs/Platform-as-Code-workflow.jpg
-   :scale: 25%
-   :align: center
-
-*1. Operator Developer*
-
-Operator developers add above mentioned annotations on their CRD definitions. They also create the ConfigMaps with the required content. We have developed `discoverability and interoperability guidelines`_ to help with Operator development.
-
-*2. DevOps Engineer*
-
-DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a cluster. Additionally, they deploy KubePlus in their cluster to enable their Application developers discover and use various Custom Resources efficiently.
-
-
-*3. Application Developer*
-
-Application developers use Platform-as-Code endpoints to discover static and dynamic information about Custom Resources in their cluster. Using this information they can then build their platform stacks 
-composing various Custom Resources together using KubePlus functions and endpoints.
 
 
 Demo
