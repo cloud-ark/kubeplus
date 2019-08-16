@@ -5,7 +5,7 @@ Kubernetes API Add-on for Platform-as-Code
 KubePlus API Add-on enables building `Platforms as-Code`_ on Kubernetes using Custom Resources.
 It focuses on solving Kubernetes Custom Resource Discovery, Binding and Orchestration challenges
 in multi-Operator environments.
-You can think of it as a layer that enables AWS CloudFormation like experience when working 
+You can think of it as a layer that enables AWS CloudFormation/Terraform like experience when working 
 with Kubernetes Custom Resources.
 
 Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on helps application developers in creating platform stacks declaratively using Kubernetes Custom Resources/APIs introduced by the Operators.
