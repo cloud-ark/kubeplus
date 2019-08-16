@@ -8,7 +8,7 @@ for multi-Operator environments.
 You can think of it as a layer that enables AWS CloudFormation like experience when working 
 with Kubernetes Custom Resources.
 
-Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on helps application developers in creating platform stacks declaratively using Kubernetes Custom Resources.
+Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on helps application developers in creating platform stacks declaratively using Kubernetes Custom Resources/APIs introduced by the Operators.
 
 .. _Operators: https://coreos.com/operators/
 
