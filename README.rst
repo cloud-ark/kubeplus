@@ -1,27 +1,31 @@
-=================================================
-K8s Custom Resource Discovery and Binding Add-on
-=================================================
+============================================
+Kubernetes API Add-on for Platform-as-Code 
+============================================
 
-KubePlus Custom Resource Discovery and Binding Add-on enables discovery and binding of Kubernetes Custom Resources to build Platforms as-Code. You can think of it as a layer that enables AWS CloudFormation like experience when working with Kubernetes Custom Resources.
+KubePlus API Add-on enables building `Platforms as-Code`_ on Kubernetes using Custom Resources.
+It focuses on solving Kubernetes Custom Resource Discovery, Binding and Orchestration challenges
+for multi-Operator environments.
+You can think of it as a layer that enables AWS CloudFormation like experience when working 
+with Kubernetes Custom Resources.
 
-Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus Discovery and Binding Add-on helps application developers in creating platform stacks declaratively using Kubernetes Custom Resources.
+Kubernetes Custom Resource Definitions (CRDs), popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on helps application developers in creating platform stacks declaratively using Kubernetes Custom Resources.
 
 .. _Operators: https://coreos.com/operators/
 
-.. _platforms as code: https://cloudark.io/platform-as-code
+.. _Platforms as-Code: https://cloudark.io/platform-as-code
 
 
 What does it do?
 =================
 
-KubePlus Discovery and Binding Add-on enables three things - discovery, binding and orchestration of Kubernetes Custom Resources.
+KubePlus API Add-on enables three things - discovery, binding and orchestration of Kubernetes Custom Resources.
 
 *Discovery* - Variety of static and dynamic information is associated with Kubernetes resources.
 Some examples are - Spec properties, usage, implementation-level assumption made by an Operator, 
-composition tree of Kubernetes resources created as part of handling Custom Resources, permissions granted to the CRD/Operator Pod, whether Custom Resources are in use as part of a platform stack, history of declarative actions performed on resources, etc. KubePlus Discovery and Binding Add-on enables discovering this type of information about Custom Resources directly through 'kubectl'.
+composition tree of Kubernetes resources created as part of handling Custom Resources, permissions granted to the CRD/Operator Pod, whether Custom Resources are in use as part of a platform stack, history of declarative actions performed on resources, etc. KubePlus API Add-on enables discovering this type of information about Custom Resources directly through 'kubectl'.
 
 
-*Binding* - Assembling multiple resources - built-in and Custom - to build platform stacks requires them to be bound/tied together in specific ways. In Kubernetes 'labels', 'label selectors' and name-based dns resolution satisfy the binding needs between built-in resources. However, when using Custom Resources from different Operators these built-in mechanisms are not sufficient. Correct binding may require setting Spec properties to specific values or orchestrating actions on multiple resources. KubePlus Discovery and Binding Add-on enables automating binding through a set of functions that can be used to glue together different Custom Resources through their YAML definitions.
+*Binding* - Assembling multiple resources - built-in and Custom - to build platform stacks requires them to be bound/tied together in specific ways. In Kubernetes 'labels', 'label selectors' and name-based dns resolution satisfy the binding needs between built-in resources. However, when using Custom Resources from different Operators these built-in mechanisms are not sufficient. Correct binding may require setting Spec properties to specific values or orchestrating actions on multiple resources. KubePlus API Add-on enables automating binding through a set of functions that can be used to glue together different Custom Resources through their YAML definitions.
 
 
 *Orchestration* - Creating platform stacks typically requires creating resources in certain order. KubePlus provides a way to define all the resources as part of a stack including their dependencies. 
@@ -37,7 +41,7 @@ KubePlus is useful to anyone who works with Kubernetes Custom Resources. These c
 How does it work?
 ==================
 
-KubePlus Discovery and Binding Add-on consists of following components - an aggregated API Server, a mutating webhook, and a platformstack operator. Additionally, KubePlus comes with a set of functions and endpoints.
+KubePlus API Add-on consists of following components - an aggregated API Server, a mutating webhook, and a platformstack operator. Additionally, KubePlus comes with a set of functions and endpoints.
 
 .. image:: ./docs/KubePlus-components1.jpg 
    :scale: 25% 
