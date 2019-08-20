@@ -271,14 +271,13 @@ Operator developers to expose additional information that cannot be accommodated
 In designing KubePlus our main philosophy has been to not introduce any new CLI for enabling
 discovery, binding, and orchestration functions.
 We wanted application developers to use only Kubernetes's native CLI 'kubectl' for these functions.
-This distinguishes KubePlus from other community projects such as 'helm' and 'kustomize'.
 KubePlus's focus on resolving dependencies using runtime information is also unique. 
 'kustomize' supports runtime information aggregation through vars and fieldrefs.
 However, this is limited to resolving Spec properties of top-level Custom Resources only.
 KubePlus supports runtime information resolution for sub-resources of Custom Resource instances.
-It should be possible though to use 'helm' and/or 'kustomize' with YAMLs defined using KubePlus 
-binding functions. Another approach towards binding is to define a new CRD, such as ServiceBinding
-in Service Catalog. KubePlus's approach avoids introducing a new CRD for defining binding 
+It should be possible to use 'helm' and/or 'kustomize' with YAMLs defined using KubePlus 
+binding functions. Other approach towards binding is to define a new CRD, such as ServiceBinding
+as in the Service Catalog project. In KubePlus we have purposely avoided introducing a new CRD for defining binding 
 related information as it adds additional complexity for application developers.
 
 For orchestration, there exists Application CRD in the community. Conceptually, KubePlus's PlatformStack CRD is
@@ -287,8 +286,8 @@ Our goal with PlatformStack CRD is to use it for orchestration functions such as
 Application CRD's focus is mainly on visualization of an application stack.
 
 KubePlus belongs to the class of systems that enable `declarative application management`_ in Kubernetes.
-As compared to other systems, distinguishing features of KubePlus are - no new CLI, 
-focus on Custom Resource stacks, seamless integration of static and runtime information in realizing such stacks.
+As compared to other tools and systems in this class, distinguishing features of KubePlus are - no new CLI, 
+focus on Custom Resource stacks, and seamless integration of static and runtime information in realizing such stacks.
 
 .. _declarative application management: https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/declarative-application-management.md
 
