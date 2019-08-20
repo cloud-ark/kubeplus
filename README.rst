@@ -286,6 +286,12 @@ similar to it, in that both provide a way to define a stack of resources.
 Our goal with PlatformStack CRD is to use it for orchestration functions such as ordering, label propagation, etc.
 Application CRD's focus is mainly on visualization of an application stack.
 
+KubePlus belongs to the class of systems that enable `declarative application management`_ in Kubernetes.
+As compared to other systems, distinguishing features of KubePlus are - no new CLI, 
+focus on Custom Resource stacks, seamless integration of static and runtime information in realizing such stacks.
+
+.. _declarative application management: https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/declarative-application-management.md
+
 
 Bug reports
 ============
