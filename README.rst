@@ -215,12 +215,22 @@ See KubePlus in action_.
 .. _action: https://youtu.be/taOrKGkZpEc
 
 
-Available Operators
-====================
+Operators
+==========
 
-We are maintaining a `repository of Operator helm charts`_ in which Operator CRDs are annotated with Platform-as-Code annotations.
+We are maintaining a `repository of Operator helm charts`_ in which CRDs are annotated with Platform-as-Code annotations.
 
 .. _repository of Operator helm charts: https://github.com/cloud-ark/operatorcharts/
+
+
+Checkout `Operator Development Guidelines`_ when developing your Operators
+
+.. _Operator Development Guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
+
+
+Checkout `Operator FAQ`_ if you are new to CRDs and Operators
+
+.. _Operator FAQ: https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md
 
 
 Feedback
