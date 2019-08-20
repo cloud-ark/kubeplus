@@ -215,24 +215,6 @@ See KubePlus in action_.
 .. _action: https://youtu.be/taOrKGkZpEc
 
 
-Operators
-==========
-
-We are maintaining a `repository of Operator helm charts`_ in which CRDs are annotated with Platform-as-Code annotations.
-
-.. _repository of Operator helm charts: https://github.com/cloud-ark/operatorcharts/
-
-
-Checkout `Operator Development Guidelines`_ when developing your Operators
-
-.. _Operator Development Guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
-
-
-Checkout `Operator FAQ`_ if you are new to CRDs and Operators
-
-.. _Operator FAQ: https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md
-
-
 Feedback
 =========
 
@@ -300,6 +282,25 @@ As compared to other tools and systems in this class, distinguishing features of
 focus on Custom Resource stacks, and seamless integration of static and runtime information in realizing such stacks.
 
 .. _declarative application management: https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/declarative-application-management.md
+
+
+Operators
+==========
+
+1. Use `repository of Operator helm charts`_ in which CRDs are annotated with Platform-as-Code annotations.
+
+.. _repository of Operator helm charts: https://github.com/cloud-ark/operatorcharts/
+
+
+2. Follow `Operator Development Guidelines`_ when developing your Operators.
+
+.. _Operator Development Guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
+
+
+3. Checkout `Operator FAQ`_ if you are new to CRDs and Operators.
+
+.. _Operator FAQ: https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md
+
 
 
 Bug reports
