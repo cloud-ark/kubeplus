@@ -123,7 +123,7 @@ Formal grammar of these functions is available in the `functions doc`_.
 Here is how the ``Fn::ImportValue()`` function can be used in a Custom Resource YAML definition.
 
 .. image:: ./docs/mysqlcluster1.png
-   :scale: 10%
+   :scale: 5%
    :align: left
 
 .. image:: ./docs/moodle1.png
@@ -142,7 +142,7 @@ Note that PlatformStack Operator does not actually deploy any resources defined 
 is done normally using 'kubectl'.
 
 .. image:: ./docs/platform-yaml.png
-   :scale: 10%
+   :scale: 5%
    :align: center
 
 
@@ -268,14 +268,6 @@ this problem has been solved by Infrastructure-as-Code tools like AWS CloudForma
 static and not going to change. With Kubernetes that is not the case. The set of resource APIs available in a cluster
 is dynamic as it depends on what Operators/CRDs are installed in a cluster.
 KubePlus API Add-on is focused on solving the declarative platform stack creation problem for the Kubernetes world.
-
-..The primary focus of KubePlus is on simplifying consumption of Kubernetes Custom Resources/APIs
-..available in a cluster. The main challenge in this is the fact that the set of
-..Custom Resources/APIs present in a cluster is not known apriori. It can change based on what
-..Operators are installed in a cluster. 
-..This makes the problem domain of declarative resource stack
-..creation on Kubernetes different than Infrastructure-as-Code systems like 
-..AWS CloudFormation or Terraform where the set of underlying cloud APIs is static and known.
 
 For discovery, Kubernetes itself now supports 'kubectl explain' on Custom Resources.
 In our experience the information that is needed for correctly using Custom Resources with other
