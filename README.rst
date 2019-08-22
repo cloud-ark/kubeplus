@@ -122,7 +122,7 @@ Formal grammar of these functions is available in the `functions doc`_.
 
 Here is how the ``Fn::ImportValue()`` function can be used in a Custom Resource YAML definition.
 
-.. image:: ./docs/mysqlcluster1.png
+.. image:: ./docs/mysql-cluster1.png
    :scale: 5%
    :align: left
 
@@ -141,7 +141,7 @@ inter-dependencies between them. The dependency information is used by mutating 
 Note that PlatformStack Operator does not actually deploy any resources defined in a stack. Resource creation
 is done normally using 'kubectl'.
 
-.. image:: ./docs/platform-yaml.png
+.. image:: ./docs/platform-stack1.png
    :scale: 5%
    :align: center
 
@@ -264,10 +264,12 @@ focus on Custom Resource stacks, and seamless integration of static and runtime 
 .. _declarative application management: https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/declarative-application-management.md
 
 Problem domain of declarative resource stack creation is not new. In the traditional cloud world,
-this problem has been solved by Infrastructure-as-Code tools like AWS CloudFormation and Terraform that solve this problem. The main assumption that these tools work with is that the set of underlying cloud resource APIs are 
-static and not going to change. With Kubernetes that is not the case. The set of resource APIs available in a cluster
-is dynamic as it depends on what Operators/CRDs are installed in a cluster.
-KubePlus API Add-on is focused on solving the declarative platform stack creation problem for the Kubernetes world.
+this problem has been solved by Infrastructure-as-Code tools like AWS CloudFormation and Terraform.
+The main assumption that these tools work with is that the set of underlying cloud resource APIs are 
+statically known and not going to change. 
+With Kubernetes that is not the case. The set of resource APIs available in a cluster
+is dynamic as it depends on the Operators/CRDs that are installed in a cluster.
+KubePlus API Add-on is solving the declarative platform stack creation problem for the Kubernetes world.
 
 For discovery, Kubernetes itself now supports 'kubectl explain' on Custom Resources.
 In our experience the information that is needed for correctly using Custom Resources with other
@@ -277,7 +279,7 @@ Operator developers to expose additional information that cannot be accommodated
 
 In designing KubePlus our main philosophy has been to not introduce any new CLI for enabling
 discovery, binding, and orchestration functions.
-We wanted application developers to use only Kubernetes's native CLI 'kubectl' for these functions.
+With KubePlus, application developers can use Kubernetes's native CLI 'kubectl' for these functions.
 It should be possible though to use 'helm' and/or 'kustomize' with Custom Resource YAMLs defined using KubePlus 
 binding functions. KubePlus's focus on resolving binding between resources using runtime information is unique. 
 'kustomize' supports runtime information aggregation through vars and fieldrefs.
