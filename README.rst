@@ -79,7 +79,7 @@ For static and runtime information discovery, KubePlus defines following custom 
 
 The man endpoint is used for obtaining static usage information about a Custom Resource. It is a mechanism that an Operator developer can use to expose any assumptions or usage details that go beyond the Custom Resource Spec properties.
 
-.. image:: ./docs/Moodle-man.png
+.. image:: ./docs/MysqlCluster-man-output.png
    :scale: 25%
    :align: center
 
@@ -90,7 +90,7 @@ The man endpoint is used for obtaining static usage information about a Custom R
 
 The composition endpoint is used for obtaining runtime composition tree of Kubernetes resources that are created as part of handling a Custom Resource instance.
 
-.. image:: ./docs/Moodle-composition.png
+.. image:: ./docs/MysqlCluster-composition-output.png
    :scale: 25%
    :align: center
 
@@ -123,7 +123,7 @@ Formal grammar of these functions is available in the `functions doc`_.
 Here is how the ``Fn::ImportValue()`` function can be used in a Custom Resource YAML definition.
 
 .. image:: ./docs/mysql-cluster1.png
-   :scale: 5%
+   :scale: 10%
    :align: left
 
 .. image:: ./docs/moodle1.png
@@ -142,7 +142,7 @@ Note that PlatformStack Operator does not actually deploy any resources defined 
 is done normally using 'kubectl'.
 
 .. image:: ./docs/platform-stack1.png
-   :scale: 5%
+   :scale: 10%
    :align: center
 
 
@@ -214,7 +214,6 @@ Platform-as-Code examples:
 2. `Automatic discovery and binding`_
 
 .. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/platform-crd/steps.txt
-
 
 
 Demo
