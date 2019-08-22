@@ -164,28 +164,31 @@ The 'composition' annotation is used to define Kubernetes's built-in resources t
 The 'usage' annotation is used to define usage information for a Custom Resource.
 The value for 'usage' annotation is the name of the ConfigMap that stores the usage information.
 
-As an example, annotations on Moodle Custom Resource Definition are shown below:
+As an example, annotations on MysqlCluster Custom Resource Definition are shown below:
 
 .. code-block:: yaml
 
-   apiVersion: apiextensions.k8s.io/v1beta1
-   kind: CustomResourceDefinition
-   metadata:
-     name: moodles.moodlecontroller.kubeplus
-     annotations:
-       platform-as-code/usage: moodle-operator-usage.usage
-       platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
-   spec:
-     group: moodlecontroller.kubeplus
-     version: v1
-     names:
-       kind: Moodle
-       plural: moodles
-     scope: Namespaced
+  apiVersion: apiextensions.k8s.io/v1beta1
+  kind: CustomResourceDefinition
+  metadata:
+    name: mysqlclusters.mysql.presslabs.org
+    annotations:
+      helm.sh/hook: crd-install
+      platform-as-code/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
+      platform-as-code/usage: mysqlcluster-usage.usage
+  spec:
+    group: mysql.presslabs.org
+    names:
+      kind: MysqlCluster
+      plural: mysqlclusters
+      shortNames:
+      - mysql
+    scope: Namespaced
+
 
 The Helm chart for Moodle Operator is available here_.
 
-.. _here: https://github.com/cloud-ark/kubeplus-operators/tree/master/moodle/moodle-operator-chart/templates
+.. _here: https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz
 
 
 Getting started
