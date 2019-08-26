@@ -1,0 +1,12 @@
+apiVersion: moodlecontroller.kubeplus/v1
+kind: Moodle
+metadata:
+  name: moodle2
+  namespace: namespace2
+spec:
+  plugins: ["profilecohort"]
+  mySQLServiceName: cluster2-mysql-master
+  mySQLUserName: root
+  mySQLUserPassword: cluster2-secret.ROOT_PASSWORD
+  moodleAdminEmail: test@test.com
+  domainName: www.moodle2.net

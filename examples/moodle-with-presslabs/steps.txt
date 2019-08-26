@@ -17,18 +17,16 @@ For database, Moodle instance uses the MysqlCluster instance. The database conne
 are specified in Moodle Custom Resource Spec. The endpoints consist of name of the MysqlCluster Custom
 Resource instance's service and name of the Secret storing the password.
 
-Setup:
--------
-- Download Minikube (v0.34.0), download Helm (v2.11.0)
 
 Steps:
 -------
 
 1) Create Kubernetes Cluster
-   - minikube start --memory 4096
-   - (Experimental) If working with Managed Kubernetes cluster (such as DigitalOcean), 
-     create a single node cluster, download the cluster config file and save it in 
-     your ~/.kube directory with the name 'config' (e.g.: ~/.kube/config)
+   - Minikube
+     - Download Minikube (latest), download Helm (latest)
+     - minikube start --memory 4096
+  - GKE
+     - Create a GKE cluster with 4vCPUs and 15.00 GB memory minimum
 
 2) Install KubePlus
    - git clone https://github.com/cloud-ark/kubeplus.git
@@ -42,11 +40,14 @@ Steps:
 4) Wait till Tiller Pod is running
    - kubectl get pods -n kube-system
 
-5) Once Helm Pod is ready, deploy Moodle and MySQL Operators
+5) Once Helm Pod is ready, deploy Moodle and MySQL Operators. If using GKE, also install Nginx Ingress Controller
    - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz?raw=true
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.4.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.9.tgz?raw=true
+   - GKE
+     - Install Nginx Ingress Controller
+       - helm install stable/nginx-ingress --name nginx
 
-6) Wait till both Operator Pods are ready
+6) Wait till all Operator Pods are ready
    - kubectl get pods
 
 7) Find available Custom Resources
@@ -74,32 +75,47 @@ Steps:
      - kubectl get pods -n namespace1
 
    - Once MysqlCluster pods are ready, deploy Moodle
-     - If you have registered a DomainName then update Moodle Spec to include 'domainName' attribute, e.g.: 'domainName: www.moodle1.net'. Otherwise, leave it empty
+     - Minikube:
+       - Nothing special to do
+
+     - GKE:
+       - Register a DomainName with some DNS provider like AWS Route53.
+         Update moodle1-gke.yaml to include 'domainName' attribute, e.g.: 'domainName: www.moodle1.net'.
 
      - Find the name of the MysqlCluster 'master' Service corresponding to the cluster1 MysqlCluster.
        - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=MysqlCluster&instance=cluster1&namespace=namespace1" | python -mjson.tool
 
-     - Add that name in moodle1.yaml -> (in Spec.mySQLServiceName)
+     - Add that name in moodle1.yaml / moodle1-gke.yaml in Spec.mySQLServiceName field
 
      - Create Moodle instance
-       - kubectl create -f moodle1.yaml
+       - Minikube
+         - kubectl create -f moodle1.yaml
+       - GKE
+         - kubectl create -f moodle1-gke.yaml
   
    - Wail till Moodle Pod is ready (It will take about 5/6 minutes for Moodle Pod to become ready)
      - kubectl get pods -n namespace1
 
    - Login to Moodle Instance
+     - Minikube
        - Update /etc/hosts with <minikube ip or cluster node ip> moodle1. Example:
          - 192.168.99.100 moodle1
          - You can find minikube ip using: "minikube ip" command
-         - If using Managed Kubernetes, find out the cluster node ip by refering to appropriate documentation
-           from the provider.
-         - Retrieve Moodle instance's admin password
-	   - kubectl describe moodles moodle1 -n namespace1
-             - Note down the secret name and Moodle instance URL
-         - kubectl get secret moodle1 -n namespace1 -o jsonpath="{.data.adminPassword}" | base64 --decode
+
+     - GKE
+       - Get the IP address of the Nginx Ingress controller and add it to the DNS as a 'A record' set
+         - kubectl get svc
+           - Get EXTERNAL-IP of the nginx-ingress-controller and add it as 'A record' to the DNS.
+       - Navigate to the domain name url. Note that this will be a 'http' url. If your browser auto-changes
+         the url to 'https', delete browser cookies so that you will be able to navigate to 'http' url.
+
+     - Get Moodle instance admin password
+  	   - kubectl describe moodles moodle1 -n namespace1
+         - Note down the secret name and Moodle instance URL
+       - kubectl get secret moodle1 -n namespace1 -o jsonpath="{.data.adminPassword}" | base64 --decode
          - Navigate to the URL of moodle1 instance (available in the output of 'describe' command)
            - Login using 'admin' as username and password retrieved earlier from 'kubectl get secret' command
-    - Check installed plugins
+     - Check installed plugins
       - As part of creating moodle instance, we install the 'profilecohort' plugin.
         Check the custom resource specification moodle1.yaml to see this definition.
         - Once logged in to the Moodle instance, hit 'Site Administration'. 
