@@ -20,16 +20,16 @@ What does it do?
 
 KubePlus API Add-on enables three functions - discovery, binding and orchestration of Kubernetes Custom Resources.
 
-*Discovery* - Variety of static and dynamic information is associated with Kubernetes Custom Resources.
+*Discovery* - Variety of static and runtime information is associated with Kubernetes Custom Resources.
 This includes - Spec properties, usage, implementation-level assumptions made by an Operator, 
-composition tree of Kubernetes resources created as part of handling Custom Resources, permissions granted to the CRD/Operator Pod, whether Custom Resources are in use as part of a platform stack, history of declarative actions performed on Custom Resources, etc. KubePlus API Add-on enables discovering this type of information about Custom Resources directly through 'kubectl'.
+composition tree of Kubernetes resources created as part of handling Custom Resources, permissions granted to the CRD/Operator Pod, whether Custom Resources are in use as part of a platform stack, history of declarative actions performed on Custom Resources, etc. KubePlus API Add-on enables discovering this type of information about Custom Resources directly from 'kubectl'.
 
 
 *Binding* - Assembling multiple resources - built-in and Custom - to build platform stacks requires them to be bound/tied together in specific ways. In Kubernetes 'labels', 'label selectors' and name-based dns resolution satisfy the binding needs between built-in resources. However, when using Custom Resources from different Operators these built-in mechanisms are not sufficient. Correct binding requires integrating runtime information across Custom Resources, or orchestrating actions on multiple Custom and/or built-in resources.
 KubePlus API Add-on enables such actions through a set of binding functions that can be used in YAML definitions of Custom Resources.
 
 
-*Orchestration* - Creating platform stacks requires treating the set of resources that represent a stack as a unit. This enables performing actions on these resources together, such as enforcing ordering, visualization, etc. KubePlus provides a mechanism to define all the resources in a stack along with their dependencies.
+*Orchestration* - Creating platform stacks requires treating the set of resources that represent a stack as a unit. This enables performing actions on these resources together, such as enforcing ordering, visualization, etc. KubePlus provides a mechanism to define all the resources in a stack including their dependencies as a unit.
 
 
 Who is the target user of KubePlus?
@@ -50,26 +50,33 @@ Operator developers create Operator Helm charts enhanced with 'platform-as-code 
 
 *2. DevOps Engineer/Cluster Administrator*
 
-DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a Kubernetes cluster. Additionally, they deploy KubePlus in their cluster to enable Application developers discover and use various Custom Resources efficiently.
+DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a Kubernetes cluster. Additionally, they deploy KubePlus in their cluster to equip Application developers to discover and use various Custom Resources efficiently.
 
 *3. Application Developer*
 
 Application developers use KubePlus discovery endpoints, binding functions, and PlatformStack Operator to create their platform stacks as-code composing various Custom Resources together.
 
 
-Demo
-====
+KubePlus in Action
+===================
 
-Checkout Platform-as-Code in action_ using KubePlus in our presentation at the Kubernetes Community Meeting
+1. Kubernetes Community Meeting notes_
 
-.. _action: https://discuss.kubernetes.io/t/kubernetes-weekly-community-meeting-notes/35/60
+.. _notes: https://discuss.kubernetes.io/t/kubernetes-weekly-community-meeting-notes/35/60
 
+2. Kubernetes Community Meeting `slide deck`_
+
+.. _slide deck: https://drive.google.com/open?id=1fzRLBpCLYBZoMPQhKMQDM4KE5xUh6-xU
+
+3. Kubernetes Community Meeting demo_
+
+.. _demo: https://www.youtube.com/watch?v=taOrKGkZpEc&feature=youtu.be
 
 
 How does it work?
 ==================
 
-KubePlus API Add-on provides discovery endpoints, binding functions, and a orchestration mechanism to enable application developers construct platform stacks using Kubernetes Custom Resources.
+KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to construct platform stacks using Kubernetes Custom Resources.
 These constructs are implemented using following components - an Aggregated API Server, a Mutating webhook, and an  Operator.
 
 .. image:: ./docs/KubePlus-components1.jpg 
@@ -86,7 +93,7 @@ For static and runtime information discovery, KubePlus defines following custom 
 
    kubectl get --raw "/apis/platform-as-code/v1/man"
 
-The man endpoint is used for obtaining static usage information about a Custom Resource. It is a mechanism that an Operator developer can use to expose any assumptions or usage details that go beyond the Custom Resource Spec properties.
+The man endpoint is used for obtaining static usage information about a Custom Resource. It is a mechanism that an Operator developer can use to expose any assumptions or usage details about the Operator or its Custom Resources that go beyond Custom Resource Spec properties.
 
 .. image:: ./docs/MysqlCluster-man-output.png
    :scale: 25%
@@ -118,6 +125,7 @@ The main goal of KubePlus is to make it easy for Custom Resource users to define
    1. Fn::ImportValue(<Parameter>)
 
 This function imports value of the specified parameter into the Spec where the function is defined.
+The value is resolved runtime based on 
 
 .. code-block:: bash
 
@@ -139,15 +147,20 @@ Here is how the ``Fn::ImportValue()`` function can be used in a Custom Resource 
    :scale: 10%
    :align: right
 
+In the above example the name of that ``Service`` object which is child of ``cluster1`` Custom Resource instance 
+and whose name contains the string ``master`` is discovered at runtime and used as the value of
+``mySQLServiceName`` attribute while creating the ``moodle1`` Custom Resource instance.
+
+Check our `slide deck`_ in the Kubernetes Community Meeting for more details of the above example.
 
 PlatformStack Operator
 -----------------------
 
 In order to define all resources of a platform stack as a unit, 
-KubePlus provides a CRD/Operator. It defines the ``PlatformStack`` Custom Resource. 
+KubePlus provides a CRD/Operator of its own. This CRD/Operator defines the ``PlatformStack`` Custom Resource. 
 This Custom Resource enables application developers to define all the stack resources as a unit, along with the
 inter-dependencies between them. The dependency information is used by mutating webhook to prevent out-of-order creation of resources. Note that as per Kubernetes's level-based reconciliation philosophy, the ordering between resource creations should not matter. However, it is possible that CRDs/Operators may not satisfy this requirement. In such a case preventing out-of-order resource creation is helpful.
-Note that PlatformStack Operator does not actually deploy any resources defined in a stack. Resource creation
+PlatformStack Operator does not actually deploy any resources defined in a stack. Resource creation
 is done normally using 'kubectl'.
 
 .. image:: ./docs/platform-stack1.png
@@ -251,7 +264,7 @@ We are actively looking for inputs from the community on following aspects:
 
 3. Orchestration
 
-   - What capabilities should we add to KubePlus PlatformStack CRD?
+   - What capabilities should we add to KubePlus PlatformStack CRD/Operator?
      File your suggestions as comments on `issue 339`_
 
 .. _issue 339: https://github.com/cloud-ark/kubeplus/issues/339
@@ -260,7 +273,7 @@ We are actively looking for inputs from the community on following aspects:
 Comparison
 ===========
 
-KubePlus belongs to the class of systems that enable `declarative application management`_ in Kubernetes.
+KubePlus belongs to the class of tools that enable `declarative application management`_ in Kubernetes.
 As compared to other tools and systems, distinguishing features of KubePlus are - no new CLI, 
 focus on Custom Resource stacks, and seamless integration of static and runtime information in realizing such stacks.
 
@@ -269,10 +282,11 @@ focus on Custom Resource stacks, and seamless integration of static and runtime 
 Problem domain of declarative resource stack creation is not new. In the traditional cloud world,
 this problem has been solved by Infrastructure-as-Code tools like AWS CloudFormation and Terraform.
 The main assumption that these tools work with is that the set of underlying cloud resource APIs are 
-statically known and not going to change. 
+statically known and is not going to change.
 With Kubernetes that is not the case. The set of resource APIs available in a cluster
 is dynamic as it depends on the Operators/CRDs that are installed in a cluster.
-KubePlus API Add-on is solving the declarative platform stack creation problem for the Kubernetes world.
+KubePlus API Add-on is solving the declarative platform stack creation problem for this 
+dynamic world of Kubernetes CRDs/Operators.
 
 For discovery, Kubernetes itself now supports 'kubectl explain' on Custom Resources.
 In our experience the information that is needed for correctly using Custom Resources with other
@@ -282,13 +296,13 @@ Operator developers to expose additional information that cannot be accommodated
 
 In designing KubePlus our main philosophy has been to not introduce any new CLI for enabling
 discovery, binding, and orchestration functions.
-With KubePlus, application developers can use Kubernetes's native CLI 'kubectl' for these functions.
+With KubePlus, application developers use Kubernetes's native CLI 'kubectl' for these functions.
 It should be possible though to use 'helm' and/or 'kustomize' with Custom Resource YAMLs defined using KubePlus 
 binding functions. KubePlus's focus on resolving binding between resources using runtime information is unique. 
 'kustomize' supports runtime information aggregation through vars and fieldrefs.
 However, this is limited to resolving Spec properties of top-level Custom Resources only.
 KubePlus supports runtime information integration for sub-resources of Custom Resource instances.
-Other approach towards binding is to define a new CRD, such as ServiceBinding
+Another approach towards binding is to define a new CRD, such as ServiceBinding
 as in the Service Catalog project. In KubePlus we have purposely avoided introducing a new CRD for defining binding 
 related information as we believe it adds additional complexity for application developers.
 
