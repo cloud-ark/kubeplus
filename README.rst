@@ -46,15 +46,15 @@ KubePlus is useful to anyone who works with Kubernetes Custom Resources. These c
 
 *1. Operator Developer*
 
-Operator developers create Operator Helm charts enhanced with 'platform-as-code annotations' (described below). These annotations are part of our broader `discoverability and interoperability guidelines`_.
+Operator Developers create Operator Helm charts enhanced with 'platform-as-code annotations' (described below). These annotations are part of our broader `discoverability and interoperability guidelines`_.
 
 *2. DevOps Engineer/Cluster Administrator*
 
 DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a Kubernetes cluster. Additionally, they deploy KubePlus in their cluster to equip Application developers to discover and use various Custom Resources efficiently.
 
-*3. Application Developer*
+*3. Application Developer/Micro-services Developer*
 
-Application developers use KubePlus discovery endpoints, binding functions, and PlatformStack Operator to create their platform stacks as-code composing various Custom Resources together.
+Application Developers/Micro-services Developers use KubePlus discovery endpoints, binding functions, and PlatformStack Operator to create their platform stacks as-code composing various Custom Resources together.
 
 
 KubePlus in Action
