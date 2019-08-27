@@ -7,6 +7,7 @@ We use three Operators in this example:
 - Moodle Operator from CloudARK
 - MySQL Operator from PressLabs
 - Stash Operator from Appscode
+- Nginx Controller (if on GKE)
 
 MySQL Operator has the capability to perform database backup and restore.
 Stash Operator has the capability to perform Volume backups and restore.
@@ -27,8 +28,9 @@ Follow these steps to test this example:
    - moodle-backup/cluster1.yaml, moodle-backup/restic-moodle.yaml
    - moodle-recovery/cluster2-recovered.yaml
 
-2) Download Minikube (v0.34.0), download Helm (v2.11.0)
+2) Download Minikube (latest), download Helm (latest)
    Or create a Kubernetes cluster from a Managed Service Provider such as GKE.
+   - GKE cluster size: 4vCPUs and 15.00 GB memory minimum
 
 3) Start Minikube
     - minikube start --memory 4096 --cpus=2
@@ -54,9 +56,12 @@ Start helm and install operators
     - kubectl get pods -n kube-system
 
 3) Install presslabs-mysql-operator, moodle operator and stash operator
-helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-1.tgz?raw=true
-helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.4.tgz?raw=true
+helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz?raw=true
+helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.9.tgz?raw=true
 helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.4.tgz?raw=true
+- GKE
+  - Install Nginx Ingress Controller
+    - helm install stable/nginx-ingress --name nginx
 
 
 Create Moodle instance and take its backups
@@ -89,7 +94,9 @@ Create Moodle instance and take its backups
        - Make sure the names of above two Secrets are referenced in MysqlCluster Spec.
          The Secret for root user password is referenced in the Spec property: secretName
          The Secret for AWS is referenced in the Spec property: backupSecretName
-       - kubectl create -f cluster1.yaml
+     d. Add the Bucket name in Spec property: backupURL
+     e. Create MysqlCluster instance
+        - kubectl create -f cluster1.yaml
 
    - Wait until MysqlCluster pod is Ready - 4/4
      - kubectl get pods -n namespace1
@@ -110,19 +117,41 @@ Create Moodle instance and take its backups
        The value of mysqlUserPassword should be name of the MysqlCluster's root user password with the key of the data appended to it. 
        All these values are already populated in moodle1.yaml. If you change the names of MysqlCluster resource or the corresponding Secret object for the username, then make sure to update moodle1.yaml.
 
-     - If you have registered domain name then add that in moodle1 Spec as 'domainName' attribute.
-     - kubectl create -f moodle1.yaml
+     - Minikube:
+       - Nothing special to do
+
+     - GKE:
+       - Register a DomainName with some DNS provider like AWS Route53.
+         Update moodle1-gke.yaml to include 'domainName' attribute, e.g.: 'domainName: www.moodle1.net'.
+
+     - Find the name of the MysqlCluster 'master' Service corresponding to the cluster1 MysqlCluster.
+       - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=MysqlCluster&instance=cluster1&namespace=namespace1" | python -mjson.tool
+
+     - Add that name in moodle1.yaml / moodle1-gke.yaml in Spec.mySQLServiceName field
+
+     - Create Moodle instance
+       - Minikube
+         - kubectl create -f moodle1.yaml
+       - GKE
+         - kubectl create -f moodle1-gke.yaml
 
      - Wait till Moodle Pod is ready 1/1 (It will take about 5/6 minutes for Moodle Pod to become ready)
        - kubectl get pods -n namespace1
 
    - Login to Moodle Instance
-       - If you have working DNS name, then below steps are not required.
-       - Update /etc/hosts with <minikube ip or cluster node ip> moodle1. Example:
-         - 192.168.99.100 moodle1
-         - You can find minikube ip using: "minikube ip" command
-         - If using Managed Kubernetes, find out the cluster node ip by refering to appropriate documentation from the provider.
-         - Retrieve Moodle instance's admin password. The Moodle Operator creates a password and stores that in a Secret Object.
+        - Minikube
+          - Update /etc/hosts with <minikube ip or cluster node ip> moodle1. Example:
+            - 192.168.99.100 moodle1
+            - You can find minikube ip using: "minikube ip" command
+
+        - GKE
+          - Get the IP address of the Nginx Ingress controller and add it to the DNS as a 'A record' set
+            - kubectl get svc
+              - Get EXTERNAL-IP of the nginx-ingress-controller and add it as 'A record' to the DNS.
+          - Navigate to the domain name url. Note that this will be a 'http' url. If your browser auto-changes
+            the url to 'https', delete browser cookies so that you will be able to navigate to 'http' url.
+
+        - Retrieve Moodle instance's admin password. The Moodle Operator creates a password and stores that in a Secret Object.
 	       - kubectl describe moodles moodle1 -n namespace1
              - Note down name of the Secret object and Moodle instance URL
            - kubectl get secret moodle1 -n namespace1 -o jsonpath="{.data.adminPassword}" | base64 --decode
@@ -200,7 +229,6 @@ Recover a snapshot
 
 1) cd ../moodle-recovery
 
-
 2) We are going to use the 'Recovery' Custom Resource from Stash Operator to recover the Volume.
    - Check how to use the 'Recovery' Custom Resource
      - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Recovery"
@@ -214,18 +242,18 @@ Recover a snapshot
       - Change recovery.yaml L10 to the snapshot you picked.
         - snapshot: deployment.moodle1-b3ae042b
 
-5) Check available MysqlCluster backups. Pick one
-    - aws s3 ls s3://stash-testing34/mysql-backups/
-        Change cluster2-recovered.yaml L9 to the mysqlbackup you picked:
-        - initBucketURI: s3://stash-testing34/mysql-backups/cluster1-2019-04-09T19:56:01.xbackup.gz
-
-6) Create the Recovery object. It stores the snapshot into that PersistentVolumeClaim.
+5) Create the Recovery object. It stores the snapshot into that PersistentVolumeClaim.
    Update the Recovery Custom Resource definition (in recovery.yaml) with the name of the PersistentVolumeClaim that you created in step 3 (in line 16)
     - kubectl create -f recovery.yaml
     Wait until the Recovery event is successful
     - kubectl describe recovery s3-recovery-specific-snapshot -n namespace1
       -> It may take couple of minutes for this. Once you see following message
          "Recovery s3-recovery-specific-snapshot succeeded", it means recovery is complete.
+
+6) Check available MysqlCluster backups. Pick one
+    - aws s3 ls s3://stash-testing34/mysql-backups/
+        Change cluster2-recovered.yaml L9 to the mysqlbackup you picked:
+        - initBucketURI: s3://stash-testing34/mysql-backups/cluster1-2019-04-09T19:56:01.xbackup.gz
 
 7) Create the new MysqlCluster from backed up data
     - kubectl create -f cluster2-secret.yaml
@@ -235,22 +263,26 @@ Recover a snapshot
    - kubectl get pods -n namespace1
 
 9) Recover the Moodle instance with backed up Volume. Specify the name of the PersistentVolumeClaim in the Spec property PVCVolumeName in moodle2-recovered.yaml
-    - kubectl create -f moodle2-recovered.yaml
+    - kubectl create -f moodle2-recovered-gke.yaml
 
 10) Wait for moodle2 instance to come up:
    - kubectl describe moodles moodle2 -n namespace1
 
 11) Access moodle2 instance
-    - Following step is not required if you have a working DNS setup
-    - Update /etc/hosts with <minikube ip or cluster node ip> moodle2. Example:
-        - (minikube ip) moodle2
+    - Follow 'Login to Moodle instance steps' described earlier. 
 
-12) Visit moodle2:32001 (may take a few minutes)
+    - GKE
+      - Visit the domain in the browser. It may take couple of minutes for Moodle instance
+        to become active at the new Domain Name. 
+
+    - Minikube:   
+      - Visit moodle2:32001 (may take a few minutes)
     - Verify that all uploaded images are there!
     - Courses you added with an image should be there
     - Private files that students created should be there
-    - Log in (not working yet)
-      - kubectl get secret moodle2 -n namespace1 -o jsonpath="{.data.adminPassword}" | base64 --decode
+    - Log in to Moodle instance and verify the installed plugins. You will need to use password of the Moodle1
+      instance for logging in.
+      - kubectl get secret moodle1 -n namespace1 -o jsonpath="{.data.adminPassword}" | base64 --decode
 
 
 Clean up
@@ -275,5 +307,6 @@ Clean up
     - helm delete _some_name_sql
     - helm delete _some_name_moodle
     - helm delete _some_name_stash
+    - helm delete nginx
     - cd ../../
     - kubectl delete -f deploy
