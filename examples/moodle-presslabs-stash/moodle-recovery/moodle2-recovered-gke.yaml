@@ -1,0 +1,13 @@
+apiVersion: moodlecontroller.kubeplus/v1
+kind: Moodle
+metadata:
+  name: moodle2
+  namespace: namespace1
+spec:
+  plugins: ["profilecohort"]
+  mySQLServiceName: cluster2-mysql-master
+  mySQLUserName: root
+  mySQLUserPassword: cluster2-secret.ROOT_PASSWORD
+  moodleAdminEmail: test@test.com
+  PVCVolumeName: stash-recovered1
+  domainName: www.moodle1-bak.net
