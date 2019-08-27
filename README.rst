@@ -222,9 +222,9 @@ Platform-as-Code examples:
 Demo
 ====
 
-See KubePlus in action_.
+Checkout Platform-as-Code in action_ using KubePlus in our presentation at the Kubernetes Community Meeting:
 
-.. _action: https://youtu.be/taOrKGkZpEc
+.. _action: https://discuss.kubernetes.io/t/kubernetes-weekly-community-meeting-notes/35/60
 
 
 Feedback
