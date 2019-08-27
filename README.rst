@@ -57,6 +57,15 @@ DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 
 Application developers use KubePlus discovery endpoints, binding functions, and PlatformStack Operator to create their platform stacks as-code composing various Custom Resources together.
 
 
+Demo
+====
+
+Checkout Platform-as-Code in action_ using KubePlus in our presentation at the Kubernetes Community Meeting
+
+.. _action: https://discuss.kubernetes.io/t/kubernetes-weekly-community-meeting-notes/35/60
+
+
+
 How does it work?
 ==================
 
@@ -217,14 +226,6 @@ Platform-as-Code examples:
 2. `Automatic discovery and binding`_
 
 .. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/platform-crd/steps.txt
-
-
-Demo
-====
-
-Checkout Platform-as-Code in action_ using KubePlus in our presentation at the Kubernetes Community Meeting:
-
-.. _action: https://discuss.kubernetes.io/t/kubernetes-weekly-community-meeting-notes/35/60
 
 
 Feedback
