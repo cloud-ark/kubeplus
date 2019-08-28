@@ -125,7 +125,6 @@ The main goal of KubePlus is to make it easy for Custom Resource users to define
    1. Fn::ImportValue(<Parameter>)
 
 This function imports value of the specified parameter into the Spec where the function is defined.
-The value is resolved runtime based on 
 
 .. code-block:: bash
 
