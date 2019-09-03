@@ -17,7 +17,7 @@ Check out [this post](https://medium.com/@cloudark/analysis-of-open-source-kuber
 
 [3) Decide Custom Resource Metrics Collection strategy](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#3-decide-custom-resource-metrics-collection-strategy)
 
-[4) Register CRDs as YAML Spec in Helm chart rather than in Operator code (Helm related)](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#4-register-crds-as-yaml-spec-rather-than-in-operator-code)
+[4) Register CRDs as YAML Spec in Helm chart rather than in Operator code (Helm chart related)](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#4-register-crds-as-yaml-spec-rather-than-in-operator-code)
 
 
 ## Implementation guidelines
