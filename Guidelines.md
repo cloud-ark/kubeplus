@@ -220,10 +220,19 @@ CloudARK [sample Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/m
 
 ## 12) Add crd-install Helm hook annotation on your CRD YAML
 
-Helm defines crd-install hook that allows Helm to install CRDs first before installing rest of your
+Helm defines crd-install hook that directs Helm to install CRDs first before installing rest of your
 Helm chart that might refer to the Custom Resources defined by the CRDs. 
-This is important as otherwise the Custom Resources defined in your chart won't be recognized in your cluster.
+This is important as otherwise the Custom Resources defined in your chart won't be able to be
+installed in your cluster.
 
+```
+  apiVersion: apiextensions.k8s.io/v1beta1
+  kind: CustomResourceDefinition
+  metadata:
+    name: moodles.moodlecontroller.kubeplus
+    annotations:
+      helm.sh/hook: crd-install
+```
 
 ## 13) Generate Kube OpenAPI Spec for your Custom Resources
 
