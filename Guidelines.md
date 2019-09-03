@@ -17,7 +17,7 @@ Check out [this post](https://medium.com/@cloudark/analysis-of-open-source-kuber
 
 [3) Decide Custom Resource Metrics Collection strategy](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#3-decide-custom-resource-metrics-collection-strategy)
 
-[4) Register CRDs as YAML Spec rather than in Operator code](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#4-register-crds-as-yaml-spec-rather-than-in-operator-code)
+[4) Register CRDs as YAML Spec in Helm chart rather than in Operator code (Helm chart related)](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#4-register-crds-as-yaml-spec-rather-than-in-operator-code)
 
 
 ## Implementation guidelines
@@ -26,16 +26,16 @@ Check out [this post](https://medium.com/@cloudark/analysis-of-open-source-kuber
 
 [6) Make Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#6-make-custom-resource-type-definitions-compliant-with-kube-openapi)
 
-[7) Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#7-define-custom-resource-spec-validation-rules-as-part-of-custom-resource-definition-yaml)
+[7) Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML (Helm chart related)](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#7-define-custom-resource-spec-validation-rules-as-part-of-custom-resource-definition-yaml)
 
 [8) Set OwnerReferences for underlying resources owned by your Custom Resource](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#8-set-ownerreferences-for-underlying-resources-owned-by-your-custom-resource)
 
-[9) Use Helm chart or ConfigMap for Operator configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#9-use-helm-chart-or-configmap-for-operator-configurables)
+[9) Use Helm chart or ConfigMap for Operator configurables (Helm chart related)](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#9-use-helm-chart-or-configmap-for-operator-configurables)
 
 [10) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-use-configmap-or-annotation-or-spec-definition-for-custom-resource-configurables)
 
 
-## Packaging guidelines
+## Packaging guidelines (Helm chart related)
 
 [11) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-package-operator-as-helm-chart)
 
