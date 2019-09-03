@@ -1,11 +1,11 @@
 # Kubernetes Operator Guidelines to enable Multi-Operator Platform Stacks (Platform-as-Code)
 
-Kubernetes Operators extend Kubernetes API to manage third-party softwares to run on Kubernetes.
+Kubernetes Operators extend Kubernetes API to run third-party softwares on Kubernetes.
 Various Operators are being built today for variety of softwares such as 
 MySQL, Postgres, Airflow, Redis, MongoDB, Kafka, Prometheus, Logstash, Moodle, Wordpress, Odoo, etc.
 We are seeing a new trend where Custom Resources introduced by different Operators are used to create custom application [platforms as Code](https://cloudark.io/platform-as-code). Such platforms are Kubernetes-native, they don't have any platform vendor lock-in, and they can be created/re-created on any Kubernetes cluster.
 
-Towards building such platforms various Operators and their Custom Resources need to provide a consistent usage experience. We present below guidelines that ensures such an experience to end users (Cluster Administrators and Application Developers). Operators that are developed following these guidelines provide ease of installation, management, and discovery to end users who are creating application platforms leveraging them.
+Towards building such platforms various Operators and their Custom Resources need to provide a consistent usage experience. We present below guidelines that ensure such an experience to end users (Cluster Administrators and Application Developers). Operators that are developed following these guidelines provide ease of installation, management, and discovery to end users who are creating application platforms leveraging them.
 
 Check out [this post](https://medium.com/@cloudark/analysis-of-open-source-kubernetes-operators-f6be898f2340) about our analysis of more than 100 open source Operators for their conformance to some of these guidelines.
 
@@ -44,13 +44,17 @@ Check out [this post](https://medium.com/@cloudark/analysis-of-open-source-kuber
 [13) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#13-package-operator-as-helm-chart)
 
 
+[14) Add crd-install Helm hook annotation on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#14-add-crd-install-helm-hook-annotation-on-your-crd-yaml)
+
+
+
 ## Documentation guidelines
 
-[14) Document how your Operator uses namespaces](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#14-document-how-your-operator-uses-namespaces)
+[15) Document how your Operator uses namespaces](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#15-document-how-your-operator-uses-namespaces)
 
-[15) Document Service Account needs of your Operator](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#15-document-service-account-needs-of-your-operator)
+[16) Document Service Account needs of your Operator](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#16-document-service-account-needs-of-your-operator)
 
-[16) Document naming convention and labels to be used with your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#16-document-naming-convention-and-labels-to-be-used-with-your-custom-resources)
+[17) Document naming convention and labels to be used with your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#17-document-naming-convention-and-labels-to-be-used-with-your-custom-resources)
 
 
 # Design guidelines
@@ -79,7 +83,7 @@ format of custom resource definition. For such actions, we encourage you to cons
 extension mechanisms of Aggregated API servers and Custom Sub-resources. These mechanisms 
 will allow you to continue using kubectl as the primary interaction point for your Operator.
 Refer to [this blog post](https://medium.com/@cloudark/comparing-kubernetes-api-extension-mechanisms-of-custom-resource-definition-and-aggregated-api-64f4ca6d0966) to learn more about them.
-So before considering to introduce new CLI for your Operator, validate if you can use these mechanisms instead. 
+Before considering to introduce new CLI for your Operator, validate if you can use these mechanisms instead. 
 
 
 ## 3) Decide Custom Resource Metrics Collection strategy
@@ -98,7 +102,10 @@ in Prometheus format.
 
 Registering CRDs as YAML spec rather than in your Operator code has following advantage.
 Installing CRD requires Cluster-scope permission. If the CRD registration is done as YAML manifest, then it is possible to separate CRD registration from the Operator Pod deployment. CRD registration
-can be done by Cluster administrator while Operator Pod deployment can be done by a non-admin user. On the other hand, if CRD registration is done as part of your Operator code then the Operator Pod will need to be given Cluster-scope permissions. Another reason to register CRD as YAML is because kube-openapi validation can be defined as part of it.
+can be done by Cluster administrator while Operator Pod deployment can be done by a non-admin user. 
+It is then possible to deploy the Operator in different namespaces with different customizations.
+On the other hand, if CRD registration is done as part of your Operator code then the deployment of the Operator Pod will need Cluster-scope permissions.
+Another reason to register CRD as YAML is because kube-openapi validation can be defined as part of it.
 
 
 # Implementation guidelines
@@ -144,7 +151,8 @@ kind: CustomResourceDefinition
 metadata:
   name: postgreses.postgrescontroller.kubeplus
   annotations:
-    composition: Deployment, Service
+    helm.sh/hook: crd-install
+    platform-as-code/composition: Deployment, Service
 spec:
   group: postgrescontroller.kubeplus
   version: v1
@@ -225,8 +233,8 @@ An example of this can be seen for our sample Moodle Custom Resource Definition 
   metadata:
     name: moodles.moodlecontroller.kubeplus
     annotations:
+      helm.sh/hook: crd-install
       platform-as-code/usage: moodle-operator-usage.usage
-      platform-as-code/constants: moodle-operator-implementation-details.implementation_choices
       platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
 ```
 
@@ -244,9 +252,17 @@ CloudARK [sample Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/m
   * ConfigMaps corresponding to Platform-as-Code annotations that you have added on your Custom Resource Definition (CRD).
 
 
+## 14) Add crd-install Helm hook annotation on your CRD YAML
+
+Helm defines crd-install hook that allows Helm to install CRDs first before installing rest of your
+Helm chart that might refer to the Custom Resources defined by the CRDs. 
+This is important as otherwise the Custom Resources defined in your chart won't be recognized in your cluster.
+
+
+
 # Documentation guidelines
 
-## 14) Document how your Operator uses namespaces
+## 15) Document how your Operator uses namespaces
 
 For Operator developers it is critical to consider how their Operator works with namespaces. Typically, an Operator can be installed in one of the following configurations:
 
@@ -259,12 +275,12 @@ For Operator developers it is critical to consider how their Operator works with
 Given these options, it will help consumers of your Operator if there is a clear documentation of how namespaces are used by your Operator. Include this information in the ConfigMap that you will add for the 'usage' platform-as-code annotation on the CRD.
 
 
-## 15) Document Service Account needs of your Operator
+## 16) Document Service Account needs of your Operator
 
 Your Operator may be need to use some specific service account. Moreover, the service account may need to be granted specific permissions. Clearly document the service account needs of your Operator. Include this information in the ConfigMap that you will add for the 'usage' platform-as-code annotation on the CRD.
 
 
-## 16) Document naming convention and labels to be used with your Custom Resources
+## 17) Document naming convention and labels to be used with your Custom Resources
 
 You may have special requirements for naming your custom resource instances or some of their
 Spec properties. Similarly you may have requirements related to the labels that need to be added on them. Document this information with in the ConfigMap corresponding to the 'usage' platform-as-code annotation on the CRD.
