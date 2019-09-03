@@ -37,15 +37,13 @@ Check out [this post](https://medium.com/@cloudark/analysis-of-open-source-kuber
 
 ## Packaging guidelines
 
-[11) Generate Kube OpenAPI Spec for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-generate-kube-openapi-spec-for-your-custom-resources)
+[11) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-package-operator-as-helm-chart)
 
-[12) Add Platform-as-Code annotations on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#12-add-platform-as-code-annotations-on-your-crd-yaml)
+[12) Add crd-install Helm hook annotation on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#12-add-crd-install-helm-hook-annotation-on-your-crd-yaml)
 
-[13) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#13-package-operator-as-helm-chart)
+[13) Generate Kube OpenAPI Spec for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#13-generate-kube-openapi-spec-for-your-custom-resources)
 
-
-[14) Add crd-install Helm hook annotation on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#14-add-crd-install-helm-hook-annotation-on-your-crd-yaml)
-
+[14) Add Platform-as-Code annotations on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#14-add-platform-as-code-annotations-on-your-crd-yaml)
 
 
 ## Documentation guidelines
@@ -208,40 +206,8 @@ Custom Resource Spec definition.
 
 # Packaging guidelines
 
-## 11) Generate Kube OpenAPI Spec for your Custom Resources
 
-We have developed a [tool](https://github.com/cloud-ark/kubeplus/tree/master/openapi-spec-generator) that you can use for generating Kube OpenAPI Spec for your custom resources. 
-It wraps code available in [kube-openapi repository](https://github.com/kubernetes/kube-openapi) 
-in an easy to use script. You can use this tool to generate OpenAPI Spec for your custom resources.
-The generated Kube OpenAPI Spec documentation for sample Postgres custom resource is 
-[here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/openapispec.json).
-The OpenAPI Spec for your Operator provides a single place where documentation is available for the entire Type
-definition hierarchy for the custom resources defined by your Operator.
-
-
-## 12) Add Platform-as-Code annotations on your CRD YAML
-
-[Platform-as-Code annotations](https://github.com/cloud-ark/kubeplus#platform-as-code-annotations) are a standard way to package information about Custom Resources.
-The 'usage' annotation should be used to define how-to use guide of a Custom Resource.
-The 'constants' annotation should be used to define Operator's implementation choices and assumption.
-The 'composition' annotation should be used to specify the underlying Kubernetes resources that will be created as part of managing a Custom Resource instance. The values of the first three annotations are names of ConfigMaps with appropriate data.
-An example of this can be seen for our sample Moodle Custom Resource Definition below:
-
-```
-  apiVersion: apiextensions.k8s.io/v1beta1
-  kind: CustomResourceDefinition
-  metadata:
-    name: moodles.moodlecontroller.kubeplus
-    annotations:
-      helm.sh/hook: crd-install
-      platform-as-code/usage: moodle-operator-usage.usage
-      platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
-```
-
-This information is useful for application developers when figuring out how to use your Operator and its Custom Resources. Externalizing information like that available in the 'composition' annotation makes it possible to build tools like [kubediscovery](https://github.com/cloud-ark/kubediscovery) that show Object composition tree for custom resource instances built leveraging this information.
-
-
-## 13) Package Operator as Helm Chart
+## 11) Package Operator as Helm Chart
 
 Create a Helm chart for your Operator. The chart should include two things:
 
@@ -252,11 +218,55 @@ CloudARK [sample Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/m
   * ConfigMaps corresponding to Platform-as-Code annotations that you have added on your Custom Resource Definition (CRD).
 
 
-## 14) Add crd-install Helm hook annotation on your CRD YAML
+## 12) Add crd-install Helm hook annotation on your CRD YAML
 
 Helm defines crd-install hook that allows Helm to install CRDs first before installing rest of your
 Helm chart that might refer to the Custom Resources defined by the CRDs. 
 This is important as otherwise the Custom Resources defined in your chart won't be recognized in your cluster.
+
+
+## 13) Generate Kube OpenAPI Spec for your Custom Resources
+
+Kubernetes provides ```kubectl explain``` functionality to obtain information about Spec properties of 
+a resource. This functionality is available for Custom Resources in Kubernetes version 1.15 onwards.
+As your Operator can be used on different cluster versions, you cannot depend on this functionality
+to be available to your Operator users. For such situations, it will be good if you generate OpenAPI
+Spec for your custom resources.
+
+We have developed a [tool](https://github.com/cloud-ark/kubeplus/tree/master/openapi-spec-generator) that you can use for generating Kube OpenAPI Spec for your custom resources. 
+It wraps code available in [kube-openapi repository](https://github.com/kubernetes/kube-openapi) 
+in an easy to use script. You can use this tool to generate OpenAPI Spec for your custom resources.
+The generated Kube OpenAPI Spec documentation for sample Postgres custom resource is 
+[here](https://github.com/cloud-ark/kubeplus/blob/master/postgres-crd-v2/postgres-crd-v2-chart/openapispec.json).
+The OpenAPI Spec for your Operator provides a single place where documentation is available for the entire Type
+definition hierarchy for the custom resources defined by your Operator.
+
+Package this OpenAPI Spec using OpenAPI Spec platform-as-code annotation defined below.
+
+
+## 14) Add Platform-as-Code annotations on your CRD YAML
+
+[Platform-as-Code annotations](https://github.com/cloud-ark/kubeplus#platform-as-code-annotations) are a standard way to package information about Custom Resources.
+The 'usage' annotation should be used to define how-to use guide of the Custom Resource.
+The 'openapispec' annotation should be used to bundle OpenAPI Spec of the Custom Resource, if you have generated it
+(guideline #13).
+The 'composition' annotation should be used to specify the underlying Kubernetes resources that will be created as part of managing a Custom Resource instance. 
+The values of the first two annotations are names of ConfigMaps with appropriate data.
+An example of this can be seen for our sample Moodle Custom Resource Definition below:
+
+```
+  apiVersion: apiextensions.k8s.io/v1beta1
+  kind: CustomResourceDefinition
+  metadata:
+    name: moodles.moodlecontroller.kubeplus
+    annotations:
+      helm.sh/hook: crd-install
+      platform-as-code/usage: moodle-operator-usage.usage
+      platform-as-code/openapispec: moodle-operator-openapispec.openapispec
+      platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
+```
+
+This information is useful for application developers when figuring out how to use your Operator and its Custom Resources. Externalizing information like that available in the 'composition' annotation makes it possible to build tools like [kubediscovery](https://github.com/cloud-ark/kubediscovery) that show Object composition tree for custom resource instances built leveraging this information.
 
 
 
