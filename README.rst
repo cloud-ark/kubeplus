@@ -2,7 +2,15 @@
 Kubernetes API Add-on for Platform-as-Code 
 ============================================
 
-Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes as ``Custom Resources``. KubePlus API Add-on focuses on solving Kubernetes Custom Resource Discovery, Binding and Orchestration problems in multi-Operator environments to enable creating Platform stacks of Custom Resources `as Code`_. You can think of it as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
+Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes as ``Custom Resources``. 
+
+KubePlus API Add-on simplifies creation of platform stacks consisting of Custom and built-in resources in multi-Operator environments. The main benefit of using KubePlus to end users are the following:
+
+- easily discover static and runtime information about Custom Resources available in their cluster
+- easily define bindings between Custom and/or built-in Resources that are resolved at runtime
+- define dependency between Custom and/or built-in Resources in order to prevent out-of-order creation of resources in a stack.
+
+You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
 
 .. _Operators: https://coreos.com/operators/
 
