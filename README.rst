@@ -2,12 +2,10 @@
 Kubernetes API Add-on for Platform-as-Code 
 ============================================
 
-Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes as ``Custom Resources``. 
-
-KubePlus API Add-on simplifies creation of platform stacks consisting of Custom and built-in resources in multi-Operator environments. The main benefit of using KubePlus to end users are the following:
+Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on simplifies creation of platform stacks consisting of Custom and built-in resources in multi-Operator environments. The main benefit of using KubePlus to end users are the following:
 
 - easily discover static and runtime information about Custom Resources available in their cluster
-- easily define bindings between Custom and/or built-in Resources that are resolved at runtime
+- easily define bindings between Custom and/or built-in Resources which are resolved at runtime
 - define dependency between Custom and/or built-in Resources in order to prevent out-of-order creation of resources in a stack.
 
 You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
@@ -17,8 +15,8 @@ You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/T
 .. _as Code: https://cloudark.io/platform-as-code
 
 
-What does it do?
-=================
+How?
+=====
 
 KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to construct platform stacks using Kubernetes Custom Resources.
 These constructs are implemented using following components - an Aggregated API Server, a Mutating webhook, and an  Operator.
@@ -40,7 +38,7 @@ KubePlus defines following custom endpoints for static and runtime information d
 
    kubectl get --raw "/apis/platform-as-code/v1/man"
 
-The man endpoint is used for obtaining static usage information about a Custom Resource. It is a mechanism that an Operator developer can use to expose any assumptions or usage details about the Operator or its Custom Resources that go beyond Custom Resource Spec properties.
+The man endpoint is used for obtaining static usage information about a Custom Resource. 
 
 .. image:: ./docs/MysqlCluster-man-output.png
    :scale: 25%
@@ -57,14 +55,10 @@ The composition endpoint is used for obtaining runtime composition tree of Kuber
    :scale: 25%
    :align: center
 
-In order for these endpoints to work Operator's Custom Resource Definition (CRD) needs to added with
-platfor-as-code annotations (explained below).
-
-
 Platform-as-Code Annotations
 -----------------------------
 
-For correct working of discovery endpoints and binding functions, following annotations need to be defined on Custom Resource Definition (CRD) YAMLs of an Operator.
+For correct working of discovery endpoints following annotations need to be defined on Custom Resource Definition (CRD) YAMLs of an Operator.
 
 .. code-block:: bash
 
@@ -101,7 +95,7 @@ As an example, annotations on MysqlCluster Custom Resource Definition are shown 
     scope: Namespaced
 
 
-The Helm chart for Moodle Operator is available here_.
+The Helm chart for above mentioned MySQL Operator is available here_.
 
 .. _here: https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz
 
@@ -109,7 +103,7 @@ The Helm chart for Moodle Operator is available here_.
 Binding Functions
 ------------------
 
-The main goal of KubePlus is to make it easy for Custom Resource users to define "stacks" of Custom Resources to achieve their end goals. In Kubernetes 'labels', 'label selectors' and name-based dns resolution satisfy the binding needs between built-in resources. However, when using Custom Resources from different Operators these built-in mechanisms need to be augmented with runtime information across different Custom Resources, or orchestrating actions on multiple Custom and/or built-in resources. Towards this we have defined following functions that can be used to glue different Custom Resources together. 
+KubePlus API Add-on defines following functions that can be used to glue different Custom Resources together. 
 
 .. code-block:: bash
 
@@ -195,7 +189,7 @@ KubePlus is useful to anyone who works with Kubernetes Custom Resources. These c
 
 *1. Operator Developer*
 
-Operator Developers create Operator Helm charts enhanced with 'platform-as-code annotations' (described below). These annotations are part of our broader `discoverability and interoperability guidelines`_.
+Operator Developers create Operator Helm charts enhanced with 'platform-as-code annotations'. These annotations are part of our broader `discoverability and interoperability guidelines`_.
 
 *2. DevOps Engineer/Cluster Administrator*
 
