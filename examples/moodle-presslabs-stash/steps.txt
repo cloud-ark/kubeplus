@@ -57,9 +57,11 @@ Start helm and install operators
 
 3) Install presslabs-mysql-operator, moodle operator and stash operator
 helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz?raw=true
-helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.9.tgz?raw=true
 helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.4.tgz?raw=true
+- Minikube
+  - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.4.tgz?raw=true
 - GKE
+  - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.9.tgz?raw=true
   - Install Nginx Ingress Controller
     - helm install stable/nginx-ingress --name nginx
 
