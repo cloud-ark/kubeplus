@@ -2,7 +2,7 @@
 Kubernetes API Add-on for Platform-as-Code 
 ============================================
 
-Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on simplifies creation of platform stacks consisting of Custom and built-in resources in multi-Operator environments. The main benefit of using KubePlus to end users are the following:
+Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on simplifies creation of platform workflows consisting of Custom and built-in resources in multi-Operator environments. The main benefit of using KubePlus to application/microservice developers are:
 
 - easily discover static and runtime information about Custom Resources available in their cluster
 - easily define bindings between Custom and/or built-in Resources which are resolved at runtime
@@ -15,11 +15,8 @@ You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/T
 .. _as Code: https://cloudark.io/platform-as-code
 
 
-How?
-=====
-
 KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to construct platform stacks using Kubernetes Custom Resources.
-These constructs are implemented using following components - an Aggregated API Server, a Mutating webhook, and an  Operator.
+These mechanisms are implemented using following components - an Aggregated API Server, a Mutating webhook, and an  Operator.
 
 .. image:: ./docs/KubePlus-components1.jpg 
    :scale: 25% 
@@ -30,7 +27,7 @@ Discovery Endpoints
 --------------------
 
 Variety of static and runtime information is associated with Kubernetes Custom Resources.
-This includes - Spec properties, usage, implementation-level assumptions made by an Operator, 
+This includes - Spec properties, usage information, implementation-level assumptions made by an Operator, 
 composition tree of Kubernetes resources created as part of handling Custom Resources, etc. 
 KubePlus defines following custom endpoints for static and runtime information discovery:
 
@@ -54,6 +51,7 @@ The composition endpoint is used for obtaining runtime composition tree of Kuber
 .. image:: ./docs/MysqlCluster-composition-output.png
    :scale: 25%
    :align: center
+
 
 Platform-as-Code Annotations
 -----------------------------
@@ -95,9 +93,9 @@ As an example, annotations on MysqlCluster Custom Resource Definition are shown 
     scope: Namespaced
 
 
-The Helm chart for above mentioned MySQL Operator is available here_.
+..The Helm chart for above mentioned MySQL Operator is available here_.
 
-.. _here: https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz
+.... _here: https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz
 
 
 Binding Functions
@@ -131,16 +129,17 @@ Here is how the ``Fn::ImportValue()`` function can be used in a Custom Resource 
    :scale: 10%
    :align: right
 
-In the above example the name of that ``Service`` object which is child of ``cluster1`` Custom Resource instance 
-and whose name contains the string ``master`` is discovered at runtime and used as the value of
-``mySQLServiceName`` attribute while creating the ``moodle1`` Custom Resource instance.
+In the above example the name of the ``Service`` object which is child of ``cluster1`` Custom Resource instance 
+and whose name contains the string ``master`` is discovered and injected at runtime as the value of
+``mySQLServiceName`` attribute in the ``moodle1`` Custom Resource Spec.
 
 Check our `slide deck`_ in the Kubernetes Community Meeting for more details of the above example.
+
 
 PlatformStack Operator
 -----------------------
 Creating platform stacks requires treating the set of resources that represent a stack as a unit. 
-For this purpose KubePlus provides a CRD/Operator of its own. This CRD/Operator defines the ``PlatformStack`` Custom Resource. This Custom Resource enables application developers to define all the stack resources as a unit, along with the inter-dependencies between them. The dependency information is used by mutating webhook to prevent out-of-order creation of resources. PlatformStack Operator does not actually deploy any resources defined in a stack. Resource creation is done normally using 'kubectl'.
+For this purpose KubePlus provides a CRD/Operator of its own which defines the ``PlatformStack`` Custom Resource. This Custom Resource enables application developers to define all the stack resources as a unit, along with the inter-dependencies between them. The dependency information is used by mutating webhook to prevent out-of-order creation of resources. PlatformStack Operator does not actually deploy any resources defined in a stack. Resource creation is done normally using 'kubectl'.
 
 .. image:: ./docs/platform-stack1.png
    :scale: 10%
@@ -193,11 +192,11 @@ Operator Developers create Operator Helm charts enhanced with 'platform-as-code 
 
 *2. DevOps Engineer/Cluster Administrator*
 
-DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a Kubernetes cluster. Additionally, they deploy KubePlus in their cluster to equip Application developers to discover and use various Custom Resources efficiently.
+DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a Kubernetes cluster. Additionally, they deploy KubePlus in their cluster to equip application developers to discover and use various Custom Resources efficiently.
 
-*3. Application Developer/Micro-services Developer*
+*3. Application/Microservices Developer*
 
-Application Developers/Microservices Developers use KubePlus discovery endpoints, binding functions, and PlatformStack Operator to create their platform stacks as-code composing various Custom Resources together.
+Application/Microservices Developers use KubePlus discovery endpoints, binding functions, and PlatformStack Operator to create their platform stacks as-code composing various Custom Resources together.
 
 
 KubePlus in Action
@@ -216,33 +215,33 @@ KubePlus in Action
 .. _demo: https://www.youtube.com/watch?v=taOrKGkZpEc&feature=youtu.be
 
 
-Feedback
-=========
+..Feedback
+..=========
 
-We are actively looking for inputs from the community on following aspects:
+..We are actively looking for inputs from the community on following aspects:
 
-1. Discovery
+..1. Discovery
 
-   - What additional discovery endpoints should we add in KubePlus API Server?
-     File your suggestions as comments on `issue 320`_
+..   - What additional discovery endpoints should we add in KubePlus API Server?
+..     File your suggestions as comments on `issue 320`_
 
-.. _issue 320: https://github.com/cloud-ark/kubeplus/issues/320
-
-
-2. Binding
-
-   - What additional binding functions should we add to KubePlus?
-     File your suggestions as comments on `issue 319`_
-
-.. _issue 319: https://github.com/cloud-ark/kubeplus/issues/319
+.... _issue 320: https://github.com/cloud-ark/kubeplus/issues/320
 
 
-3. Orchestration
+..2. Binding
 
-   - What capabilities should we add to KubePlus PlatformStack CRD/Operator?
-     File your suggestions as comments on `issue 339`_
+..   - What additional binding functions should we add to KubePlus?
+..     File your suggestions as comments on `issue 319`_
 
-.. _issue 339: https://github.com/cloud-ark/kubeplus/issues/339
+.... _issue 319: https://github.com/cloud-ark/kubeplus/issues/319
+
+
+..3. Orchestration
+
+..   - What capabilities should we add to KubePlus PlatformStack CRD/Operator?
+..     File your suggestions as comments on `issue 339`_
+
+.... _issue 339: https://github.com/cloud-ark/kubeplus/issues/339
 
 
 Comparison
