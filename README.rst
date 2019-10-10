@@ -93,11 +93,6 @@ As an example, annotations on MysqlCluster Custom Resource Definition are shown 
     scope: Namespaced
 
 
-..The Helm chart for above mentioned MySQL Operator is available here_.
-
-.... _here: https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz
-
-
 Binding Functions
 ------------------
 
@@ -213,35 +208,6 @@ KubePlus in Action
 3. Kubernetes Community Meeting demo_
 
 .. _demo: https://www.youtube.com/watch?v=taOrKGkZpEc&feature=youtu.be
-
-
-..Feedback
-..=========
-
-..We are actively looking for inputs from the community on following aspects:
-
-..1. Discovery
-
-..   - What additional discovery endpoints should we add in KubePlus API Server?
-..     File your suggestions as comments on `issue 320`_
-
-.... _issue 320: https://github.com/cloud-ark/kubeplus/issues/320
-
-
-..2. Binding
-
-..   - What additional binding functions should we add to KubePlus?
-..     File your suggestions as comments on `issue 319`_
-
-.... _issue 319: https://github.com/cloud-ark/kubeplus/issues/319
-
-
-..3. Orchestration
-
-..   - What capabilities should we add to KubePlus PlatformStack CRD/Operator?
-..     File your suggestions as comments on `issue 339`_
-
-.... _issue 339: https://github.com/cloud-ark/kubeplus/issues/339
 
 
 Comparison
