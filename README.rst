@@ -142,7 +142,7 @@ For this purpose KubePlus provides a CRD/Operator of its own which defines the `
 
 
 Getting started
-=================
+----------------
 
 Read our `blog post`_ to understand how Kubernetes Custom Resources affect the notion of 'as-Code' systems.
 
@@ -170,7 +170,7 @@ Platform-as-Code examples:
 
 
 Who is the target user of KubePlus?
-====================================
+------------------------------------
 
 KubePlus is useful to anyone who works with Kubernetes Custom Resources. These could be service developers, microservice developers, application developers, or devops engineers.
 
@@ -195,7 +195,7 @@ Application/Microservices Developers use KubePlus discovery endpoints, binding f
 
 
 KubePlus in Action
-===================
+-------------------
 
 1. Kubernetes Community Meeting notes_
 
@@ -211,7 +211,7 @@ KubePlus in Action
 
 
 Comparison
-===========
+-----------
 
 Check comparison of KubePlus with other `community tools`_.
 
@@ -219,7 +219,7 @@ Check comparison of KubePlus with other `community tools`_.
 
 
 Operators
-==========
+----------
 
 1. Use our `repository of Operator helm charts`_ for building your custom platform layer. Our Operators are annotated with Platform-as-Code annotations that enable Custom Resource discovery and binding.
 
@@ -239,7 +239,7 @@ Operators
 
 
 Bug reports
-============
+------------
 
 Follow `contributing guidelines`_ to submit bug reports.
 
@@ -247,6 +247,5 @@ Follow `contributing guidelines`_ to submit bug reports.
 
 
 Status
-=======
-
+-------
 Actively under development.
