@@ -8,19 +8,13 @@ Kubernetes Custom Resources and Custom Controllers, popularly known as `Operator
 - easily define bindings between Custom and/or built-in Resources which are resolved at runtime
 - define dependency between Custom and/or built-in Resources in order to prevent out-of-order creation of resources in a stack.
 
+KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to define platform workflows using Kubernetes Custom Resources.
+
 You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
 
 .. _Operators: https://coreos.com/operators/
 
 .. _as Code: https://cloudark.io/platform-as-code
-
-
-KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to construct platform stacks using Kubernetes Custom Resources.
-These mechanisms are implemented using following components - an Aggregated API Server, a Mutating webhook, and an  Operator.
-
-.. image:: ./docs/KubePlus-components1.jpg 
-   :scale: 25% 
-   :align: center
 
 
 Discovery Endpoints
@@ -52,45 +46,6 @@ The composition endpoint is used for obtaining runtime composition tree of Kuber
    :scale: 25%
    :align: center
 
-
-Platform-as-Code Annotations
------------------------------
-
-For correct working of discovery endpoints following annotations need to be defined on Custom Resource Definition (CRD) YAMLs of an Operator.
-
-.. code-block:: bash
-
-   platform-as-code/composition 
-
-The 'composition' annotation is used to define Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance.
-
-.. code-block:: bash
-
-   platform-as-code/usage 
-
-The 'usage' annotation is used to define usage information for a Custom Resource.
-The value for 'usage' annotation is the name of the ConfigMap that stores the usage information.
-
-As an example, annotations on MysqlCluster Custom Resource Definition are shown below:
-
-.. code-block:: yaml
-
-  apiVersion: apiextensions.k8s.io/v1beta1
-  kind: CustomResourceDefinition
-  metadata:
-    name: mysqlclusters.mysql.presslabs.org
-    annotations:
-      helm.sh/hook: crd-install
-      platform-as-code/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
-      platform-as-code/usage: mysqlcluster-usage.usage
-  spec:
-    group: mysql.presslabs.org
-    names:
-      kind: MysqlCluster
-      plural: mysqlclusters
-      shortNames:
-      - mysql
-    scope: Namespaced
 
 
 Binding Functions
@@ -134,11 +89,58 @@ Check our `slide deck`_ in the Kubernetes Community Meeting for more details of 
 PlatformStack Operator
 -----------------------
 Creating platform stacks requires treating the set of resources that represent a stack as a unit. 
-For this purpose KubePlus provides a CRD/Operator of its own which defines the ``PlatformStack`` Custom Resource. This Custom Resource enables application developers to define all the stack resources as a unit, along with the inter-dependencies between them. The dependency information is used by mutating webhook to prevent out-of-order creation of resources. PlatformStack Operator does not actually deploy any resources defined in a stack. Resource creation is done normally using 'kubectl'.
+For this purpose KubePlus provides a Operator of its own which defines the ``PlatformStack`` Custom Resource. This Custom Resource enables application developers to define all the stack resources as a unit, along with the inter-dependencies between them. The dependency information is used by mutating webhook to prevent out-of-order creation of resources. PlatformStack Operator does not actually deploy any resources defined in a stack. Resource creation is done normally using 'kubectl'.
 
 .. image:: ./docs/platform-stack1.png
    :scale: 10%
    :align: center
+
+
+KubePlus Components 
+--------------------
+
+Discovery endpoints, binding functions and the PlatformStack Custom Resource are implemented using following components - an Aggregated API Server, a Mutating webhook, and an  Operator.
+
+.. image:: ./docs/KubePlus-components1.jpg 
+   :scale: 25% 
+   :align: center
+
+Additionally, Custom Resource Definition (CRD) YAMLs of Operators need to be annotated with following
+Platform-as-Code annotations. 
+
+.. code-block:: bash
+
+   platform-as-code/composition 
+
+The 'composition' annotation is used to define Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance.
+
+.. code-block:: bash
+
+   platform-as-code/usage 
+
+The 'usage' annotation is used to define usage information for a Custom Resource.
+The value for 'usage' annotation is the name of the ConfigMap that stores the usage information.
+
+As an example, annotations on MysqlCluster Custom Resource Definition are shown below:
+
+.. code-block:: yaml
+
+  apiVersion: apiextensions.k8s.io/v1beta1
+  kind: CustomResourceDefinition
+  metadata:
+    name: mysqlclusters.mysql.presslabs.org
+    annotations:
+      helm.sh/hook: crd-install
+      platform-as-code/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
+      platform-as-code/usage: mysqlcluster-usage.usage
+  spec:
+    group: mysql.presslabs.org
+    names:
+      kind: MysqlCluster
+      plural: mysqlclusters
+      shortNames:
+      - mysql
+    scope: Namespaced
 
 
 Getting started
@@ -172,7 +174,7 @@ Platform-as-Code examples:
 Who is the target user of KubePlus?
 ------------------------------------
 
-KubePlus is useful to anyone who works with Kubernetes Custom Resources. These could be service developers, microservice developers, application developers, or devops engineers.
+KubePlus is useful to anyone who works with Kubernetes Custom Resources. These could be microservice developers, application developers, or devops engineers.
 
 .. image:: ./docs/Platform-as-Code-workflow.jpg
    :scale: 25%
@@ -221,18 +223,17 @@ Check comparison of KubePlus with other `community tools`_.
 Operators
 ----------
 
-1. Use our `repository of Operator helm charts`_ for building your custom platform layer. Our Operators are annotated with Platform-as-Code annotations that enable Custom Resource discovery and binding.
+1. Use `repository of Operator helm charts`_ for building your custom platform layer. Operators in this repository are annotated with Platform-as-Code annotations that enable Custom Resource discovery and binding.
 
 .. _repository of Operator helm charts: https://github.com/cloud-ark/operatorcharts/
 
 
-2. Follow our `Operator Development Guidelines`_ when developing your Operators, especially if your Operator
-   will be used alongside other Operators in a Kubernetes cluster.
+2. Follow `Operator Development Guidelines`_ when developing your Operators.
 
 .. _Operator Development Guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
 
-3. Checkout our `Operator FAQ`_ if you are new to CRDs and Operators.
+3. Checkout `Operator FAQ`_ if you are new to Kubernetes Operators.
 
 .. _Operator FAQ: https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md
 
