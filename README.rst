@@ -171,8 +171,8 @@ Platform-as-Code examples:
 .. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/platform-crd/steps.txt
 
 
-Who is the target user of KubePlus?
-------------------------------------
+Platform-as-Code Stakeholders
+------------------------------
 
 KubePlus is useful to anyone who works with Kubernetes Custom Resources. These could be microservice developers, application developers, or devops engineers.
 
