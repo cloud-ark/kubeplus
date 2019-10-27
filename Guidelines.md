@@ -34,25 +34,31 @@ Check out [this post](https://medium.com/@cloudark/analysis-of-open-source-kuber
 
 [10) Use ConfigMap or Annotation or Spec definition for Custom Resource configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#10-use-configmap-or-annotation-or-spec-definition-for-custom-resource-configurables)
 
+[11) Resource limit and Resource requests for Custom Resource Pods](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-resource-limit-and-resource-requests-for-custom-resource-pods)
+
+[12) PodDisruptionBudget for Custom Resource Pods](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#12-poddisruptionbudget-for-custom-resource-pods)
+
+[13) SecurityContext for Custom Resource Pods](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#13-securitycontext-for-custom-resource-pods)
+
 
 ## Packaging guidelines (Helm chart related)
 
-[11) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#11-package-operator-as-helm-chart)
+[14) Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#14-package-operator-as-helm-chart)
 
-[12) Add crd-install Helm hook annotation on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#12-add-crd-install-helm-hook-annotation-on-your-crd-yaml)
+[15) Add crd-install Helm hook annotation on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#15-add-crd-install-helm-hook-annotation-on-your-crd-yaml)
 
-[13) Generate Kube OpenAPI Spec for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#13-generate-kube-openapi-spec-for-your-custom-resources)
+[16) Generate Kube OpenAPI Spec for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#16-generate-kube-openapi-spec-for-your-custom-resources)
 
-[14) Add Platform-as-Code annotations on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#14-add-platform-as-code-annotations-on-your-crd-yaml)
+[17) Add Platform-as-Code annotations on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#17-add-platform-as-code-annotations-on-your-crd-yaml)
 
 
 ## Documentation guidelines
 
-[15) Document how your Operator uses namespaces](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#15-document-how-your-operator-uses-namespaces)
+[18) Document how your Operator uses namespaces](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#18-document-how-your-operator-uses-namespaces)
 
-[16) Document Service Account needs of your Operator](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#16-document-service-account-needs-of-your-operator)
+[19) Document Service Account needs of your Operator](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#19-document-service-account-needs-of-your-operator)
 
-[17) Document naming convention and labels to be used with your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#17-document-naming-convention-and-labels-to-be-used-with-your-custom-resources)
+[20) Document naming convention and labels to be used with your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#20-document-naming-convention-and-labels-to-be-used-with-your-custom-resources)
 
 
 # Design guidelines
@@ -204,10 +210,42 @@ Custom Resource Spec definition.
 [PressLabs MySQL Operator](https://github.com/presslabs/mysql-operator) uses Custom Resource [Spec definition](https://github.com/presslabs/mysql-operator/blob/master/examples/example-cluster.yaml#L22).
 
 
+## 11) Resource limit and Resource requests for Custom Resource Pods
+
+Kubernetes provides mechanism of [requests and limits](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#resource-types) for specifying the cpu and memory resource needs of a Pod's containers. When specified, Kubernetes scheduler ensures that the Pod is scheduled on a Node that has enough capacity 
+for these resources. When implementing the controller for your Custom Resource, carefully consider the resource needs of the Pods that will be created as part of creating a Custom Resource instance. If you do decide to implement
+requests and limits for the Custom Resource Pods, surface this information as part of 
+the Custom Resource Definition (CRD) using following annotations:
+'platform-as-code/cpu-requests', 'platform-as-code/cpu-limits', 'platform-as-code/mem-requests', 
+'platform-as-code/mem-limits'. These annotations will help the DevOps engineers to understand the resource requirements of the Custom Resource Pods. This in turn will enable them to define the per namespace resource quotas.
+
+
+## 12) PodDisruptionBudget for Custom Resource Pods
+
+Kubernetes provides mechanism of [Pod Disruption Budget](https://kubernetes.io/docs/tasks/run-application/configure-pdb/) (PDB) that can be used to define the disruption tolerance for Pods. Specifically, two
+fields are provided - 'minAvailable' and 'maxUnavailable'. minAvailable is the minimum number of Pods that 
+should be always running in a cluster. maxUnavailable is complementary and defines the maximum number of Pods
+that can be unavailable in a cluster. These two fields provide a way to control the availability of Pods in a cluster.
+They ensure that minimum number of Pods will always be present. When implementing the controller for your Custom Resource, carefully consider such availability requirements for your Custom Resource instance's Pods. If you do decide to implment PDB for your Custom Resource Pods, surface this information using following annotation on CRD:
+'platform-as-code/pdb-maxunavailable' or 'platform-as-code/pdb-minavailable'.
+This information will help Application developers understand the availability guarantee for Custom Resources provided by your Operator.
+
+
+## 13) SecurityContext for Custom Resource Pods
+
+Kubernetes provides mechanism of [SecurityContext](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) that can be used to define the security attributes (userID, groupID, Linux capabilities, etc.)
+of a Pod's containers. In your Operator implementation, you may decide to create Custom Resource Pods using
+certain settings for the securityContext. Surface these settings through 'platform-as-code/securitycontext' annotation
+on the CRD. The value of this annotation should be the name of a ConfigMap that contains the security context attributes defined as the data values. Make sure to include this ConfigMap in your Operator's Helm chart.
+By surfacing the security context information in this way, it will be possible for the DevOps engineers and
+Application developers to find out the security context with which Custom Resource Pods are going to run.
+This in turn may enable them to define Pod affinity/anti-affinity rules.
+
+
 # Packaging guidelines
 
 
-## 11) Package Operator as Helm Chart
+## 14) Package Operator as Helm Chart
 
 Create a Helm chart for your Operator. The chart should include two things:
 
@@ -218,7 +256,7 @@ CloudARK [sample Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/m
   * ConfigMaps corresponding to Platform-as-Code annotations that you have added on your Custom Resource Definition (CRD).
 
 
-## 12) Add crd-install Helm hook annotation on your CRD YAML
+## 15) Add crd-install Helm hook annotation on your CRD YAML
 
 Helm defines crd-install hook that directs Helm to install CRDs first before installing rest of your
 Helm chart that might refer to the Custom Resources defined by the CRDs. 
@@ -234,7 +272,7 @@ installed in your cluster.
       helm.sh/hook: crd-install
 ```
 
-## 13) Generate Kube OpenAPI Spec for your Custom Resources
+## 16) Generate Kube OpenAPI Spec for your Custom Resources
 
 Kubernetes provides ```kubectl explain``` functionality to obtain information about Spec properties of 
 a resource. This functionality is available for Custom Resources in Kubernetes version 1.15 onwards.
@@ -253,7 +291,7 @@ definition hierarchy for the custom resources defined by your Operator.
 Package this OpenAPI Spec using OpenAPI Spec platform-as-code annotation defined below.
 
 
-## 14) Add Platform-as-Code annotations on your CRD YAML
+## 17) Add Platform-as-Code annotations on your CRD YAML
 
 [Platform-as-Code annotations](https://github.com/cloud-ark/kubeplus#platform-as-code-annotations) are a standard way to package information about Custom Resources.
 The 'usage' annotation should be used to define how-to use guide of the Custom Resource.
@@ -281,7 +319,7 @@ This information is useful for application developers when figuring out how to u
 
 # Documentation guidelines
 
-## 15) Document how your Operator uses namespaces
+## 18) Document how your Operator uses namespaces
 
 For Operator developers it is critical to consider how their Operator works with namespaces. Typically, an Operator can be installed in one of the following configurations:
 
@@ -294,15 +332,15 @@ For Operator developers it is critical to consider how their Operator works with
 Given these options, it will help consumers of your Operator if there is a clear documentation of how namespaces are used by your Operator. Include this information in the ConfigMap that you will add for the 'usage' platform-as-code annotation on the CRD.
 
 
-## 16) Document Service Account needs of your Operator
+## 19) Document Service Account needs of your Operator
 
 Your Operator may be need to use some specific service account. Moreover, the service account may need to be granted specific permissions. Clearly document the service account needs of your Operator. Include this information in the ConfigMap that you will add for the 'usage' platform-as-code annotation on the CRD.
 
 
-## 17) Document naming convention and labels to be used with your Custom Resources
+## 20) Document naming convention and labels to be used with your Custom Resources
 
 You may have special requirements for naming your custom resource instances or some of their
-Spec properties. Similarly you may have requirements related to the labels that need to be added on them. Document this information with in the ConfigMap corresponding to the 'usage' platform-as-code annotation on the CRD.
+Spec properties. Similarly you may have requirements related to the labels that need to be added on them. Document this information in the ConfigMap corresponding to the 'usage' platform-as-code annotation on the CRD.
 
 
 
