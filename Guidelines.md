@@ -31,7 +31,7 @@ Operator and underlying resource configuration, Interactions and Discoverability
 
 [2) Make Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#2-make-custom-resource-type-definitions-compliant-with-kube-openapi)
 
-[3) Define Resource limits and Resource requests for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#3-define-resource-limits-and-resource-requests-for-custom-resources)
+[3) Define Resource limits and Resource requests for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#3-define-resource-limit-and-resource-requests-for-custom-resources)
 
 [4) Define PodDisruptionBudget for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#4-define-poddisruptionbudget-for-custom-resources)
 
@@ -39,9 +39,9 @@ Operator and underlying resource configuration, Interactions and Discoverability
 
 [6) Define Custom Resource Anti-Affinity rules](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#6-define-custom-resource-anti-affinity-rules)
 
-[7) Define Custom Resource Taint Toleration rules(https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#7-define-custom-resource-taint-toleration-rules)
+[7) Define Custom Resource Taint Toleration rules](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#7-define-custom-resource-taint-toleration-rules)
 
-[8) Define SecurityContext for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#8-define-securitycontext-for-custom-resource-pods)
+[8) Define SecurityContext for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#8-define-securitycontext-for-custom-resources)
 
 [9) Evaluate Service Account needs for Custom Resource Pods](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#9-evaluate-service-account-needs-for-custom-resource-pods)
 
