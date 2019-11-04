@@ -2,11 +2,11 @@
 Kubernetes API Add-on for Platform-as-Code 
 ============================================
 
-Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on simplifies creation of platform workflows consisting of Custom and built-in resources in multi-Operator environments. The main benefit of using KubePlus to application/microservice developers are:
+Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on simplifies creation of platform workflows as code consisting of Custom and built-in resources in multi-Operator environments. The main benefit of using KubePlus to application/microservice developers are:
 
 - easily discover static and runtime information about Custom Resources available in their cluster
-- easily define bindings between Custom and/or built-in Resources which are resolved at runtime
-- define dependency between Custom and/or built-in Resources in order to prevent out-of-order creation of resources in a stack.
+- easily define bindings between Custom and/or built-in Resources that are resolved at runtime
+- define dependency between Custom and/or built-in Resources in order to prevent out-of-order creation of resources in a workflow.
 
 KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to define platform workflows using Kubernetes Custom Resources.
 
@@ -48,8 +48,8 @@ The composition endpoint is used for obtaining runtime composition tree of Kuber
 
 
 
-Binding Functions
-------------------
+Runtime Binding Functions
+--------------------------
 
 KubePlus API Add-on defines following functions that can be used to glue different Custom Resources together. 
 
@@ -57,13 +57,13 @@ KubePlus API Add-on defines following functions that can be used to glue differe
 
    1. Fn::ImportValue(<Parameter>)
 
-This function imports value of the specified parameter into the Spec where the function is defined.
+This function resolves the parameter at runtime and imports its value into the Spec where the function is defined.
 
 .. code-block:: bash
 
    1. Fn::AddLabel(label, <Resource>)
 
-This function adds the specified label to the specified resource.
+This function adds the specified label to the specified resource by resolving the resource name at runtime.
 
 Formal grammar of these functions is available in the `functions doc`_.
 
@@ -88,8 +88,8 @@ Check our `slide deck`_ in the Kubernetes Community Meeting for more details of 
 
 PlatformStack Operator
 -----------------------
-Creating platform stacks requires treating the set of resources that represent a stack as a unit. 
-For this purpose KubePlus provides a Operator of its own which defines the ``PlatformStack`` Custom Resource. This Custom Resource enables application developers to define all the stack resources as a unit, along with the inter-dependencies between them. The dependency information is used by mutating webhook to prevent out-of-order creation of resources. PlatformStack Operator does not actually deploy any resources defined in a stack. Resource creation is done normally using 'kubectl'.
+Creating platform workflows requires treating the set of resources that represent a workflow stack as a unit. 
+For this purpose KubePlus provides an Operator of its own which defines the ``PlatformStack`` Custom Resource. This Custom Resource enables application developers to define all the workflow resources as a unit, along with the inter-dependencies between them. The dependency information is used to prevent out-of-order creation of resources. PlatformStack Operator does not actually deploy any resources defined in a workflow stack. Resource creation is done normally using 'kubectl'.
 
 .. image:: ./docs/platform-stack1.png
    :scale: 10%
@@ -99,14 +99,13 @@ For this purpose KubePlus provides a Operator of its own which defines the ``Pla
 KubePlus Components 
 --------------------
 
-Discovery endpoints, binding functions and the PlatformStack Custom Resource are implemented using following components - an Aggregated API Server, a Mutating webhook, and an  Operator.
+Discovery endpoints, runtime binding functions and the PlatformStack Custom Resource are implemented using following components - an Aggregated API Server, a Mutating webhook, and an  Operator.
 
 .. image:: ./docs/KubePlus-components1.jpg 
    :scale: 25% 
    :align: center
 
-Additionally, Custom Resource Definition (CRD) YAMLs of Operators need to be annotated with following
-Platform-as-Code annotations. 
+Additionally, KubePlus API Add-on defines following Platform-as-Code annotations. 
 
 .. code-block:: bash
 
@@ -142,6 +141,9 @@ As an example, annotations on MysqlCluster Custom Resource Definition are shown 
       - mysql
     scope: Namespaced
 
+These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators
+in order to make them discoverable and usable in multi-Operator environments.
+
 
 Getting started
 ----------------
@@ -174,7 +176,7 @@ Platform-as-Code examples:
 Platform-as-Code Stakeholders
 ------------------------------
 
-KubePlus is useful to anyone who works with Kubernetes Custom Resources. These could be microservice developers, application developers, or devops engineers.
+KubePlus API Add-on is useful to Operator developers, DevOps Engineers, and Application/Microservice developers alike.
 
 .. image:: ./docs/Platform-as-Code-workflow.jpg
    :scale: 25%
@@ -185,15 +187,15 @@ KubePlus is useful to anyone who works with Kubernetes Custom Resources. These c
 
 *1. Operator Developer*
 
-Operator Developers create Operator Helm charts enhanced with 'platform-as-code annotations'. These annotations are part of our broader `discoverability and interoperability guidelines`_.
+For Operator developers, we have developed `discoverability and interoperability guidelines`_ with specific focus on Operator interoperability in multi-Operator environments. Use these guidelines when developing your Operator to ensure that it works smoothly with other Operators. 
 
 *2. DevOps Engineer/Cluster Administrator*
 
-DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a Kubernetes cluster. Additionally, they deploy KubePlus in their cluster to equip application developers to discover and use various Custom Resources efficiently.
+DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a Kubernetes cluster. Additionally, they deploy KubePlus API Add-on in their cluster to equip application developers to discover and use various Custom Resources efficiently.
 
 *3. Application/Microservices Developer*
 
-Application/Microservices Developers use KubePlus discovery endpoints, binding functions, and PlatformStack Operator to create their platform stacks as-code composing various Custom Resources together.
+Application/Microservices Developers use KubePlus API Add-on discovery endpoints, runtime binding functions, and PlatformStack Operator to create their platform workflows as-code.
 
 
 KubePlus in Action
