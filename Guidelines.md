@@ -2,77 +2,67 @@
 
 Kubernetes Operators enable running third-party softwares directly on Kubernetes.
 Various Operators are being built today for variety of softwares such as 
-MySQL, Postgres, Cassandra, Airflow, Redis, MongoDB, Kafka, Prometheus, Moodle, Wordpress, etc.
+MySQL, Postgres, Cassandra, Airflow, Kafka, Prometheus, Moodle, Wordpress, etc.
 Technically, a Kubernetes Operator consists of one or more Kubernetes Custom Resources and their associated Custom Controllers. A Custom Resource provides declarative model to specify the desired state of a resource
-that the associated Custom Controller is built to reconcile. While an individual Operator is typically focused on 
+that the associated Custom Controller manages. While an individual Operator is typically focused on 
 managing some domain-specific workflows in Kubernetes-native manner, increasingly there are setups where more
-than one Operators are installed on a cluster. 
+than one Operators are installed on a cluster.
 
-Below we define the Operator maturity model which is intended to capture the 
-wide range of cluster setups that are seen in enterprises today. 
-The maturity model is divided into four levels. The levels are defined in the order of increasingly complex setups
-in which Operators will be used. We also present guidelines that an Operator developer should follow
-corresponding to each maturity level.
+Below we define a Operator maturity model which is intended to capture the 
+wide range of Operator setups that are seen in enterprises today. 
+We also present guidelines that an Operator developer should follow
+in order to make their Operator compliant towards each maturity level.
  
-**(1) Kubernetes Distribution and Cloud provider independence:** The first maturity level defines the requirement that
-an Operator should be independent of any Kubernetes distribution or Cloud provider.
-This will enable the Operator to be installed on any Kubernetes cluster.
+### 1) Application developer usability
 
-**(2) Application developer usability:** This maturity level defines the requirements related to the
-usability of Custom Resources. These include, ability of application developers to discover the capabilities
-offered by the Operator including any implementation-level assumptions made by the Operator developer; 
-how to use the Custom Resources to define different workflow actions; how to find out runtime information
-about the Operator and the Custom Resources, etc.
+This maturity level defines the requirements related to the
+usability of Custom Resources of an Operator. These include, 
+how to use the Custom Resources to define different workflow actions, how to find out runtime information
+about the Custom Resources, ability of application developers to discover the capabilities
+offered by the Operator including any implementation-level assumptions made by the Operator developer, etc.
 
-**(3) Multi-Operator interoperability guarantees:** This maturity level identifies
-the requirements related to using your Operator alongside other Operators in a cluster. These include things
-such as enabling application developers to specify resource requests and limits for your Custom Resources,
-defining Custom Resource node co-location policies, etc.
+### 2) Multi-Operator interoperability guarantees
 
-**(4) Multi-tenant guarantees:** This maturity level identifies requirements related to using an Operator
-in creating multi-tenant stacks of Custom Resources on a cluster. 
+This maturity level identifies the requirements related to using your Operator alongside other Operators in a cluster. These include things such as enabling application developers to specify resource requests and limits for your Custom Resources, defining Custom Resource node co-location policies, etc.
 
-It is possible that an Operator may satisfy some combination of these maturity
-levels. That is fine. The maturity model is intended to be used to calibrate an Operator's readiness
+### 3) Multi-tenant guarantees
+
+This maturity level identifies requirements related to using an Operator
+in creating multi-tenant stacks consisting of different Custom Resources. 
+
+### 4) Kubernetes Distribution and Cloud provider independence
+
+This maturity level defines the requirement that an Operator should be independent of any Kubernetes distribution 
+or Cloud provider. This will enable the Operator to be installed on any Kubernetes cluster.
+
+The maturity model is intended to be used to calibrate an Operator's readiness
 to work in increasingly complex scenarios. You can use it as a guiding framework when thinking about your
 next Operator design. 
 
 
 ## Guidelines
 
-### 1) Kubernetes Distribution and Cloud provider independence
 
-[Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#package-operator-as-helm-chart)
-
-[Register CRDs as YAML Spec in Helm chart rather than in Operator code](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#register-crds-as-yaml-spec-in-helm-chart-rather-than-in-operator-code)
-
-[Add crd-install Helm hook annotation on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-crd-install-helm-hook-annotation-on-your-crd-yaml)
-
-[Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-spec-validation-rules-as-part-of-custom-resource-definition-yaml)
-
-[Use Helm chart or ConfigMap for Operator configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#use-helm-chart-or-configmap-for-operator-configurables)
-
-
-### 2) Application developer usability
+### 1) Application developer usability
 
 [Design Custom Resource as a declarative API and avoid inputs as imperative actions](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#design-operator-with-declarative-apis-and-avoid-inputs-as-imperative-actions)
 
 [Make Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#make-custom-resource-type-definitions-compliant-with-kube-openapi)
 
-[Use ConfigMap or Annotation or Spec definition for Custom Resource configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#use-configmap-or-annotation-or-spec-definition-for-custom-resource-configurables)
-
-[Consider to use kubectl as the primary interaction mechanism](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#consider-to-use-kubectl-as-the-primary-interaction-mechanism)
+[Use ConfigMap or Custom Resource Annotation or Custom Resource Spec definition for underlying resource configuration](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#use-configmap-or-custom-resource-annotation-or-custom-resource-spec-definition-for-underlying-resource-configuration)
 
 [Define PodDisruptionBudget for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-poddisruptionbudget-for-custom-resources)
 
 [Add Platform-as-Code annotations on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-platform-as-code-annotations-on-your-crd-yaml)
+
+[Consider to use kubectl as the primary interaction mechanism](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#consider-to-use-kubectl-as-the-primary-interaction-mechanism)
 
 [Document Service Account needs of your Operator](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-service-account-needs-of-your-operator)
 
 [Document naming convention and labels to be used with your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-naming-convention-and-labels-to-be-used-with-your-custom-resources)
 
 
-### 3) Multi-Operator interoperability guarantees
+### 2) Multi-Operator interoperability guarantees
 
 [Define Resource limits and Resource requests for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-resource-limit-and-resource-requests-for-custom-resources)
 
@@ -89,8 +79,7 @@ next Operator design.
 [Decide Custom Resource Metrics Collection strategy](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#decide-custom-resource-metrics-collection-strategy)
 
 
-### 4) Multi-tenant guarantees
-
+### 3) Multi-tenant guarantees
 
 [Define SecurityContext for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-securitycontext-for-custom-resources)
 
@@ -99,6 +88,21 @@ next Operator design.
 [Make Custom Controllers Namespace aware](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#make-custom-controllers-namespace-aware)
 
 [Document how your Operator uses namespaces](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-how-your-operator-uses-namespaces)
+
+
+### 4) Kubernetes Distribution and Cloud provider independence
+
+[Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#package-operator-as-helm-chart)
+
+[Register CRDs as YAML Spec in Helm chart rather than in Operator code](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#register-crds-as-yaml-spec-in-helm-chart-rather-than-in-operator-code)
+
+[Add crd-install Helm hook annotation on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-crd-install-helm-hook-annotation-on-your-crd-yaml)
+
+[Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-spec-validation-rules-as-part-of-custom-resource-definition-yaml)
+
+[Use Helm chart or ConfigMap for Operator configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#use-helm-chart-or-configmap-for-operator-configurables)
+
+
 
 
 
@@ -311,7 +315,7 @@ validation:
 ```
 
 
-## Use ConfigMap or Annotation or Spec definition for Custom Resource configurables
+## Use ConfigMap or Custom Resource Annotation or Custom Resource Spec definition for underlying resource configuration
 
 An Operator generally needs to take configuration parameter as inputs 
 for the underlying resource that it is managing through its custom resource such as a database.
