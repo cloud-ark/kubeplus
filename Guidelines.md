@@ -15,15 +15,12 @@ in order to make their Operator compliant towards each maturity level.
  
 ### 1) Application developer usability
 
-This maturity level defines the requirements related to the
-usability of Custom Resources of an Operator. These include, 
-how to use the Custom Resources to define different workflow actions, how to find out runtime information
-about the Custom Resources, ability of application developers to discover the capabilities
-offered by the Operator including any implementation-level assumptions made by the Operator developer, etc.
+This maturity level defines the requirements related to the usability of Custom Resources of an Operator. These include things such as - how to use Custom Resources to define different workflow actions, how to find out runtime information about Custom Resources, ability of application developers to discover the capabilities offered by the Operator including any implementation-level assumptions made by the Operator developer, etc.
+
 
 ### 2) Multi-Operator interoperability guarantees
 
-This maturity level identifies the requirements related to using your Operator alongside other Operators in a cluster. These include things such as enabling application developers to specify resource requests and limits for your Custom Resources, defining Custom Resource node co-location policies, etc.
+This maturity level identifies the requirements related to using your Operator alongside other Operators in a cluster. This includes things such as enabling application developers to specify resource requests and limits for your Custom Resources, defining Custom Resource affinity policies with other Custom Resources, defining Custom Resource node co-location policies, etc.
 
 ### 3) Multi-tenant guarantees
 
@@ -32,8 +29,7 @@ in creating multi-tenant stacks consisting of different Custom Resources.
 
 ### 4) Kubernetes Distribution and Cloud provider independence
 
-This maturity level defines the requirement that an Operator should be independent of any Kubernetes distribution 
-or Cloud provider. This will enable the Operator to be installed on any Kubernetes cluster.
+This maturity level identifies the requirements related to Operator packaging and installation. The goal here should be to create Operator packaging and installation artifacts such that they are independent of Kubernetes distribution or Cloud provider. This will enable the Operator to be installed on any Kubernetes cluster - on-prem or public clouds.
 
 The maturity model is intended to be used to calibrate an Operator's readiness
 to work in increasingly complex scenarios. You can use it as a guiding framework when thinking about your
