@@ -2,13 +2,13 @@
 Kubernetes API Add-on for Platform-as-Code 
 ============================================
 
-Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on simplifies creation of platform workflows as code consisting of Custom and built-in resources in multi-Operator environments. The main benefit of using KubePlus to application/microservice developers are:
+Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on simplifies creation of platform workflows consisting of Custom and built-in resources. The main benefit of using KubePlus to application/microservice developers are:
 
 - easily discover static and runtime information about Custom Resources available in their cluster
-- easily define bindings between Custom and/or built-in Resources that are resolved at runtime
+- easily define bindings between Custom and/or built-in Resources
 - define dependency between Custom and/or built-in Resources in order to prevent out-of-order creation of resources in a workflow.
 
-KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to define platform workflows using Kubernetes Custom Resources.
+KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to define platform workflows as code using Kubernetes Custom Resources.
 
 You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
 
@@ -21,9 +21,9 @@ Discovery Endpoints
 --------------------
 
 Variety of static and runtime information is associated with Kubernetes Custom Resources.
-This includes - Spec properties, usage information, implementation-level assumptions made by an Operator, 
-composition tree of Kubernetes resources created as part of handling Custom Resources, etc. 
-KubePlus defines following custom endpoints for static and runtime information discovery:
+This includes - Spec properties, usage information, implementation-level assumptions made by Operator developer,
+composition tree of Kubernetes built-in resources created as part of handling Custom Resources, etc. 
+KubePlus API Add-on defines following custom endpoints for static and runtime information discovery:
 
 .. code-block:: bash
 
@@ -40,7 +40,7 @@ The man endpoint is used for obtaining static usage information about a Custom R
 
    kubectl get --raw "/apis/platform-as-code/v1/composition"
 
-The composition endpoint is used for obtaining runtime composition tree of Kubernetes resources that are created as part of handling a Custom Resource instance.
+The composition endpoint is used for obtaining runtime composition tree of Kubernetes built-in resources that are created as part of handling a Custom Resource instance.
 
 .. image:: ./docs/MysqlCluster-composition-output.png
    :scale: 25%
@@ -57,17 +57,14 @@ KubePlus API Add-on defines following functions that can be used to glue differe
 
    1. Fn::ImportValue(<Parameter>)
 
-This function resolves the parameter at runtime and imports its value into the Spec where the function is defined.
+This function resolves the parameter value using runtime information in a cluster and imports that value into the Spec where the function is defined.
 
 .. code-block:: bash
 
    1. Fn::AddLabel(label, <Resource>)
 
-This function adds the specified label to the specified resource by resolving the resource name at runtime.
-
-Formal grammar of these functions is available in the `functions doc`_.
-
-.. _functions doc: https://github.com/cloud-ark/kubeplus/blob/master/docs/kubeplus-functions.txt
+This function adds the specified label to the specified resource by resolving the resource name using runtime
+information in a cluster.
 
 Here is how the ``Fn::ImportValue()`` function can be used in a Custom Resource YAML definition.
 
@@ -80,16 +77,21 @@ Here is how the ``Fn::ImportValue()`` function can be used in a Custom Resource 
    :align: right
 
 In the above example the name of the ``Service`` object which is child of ``cluster1`` Custom Resource instance 
-and whose name contains the string ``master`` is discovered and injected at runtime as the value of
+and whose name contains the string ``master`` is discovered at runtime and that value is injected as the value of
 ``mySQLServiceName`` attribute in the ``moodle1`` Custom Resource Spec.
+
+Formal grammar of ``ImportValue`` and ``AddLabel`` functions is available in the `functions doc`_.
+
+.. _functions doc: https://github.com/cloud-ark/kubeplus/blob/master/docs/kubeplus-functions.txt
+
 
 Check our `slide deck`_ in the Kubernetes Community Meeting for more details of the above example.
 
 
 PlatformStack Operator
 -----------------------
-Creating platform workflows requires treating the set of resources that represent a workflow stack as a unit. 
-For this purpose KubePlus provides an Operator of its own which defines the ``PlatformStack`` Custom Resource. This Custom Resource enables application developers to define all the workflow resources as a unit, along with the inter-dependencies between them. The dependency information is used to prevent out-of-order creation of resources. PlatformStack Operator does not actually deploy any resources defined in a workflow stack. Resource creation is done normally using 'kubectl'.
+Creating workflows requires treating the set of resources that representing the workflow as a unit.
+For this purpose KubePlus provides a Custom Resource of its own - ``PlatformStack``. This Custom Resource enables application developers to define all the resources in a workflow as a unit along with the inter-dependencies between them. The dependency information is used to prevent out-of-order creation of resources. PlatformStack Operator does not actually deploy any resources defined in a workflow stack. Resource creation is done by application developers as usual using 'kubectl'.
 
 .. image:: ./docs/platform-stack1.png
    :scale: 10%
@@ -119,8 +121,10 @@ The 'composition' annotation is used to define Kubernetes's built-in resources t
 
 The 'usage' annotation is used to define usage information for a Custom Resource.
 The value for 'usage' annotation is the name of the ConfigMap that stores the usage information.
+These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators
+in order to make Custom Resources discoverable and usable by application developers.
 
-As an example, annotations on MysqlCluster Custom Resource Definition are shown below:
+As an example, annotations on MysqlCluster Custom Resource Definition (CRD) are shown below:
 
 .. code-block:: yaml
 
@@ -140,9 +144,6 @@ As an example, annotations on MysqlCluster Custom Resource Definition are shown 
       shortNames:
       - mysql
     scope: Namespaced
-
-These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators
-in order to make them discoverable and usable in multi-Operator environments.
 
 
 Getting started
@@ -173,8 +174,18 @@ Platform-as-Code examples:
 .. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/platform-crd/steps.txt
 
 
-Platform-as-Code Stakeholders
-------------------------------
+Operator Maturity Model
+------------------------
+
+In order to build Platform workflows as code using Operators and Custom Resources, it is important for Cluster
+administrators to evaluate different Operators against a standard set of requirements. We have developed
+`Operator Maturity Model`_ towards this focusing on Operator usage in increasingly complex scenarios.
+
+.. _Operator Maturity Model: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
+
+
+KubePlus API Add-on Stakeholders
+---------------------------------
 
 KubePlus API Add-on is useful to Operator developers, DevOps Engineers, and Application/Microservice developers alike.
 
@@ -187,11 +198,17 @@ KubePlus API Add-on is useful to Operator developers, DevOps Engineers, and Appl
 
 *1. Operator Developer*
 
-For Operator developers, we have developed `discoverability and interoperability guidelines`_ with specific focus on Operator interoperability in multi-Operator environments. Use these guidelines when developing your Operator to ensure that it works smoothly with other Operators. 
+For Operator developers, we have developed `Operator Maturity Model`_ with specific focus on Operator interoperability in multi-Operator environments. Use these guidelines when developing your Operator to ensure that it works smoothly with other Operators in a cluster.
+
 
 *2. DevOps Engineer/Cluster Administrator*
 
-DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a Kubernetes cluster. Additionally, they deploy KubePlus API Add-on in their cluster to equip application developers to discover and use various Custom Resources efficiently.
+DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a Kubernetes cluster. Additionally, they deploy KubePlus API Add-on in their cluster to equip application developers to discover and use various Custom Resources efficiently. We are maintaining a `repository of Operator helm charts`_
+where every Operator Helm chart is annotated with Platform-as-Code annotations. 
+Use it for building your custom platform layer using Operators.
+
+.. _repository of Operator helm charts: https://github.com/cloud-ark/operatorcharts/
+
 
 *3. Application/Microservices Developer*
 
@@ -222,20 +239,11 @@ Check comparison of KubePlus with other `community tools`_.
 .. _community tools: https://github.com/cloud-ark/kubeplus/blob/master/Comparison.md
 
 
-Operators
-----------
 
-1. Use `repository of Operator helm charts`_ for building your custom platform layer. Operators in this repository are annotated with Platform-as-Code annotations that enable Custom Resource discovery and binding.
+Operator FAQ
+-------------
 
-.. _repository of Operator helm charts: https://github.com/cloud-ark/operatorcharts/
-
-
-2. Follow `Operator Development Guidelines`_ when developing your Operators.
-
-.. _Operator Development Guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
-
-
-3. Checkout `Operator FAQ`_ if you are new to Kubernetes Operators.
+New to Operators? Checkout `Operator FAQ`_.
 
 .. _Operator FAQ: https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md
 
