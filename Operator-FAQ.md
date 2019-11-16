@@ -2,8 +2,8 @@
 
 **Q. What is a Kubernetes Operator?**
 
-A. An [Operator](https://coreos.com/operators/) is essentially a new REST API that is added to a Kubernetes cluster's control plane. Like traditional REST APIs, it has a resource path, a resource definition and code that knows how to perform CRUD operations on that resource. In Kubernetes nomenclature, the resource path is called as the Custom Resource, resource definition is called as the Custom Resource Kind, and the code that performs CRUD operations is called Custom Controller. Most of the times no distinction is made between Custom Resource and Custom Resource Kind
-when discussing CRDs and Operators. 'Custom Resource' is used to refer to both.
+A. An [Operator](https://coreos.com/operators/) is essentially a new REST API that is added to a Kubernetes cluster's control plane. Like traditional REST APIs, it has a resource definition and code that knows how to perform CRUD operations on that resource. In Kubernetes nomenclature, the resource definition is called as the Custom Resource and the code that performs CRUD operations is called Custom Controller. The official definition of an Operator is being debated and discussed
+in the [CNCF sig-app-delivery group currently](https://lists.cncf.io/g/cncf-sig-app-delivery/topic/operator_definition/44377945). 
 
 **Q. Why are Operators useful?**
 
@@ -48,6 +48,8 @@ A. No, there is no inheritance in the style of Object-Oriented languages between
 **Q. Are there any standards emerging around Operators and Custom Resources?**
 
 A. Not yet. The only standard right now is that the Custom Resource Spec definition should follow Kubernetes Spec definition format. Operator developers can define their own Custom Resource Spec properties.
+We have defined an [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) 
+that defines guidelines towards developing Operators that can be used in different scenarios and setups.
 
 **Q. What is the purpose of Operators that provision Cloud Services like AWS RDS?**
 
@@ -56,28 +58,6 @@ A. Such Operators can be used to provision Cloud-based managed services directly
 **Q. Will running MySQL on Kubernetes using a MySQL Operator provide same level of robustness as a managed database service like AWS RDS or Google CloudSQL?**
 
 A. It depends on how the Operator’s code is written. You can choose from multiple available MySQL community Operators or develop your own or customize a community Operator further as per your internal requirements. 
-
-**Q. Are there situations where one needs multiple Operators?**
-
-A. Often. We are seeing enterprises use multiple Operators to build their platform stacks on Kubernetes. At CloudARK, we have pioneered Platform-as-Code approach for creating multi Operator platform stacks.
-
-**Q. What are the advantages of using multiple Operators?**
-
-A. Development and maintenance of in-house platform automation is reduced. This approach helps you in your goal of moving towards multi-cloud application portability as this significantly simplifies creating or transferring your workloads from one cloud environment to other. 
-
-**Q. What are the challenges when using multiple Operators together?**
-
-A. Primary challenge is interoperability and binding between various Custom Resources supported by Operators. We have developed KubePlus Custom Resource Discovery and Binding Add-on that helps with this process.
-
-**Q. How to use KubePlus Custom Resource Discovery and Binding Add-on?**
-
-KubePlus defines three things - annotations that can be added to Custom Resource Definitions of your Operators, custom endpoints that can be used for Custom Resource discovery, and a language that can be used to glue Custom Resources together. Operator developer/curator defines the annotations with appropriate values. KubePlus Add-on uses these annotations to surface information about Custom Resources through the defined custom endpoints. This enables users of Custom Resources to understand static as well as dynamic information about them which can be used in figuring out their interoperability characteristics. 
-Here are examples of new endpoints enabled by KubePlus: 
-Use ‘man’ endpoint to find usage information about Custom Resource:
-    ```kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"```
-Use ‘composition’ endpoint to find underlying resources that the custom resource is composed of:
-    ```kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=ns1"```
-For a detailed example check this.
 
 **Q. What are all the personas involved in developing, installing, using Operators? What tools exist for each?**
 
@@ -96,9 +76,23 @@ A. The three personas involved are - Operator developers/Operator curators, Clus
 
 A. Operators can be written in any language. Currently there are [officially supported Kubernetes libraries](https://kubernetes.io/docs/reference/using-api/client-libraries/) for Go, Python, Java, dotnet, JavaScript. There exist [sample-controller](https://github.com/kubernetes/sample-controller), [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder), [Operator SDK](https://github.com/operator-framework/operator-sdk) which help in Operator development. These are Golang based.
 
+
+**Q. Are there situations where one needs multiple Operators?**
+
+A. Often. We are seeing enterprises use multiple Operators to build their platform stacks on Kubernetes. At CloudARK, we have pioneered Platform-as-Code approach for creating multi Operator platform stacks.
+
+**Q. What are the advantages of using multiple Operators?**
+
+A. Development and maintenance of in-house platform automation is reduced. This approach helps you in your goal of moving towards multi-cloud application portability as this significantly simplifies creating or transferring your workloads from one cloud environment to other. 
+
+**Q. What are the challenges when using multiple Operators together?**
+
+A. Primary challenge is interoperability and binding between various Custom Resources supported by Operators. We have developed KubePlus API Add-on for Custom Resource Discovery and Binding that helps with this process.
+
 **Q. We are interested in building our Kubernetes platform using Open source Operators. What should we look for when choosing an Operator?**
 
-A. There are Operator listing and repositories such as following: https://operatorhub.io/, https://chartmuseum.com/, https://github.com/operator-framework/awesome-operators, https://kubedex.com/operators/. You can pick an Operator from any of these places. Then use the guidelines that we have developed to evaluate whether the Operator that you have selected has some of the attributes mentioned in the guidelines. 
+A. There are Operator listing and repositories such as following: https://operatorhub.io/, https://chartmuseum.com/, https://github.com/operator-framework/awesome-operators, https://kubedex.com/operators/. You can pick an Operator from any of these places. Then use the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) that we have developed to evaluate whether the Operator that you have selected has some of the attributes mentioned in the 
+Operator Maturity Model.
 
 **Q. Are Operators production ready? Is there any analysis of open source Operators?**
 
