@@ -185,8 +185,7 @@ then design the Custom Resource Spec to take the resource requests/limits as inp
 Implement your Custom Controller to pass this information through to the Pod creation Spec. 
 In case you decide to hard code this information in your
 Custom Controller, then surface this information to Custom Resource users through its ``man page`` 
-[check guideline for Platform-as-Code annotations for details]
-(https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-platform-as-code-annotations-on-your-crd-yaml).
+[check guideline for Platform-as-Code annotations for details](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-platform-as-code-annotations-on-your-crd-yaml).
 
 
 ## Define Custom Resource Node Affinity rules
@@ -238,7 +237,6 @@ Implement the Custom Controller to pass this value to the Pod Spec.
 If on the other hand you decide to hard code this choice in your Custom Controller implementation then
 surface it to Custom Resource users throught its ``man page``
 [check guideline for Platform-as-Code annotations for details](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-platform-as-code-annotations-on-your-crd-yaml).
-
 
 
 # 3) Multi-tenancy
@@ -373,7 +371,7 @@ validation:
 
 
 
-## Use Helm chart or ConfigMap for Operator configurables
+## Use Helm chart Values YAML for Operator configurables
 
 Typically Operators will need to support some form of customization. For example, 
 [this MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/tutorial.md#configuration) supports following customization settings: whether to deploy
