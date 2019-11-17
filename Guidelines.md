@@ -130,19 +130,22 @@ Custom Resource Spec definition.
 [PressLabs MySQL Operator](https://github.com/presslabs/mysql-operator) uses Custom Resource [Spec definition](https://github.com/presslabs/mysql-operator/blob/master/examples/example-cluster.yaml#L22).
 
 
-## Define PodDisruptionBudget for Custom Resources
+## Set OwnerReferences for underlying resources owned by your Custom Resource
 
-Kubernetes provides mechanism of [Pod Disruption Budget](https://kubernetes.io/docs/tasks/run-application/configure-pdb/) (PDB) that can be used to define the disruption tolerance for Pods. Specifically, two
-fields are provided - 'minAvailable' and 'maxUnavailable'. minAvailable is the minimum number of Pods that 
-should be always running in a cluster. maxUnavailable is complementary and defines the maximum number of Pods
-that can be unavailable in a cluster. These two fields provide a way to control the availability of Pods in a cluster.
-When implementing the controller for your Custom Resource, carefully consider such availability requirements for your Custom Resource Pods. If you decide to implement PDB for your Custom Resource Pods, consider whether
-the disruption budget should be set by application developers. 
-If yes, then ensure that the Custom Resource Spec definition has a field to specify a disruption budget.
-Implement the Custom Controller to pass this value to the Pod Spec.
-If on the other hand you decide to hard code this choice in your Custom Controller implementation then
-surface it to Custom Resource users throught its ``man page``
-[check guideline for Platform-as-Code annotations for details](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-platform-as-code-annotations-on-your-crd-yaml).
+An Operator will typically create one or more native Kubernetes resources as part of instantiating a Custom Resource instance. Set the OwnerReference attribute of such underlying resources to the Custom Resource instance that is
+being created. OwnerReference setting is essential for correct garbage collection of Custom Resources. 
+It also help with finding runtime composition tree of your Custom Resource instances.
+
+
+## Decide Custom Resource Metrics Collection strategy
+
+Plan for metrics collection of Custom Resources managed by your Operator. This information is useful for understanding effect of various actions on your Custom Resources over time for their traceability. 
+For example, [this MySQL Operator](https://github.com/oracle/mysql-operator/) 
+collects information such as how many clusters were created. One option to collect metrics 
+is to build the metrics collection inside your Custom Controller itself, as done by the MySQL Operator.
+Another option is to leverage Kubernetes Audit Logs for this purpose. 
+Then, you can use external tooling like [kubeprovenance](https://github.com/cloud-ark/kubeprovenance) 
+to build the required metrics. Once metrics are collected, you should consider exposing them in Prometheus format.
 
 
 ## Consider to use kubectl as the primary interaction mechanism
@@ -182,8 +185,8 @@ then design the Custom Resource Spec to take the resource requests/limits as inp
 Implement your Custom Controller to pass this information through to the Pod creation Spec. 
 In case you decide to hard code this information in your
 Custom Controller, then surface this information to Custom Resource users through its ``man page`` 
-([check guideline for Platform-as-Code annotations for details]
-(https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-platform-as-code-annotations-on-your-crd-yaml)).
+[check guideline for Platform-as-Code annotations for details]
+(https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-platform-as-code-annotations-on-your-crd-yaml).
 
 
 ## Define Custom Resource Node Affinity rules
@@ -222,22 +225,19 @@ where such tolerations can be specified. Implement the Custom Controller to pass
 the Custom Resource Pod Spec.
 
 
-## Set OwnerReferences for underlying resources owned by your Custom Resource
+## Define PodDisruptionBudget for Custom Resources
 
-An Operator will typically create one or more native Kubernetes resources as part of instantiating a Custom Resource instance. Set the OwnerReference attribute of such underlying resources to the Custom Resource instance that is
-being created. OwnerReference setting is essential for correct garbage collection of Custom Resources. 
-It also help with finding runtime composition tree of your Custom Resource instances.
-
-
-## Decide Custom Resource Metrics Collection strategy
-
-Plan for metrics collection of Custom Resources managed by your Operator. This information is useful for understanding effect of various actions on your Custom Resources over time for their traceability. 
-For example, [this MySQL Operator](https://github.com/oracle/mysql-operator/) 
-collects information such as how many clusters were created. One option to collect metrics 
-is to build the metrics collection inside your Custom Controller itself, as done by the MySQL Operator.
-Another option is to leverage Kubernetes Audit Logs for this purpose. 
-Then, you can use external tooling like [kubeprovenance](https://github.com/cloud-ark/kubeprovenance) 
-to build the required metrics. Once metrics are collected, you should consider exposing them in Prometheus format.
+Kubernetes provides mechanism of [Pod Disruption Budget](https://kubernetes.io/docs/tasks/run-application/configure-pdb/) (PDB) that can be used to define the disruption tolerance for Pods. Specifically, two
+fields are provided - 'minAvailable' and 'maxUnavailable'. minAvailable is the minimum number of Pods that 
+should be always running in a cluster. maxUnavailable is complementary and defines the maximum number of Pods
+that can be unavailable in a cluster. These two fields provide a way to control the availability of Pods in a cluster.
+When implementing the controller for your Custom Resource, carefully consider such availability requirements for your Custom Resource Pods. If you decide to implement PDB for your Custom Resource Pods, consider whether
+the disruption budget should be set by application developers. 
+If yes, then ensure that the Custom Resource Spec definition has a field to specify a disruption budget.
+Implement the Custom Controller to pass this value to the Pod Spec.
+If on the other hand you decide to hard code this choice in your Custom Controller implementation then
+surface it to Custom Resource users throught its ``man page``
+[check guideline for Platform-as-Code annotations for details](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-platform-as-code-annotations-on-your-crd-yaml).
 
 
 
@@ -280,8 +280,7 @@ of the decisions you will need to make is whether that Service account should be
 developers. If so, provide an attribute in Custom Resource Spec
 definition to define a Service account. Alternatively, if the Custom Controller is hard coding
 the Service account in the Pod Spec, then surface this information through the Custom Resource ``man page``
-([check guideline for Platform-as-Code annotations for details]
-(https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-platform-as-code-annotations-on-your-crd-yaml)).
+[check guideline for Platform-as-Code annotations for details](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-platform-as-code-annotations-on-your-crd-yaml).
 
 
 # 4) Kubernetes Distribution and Cloud provider independence
