@@ -29,6 +29,10 @@ KubePlus API Add-on defines following custom endpoints for static and runtime in
 
    kubectl get --raw "/apis/platform-as-code/v1/man"
 
+.. code-block :: bash
+
+   kubectl man <Custom Resource>
+
 The man endpoint is used for obtaining static usage information about a Custom Resource. 
 
 .. image:: ./docs/MysqlCluster-man-output.png
@@ -39,6 +43,10 @@ The man endpoint is used for obtaining static usage information about a Custom R
 .. code-block:: bash
 
    kubectl get --raw "/apis/platform-as-code/v1/composition"
+
+.. code-block:: bash
+
+   kubectl composition <Custom Resource> <Custom Resource Instance> [<Namespace]
 
 The composition endpoint is used for obtaining runtime composition tree of Kubernetes built-in resources that are created as part of handling a Custom Resource instance.
 
@@ -161,6 +169,17 @@ Install KubePlus:
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
    $ ./deploy-kubeplus.sh
+
+Install KubePlus kubectl plugins:
+
+We provide kubectl plugins for 'man' and 'composition' endpoints to simplify querying of the man page
+information and composition tree information about Custom Resources. In order to use the plugins you
+will need to add KubePlus folder to your PATH variable.
+
+.. code-block:: bash
+
+   $ export PATH=$PATH:`pwd`
+
 
 Platform-as-Code examples:
 
