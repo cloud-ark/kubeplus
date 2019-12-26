@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#echo "You provided $# arguments"
+
+#for arg in "$@"
+#do
+#    echo "$arg"
+#done
+
+if (( $# < 1 )); then
+    echo "kubectl man <Custom Resource>"
+    exit 0
+fi
+
+echo "Custom Resource: $1"
+kubectl get --raw "/apis/platform-as-code/v1/man?kind=$1" 
