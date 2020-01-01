@@ -26,6 +26,12 @@ usability of Custom Resources of an Operator focusing on the needs of the applic
 
 [Document naming convention and labels to be used with your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-naming-convention-and-labels-to-be-used-with-your-custom-resources)
 
+[Expose Custom Resource Usage Information](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#expose-custom-resource-usage-information)
+
+[Expose Custom Resource Composition Information](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#expose-custom-resource-composition-information)
+
+
+
 
 ### 2) Interoperability - Interoperability guarantees for multi-Operator environments
 
@@ -59,7 +65,7 @@ Operators naturally provide a `managed service` experience in running third-part
 [Evaluate Service Account needs for Custom Resource Pods](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#evaluate-service-account-needs-for-custom-resource-pods)
 
 
-### Portability - Kubernetes distribution and Cloud provider independence
+### 4) Portability - Kubernetes distribution and Cloud provider independence
 
 The goal of the fourth maturity level is to define Operator packaging and installation requirements such that an Operator can be installed on any Kubernetes cluster independent of any Kubernetes distribution or Cloud provider. 
 
@@ -72,8 +78,6 @@ The goal of the fourth maturity level is to define Operator packaging and instal
 [Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-spec-validation-rules-as-part-of-custom-resource-definition-yaml)
 
 [Use Helm chart or ConfigMap for Operator configurables](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#use-helm-chart-or-configmap-for-operator-configurables)
-
-[Add Platform-as-Code annotations on your CRD YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#add-platform-as-code-annotations-on-your-crd-yaml)
 
 
 
@@ -162,6 +166,49 @@ Your Operator may be need to use a specific service account with specific permis
 
 You may have special requirements for naming your Custom Resource instances or some of their
 Spec properties. Similarly you may have requirements related to the labels that need to be added on them. Document this information in the ConfigMap corresponding to the 'usage' platform-as-code annotation on the CRD.
+
+
+## Expose Custom Resource Usage Information
+
+Application developers will need to know details about how to use your Operator
+and the Custom Resources. This information goes beyond what is available through Custom Resource Spec properties.
+This should include any assumptions that the Operator developer has made in implementing Custom Controllers, any hard coded values such as those for resource requests/limits, disruption budgets, service accounts, tolerations, etc.
+It is useful to document this information as part of your Operator's documentation.
+In order to enable users to discover this information in Kubernetes-native manner, you can use 
+our 'platform-as-code/usage' annotation on the CRD definition YAML. Create a ConfigMap with the usage information 
+and add following annotation on your CRD definition YAML: 'platform-as-code/usage'. Set the value of this
+annotation to the name of the ConfigMap that you have created with the usage information. Once this is done,
+users will be able to access this information in Kubernetes-native manner using 'kubectl man <Custom Resource>'
+command, once you install KubePlus API Add-on in your cluster.
+
+
+## Expose Custom Resource Composition Information
+
+When using Custom Resources of your Operator, Application developers will often need help with debugging
+Custom Resources when failures occur. One of the key things as part of this is to know what Kubernetes's
+native resources are created by the Operator when instantiating a Custom Resource instance.
+It is helpful to document this information as part of your Operator's documentation. 
+In order to enable users to discover this information in Kubernetes-native manner, you can use
+our 'platform-as-code/composition' annotation on the CRD definition YAML. The value of this annotation
+is the list of all the Kubernetes resources such as Deployment, ConfigMap, Secret, etc. that an Operator
+creates as part of creating a Custom Resource instance. Once this is done, users will be able to use
+the 'kubectl composition <Custom Resource> <Custom Resource instance>' command to find the runtime
+composition tree of all the Kubernetes resource that are created by the Operator as part of instantiating
+a Custom Resource instance. This information can then aid debugging. Here is an example of defining 'usage' and 'composition' annotations on Moodle CRD.
+
+
+```
+  apiVersion: apiextensions.k8s.io/v1beta1
+  kind: CustomResourceDefinition
+  metadata:
+    name: moodles.moodlecontroller.kubeplus
+    annotations:
+      helm.sh/hook: crd-install
+      platform-as-code/usage: moodle-operator-usage.usage
+      platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
+```
+
+
 
 
 # 2) Multi-Operator interoperability
@@ -372,26 +419,3 @@ the Operator cluster-wide or within a particular namespace, which version of MyS
 Use Values.yaml of your Helm chart to specify such parameters.
 
 
-## Add Platform-as-Code annotations on your CRD YAML
-
-[Platform-as-Code annotations](https://github.com/cloud-ark/kubeplus#kubeplus-components) provide an approach to package and surface information about Custom Resources to application developers.
-Following annotations are available - 'usage', 'securitycontext', 'composition', .
-The values of the 'usage' and 'securitycontext' annotations are names of ConfigMaps that contain
-the corresponding information. The 'usage' annotation should be used to define 'man page' like 
-information of a Custom Resource. This should include any assumptions that the Operator developer has made in implementing Custom Controllers. Hard coded values for resource requests/limits, disruption budgets, service accounts, tolerations, 
-should be included when creating the 'usage' ConfigMap. The 'composition' annotation should be used to specify the underlying Kubernetes resources that will be created as part of managing a Custom Resource instance. 
-This information is useful for application developers when figuring out how to use your Operator and its Custom Resources. 
-We have built KubePlus API Add-on that provides ``man`` and ``composition`` endpoints that can be used to retrieve
-static and dynamic information about Custom Resources. KubePlus API Add-on uses the platform-as-code annotations
-for this. An example of using can be seen for our sample Moodle Custom Resource Definition below:
-
-```
-  apiVersion: apiextensions.k8s.io/v1beta1
-  kind: CustomResourceDefinition
-  metadata:
-    name: moodles.moodlecontroller.kubeplus
-    annotations:
-      helm.sh/hook: crd-install
-      platform-as-code/usage: moodle-operator-usage.usage
-      platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
-```
