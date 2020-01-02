@@ -5,7 +5,7 @@
 ## Guidelines
 
 
-### 1) Consumability - Application developer’s ability to consume Custom Resources
+### 1) Ease of use - Application developer’s ability to consume Custom Resources
 
 The first maturity level defines the requirements related to 
 usability of Custom Resources of an Operator focusing on the needs of the application developers.
@@ -30,10 +30,11 @@ usability of Custom Resources of an Operator focusing on the needs of the applic
 
 [j. Expose Custom Resource Composition Information](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#expose-custom-resource-composition-information)
 
+[k. Document Resource dependency information of your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-resource-dependency-information-of-your-custom-resources)
 
 
 
-### 2) Interoperability - Interoperability guarantees for multi-Operator environments
+### 2) Multi-Operator Environments - Interoperability guarantees
 
 The second maturity level identifies the requirements related to using an Operator alongside other Operators in a cluster. 
 This level acknowledges the growing interest of enterprises in using multiple Operators in their clusters.
@@ -65,7 +66,7 @@ Operators naturally provide a `managed service` experience in running third-part
 [d. Evaluate Service Account needs for Custom Resource Pods](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#evaluate-service-account-needs-for-custom-resource-pods)
 
 
-### 4) Portability - Kubernetes distribution and Cloud provider independence
+### 4) Hybrid Multi-cloud Portability - Kubernetes distribution and Cloud provider independence
 
 The goal of the fourth maturity level is to define Operator packaging and installation requirements such that an Operator can be installed on any Kubernetes cluster independent of any Kubernetes distribution or Cloud provider. 
 
@@ -209,6 +210,12 @@ a Custom Resource instance. This information can then aid debugging. Here is an 
 ```
 
 
+## Document Resource dependency information of your Custom Resources
+
+In order to use your Custom Resource correctly, other Kubernetes built-in resource or Custom Resource from same
+or different Operator may need to be created first. This guideline is about explicitly documenting such dependencies.
+This information will be useful for Application developers in creating workflows consisting of Custom and built-in
+resources. You can also use our KubePlus API Add-on which provides ``PlatformStack`` CRD to capture this type of dependency information. KubePlus API Add-on uses this information to prevent out-of-order creation of Kubernetes resources. It also ensures that Custom or built-in resources that are in use as part of some workflows are not inadvertently deleted.
 
 
 # 2) Multi-Operator interoperability
