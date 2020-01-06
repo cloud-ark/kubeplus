@@ -34,3 +34,7 @@ Functions:
 
 2. Fn::AddLabel(label, <Fully Qualified Resource Name>)
    -> Add label to the specified Fully Qualified Resource Name 
+
+3. Fn::AddAnnotation(annotation, <Fully Qualified Resource Name>)
+   -> Add annotation to the specified Fully Qualified Resource Name 
+

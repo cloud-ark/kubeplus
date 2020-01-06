@@ -4,11 +4,11 @@ Kubernetes API Add-on for Platform-as-Code
 
 Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on simplifies creation of platform workflows consisting of Custom and built-in resources. The main benefit of using KubePlus to application/microservice developers are:
 
-- easily discover static and runtime information about Custom Resources available in their cluster
-- easily define bindings between Custom and/or built-in Resources
-- define dependency between Custom and/or built-in Resources in order to prevent out-of-order creation of resources in a workflow.
+- easily discover static and runtime information about Custom Resources available in their cluster.
+- easily define bindings between Custom and/or built-in Resources.
+- define dependency between Custom and/or built-in Resources to ensure robustness and security of the platform workflows.
 
-KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to define platform workflows as code using Kubernetes Custom Resources.
+KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to define platform workflows using Kubernetes Custom and built-in Resources.
 
 You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
 
@@ -29,11 +29,8 @@ KubePlus API Add-on defines following custom endpoints for static and runtime in
 
    kubectl get --raw "/apis/platform-as-code/v1/man"
 
-.. code-block :: bash
-
-   kubectl man <Custom Resource>
-
-The man endpoint is used for obtaining static usage information about a Custom Resource. 
+The man endpoint is used for obtaining static usage information about a Custom Resource. Here is an example
+of using 'man' endpoint for 'MysqlCluster' Custom Resource.
 
 .. image:: ./docs/MysqlCluster-man-output.png
    :scale: 25%
@@ -44,35 +41,43 @@ The man endpoint is used for obtaining static usage information about a Custom R
 
    kubectl get --raw "/apis/platform-as-code/v1/composition"
 
-.. code-block:: bash
 
-   kubectl composition <Custom Resource> <Custom Resource Instance> [<Namespace]
-
-The composition endpoint is used for obtaining runtime composition tree of Kubernetes built-in resources that are created as part of handling a Custom Resource instance.
+The composition endpoint is used for obtaining runtime composition tree of Kubernetes built-in resources that are created by the Operator as part of handling a Custom Resource instance. Here is an example of using 'composition' endpoint on 'MysqlCluster' Custom Resource instance.
 
 .. image:: ./docs/MysqlCluster-composition-output.png
    :scale: 25%
    :align: center
 
 
+We provide kubectl plugins for these endpoints. In order to use the plugins you
+need to add KubePlus folder to your PATH variable.
+
+.. code-block:: bash
+
+   $ export PATH=$PATH:`pwd`
+
+Once this is done, you can use following 'kubectl man' and 'kubectl composition' commands.
+
+.. code-block :: bash
+
+   kubectl man <Custom Resource>
+
+.. code-block:: bash
+
+   kubectl composition <Custom Resource> <Custom Resource Instance> [<Namespace]
+
+
 
 Runtime Binding Functions
 --------------------------
 
-KubePlus API Add-on defines following functions that can be used to glue different Custom Resources together. 
+KubePlus API Add-on defines following functions that can be used to glue different Custom and built-in Resources together.
 
 .. code-block:: bash
 
    1. Fn::ImportValue(<Parameter>)
 
-This function resolves the parameter value using runtime information in a cluster and imports that value into the Spec where the function is defined.
-
-.. code-block:: bash
-
-   1. Fn::AddLabel(label, <Resource>)
-
-This function adds the specified label to the specified resource by resolving the resource name using runtime
-information in a cluster.
+This function should be used for defining Custom Resource Spec property values that need to be resolved using runtime information. The function resolves specified parameter at runtime using information about various resources running in a cluster and imports that value into the Spec where the function is defined.
 
 Here is how the ``Fn::ImportValue()`` function can be used in a Custom Resource YAML definition.
 
@@ -88,7 +93,36 @@ In the above example the name of the ``Service`` object which is child of ``clus
 and whose name contains the string ``master`` is discovered at runtime and that value is injected as the value of
 ``mySQLServiceName`` attribute in the ``moodle1`` Custom Resource Spec.
 
-Formal grammar of ``ImportValue`` and ``AddLabel`` functions is available in the `functions doc`_.
+
+.. code-block:: bash
+
+   2. Fn::AddLabel(label, <Resource>)
+
+This function adds the specified label to the specified resource by resolving the resource name using runtime
+information in a cluster.
+
+
+.. code-block:: bash
+
+   3. Fn::AddAnnotation(annotation, <Resource>)
+
+This function adds the specified annotation to the specified resource by resolving the resource name using runtime
+information in a cluster.
+
+
+The ``AddLabel`` and ``AddAnnotation`` functions should be defined as annotations on those Custom Resources whose
+functioning depends on having appropriate labels and/or annotations on other resources in a cluster. Such
+resources can be built-in resources or Custom Resources. `Here`_ is an example the ``AddLabel`` function used with
+the ``Restic`` Custom Resource.
+
+.. _Here: https://github.com/cloud-ark/kubeplus/blob/master/examples/platform-crd/moodle-mysql-restic/restic.yaml#L8
+
+Restic Custom Resource takes backups of Deployments. For this, it requires that the Deployment object be given a label.
+Then in order to take backup of Moodle Custom Resource, we need to add a label on its Deployment object. This is
+achieved using the ``AddLabel`` function defined as ``pac/action`` annotation on the Restic Custom Resource Spec.
+
+
+Formal grammar of ``ImportValue``, ``AddLabel``, ``AddAnnotation`` functions is available in the `functions doc`_.
 
 .. _functions doc: https://github.com/cloud-ark/kubeplus/blob/master/docs/kubeplus-functions.txt
 
@@ -99,7 +133,7 @@ Check our `slide deck`_ in the Kubernetes Community Meeting for more details of 
 PlatformStack Operator
 -----------------------
 Creating workflows requires treating the set of resources that representing the workflow as a unit.
-For this purpose KubePlus provides a Custom Resource of its own - ``PlatformStack``. This Custom Resource enables application developers to define all the resources in a workflow as a unit along with the inter-dependencies between them. The dependency information is used to prevent out-of-order creation of resources. PlatformStack Operator does not actually deploy any resources defined in a workflow stack. Resource creation is done by application developers as usual using 'kubectl'.
+For this purpose KubePlus provides a Custom Resource of its own - ``PlatformStack``. This Custom Resource enables application developers to define all the resources in a workflow as a unit along with the inter-dependencies between them. The dependency information is used for ensuring robustness and security of the workflows including, preventing out-of-order creation of resources and ensuring that resources that are still in use cannot be deleted. PlatformStack Operator does not actually deploy any resources defined in a workflow. Resource creation is done by application developers as usual using 'kubectl'.
 
 .. image:: ./docs/platform-stack1.png
    :scale: 10%
@@ -109,7 +143,7 @@ For this purpose KubePlus provides a Custom Resource of its own - ``PlatformStac
 KubePlus Components 
 --------------------
 
-Discovery endpoints, runtime binding functions and the PlatformStack Custom Resource are implemented using following components - an Aggregated API Server, a Mutating webhook, and an  Operator.
+Discovery endpoints, runtime binding functions and PlatformStack Custom Resource are implemented using following components - an Aggregated API Server, a Mutating webhook, and an Operator.
 
 .. image:: ./docs/KubePlus-components1.jpg 
    :scale: 25% 
@@ -119,16 +153,18 @@ Additionally, KubePlus API Add-on defines following Platform-as-Code annotations
 
 .. code-block:: bash
 
-   platform-as-code/composition 
-
-The 'composition' annotation is used to define Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance.
-
-.. code-block:: bash
-
-   platform-as-code/usage 
+   platform-as-code/usage
 
 The 'usage' annotation is used to define usage information for a Custom Resource.
 The value for 'usage' annotation is the name of the ConfigMap that stores the usage information.
+
+.. code-block:: bash
+
+   platform-as-code/composition
+
+The 'composition' annotation is used to define Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance.
+
+
 These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators
 in order to make Custom Resources discoverable and usable by application developers.
 
@@ -142,8 +178,8 @@ As an example, annotations on MysqlCluster Custom Resource Definition (CRD) are 
     name: mysqlclusters.mysql.presslabs.org
     annotations:
       helm.sh/hook: crd-install
-      platform-as-code/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
       platform-as-code/usage: mysqlcluster-usage.usage
+      platform-as-code/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
   spec:
     group: mysql.presslabs.org
     names:
@@ -206,7 +242,7 @@ administrators to evaluate different Operators against a standard set of require
 KubePlus API Add-on Stakeholders
 ---------------------------------
 
-KubePlus API Add-on is useful to Operator developers, DevOps Engineers, and Application/Microservice developers alike.
+KubePlus API Add-on is useful to Operator developers, DevOps Engineers/Cluster Administrator, and Application/Microservice developers alike.
 
 .. image:: ./docs/Platform-as-Code-workflow.jpg
    :scale: 25%
