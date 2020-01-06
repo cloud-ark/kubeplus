@@ -5,10 +5,10 @@ Kubernetes API Add-on for Platform-as-Code
 Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on simplifies creation of platform workflows consisting of Custom and built-in resources. The main benefit of using KubePlus to application/microservice developers are:
 
 - easily discover static and runtime information about Custom Resources available in their cluster.
-- easily define bindings between Custom and/or built-in Resources.
-- define dependency between Custom and/or built-in Resources to ensure robustness and security of the platform workflows.
+- easily define bindings between Custom and/or built-in resources.
+- define dependency between Custom and/or built-in resources to ensure robustness and security of the platform workflows.
 
-KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to define platform workflows using Kubernetes Custom and built-in Resources.
+KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to define platform workflows using Kubernetes Custom and built-in resources.
 
 You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
 
@@ -41,7 +41,6 @@ of using 'man' endpoint for 'MysqlCluster' Custom Resource.
 
    kubectl get --raw "/apis/platform-as-code/v1/composition"
 
-
 The composition endpoint is used for obtaining runtime composition tree of Kubernetes built-in resources that are created by the Operator as part of handling a Custom Resource instance. Here is an example of using 'composition' endpoint on 'MysqlCluster' Custom Resource instance.
 
 .. image:: ./docs/MysqlCluster-composition-output.png
@@ -71,7 +70,7 @@ Once this is done, you can use following 'kubectl man' and 'kubectl composition'
 Runtime Binding Functions
 --------------------------
 
-KubePlus API Add-on defines following functions that can be used to glue different Custom and built-in Resources together.
+KubePlus API Add-on defines following functions that can be used to glue different Custom and built-in resources together.
 
 .. code-block:: bash
 
@@ -110,15 +109,14 @@ This function adds the specified annotation to the specified resource by resolvi
 information in a cluster.
 
 
-The ``AddLabel`` and ``AddAnnotation`` functions should be defined as annotations on those Custom Resources whose
-functioning depends on having appropriate labels and/or annotations on other resources in a cluster. Such
-resources can be built-in resources or Custom Resources. `Here`_ is an example the ``AddLabel`` function used with
-the ``Restic`` Custom Resource.
+The ``AddLabel`` and ``AddAnnotation`` functions should be defined as annotations on those Custom Resources that
+need appropriate labels and/or annotations on other resources in a cluster for their operation.
+`Here`_ is an example of using the ``AddLabel`` function with the ``Restic`` Custom Resource.
 
 .. _Here: https://github.com/cloud-ark/kubeplus/blob/master/examples/platform-crd/moodle-mysql-restic/restic.yaml#L8
 
 Restic Custom Resource takes backups of Deployments. For this, it requires that the Deployment object be given a label.
-Then in order to take backup of Moodle Custom Resource, we need to add a label on its Deployment object. This is
+In order to take backup of Moodle Custom Resource, we need to add a label on its Deployment object. This is
 achieved using the ``AddLabel`` function defined as ``pac/action`` annotation on the Restic Custom Resource Spec.
 
 
@@ -242,7 +240,7 @@ administrators to evaluate different Operators against a standard set of require
 KubePlus API Add-on Stakeholders
 ---------------------------------
 
-KubePlus API Add-on is useful to Operator developers, DevOps Engineers/Cluster Administrator, and Application/Microservice developers alike.
+KubePlus API Add-on is useful to Operator developers, DevOps Engineers/Cluster Administrators, and Application/Microservice developers alike.
 
 .. image:: ./docs/Platform-as-Code-workflow.jpg
    :scale: 25%
@@ -251,12 +249,12 @@ KubePlus API Add-on is useful to Operator developers, DevOps Engineers/Cluster A
 .. _discoverability and interoperability guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
 
-*1. Operator Developer*
+*1. Operator Developers*
 
 For Operator developers, we have developed `Operator Maturity Model`_ with specific focus on Operator interoperability in multi-Operator environments. Use these guidelines when developing your Operator to ensure that it works smoothly with other Operators in a cluster.
 
 
-*2. DevOps Engineer/Cluster Administrator*
+*2. DevOps Engineers/Cluster Administrators*
 
 DevOps Engineers/Cluster Administrators use standard tools such as 'kubectl' or 'helm' to deploy required Operators in a Kubernetes cluster. Additionally, they deploy KubePlus API Add-on in their cluster to equip application developers to discover and use various Custom Resources efficiently. We are maintaining a `repository of Operator helm charts`_
 where every Operator Helm chart is annotated with Platform-as-Code annotations. 
@@ -265,9 +263,9 @@ Use it for building your custom platform layer using Operators.
 .. _repository of Operator helm charts: https://github.com/cloud-ark/operatorcharts/
 
 
-*3. Application/Microservices Developer*
+*3. Applications/Microservices Developers*
 
-Application/Microservices Developers use KubePlus API Add-on discovery endpoints, runtime binding functions, and PlatformStack Operator to create their platform workflows as-code.
+Application/Microservices Developers use KubePlus API Add-on discovery endpoints, runtime binding functions, and PlatformStack Operator to create their platform workflows as code with Kubernetes Custom and built-in resources.
 
 
 KubePlus in Action
