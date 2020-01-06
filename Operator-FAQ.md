@@ -7,7 +7,7 @@ in the [CNCF sig-app-delivery group currently](https://lists.cncf.io/g/cncf-sig-
 
 **Q. Why are Operators useful?**
 
-A. Operators offer Kubernetes-native way to implement your platform automation by extending Kubernetes for your platform workflows. It allows Operator developers to easily share this automation with the broader community enabling composability and reuse. Ultimately this approach makes it possible to reduce in-house custom platform automation and at the same time offers a declarative way to define the platform stacks using Kubernetes YAMLs.
+A. Operators offer Kubernetes-native way to implement your platform automation by extending Kubernetes for your platform workflows. It allows Operator developers to easily share this automation with the broader community enabling composability and reuse. Ultimately this approach makes it possible to reduce in-house custom platform automation and at the same time offers a declarative way to define the platform workflows using Kubernetes YAMLs.
 
 **Q. How are Kubernetes Operators different than Helm charts?**
 
@@ -79,7 +79,7 @@ A. Operators can be written in any language. Currently there are [officially sup
 
 **Q. Are there situations where one needs multiple Operators?**
 
-A. Often. We are seeing enterprises use multiple Operators to build their platform stacks on Kubernetes. At CloudARK, we have pioneered Platform-as-Code approach for creating multi Operator platform stacks.
+A. Often. We are seeing enterprises use multiple Operators to build their platform workflows on Kubernetes. At CloudARK, we have pioneered Platform-as-Code approach for creating multi Operator platform workflows.
 
 **Q. What are the advantages of using multiple Operators?**
 
