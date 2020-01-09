@@ -164,7 +164,7 @@ Your Operator may need certain labels or annotations to be added on Kubernetes b
 of Custom and built-in resource workflows. 
 
 
-### Define Resource limit and Resource requests for Custom Resources
+### Define Resource limits and Resource requests for Custom Resources
 
 Kubernetes provides mechanism of [requests and limits](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#resource-types) for specifying the cpu and memory resource needs of a Pod's containers. When specified, Kubernetes scheduler ensures that the Pod is scheduled on a Node that has enough capacity 
 for these resources. A Pod with request and limits specified for every container is given ``guaranteed`` Quality-of-Service (QoS) by the Kubernetes scheduler. A Pod in which only resource requests are specified for at least one container is given ``burstable`` QoS. A Pod with no requests/limits specified is given ``best effort`` QoS.
