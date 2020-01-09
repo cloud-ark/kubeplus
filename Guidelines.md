@@ -5,6 +5,9 @@ Below we present the guidelines related to consumability, configurability, secur
 
 ## Consumability
 
+Consumability guidelines focus on accessibility properties of Custom Resources 
+that make it easy for application developers to build Custom Resource workflows.
+
 [1. Design Custom Resource as a declarative API and avoid inputs as imperative actions](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#design-custom-resource-as-a-declarative-api-and-avoid-inputs-as-imperative-actions)
 
 [2. Make Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#make-custom-resource-type-definitions-compliant-with-kube-openapi)
@@ -16,7 +19,7 @@ Below we present the guidelines related to consumability, configurability, secur
 
 ## Configurability
 
-Configurability guidelines focus on configurations of Custom Resources, configuration of Operator deployments, configuration requirements to ensure that Custom Resource workflows are not tied to any specific Kubernetes distribution or cloud provider, and accessibility of Custom Resource workflows.
+Configurability guidelines focus on configuration and customization of Custom Resource workflows. 
 
 [5. Define inter Custom Resource binding information in Spec Properties](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-inter-custom-resource-binding-information-in-spec-properties)
 
@@ -29,8 +32,8 @@ Configurability guidelines focus on configurations of Custom Resources, configur
 
 ## Security
 
-Security guidelines focus on Operator support of multi-tenancy via namespaces, authorization related properties of 
-Custom Resource workflows, security related properties of Custom Resource Pods, their secure placement on a cluster, and network traffic constraints of Custom Resource Pods.
+Security guidelines focus on Operator support of multi-tenancy and ability to define appropriate authorization controls
+for workflows.
 
 [9. Document Service Account needs of your Operator](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-service-account-needs-of-your-operator)
 
@@ -84,6 +87,8 @@ Debuggability guidelines focus on Operator and Custom Resource properties that e
 
 ## Portability
 
+Portability guidelines focus on Operator and Custom Resource properties that enable deploying the Operators and workflows
+on any Kubernetes distribution, on-prem or on cloud.
 
 [28. Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#package-operator-as-helm-chart)
 
