@@ -32,7 +32,7 @@ KubePlus API Add-on defines following custom endpoints for static and runtime in
 The man endpoint is used for obtaining static usage information about a Custom Resource. Here is an example
 of using 'man' endpoint for 'MysqlCluster' Custom Resource.
 
-.. image:: ./docs/MysqlCluster-man-output.png
+.. image:: ./docs/kubectl-man-Moodle.png
    :scale: 25%
    :align: center
 
@@ -43,7 +43,7 @@ of using 'man' endpoint for 'MysqlCluster' Custom Resource.
 
 The composition endpoint is used for obtaining runtime composition tree of Kubernetes built-in resources that are created by the Operator as part of handling a Custom Resource instance. Here is an example of using 'composition' endpoint on 'MysqlCluster' Custom Resource instance.
 
-.. image:: ./docs/MysqlCluster-composition-output.png
+.. image:: ./docs/kubectl-composition-moodle.png
    :scale: 25%
    :align: center
 
