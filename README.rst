@@ -1,6 +1,28 @@
-============================================
-Kubernetes API Add-on for Platform-as-Code 
-============================================
+=======================
+Kubernetes API Add-on
+=======================
+
+
+KubePlus API add-on simplifies building workflow automation using Kubernetes Custom Resources with improved visibility and reliability. This is part of our  `Platform as Code practice`_.
+
+.. _Platform as Code practice: https://cloudark.io/platform-as-code
+
+
+KubePlus API add-on brings uniformity in using variety of Custom APIs/Resources coming from different Kubernetes Operators or extensions. It allow users to discover and use Custom APIs/Resources more efficiently and visualize their dependencies with other APIs/Resources for debugging and monitoring purpose.
+
+KubePlus API add-on offers following interfaces through kubectl:
+
+**1. kubectl man <Custom Resource>:** Provides information about how to perform supported actions by the Custom Resource
+
+**2. kubectl composition <Custom Resource Instance>:** Provides information about sub resources created by the Custom Resource Instance
+
+**3. kubectl relations <Custom Resource Instance>:** Provide information about relationships of Custom Resource Instance with other instances via labels / annotations / Spec Properties.
+
+You enhance your Kubernetes Operator packages or Helm charts with a set of Platform-as-Code annotations and then use KubePlus API add-on for workflow modeling with Custom Resources.
+
+--------
+Details
+--------
 
 Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. KubePlus API Add-on simplifies creation of platform workflows consisting of Custom and built-in resources. The main benefit of using KubePlus to application/microservice developers are:
 
@@ -65,6 +87,13 @@ Once this is done, you can use following 'kubectl man' and 'kubectl composition'
 
    kubectl composition <Custom Resource> <Custom Resource Instance> [<Namespace]
 
+
+.. code-block:: bash
+
+   kubectl get --raw "/apis/platform-as-code/v1/relationships"
+
+The relationships endpoint is used for querying relationship information about a Custom Resource.
+Currently this endpoint is under development.
 
 
 Runtime Binding Functions
