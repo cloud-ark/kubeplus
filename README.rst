@@ -1,5 +1,5 @@
 =======================
-Kubernetes API Add-on
+KubePlus API Add-on
 =======================
 
 
@@ -69,6 +69,13 @@ The composition endpoint is used for obtaining runtime composition tree of Kuber
    :scale: 25%
    :align: center
 
+.. code-block:: bash
+
+   kubectl get --raw "/apis/platform-as-code/v1/relationships"
+
+The relationships endpoint is used for querying relationship information about a Custom Resource.
+This endpoint is currently under development.
+
 
 We provide kubectl plugins for these endpoints. In order to use the plugins you
 need to add KubePlus folder to your PATH variable.
@@ -86,14 +93,6 @@ Once this is done, you can use following 'kubectl man' and 'kubectl composition'
 .. code-block:: bash
 
    kubectl composition <Custom Resource> <Custom Resource Instance> [<Namespace]
-
-
-.. code-block:: bash
-
-   kubectl get --raw "/apis/platform-as-code/v1/relationships"
-
-The relationships endpoint is used for querying relationship information about a Custom Resource.
-Currently this endpoint is under development.
 
 
 Runtime Binding Functions
