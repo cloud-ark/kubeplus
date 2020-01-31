@@ -27,8 +27,8 @@ Details
 
 Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus API add-on simplifies creation of platform workflows leveraging these Custom Resources.
 
-.. image:: ./docs/PaC-2.png
-   :scale: 10% 
+.. image:: ./docs/KubePlus-workflow.jpg
+   :scale: 15%
    :align: center
 
 The main benefit of using KubePlus to application/microservice developers are:
