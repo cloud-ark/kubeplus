@@ -48,10 +48,10 @@ You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/T
 KubePlus API add-on Components
 -------------------------------
 
-.. image:: ./docs/KubePlus-API-Addon-Components.png 
-   :scale: 10% 
+.. image:: ./docs/KubePlus-API-Addon-Components.png
+   :height: 100px
+   :width: 200 px
    :align: center
-
 
 Kubectl Endpoints
 ------------------
