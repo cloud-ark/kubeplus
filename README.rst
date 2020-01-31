@@ -28,7 +28,7 @@ Details
 Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus API add-on simplifies creation of platform workflows leveraging these Custom Resources.
 
 .. image:: ./docs/PaC-2.png
-   :scale: 25% 
+   :scale: 10% 
    :align: center
 
 The main benefit of using KubePlus to application/microservice developers are:
@@ -48,8 +48,8 @@ You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/T
 KubePlus API add-on Components
 -------------------------------
 
-.. image:: ./docs/KubePlus-API-Addon-Components.jpg 
-   :scale: 25% 
+.. image:: ./docs/KubePlus-API-Addon-Components.png 
+   :scale: 10% 
    :align: center
 
 
