@@ -1,6 +1,11 @@
 # Kubernetes Operator Maturity Model Guidelines for multi-Operator Stacks
 
-Below we present the guidelines related to consumability, configurability, security, robustness, debuggability and portability of Operators in multi-Operator stacks towards creating workflows consisting of Custom Resources.
+We have developed Operator Maturity Model consisting of six stages.
+
+![](./docs/Maturity-Model.jpg)
+
+Below we present the guidelines related to each of these stages towards creating 
+workflows consisting of Custom Resources.
 
 
 ## Consumability
@@ -21,9 +26,9 @@ that make it easy for application developers to build Custom Resource workflows.
 
 Configurability guidelines focus on configuration and customization of Custom Resource workflows. 
 
-[5. Define inter Custom Resource binding information in Spec Properties](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-inter-custom-resource-binding-information-in-spec-properties)
+[5. Document Custom Resource Spec Property dependencies](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-custom-resource-spec-property-dependencies)
 
-[6. Document labels and annotations to be used with your Operator](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-labels-and-annotations-to-be-used-with-your-operator)
+[6. Document labels and annotations based dependencies for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-labels-and-annotations-based-dependencies-for-your-custom-resources)
 
 [7. Define Resource limits and Resource requests for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-resource-limits-and-resource-requests-for-custom-resources)
 
@@ -158,15 +163,13 @@ If all the Operators in a multi-Operator stack support man pages for their Custo
 ## Configurability
 
 
-### Define inter Custom Resource binding information in Spec Properties
+### Document Custom Resource Spec Property dependencies
 
-Define Spec properties in Custom Resources that can be used to define the binding between them. This enables creating Kubernetes-native workflows by composing various Custom Resources together.
+Are values of any of your Custom Resource Spec Properties dependent on any other Custom or built-in Resources? If yes, document this information. This helps creating workflow actions involving your Custom Resources.
 
+### Document labels and annotations based dependencies for your Custom Resources
 
-### Document labels and annotations to be used with your Operator
-
-Your Operator may need certain labels or annotations to be added on Kubernetes built-in resources for its operation. Document this information as part of your Operator's man page. This information will be critical for correct operation
-of Custom and built-in resource workflows. 
+Your Operator may need certain labels or annotations to be added on Kubernetes resources for its operation. Document this information explicitly, preferably as part of  the man page of your relevant Custom Resource. This information will be critical for building workflows involving your Custom Resources.
 
 
 ### Define Resource limits and Resource requests for Custom Resources
