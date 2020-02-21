@@ -1,11 +1,10 @@
 # Kubernetes Operator Maturity Model Guidelines for multi-Operator Stacks
 
 We have developed Operator Maturity Model consisting of six stages.
+Below we present the guidelines related to each of these stages that help creating 
+workflows consisting of Custom Resources.
 
 ![](./docs/Maturity-Model.jpg)
-
-Below we present the guidelines related to each of these stages towards creating 
-workflows consisting of Custom Resources.
 
 
 ## Consumability
