@@ -98,7 +98,7 @@ We provide kubectl plugins for these endpoints. In order to use the plugins you 
 
    $ export PATH=$PATH:`pwd`
 
-Once this is done, you can use following 'kubectl man' and 'kubectl composition' commands.
+Once this is done, you can use following 'kubectl man', 'kubectl composition', 'kubectl metrics' commands.
 
 .. code-block :: bash
 
@@ -107,6 +107,10 @@ Once this is done, you can use following 'kubectl man' and 'kubectl composition'
 .. code-block:: bash
 
    kubectl composition <Custom Resource> <Custom Resource Instance> [<Namespace]
+
+.. code-block:: bash
+
+   kubectl metrics <Custom Resource> <Custom Resource Instance> [<Namespace]
 
 
 Platform-as-Code annotations on CRD packages
