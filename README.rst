@@ -19,6 +19,9 @@ KubePlus API add-on offers following interfaces through kubectl:
 
 **4. kubectl cr-relations <Custom Resource Instance>:** Provide information about relationships of Custom Resource Instance with other instances via labels / annotations / Spec Properties / sub-resources.
 
+**5. kubectl crd <Custom Resource Definition>:** Retrieves names of Custom Resource Instances for specified CRD across all namespaces.
+
+
 You enhance your Kubernetes CRD / Operator packages with a set of Platform-as-Code annotations and then use KubePlus API add-on for workflow modeling with Custom Resources introduced by those Operators. 
 
 KubePlus API add-on extends the Kubernetes resource graph and maintains all implicit and explicit relationships of Custom Resources created through labels, annotations, spec properties or sub-resources. This Custom Resource relationship graph is then exposed through the interfaces discussed above for improved visibility, monitoring and debuggability of Custom Resources. KubePlus API add-on additionally allows you to define workflow level Kubernetes Resource dependencies and then allows applying certain security or robustness policies to all these Resources together. 
@@ -113,6 +116,10 @@ Once this is done, you can use following 'kubectl man', 'kubectl composition', '
 .. code-block:: bash
 
    kubectl metrics <Custom Resource> <Custom Resource Instance> [<Namespace]
+
+.. code-block:: bash
+
+   kubectl crd instance list
 
 
 Platform-as-Code annotations on CRD packages
