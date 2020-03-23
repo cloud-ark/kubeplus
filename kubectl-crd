@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if (( $# < 1 )); then
+    echo "kubectl crd list - list all crds in the cluster"
+    echo "kubectl crd instance list - list all custom resource instances across all namespaces in the cluster"
+    exit 0
+fi
+
+namespace="default"
+
+if [ $# = 1 ]; then
+	kubectl get crds
+fi
+
+if [ $# = 2 ]; then
+	crds=(`kubectl get crds | awk '{print $1}' | grep -v NAME`)
+	printf "%s\t%s\t%s\n" "CRD        NAMESPACE      NAME      AGE"
+		for c in "${!crds[@]}"; do
+			echo -n "${crds[$c]}      "
+			kubectl get "${crds[$c]}" --all-namespaces | grep -v NAME;
+			#printf "%s\t%s\n" \"${namespaces[$n]}\" $output 
+			done;
+fi
