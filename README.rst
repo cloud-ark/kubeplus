@@ -15,11 +15,13 @@ KubePlus API add-on offers following interfaces through kubectl:
 
 **2. kubectl composition <Custom Resource Instance>:** Provides information about sub resources created by the Custom Resource Instance
 
-**3. kubectl cr-relations <Custom Resource Instance>:** Provide information about relationships of Custom Resource Instance with other instances via labels / annotations / Spec Properties / sub-resources.
+**3. kubectl metrics <Custom Resource Instance>:** Provides information about CPU and memory resources consumed by the Custom Resource Instance
+
+**4. kubectl cr-relations <Custom Resource Instance>:** Provide information about relationships of Custom Resource Instance with other instances via labels / annotations / Spec Properties / sub-resources.
 
 You enhance your Kubernetes CRD / Operator packages with a set of Platform-as-Code annotations and then use KubePlus API add-on for workflow modeling with Custom Resources introduced by those Operators. 
 
-KubePlus API add-on extends the Kubernetes resource graph and maintains all implicit and explicit relationships of Custom Resources created through labels, annotations, spec properties or sub-resources. This Custom Resource relationship graph is then exposed through the interfaces discussed above for improving visibility and debuggability. KubePlus API add-on additionally allows you to define workflow level Kubernetes Resource dependencies and then allows applying certain security or robustness policies to all these Resources together. 
+KubePlus API add-on extends the Kubernetes resource graph and maintains all implicit and explicit relationships of Custom Resources created through labels, annotations, spec properties or sub-resources. This Custom Resource relationship graph is then exposed through the interfaces discussed above for improved visibility, monitoring and debuggability of Custom Resources. KubePlus API add-on additionally allows you to define workflow level Kubernetes Resource dependencies and then allows applying certain security or robustness policies to all these Resources together. 
 
 --------
 Details
