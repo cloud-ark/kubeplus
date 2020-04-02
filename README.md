@@ -1,6 +1,6 @@
 ## KubePlus API Add-on
 
-KubePlus API add-on simplifies building workflow automation involving Kubernetes Custom Resoures. It brings uniformity in using disparate Custom Resources to create platform workflows. Towards this it provides kubectl commands for discovery, resource usage monitoring and troubleshooting of Custom Resources. Details about KubePlus API Add-on can be found [here](./details.rst). KubePlus API Add-on is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
+KubePlus API add-on simplifies building workflow automation involving Kubernetes Custom Resoures. It brings uniformity in using disparate Custom Resources to create platform workflows. Towards this it provides kubectl commands for discovery, resource usage monitoring and troubleshooting of Custom Resources. 
 
 ## kubectl commands
 
@@ -47,6 +47,8 @@ $ kubectl metrics account devdattakulkarni@gmail.com
 Total CPU(cores): 288m
 Total MEMORY(bytes): 524Mi
 ```
+
+Details about KubePlus API Add-on can be found [here](./details.rst). KubePlus API Add-on is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
 ## How to use?
 
