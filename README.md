@@ -2,7 +2,7 @@
 
 KubePlus API add-on simplifies building workflow automation involving Kubernetes Custom Resoures. It brings uniformity in using disparate Custom Resources to create platform workflows. Towards this it provides kubectl commands for discovery, usage monitoring and troubleshooting of Custom Resources. Details about KubePlus API Add-on can be found [here](./details.rst). KubePlus API Add-on is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
-## Commands
+### kubectl Commands
 
 KubePlus API add-on offers following kubectl commands:
 
@@ -18,7 +18,7 @@ KubePlus API add-on offers following kubectl commands:
 
 **6. kubectl cr-relations <Custom Resource Instance>: (upcoming)** Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties / sub-resources.
 
-## Example
+### Example
 
 ``` 
 $ kubectl metrics account devdattakulkarni@gmail.com
@@ -36,7 +36,7 @@ Total CPU(cores): 259m
 Total MEMORY(bytes): 255Mi
 ```
 
-## How to use?
+### How to use?
 
 In order to use KubePlus API add-on all you need to do is enhance Custom Resource Definition (CRD) YAMLs with following two annotations.
 
@@ -74,7 +74,7 @@ Here is an example of MysqlCluster Custom Resource Definition (CRD) enhanced wit
     scope: Namespaced
 ```
 
-## Try it:
+### Try it:
 
 Use Kubernetes cluster with version 1.14.
 
@@ -85,10 +85,10 @@ Use Kubernetes cluster with version 1.14.
    $ export PATH=`pwd`:$PATH
 ```
 
-Check out [examples](./details.rst)
+Check out [examples](./details.rst).
 
 
-## Status
+### Status
 
 Actively under development
 
