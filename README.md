@@ -1,17 +1,22 @@
-# KubePlus API Add-on
+## KubePlus API Add-on
 
 KubePlus API add-on simplifies building workflow automation using Kubernetes Custom Resoures. It brings uniformity in using different Custom Resources and enables 
 usage monitoring and troubleshooting. KubePlus API Add-on is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code)
 
-# Custom Resource kubectl commands
+## kubectl commands
 
 KubePlus API add-on offers following interfaces through kubectl:
 
 **1. kubectl man <Custom Resource>:** Provides information about how to use different  the Custom Resource.
+
 **2. kubectl composition <Custom Resource Instance>:** Provides information about sub resources created by the Operator for handling Custom Resource Instance.
+
 **3. kubectl metrics cr <Custom Resource Instance>:** Provides information about CPU and memory resources consumed by the Custom Resource Instance.
+
 **4. kubectl metrics account <Account Name>:** Provides information about CPU and memory resources consumed by all the Kubernetes resources created by the account.
+
 **5. kubectl crlogs <Custom Resource Instance>:** Provides logs for all the containers for a Custom Resource Instance.
+
 **6. kubectl cr-relations <Custom Resource Instance>: (upcoming)** Provide information about relationships of Custom Resource Instance with other instances via labels / annotations / Spec Properties / sub-resources.
 
 In order to use above kubectl commands all you need to do is enhance your Operator's Custom Resource Definition (CRD) YAML with following two annotations.
@@ -62,26 +67,26 @@ Use Kubernetes version 1.14
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
    $ ./deploy-kubeplus.sh
-
    $ export PATH=$PATH:`pwd`
 ```
 
-## Examples
+## Example
 
-``` $ kubectl metrics cr MysqlCluster cluster1 namespace1 
-
+``` 
+$ kubectl metrics account devdattakulkarni@gmail.com
 ---------------------------------------------------------- 
  Creator Account Identity: devdattakulkarni@gmail.com
 ---------------------------------------------------------- 
- Number of Sub-resources: 6
+ Number of Custom Resources: 3
+ Number of Deployments: 1
+ Number of StatefulSets: 1
+ Number of ReplicaSets: 1
+ Number of DaemonSets: 1
+ Number of ReplicationControllers: 1
  Number of Pods: 1
- Number of Containers: 8
- Number of Nodes: 0
-Total CPU(cores): 0m
-Total MEMORY(bytes): 0Mi
+Total CPU(cores): 259m
+Total MEMORY(bytes): 255Mi
 ```
-
-
 
 ## Status
 
