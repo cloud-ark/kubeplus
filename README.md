@@ -21,6 +21,18 @@ KubePlus API add-on offers following kubectl commands:
 ## Example
 
 ``` 
+$ kubectl metrics cr MysqlCluster cluster1 namespace1
+---------------------------------------------------------- 
+ Creator Account Identity: devdattakulkarni@gmail.com
+---------------------------------------------------------- 
+ Number of Sub-resources: 7
+ Number of Pods: 2
+ Number of Containers: 16
+ Number of Nodes: 1
+Total CPU(cores): 84m
+Total MEMORY(bytes): 302Mi
+----------------------------------------------------------
+
 $ kubectl metrics account devdattakulkarni@gmail.com
 ---------------------------------------------------------- 
  Creator Account Identity: devdattakulkarni@gmail.com
