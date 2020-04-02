@@ -90,7 +90,9 @@ Here is an example of MysqlCluster Custom Resource Definition (CRD) enhanced wit
 
 ## Try it:
 
-Use Kubernetes cluster with version 1.14.
+- Use Kubernetes cluster with version 1.14.
+- Enable Kubernetes Metrics API Server on your cluster.
+  - Hosted Kubernetes solutions like GKE has this already installed.
 
 ```
    $ git clone https://github.com/cloud-ark/kubeplus.git
