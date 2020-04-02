@@ -11,20 +11,17 @@ This tool is being developed as a part of our  `Platform as Code practice`_.
 
 KubePlus API add-on offers following interfaces through kubectl:
 
-**1. kubectl man <Custom Resource>:** Provides information about how to perform supported actions by the Custom Resource.
+**1. kubectl man <Custom Resource>:** Provides information about how to use a Custom Resource.
 
-**2. kubectl composition <Custom Resource Instance>:** Provides information about sub resources created by the Custom Resource Instance.
+**2. kubectl composition <Custom Resource Instance>:** Provides information about sub resources created as part of handling a Custom Resource instance.
 
-**3. kubectl metrics <Custom Resource Instance>:** Provides information about CPU and memory resources consumed by the Custom Resource Instance.
+**3. kubectl metrics cr <Custom Resource Instance>:** Provides various metrics for Custom Resource instance (number of sub-resources, number of pods, number of containers, number of nodes on which the pods run, total CPU and Memory).
 
-**4. kubectl crlogs <Custom Resource Instance>:** Provides logs for all the containers for a Custom Resource Instance.
+**4. kubectl metrics account <Account Name>:** Provides various metrics for an account identity - user / service account. (number of custom resources, number of Deployments/StatefulSets/ReplicaSets/DaemonSets/ReplicationControllers, number of Pods, total CPU and Memory).
 
-**5. kubectl crd list:** Show names of all CRDs installed in the cluster.
+**5. kubectl crlogs <Custom Resource Instance>:** Provides logs for all the containers of a Custom Resource instance.
 
-**6. kubectl crd instance list:** Show names of Custom Resource Instances for all CRDs across all namespaces.
-
-**7. kubectl cr-relations <Custom Resource Instance>:** Provide information about relationships of Custom Resource Instance with other instances via labels / annotations / Spec Properties / sub-resources.
-
+**6. kubectl cr-relations <Custom Resource Instance>: (upcoming)** Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties / sub-resources.
 
 
 You enhance your Kubernetes CRD / Operator packages with a set of Platform-as-Code annotations and then use KubePlus API add-on for workflow modeling with Custom Resources introduced by those Operators. 
@@ -108,24 +105,7 @@ We provide kubectl plugins for these endpoints. In order to use the plugins you 
 
    $ export PATH=$PATH:`pwd`
 
-Once this is done, you can use following 'kubectl man', 'kubectl composition', 'kubectl metrics', 'kubectl crlogs' commands.
-
-.. code-block :: bash
-
-   kubectl man <Custom Resource>
-
-.. code-block:: bash
-
-   kubectl composition <Custom Resource> <Custom Resource Instance> [<Namespace]
-
-.. code-block:: bash
-
-   kubectl metrics <Custom Resource> <Custom Resource Instance> [<Namespace]
-
-.. code-block:: bash
-
-   kubectl crlogs <Custom Resource> <Custom Resource Instance> [<Namespace]
-
+Once this is done, you can use following above mentioned kubectl commands. 
 
 Platform-as-Code annotations on CRD packages
 ---------------------------------------------
