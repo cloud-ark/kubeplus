@@ -9,7 +9,14 @@ This is similar to AWS CloudFormation, and is aiming to give operators better in
 
 
 ## Steps
-1. Deploy CRD Web hook
+
+1. Use go 1.12
+   - GOROOT=/../../go1.12.6/go/
+
+2. Build:
+   make docker
+
+3. Deploy CRD Web hook
    - make deploy
 
 Development:
