@@ -39,13 +39,13 @@ $ kubectl metrics account devdattakulkarni@gmail.com
 ---------------------------------------------------------- 
  Number of Custom Resources: 3
  Number of Deployments: 1
- Number of StatefulSets: 1
- Number of ReplicaSets: 1
- Number of DaemonSets: 1
- Number of ReplicationControllers: 1
- Number of Pods: 1
-Total CPU(cores): 259m
-Total MEMORY(bytes): 255Mi
+ Number of StatefulSets: 0
+ Number of ReplicaSets: 0
+ Number of DaemonSets: 0
+ Number of ReplicationControllers: 0
+ Number of Pods: 0
+Total CPU(cores): 288m
+Total MEMORY(bytes): 524Mi
 ```
 
 ## How to use?
