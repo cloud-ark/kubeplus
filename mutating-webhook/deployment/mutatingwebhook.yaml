@@ -14,6 +14,6 @@ webhooks:
       caBundle: ${CA_BUNDLE}
     rules:
       - operations: [ "CREATE" ]
-        apiGroups: ["platformstack.kubeplus"]
+        apiGroups: ["platformstack.kubeplus", "apps", "extensions", ""]
         apiVersions: ["v1alpha1", "v1", "v1beta1"]
-        resources: ["platformstacks"]
+        resources: ["platformstacks", "deployments", "statefulsets", "replicasets", "daemonsets", "replicationcontrollers", "pods"]

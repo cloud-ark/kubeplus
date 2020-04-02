@@ -16,6 +16,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/kubernetes/pkg/apis/core/v1"
+
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/kubernetes"
 )
 
 var (
@@ -25,6 +28,12 @@ var (
 
 	// (https://github.com/kubernetes/kubernetes/issues/57982)
 	defaulter = runtime.ObjectDefaulter(runtimeScheme)
+
+	accountidentity = "accountidentity"
+	accountidentities = "accountidentities"
+	webhook_namespace = "default"
+ 
+	kubeclientset *kubernetes.Clientset
 )
 
 type WebhookServer struct {
@@ -61,21 +70,82 @@ func init() {
 	_ = v1.AddToScheme(runtimeScheme)
 	annotations.KindToEntry = make(map[string][]Entry, 0)
 
+	cfg, _ := rest.InClusterConfig()
+	kubeclientset, _ = kubernetes.NewForConfig(cfg)
+
 }
 
 // main mutation process
 func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	req := ar.Request
 
+	fmt.Println("=== Request ===")
+	fmt.Println(req.Kind.Kind)
+	fmt.Println(req.Name)
+	fmt.Println(req.Namespace)
+	fmt.Println("=== Request ===")
+
+	fmt.Println("=== User ===")
+	fmt.Println(req.UserInfo.Username)
+	fmt.Println("=== User ===")
+
+	//userInfo, _, _, err := jsonparser.Get()
+
 	//fmt.Println(req.Kind.Kind)
-	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
 
 	var patchOperations []patchOperation
 	patchOperations = make([]patchOperation, 0)
+
+	// Add user identity annotation
+	annotations1 := make(map[string]string, 0)
+	fmt.Printf("First Annotations:%v", annotations1)
+	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
+	if err != nil {
+		fmt.Printf("Error in parsing existing annotations")
+	} else {
+		json.Unmarshal(allAnnotations, &annotations1)
+		fmt.Printf("All Annotations:%v\n", annotations1)
+	}
+
+	delete(annotations1, accountidentity)
+	fmt.Printf("All Annotations:%v\n", annotations1)
+	annotations1[accountidentity] = req.UserInfo.Username
+	updateConfigMap(req.UserInfo.Username)
+
+	//userIdentity := map[string]string{"useridentity": req.UserInfo.Username}
+	//annotations1 = append(annotations1, userIdentity)
+	//userIdentityJSON, _ := json.Marshal(userIdentity)
+	//allAnnotations = append(allAnnotations, userIdentityJSON)
+	fmt.Printf("All Annotations:%v\n", annotations1)
+	//fmt.Printf("All Annotations:%s", fmt.Sprintf("%v", annotations1))
+	patch := patchOperation{
+		Op:    "replace",
+		Path:  "/metadata/annotations",
+		Value: annotations1,
+	}
+
+	patchOperations = append(patchOperations, patch)
+
+	fmt.Printf("PatchOperations:%v\n", patchOperations)
+	patchBytes, _ := json.Marshal(patchOperations)
+	// marshal the struct into bytes to pass into AdmissionResponse
+	return &v1beta1.AdmissionResponse{
+		Allowed: true,
+		Patch:   patchBytes,
+		PatchType: func() *v1beta1.PatchType {
+			pt := v1beta1.PatchTypeJSONPatch
+			return &pt
+		}(),
+	}
+
+	// Work-in-Progress: Below code is currently Work-in-progress hence
+	// returning above.
+
 	var entry Entry
 	var kind string
 	name, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
 	if err != nil {
+		fmt.Printf("Error in parsing metadata.name. Key does not exist.")
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: err.Error(),
@@ -84,6 +154,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	}
 	namespace, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "namespace")
 	if err != nil {
+		fmt.Printf("Error in parsing metadata.namespace. Key does not exist.")
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: err.Error(),
@@ -92,6 +163,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	}
 	kind, err = jsonparser.GetUnsafeString(req.Object.Raw, "kind")
 	if err != nil {
+		fmt.Printf("Error in parsing kind. Key does not exist.")
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: err.Error(),
@@ -99,7 +171,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		}
 	}
 	fmt.Printf("Kind:%s, Name:%s, Namespace:%s\n", kind, name, namespace)
-
+ 
 	if kind == "PlatformStack" {
 		UpdatePlatformStacks(name, namespace, req.Object.Raw)
 	} else {
@@ -196,7 +268,8 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		}
 
 	}
-	patchBytes, _ := json.Marshal(patchOperations)
+	fmt.Printf("PatchOperations:%v\n", patchOperations)
+	patchBytes, _ = json.Marshal(patchOperations)
 	// marshal the struct into bytes to pass into AdmissionResponse
 	return &v1beta1.AdmissionResponse{
 		Allowed: true,
@@ -205,6 +278,58 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			pt := v1beta1.PatchTypeJSONPatch
 			return &pt
 		}(),
+	}
+}
+
+func updateConfigMap(user string) {
+
+	configMap, err1 := kubeclientset.CoreV1().ConfigMaps(webhook_namespace).Get(accountidentities, metav1.GetOptions{})
+	if err1 != nil {
+		fmt.Printf("ConfigMap Get Error:%s\n", err1.Error())
+		userList := make([]string, 1)
+		userList = append(userList, user)
+		userListString := strings.Join(userList, ", ")
+		configMap = &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: accountidentities,
+			},
+			Data: map[string]string{
+				accountidentities: userListString,
+			},
+		}
+		_, err2 := kubeclientset.CoreV1().ConfigMaps(webhook_namespace).Create(configMap)
+		if err2 != nil {
+			fmt.Printf("ConfigMap create Error:%s\n", err2.Error())
+			return
+		}
+	} else {
+		existingIdentitiesMap := configMap.Data
+		userListString := existingIdentitiesMap[accountidentities]
+		userList := strings.Split(userListString, ", ")
+		present := false
+		for _, u := range userList {
+			if u == user {
+				present = true
+			}
+		}
+		if !present {
+			userList = append(userList, user)
+		}
+		userListString = strings.Join(userList, ", ")
+
+		configMap = &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: accountidentities,
+			},
+			Data: map[string]string{
+				accountidentities: userListString,
+			},
+		}
+		_, err3 := kubeclientset.CoreV1().ConfigMaps(webhook_namespace).Update(configMap)
+		if err3 != nil {
+			fmt.Printf("ConfigMap update Error:%s\n", err3.Error())
+			return
+		}
 	}
 }
 

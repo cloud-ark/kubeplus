@@ -16,11 +16,19 @@ all: docker
 docker:
 	# dep ensure -v
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o crd-hook
+	docker build --no-cache -t lmecld/pac-mutating-admission-webhook:0.5.1 .
+	rm -rf crd-hook
+	docker push lmecld/pac-mutating-admission-webhook:0.5.1
+
+docker1:
+	# dep ensure -v
+	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o crd-hook
 	docker build --no-cache -t gcr.io/${PROJECT_ID}/${IMAGE_NAME}:1.0 .
 	rm -rf crd-hook
 	docker push gcr.io/${PROJECT_ID}/${IMAGE_NAME}:1.0
 
 deploy: gen-certs
+	kubectl version
 	kubectl apply -f deployment/mutatingwebhook-ca-bundle.yaml
 	kubectl apply -f deployment/reader-role.yaml
 	kubectl apply -f deployment/role-binding.yaml

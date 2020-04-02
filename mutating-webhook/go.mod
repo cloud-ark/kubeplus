@@ -33,3 +33,5 @@ replace (
 )
 
 module github.com/cloud-ark/kubeplus/mutating-webhook
+
+go 1.13

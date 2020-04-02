@@ -28,9 +28,9 @@ spec:
 #        command: [ "/operator-deployer"]
       - name: operator-discovery-helper
         image: lmecld/operator-discovery-helper:0.3.0
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         command: [ "/operator-discovery-helper"]
       - name: kube-discovery-apiserver
-        image: lmecld/kube-discovery-apiserver:0.4.0
-        imagePullPolicy: IfNotPresent
+        image: lmecld/kube-discovery-apiserver:0.4.1
+        imagePullPolicy: Always
         command: [ "/kube-discovery-apiserver", "--etcd-servers=http://localhost:2379" ]
