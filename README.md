@@ -10,9 +10,9 @@ KubePlus API add-on offers following kubectl commands:
 
 **2. kubectl composition <Custom Resource Instance>:** Provides information about sub resources created as part of handling a Custom Resource instance.
 
-**3. kubectl metrics cr <Custom Resource Instance>:** Provides information about CPU and memory resources consumed by a Custom Resource instance.
+**3. kubectl metrics cr <Custom Resource Instance>:** Provides various metrics for Custom Resource instance (number of sub-resources, number of pods, number of containers, number of nodes on which the pods run, total CPU and Memory).
 
-**4. kubectl metrics account <Account Name>:** Provides information about CPU and memory resources consumed by all the Kubernetes resources created by an account.
+**4. kubectl metrics account <Account Name>:** Provides various metrics for an account identity - user / service account. (number of custom resources, number of Deployments/StatefulSets/ReplicaSets/DaemonSets/ReplicationControllers, number of Pods, total CPU and Memory).
 
 **5. kubectl crlogs <Custom Resource Instance>:** Provides logs for all the containers of a Custom Resource instance.
 
