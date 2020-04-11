@@ -17,6 +17,7 @@ if [ "$artifacttype" = "versioned" ]; then
     echo "Building version $version"
     export GOOS=linux; go build .
     docker build -t lmecld/mutating-webhook-helper:$version .
+    docker push lmecld/mutating-webhook-helper:$version
 fi
 
 
