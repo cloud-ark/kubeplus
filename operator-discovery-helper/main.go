@@ -30,14 +30,14 @@ func getCRDDetailsFromAPIServer() error {
 
 	crdClient, _ := apiextensionsclientset.NewForConfig(cfg)
 
-	crdList, err := crdClient.CustomResourceDefinitions().List(metav1.ListOptions{})
+	crdList, err := crdClient.CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Errorf("Error:%s\n", err)
 		return err
 	}
 	for _, crd := range crdList.Items {
 		crdName := crd.ObjectMeta.Name
-		crdObj, err := crdClient.CustomResourceDefinitions().Get(crdName, metav1.GetOptions{})
+		crdObj, err := crdClient.CustomResourceDefinitions().Get(context.TODO(), crdName, metav1.GetOptions{})
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
 			return err
