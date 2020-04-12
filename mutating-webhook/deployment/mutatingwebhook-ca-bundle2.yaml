@@ -1,0 +1,19 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: platform-as-code.crd-binding
+  labels:
+    app: crd-hook
+webhooks:
+  - name: platform-as-code.crd-binding.v1
+    clientConfig:
+      service:
+        name: crd-hook-service
+        namespace: default
+        path: "/mutate"
+      caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1ekNDQWMrZ0F3SUJBZ0lCQVRBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwdGFXNXAKYTNWaVpVTkJNQjRYRFRFNU1EY3hOekl5TXpBME0xb1hEVEk1TURjeE5USXlNekEwTTFvd0ZURVRNQkVHQTFVRQpBeE1LYldsdWFXdDFZbVZEUVRDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBT2hxCmxYSWl2cWMxa2dhN00rVERpY1JjVldTYys3UkFMajdoWHhPdjlrVXNEdStiRmNrbUpMejhaYm5HMGptMDc5MGwKek9BZ1JsbmcwVkpnd1ZoZy9KenppaTZ0Rmt2VS9EbVYwNHQzYUJOWCs0bUE1MG9PaHVacVMySzRkNWxua3BKdgpLbUpBa0pDZ3RqN0YrYUt1em9jS2RUNlBBRWliRzllY0RhMmdWaWhqVk5hQ3FLeldXSkRJVDJ1emxwK01VcFdBCnFnYlVlUkQydnJVZXZmTTNoZ0xsL0FVcHdLbEFZTGk4MG5raWJReFhwMGJrUE40cFFyZUNVRVppK3FERXRLbG0KVzl1Zlh6U0xFTEtET0tKMkJFQyswd085NytHaXBQTW8zelREMmI5Wk9TL0hQV1I3MHJYSU9Lb0dxVkdOSlc1MgpGeklqOCtaWHJXZkh6REpDM0kwQ0F3RUFBYU5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trTUIwR0ExVWRKUVFXCk1CUUdDQ3NHQVFVRkJ3TUNCZ2dyQmdFRkJRY0RBVEFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQTBHQ1NxR1NJYjMKRFFFQkN3VUFBNElCQVFBbk1iVmM2ZzhDVTY0MGRCUzZVV3BEWHAwQ0FBcHdUMU95anEvM0UwdS9IR3hyRVZ4ZwovenFpc252WE9oRFZCWXhENkJncDFIQ1NxNjU4dE5SVnNkbTd4dDF2S2gzTE1TNXJDekpKYVlQL2E4blE3c21vCndZb2d2NTJYVGJ4RTlKenhQRnRtMWhRRXYwSzRWTW16T21Dbm5BQnpYRjI5MnkxMnpXdzhCUlpaZWZLV1M4SjQKM2t4a2pSQWlaS25mUG0rcTh1em9rWnYvYWJsSTJyemFpV2RnRU5LYkNPNkZGSEdROWs4NHRUL3JjQnBmbGMyNgpZc0duVm9raWVzUzBWVUtIbHljdjlSRkphUFh0L3Noa2VXYUF5RUNURGx2a1lSV0lsZWRDVzZMYmEwN0hPUlRXCjhmS3pZdUMxbzBlTlNVUTJZR2VyM0JYcCtlaTRabkFHUGZidQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    rules:
+      - operations: [ "CREATE" ]
+        apiGroups: ["mysql.presslabs.org", "moodlecontroller.kubeplus", "platformstack.kubeplus"]
+        apiVersions: ["v1alpha1", "v1", "v1beta1"]
+        resources: ["mysqlclusters", "moodles", "platformstacks"]
