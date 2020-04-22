@@ -19,8 +19,8 @@ import (
 
 	"k8s.io/client-go/rest"
 
-	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset" //typed/apiextensions/v1beta1"
-	apiextensionsinformers "k8s.io/apiextensions-apiserver/pkg/client/informers/externalversions"
+	//apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset" //typed/apiextensions/v1beta1"
+	//apiextensionsinformers "k8s.io/apiextensions-apiserver/pkg/client/informers/externalversions"
 
 )
 
@@ -60,6 +60,7 @@ func main() {
 		platformController.Run(1, ctx.Done())
 	}()
 
+/*
 	crdClient := apiextensionsclientset.NewForConfigOrDie(cfg)
 	crdInformerFactory := apiextensionsinformers.NewSharedInformerFactory(crdClient, time.Second*30)
 
@@ -73,6 +74,7 @@ func main() {
 		defer wg.Done()
 		crdController.Run(1, ctx.Done())
 	}()
+*/
 
 	go kubeInformerFactory.Start(ctx.Done())
 	go platformInformerFactory.Start(ctx.Done())

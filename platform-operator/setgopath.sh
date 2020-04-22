@@ -1,4 +1,5 @@
 #!/bin/bash
 
-export GOROOT=/Users/devdatta/Downloads/go1.13.9/go
+GOPATH=<Path to Go 1.10.2>
+export GOROOT=$GOPATH
 export PATH=$GOROOT/bin:$PATH

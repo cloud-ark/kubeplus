@@ -1,13 +1,13 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: platformstacks.platformstack.kubeplus
+  name: platformworkflows.workflows.kubeplus
 spec:
-  group: platformstack.kubeplus
+  group: workflows.kubeplus
   version: v1alpha1
   names:
-    kind: PlatformStack
-    plural: platformstacks
+    kind: PlatformWorkflow
+    plural: platformworkflows
   scope: Namespaced
 ---
 apiVersion: apps/v1beta1
@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
       - name: platform-operator
-        image: lmecld/platform-operator:0.0.3
+        image: lmecld/platform-operator:0.0.4-alpha2
         imagePullPolicy: Always
         command: [ "/platform-operator"]
 
