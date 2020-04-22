@@ -25,7 +25,7 @@ import (
 
 	versioned "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/informers/externalversions/internalinterfaces"
-	platformstackcontroller "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/informers/externalversions/platformstackcontroller"
+	workflowcontroller "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/informers/externalversions/workflowcontroller"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -172,9 +172,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Platformstack() platformstackcontroller.Interface
+	Workflows() workflowcontroller.Interface
 }
 
-func (f *sharedInformerFactory) Platformstack() platformstackcontroller.Interface {
-	return platformstackcontroller.New(f, f.namespace, f.tweakListOptions)
+func (f *sharedInformerFactory) Workflows() workflowcontroller.Interface {
+	return workflowcontroller.New(f, f.namespace, f.tweakListOptions)
 }

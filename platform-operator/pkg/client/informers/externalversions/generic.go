@@ -21,7 +21,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/platformstackcontroller/v1alpha1"
+	v1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/workflowcontroller/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -52,9 +52,9 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=platformstack.kubeplus, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("platformstacks"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Platformstack().V1alpha1().PlatformStacks().Informer()}, nil
+	// Group=workflows.kubeplus, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithResource("platformworkflows"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Workflows().V1alpha1().PlatformWorkflows().Informer()}, nil
 
 	}
 

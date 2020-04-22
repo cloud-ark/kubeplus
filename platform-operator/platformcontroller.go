@@ -22,11 +22,11 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	platformstackv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/platformstackcontroller/v1alpha1"
+	platformworkflowv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/workflowcontroller/v1alpha1"
 	clientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
 	platformstackscheme "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned/scheme"
 	informers "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/informers/externalversions"
-	listers "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/listers/platformstackcontroller/v1alpha1"
+	listers "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/listers/workflowcontroller/v1alpha1"
 )
 
 const controllerAgentName = "platformstack-controller"
@@ -55,7 +55,7 @@ type Controller struct {
 
 	deploymentsLister appslisters.DeploymentLister
 	deploymentsSynced cache.InformerSynced
-	platformStacksLister        listers.PlatformStackLister
+	platformStacksLister        listers.PlatformWorkflowLister
 	platformStacksSynced        cache.InformerSynced
 
 	// workqueue is a rate limited work queue. This is used to queue work to be
@@ -79,7 +79,7 @@ func NewPlatformController(
 	// obtain references to shared index informers for the Deployment and PlatformStack
 	// types.
 	deploymentInformer := kubeInformerFactory.Apps().V1().Deployments()
-	platformStackInformer := platformstackInformerFactory.Platformstack().V1alpha1().PlatformStacks()
+	platformStackInformer := platformstackInformerFactory.Workflows().V1alpha1().PlatformWorkflows()
 
 	// Create event broadcaster
 	// Add platformstack-controller types to the default Kubernetes Scheme so Events can be
@@ -107,8 +107,8 @@ func NewPlatformController(
 	platformStackInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueFoo,
 		UpdateFunc: func(old, new interface{}) {
-			newDepl := new.(*platformstackv1alpha1.PlatformStack)
-			oldDepl := old.(*platformstackv1alpha1.PlatformStack)
+			newDepl := new.(*platformworkflowv1alpha1.PlatformWorkflow)
+			oldDepl := old.(*platformworkflowv1alpha1.PlatformWorkflow)
 			//fmt.Println("New Version:%s", newDepl.ResourceVersion)
 			//fmt.Println("Old Version:%s", oldDepl.ResourceVersion)
 			if newDepl.ResourceVersion == oldDepl.ResourceVersion {
@@ -263,7 +263,7 @@ func (c *Controller) handleObject(obj interface{}) {
 			return
 		}
 
-		foo, err := c.platformStacksLister.PlatformStacks(object.GetNamespace()).Get(ownerRef.Name)
+		foo, err := c.platformStacksLister.PlatformWorkflows(object.GetNamespace()).Get(ownerRef.Name)
 		if err != nil {
 			glog.V(4).Infof("ignoring orphaned object '%s' of foo '%s'", object.GetSelfLink(), ownerRef.Name)
 			return
@@ -297,7 +297,7 @@ func (c *Controller) syncHandler(key string) error {
 	}
 
 	// Get the Foo resource with this namespace/name
-	foo, err := c.platformStacksLister.PlatformStacks(namespace).Get(name)
+	foo, err := c.platformStacksLister.PlatformWorkflows(namespace).Get(name)
 	if err != nil {
 		// The Foo resource may no longer exist, in which case we stop
 		// processing.
