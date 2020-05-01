@@ -4,23 +4,27 @@ KubePlus simplifies building and tracking workflow automation involving Kubernet
 
 - Client-side kubectl commands for discovery, resource usage monitoring and troubleshooting of Custom Resources and their workflows.
 
-- Server-side components for building secure and robust Custom Resource workflows.
+- Server-side components for building/modeling secure and robust Custom Resource workflows.
 
 ## kubectl commands
 
 KubePlus offers following kubectl commands:
 
-**1. kubectl man cr:** Provides information about how to use a Custom Resource.
+**1. kubectl man**
 
-**2. kubectl composition cr:** Provides information about sub resources created as part of handling a Custom Resource instance.
+- ``kubectl man cr``: Provides information about how to use a Custom Resource.
 
-**3. kubectl connections:**
+**2. kubectl composition**
+
+- ``kubectl composition cr``: Provides information about sub resources created as part of handling a Custom Resource instance.
+
+**3. kubectl connections**
 
 - ``kubectl connections cr``(upcoming): Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties / sub-resources.
 
 - ``kubectl connections workflow``: Provides information about relationships between a Service object and all the downstream Pods related to it representing a workflow.
 
-**4. kubectl metrics:** 
+**4. kubectl metrics**
 
 - ``kubectl metrics cr``: Provides various metrics for Custom Resource instance (number of sub-resources, number of pods, number of containers, number of nodes on which the pods run, total CPU and Memory).
 
@@ -28,7 +32,7 @@ KubePlus offers following kubectl commands:
 
 - ``kubectl metrics workflow`` (upcoming): Provides CPU/Memory metrics for all the Pods that are part of a Workflow (direct and indirect descendants).
 
-**5. kubectl grouplogs:** 
+**5. kubectl grouplogs**
 
 - ``kubectl grouplogs cr``:Provides logs for all the containers of a Custom Resource instance.
 
