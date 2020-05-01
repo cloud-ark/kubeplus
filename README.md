@@ -1,10 +1,6 @@
-## KubePlus Kubernetes Add-on
+## KubePlus Kubernetes API Add-on
 
-KubePlus simplifies building and tracking workflow automation involving Kubernetes Custom Resoures. It brings uniformity in using disparate Custom Resources to create platform workflows. Towards this it provides two things:
-
-- Client-side kubectl commands for discovery, resource usage monitoring and troubleshooting of Custom Resources and their workflows.
-
-- Server-side components for building/modeling secure and robust Custom Resource workflows.
+Kubernetes API is comprised of built-in and Custom Resources. KubePlus API add-on simplifies building application workflows in Kubernetes YAMLs leveraging these APIs. It offers kubectl plugins that simplify adoption of Custom Resources. It also offers server side component for additional value-add for building / modeling secure and robust workflows. 
 
 ## kubectl commands
 
@@ -71,9 +67,9 @@ Total MEMORY(bytes): 524Mi
 
 If you are not yet using Operators or Custom Resources, you can still use following commands:
 
-``` kubectl workflow logs ```
+``` kubectl connections workflow ```
 
-``` kubectl metrics account ```
+``` kubectl grouplogs workflow ```
 
 Details about KubePlus can be found [here](./details.rst). KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
