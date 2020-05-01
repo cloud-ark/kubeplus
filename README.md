@@ -1,10 +1,14 @@
-## KubePlus API Add-on
+## KubePlus Kubernetes Add-on
 
-KubePlus API add-on simplifies building workflow automation involving Kubernetes Custom Resoures. It brings uniformity in using disparate Custom Resources to create platform workflows. Towards this it provides kubectl commands for discovery, resource usage monitoring and troubleshooting of Custom Resources. 
+KubePlus simplifies building and tracking workflow automation involving Kubernetes Custom Resoures. It brings uniformity in using disparate Custom Resources to create platform workflows. Towards this it provides two things:
+
+- Client-side kubectl commands for discovery, resource usage monitoring and troubleshooting of Custom Resources and their workflows.
+
+- Server-side components for building secure and robust Custom Resource workflows.
 
 ## kubectl commands
 
-KubePlus API add-on offers following kubectl commands:
+KubePlus offers following kubectl commands:
 
 **1. kubectl man <Custom Resource>:** Provides information about how to use a Custom Resource.
 
@@ -18,7 +22,7 @@ KubePlus API add-on offers following kubectl commands:
 
 **6. kubectl crlogs <Custom Resource Instance>:** Provides logs for all the containers of a Custom Resource instance.
 
-**7. kubectl workflow logs Service <Service name>:** Provides logs for all the containers of all the Pods that are part of the workflow defined by the provided Service instance.
+**7. kubectl workflow logs <Service name>:** Provides logs for all the containers of all the Pods that are part of the workflow defined by the provided Service instance.
 
 
 ## Example
@@ -51,11 +55,17 @@ Total CPU(cores): 288m
 Total MEMORY(bytes): 524Mi
 ```
 
-Details about KubePlus API Add-on can be found [here](./details.rst). KubePlus API Add-on is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
+If you are not yet using Operators or Custom Resources, you can still use following commands:
 
-## How to use?
+``` kubectl workflow logs ```
 
-In order to use KubePlus API add-on all you need to do is enhance Custom Resource Definition (CRD) YAMLs with following annotations.
+``` kubectl metrics account ```
+
+Details about KubePlus can be found [here](./details.rst). KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
+
+## Quick details
+
+In order to use KubePlus all you need to do is enhance Custom Resource Definition (CRD) YAMLs with following annotations.
 
 ```
 platform-as-code/usage
@@ -103,6 +113,8 @@ Here is an example of MysqlCluster Custom Resource Definition (CRD) enhanced wit
    $ ./deploy-kubeplus.sh
    $ export PATH=`pwd`:$PATH
 ```
+
+- ```kubectl workflow logs Service <service name>```
 
 Check out [examples](./details.rst).
 
