@@ -27,8 +27,9 @@ class CRLogs(object):
 			containers = json_output['spec']['containers']
 			self._get_container_logs(pod, namespace, containers)
 			
-			init_containers = json_output['spec']['containers']
-			self._get_container_logs(pod, namespace, init_containers)
+			if 'initContainers' in json_output['spec']:
+				init_containers = json_output['spec']['initContainers']
+				self._get_container_logs(pod, namespace, init_containers)
 
 		except Exception as e:
 			print(e)

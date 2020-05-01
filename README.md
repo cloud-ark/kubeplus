@@ -8,15 +8,18 @@ KubePlus API add-on offers following kubectl commands:
 
 **1. kubectl man <Custom Resource>:** Provides information about how to use a Custom Resource.
 
-**2. kubectl tree <Custom Resource Instance>:** Provides information about sub resources created as part of handling a Custom Resource instance.
+**2. kubectl composition <Custom Resource Instance>:** Provides information about sub resources created as part of handling a Custom Resource instance.
 
-**3. kubectl graph <Custom Resource Instance>: (upcoming)** Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties / sub-resources.
+**3. kubectl connections <Custom Resource Instance>: (upcoming)** Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties / sub-resources.
 
 **4. kubectl metrics cr <Custom Resource Instance>:** Provides various metrics for Custom Resource instance (number of sub-resources, number of pods, number of containers, number of nodes on which the pods run, total CPU and Memory).
 
 **5. kubectl metrics account <Account Name>:** Provides various metrics for an account identity - user / service account. (number of custom resources, number of Deployments/StatefulSets/ReplicaSets/DaemonSets/ReplicationControllers, number of Pods, total CPU and Memory).
 
 **6. kubectl crlogs <Custom Resource Instance>:** Provides logs for all the containers of a Custom Resource instance.
+
+**7. kubectl workflow logs Service <Service name>:** Provides logs for all the containers of all the Pods that are part of the workflow defined by the provided Service instance.
+
 
 ## Example
 
