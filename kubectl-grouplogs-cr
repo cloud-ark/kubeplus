@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if (( $# < 2 )); then
-    echo "kubectl crlogs <Custom Resource> <Resource Instance> [<Namespace>]"
+    echo "kubectl grouplogs cr <Custom Resource> <Resource Instance> [<Namespace>]"
     exit 0
 fi
 

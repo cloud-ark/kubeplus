@@ -10,19 +10,29 @@ KubePlus simplifies building and tracking workflow automation involving Kubernet
 
 KubePlus offers following kubectl commands:
 
-**1. kubectl man <Custom Resource>:** Provides information about how to use a Custom Resource.
+**1. kubectl man cr:** Provides information about how to use a Custom Resource.
 
-**2. kubectl composition <Custom Resource Instance>:** Provides information about sub resources created as part of handling a Custom Resource instance.
+**2. kubectl composition cr:** Provides information about sub resources created as part of handling a Custom Resource instance.
 
-**3. kubectl connections <Custom Resource Instance>: (upcoming)** Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties / sub-resources.
+**3. kubectl connections:**
 
-**4. kubectl metrics cr <Custom Resource Instance>:** Provides various metrics for Custom Resource instance (number of sub-resources, number of pods, number of containers, number of nodes on which the pods run, total CPU and Memory).
+- ``kubectl connections cr``(upcoming): Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties / sub-resources.
 
-**5. kubectl metrics account <Account Name>:** Provides various metrics for an account identity - user / service account. (number of custom resources, number of Deployments/StatefulSets/ReplicaSets/DaemonSets/ReplicationControllers, number of Pods, total CPU and Memory).
+- ``kubectl connections workflow``: Provides information about relationships between a Service object and all the downstream Pods related to it representing a workflow.
 
-**6. kubectl crlogs <Custom Resource Instance>:** Provides logs for all the containers of a Custom Resource instance.
+**4. kubectl metrics:** 
 
-**7. kubectl workflow logs <Service name>:** Provides logs for all the containers of all the Pods that are part of the workflow defined by the provided Service instance.
+- ``kubectl metrics cr``: Provides various metrics for Custom Resource instance (number of sub-resources, number of pods, number of containers, number of nodes on which the pods run, total CPU and Memory).
+
+- ``kubectl metrics account``: Provides various metrics for an account identity - user / service account. (number of custom resources, number of Deployments/StatefulSets/ReplicaSets/DaemonSets/ReplicationControllers, number of Pods, total CPU and Memory).
+
+- ``kubectl metrics workflow`` (upcoming): Provides CPU/Memory metrics for all the Pods that are part of a Workflow (direct and indirect descendants).
+
+**5. kubectl grouplogs:** 
+
+- ``kubectl grouplogs cr``:Provides logs for all the containers of a Custom Resource instance.
+
+- ``kubectl grouplogs workflow``: Provides logs for all the containers of all the Pods that are part of the workflow defined by the provided Service instance.
 
 
 ## Example

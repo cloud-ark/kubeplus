@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if (( $# < 1 )); then
+    echo "kubectl connections workflow Service <Service Instance name> [<Namespace>]"
+    exit 0
+fi
+
+serviceInstance=$2
+namespace="default"
+if [ $# = 3 ]; then
+   namespace=$3 # If namespace is passed; use that
+fi
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	./discovery-manager/kubediscovery-macos connections Service $serviceInstance $namespace
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+	./discovery-manager/kubediscovery-linux connections Service $serviceInstance $namespace 
+	echo "$OSTYPE not supported."
+fi

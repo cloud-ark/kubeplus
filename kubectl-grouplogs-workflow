@@ -16,7 +16,7 @@ function podLogs {
 }
 
 if (( $# < 1 )); then
-    echo "kubectl workflow logs Service <Service Instance name> [<Namespace>]"
+    echo "kubectl grouplogs workflow Service <Service Instance name> [<Namespace>]"
     exit 0
 fi
 
