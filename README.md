@@ -1,6 +1,23 @@
 ## KubePlus Kubernetes API Add-on
 
-Kubernetes API is comprised of built-in and Custom Resources. KubePlus API add-on simplifies building platform workflows in Kubernetes YAMLs leveraging these APIs. It offers kubectl plugins that simplify adoption of Custom Resources. It also offers server side component for additional value-add for building / modeling secure and robust workflows. 
+Kubernetes API set is comprised of built-in and Custom Resources. KubePlus API add-on simplifies building platform workflows in Kubernetes YAMLs leveraging these APIs. It offers kubectl plugins that simplify adoption of Custom Resources. It also offers cluster-side component for additional value-add for building and modeling secure and robust platform workflows. 
+
+
+## Quick Details
+
+Kubernetes Custom Resources and Custom Controllers, popularly known as [Operators](https://coreos.com/operators/), extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus API add-on simplifies creation of platform level workflows leveraging these Custom Resources.
+
+.. image:: ./docs/KubePlus-workflow.jpg
+   :scale: 15%
+   :align: center
+
+The primary benefit of using KubePlus to DevOps engineers are:
+
+- easily discover static and runtime information about Custom Resources available in their cluster.
+- aggregate Custom and built-in resources to build secure and robust platform workflows.
+
+More details about KubePlus can be found [here](./details.rst). KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
+
 
 ## kubectl commands
 
@@ -12,21 +29,21 @@ KubePlus offers following kubectl commands:
 
 **2. kubectl composition**
 
-- ``kubectl composition cr``: Provides information about sub resources created as part of handling a Custom Resource instance.
+- ``kubectl composition cr``: Provides information about sub resources created for a Custom Resource instance.
 
 **3. kubectl connections**
 
-- ``kubectl connections cr``(upcoming): Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties / sub-resources.
+- ``kubectl connections cr``(upcoming): Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties.
 
-- ``kubectl connections workflow``: Provides information about relationships between a Service object and all the downstream Pods related to it representing a workflow.
+- ``kubectl connections workflow``: Provides information about relationships between a Service object and all the downstream Pods related to it.
 
 **4. kubectl metrics**
 
-- ``kubectl metrics cr``: Provides various metrics for Custom Resource instance (number of sub-resources, number of pods, number of containers, number of nodes on which the pods run, total CPU and Memory).
+- ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (number of sub-resources, number of pods, number of containers, number of nodes on which the pods run, total CPU and Memory).
 
-- ``kubectl metrics account``: Provides various metrics for an account identity - user / service account. (number of custom resources, number of Deployments/StatefulSets/ReplicaSets/DaemonSets/ReplicationControllers, number of Pods, total CPU and Memory). Needs server-side component.
+- ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (number of custom resources, number of Deployments/StatefulSets/ReplicaSets/DaemonSets/ReplicationControllers, number of Pods, total CPU and Memory). Needs server-side component.
 
-- ``kubectl metrics workflow`` (upcoming): Provides CPU/Memory metrics for all the Pods that are part of a Workflow (direct and indirect descendants).
+- ``kubectl metrics workflow`` (upcoming): Provides CPU/Memory metrics for all the Pods that are part of a workflow (direct and indirect descendants).
 
 **5. kubectl grouplogs**
 
@@ -65,69 +82,47 @@ Total CPU(cores): 288m
 Total MEMORY(bytes): 524Mi
 ```
 
-If you are not yet using Operators or Custom Resources, you can still use following commands:
+If you are not using Operators or Custom Resources yet, you can still use KubePlus. Workflow related commands work with the built-in Service resource and do not depend on Operators or Custom Resources.
 
 ``` kubectl connections workflow ```
 
 ``` kubectl grouplogs workflow ```
 
-Details about KubePlus can be found [here](./details.rst). KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
-
 
 ## Try it:
-
-- Use Kubernetes cluster with version 1.14.
-- Enable Kubernetes Metrics API Server on your cluster.
-  - Hosted Kubernetes solutions like GKE has this already installed.
 
 ```
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
-   $ ./deploy-kubeplus.sh
-   $ export PATH=`pwd`:$PATH
 ```
 
-Check out [examples](./details.rst).
+- kubectl commands:
+
+```$ export PATH=`pwd`:$PATH```
 
 
-## Quick details
+- Cluster-side component:
 
-In order to use KubePlus all you need to do is enhance Custom Resource Definition (CRD) YAMLs with following annotations.
+  - Use Kubernetes cluster with version 1.14.
 
-```
-platform-as-code/usage
-```
+  - Enable Kubernetes Metrics API Server on your cluster.
+    - Hosted Kubernetes solutions like GKE has this already installed.
 
-The 'usage' annotation is used to define usage information for a Custom Resource.
-The value for 'usage' annotation is the name of the ConfigMap that stores the usage information.
+  - ```$ ./deploy-kubeplus.sh```
 
-```
-platform-as-code/composition
-```
+  - Check out [examples](./examples/moodle-with-presslabs/).
 
-The 'composition' annotation is used to define Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance. 
 
-Here is an example of MysqlCluster Custom Resource Definition (CRD) enhanced with above annotations:
+## Operator Maturity Model
 
-```
-  apiVersion: apiextensions.k8s.io/v1beta1
-  kind: CustomResourceDefinition
-  metadata:
-    name: mysqlclusters.mysql.presslabs.org
-    annotations:
-      helm.sh/hook: crd-install
-      platform-as-code/usage: mysqlcluster-usage.usage
-      platform-as-code/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
-  spec:
-    group: mysql.presslabs.org
-    names:
-      kind: MysqlCluster
-      plural: mysqlclusters
-      shortNames:
-      - mysql
-    scope: Namespaced
-```
+In order to build Platform workflows as code using Operators and Custom Resources, it is important for Cluster
+administrators to evaluate different Operators against a standard set of requirements. We have developed
+[Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) towards this focusing on Operator usage in multi-Operator environments. We use this model when curating community Operators for enterprise readiness. 
 
+
+## Operator FAQ
+
+New to Operators? Checkout [Operator FAQ](https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md)
 
 
 ## Status
