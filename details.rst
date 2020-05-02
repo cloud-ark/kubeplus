@@ -110,7 +110,7 @@ Once this is done, you can use following above mentioned kubectl commands.
 Platform-as-Code annotations on CRD packages
 ---------------------------------------------
 
-In order to build and maintain Custom Resource relationship graph, KubePlus API add-on expects CRD packages to be updated with some of the Platform-as-code annotations as described below. 
+In order to build and maintain Custom Resource relationship graph, KubePlus API add-on expects CRD packages to be updated with Platform-as-code annotations as described below. 
 
 .. code-block:: bash
 
@@ -272,17 +272,6 @@ Platform-as-Code examples:
 .. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/platform-crd/steps.txt
 
 
-Operator Maturity Model
-------------------------
-
-In order to build Platform workflows as code using Operators and Custom Resources, it is important for Cluster
-administrators to evaluate different Operators against a standard set of requirements. We have developed
-`Operator Maturity Model`_ towards this focusing on Operator usage in multi-Operator environments.
-We use this model when curating community Operators for enterprise readiness. 
-
-.. _Operator Maturity Model: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
-
-
 Comparison
 -----------
 
@@ -290,14 +279,6 @@ Check comparison of KubePlus with other `community tools`_.
 
 .. _community tools: https://github.com/cloud-ark/kubeplus/blob/master/Comparison.md
 
-
-
-Operator FAQ
--------------
-
-New to Operators? Checkout `Operator FAQ`_.
-
-.. _Operator FAQ: https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md
 
 
 Bug reports
