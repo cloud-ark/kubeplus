@@ -7,7 +7,7 @@ Kubernetes API set is comprised of built-in and Custom Resources. KubePlus API a
 
 Kubernetes Custom Resources and Custom Controllers, popularly known as [Operators](https://coreos.com/operators/), extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus API add-on simplifies creation of platform level workflows leveraging these Custom Resources.
 
-<img src="/docs/KubePlus-workflow.jpg" width="100" height="200">
+<img src="/docs/KubePlus-workflow.jpg" width="300" height="600">
 
 .. image:: ./docs/KubePlus-workflow.jpg
    :scale: 15%
@@ -26,7 +26,8 @@ More details about KubePlus can be found [here](./details.rst). KubePlus is bein
 KubePlus offers following kubectl commands:
 
 **1. kubectl man:**
-      ``kubectl man cr``: Provides information about how to use a Custom Resource.
+
+      *``kubectl man cr``: Provides information about how to use a Custom Resource.
 
 **2. kubectl composition**
 
