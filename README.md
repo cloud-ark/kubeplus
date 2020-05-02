@@ -35,21 +35,24 @@ KubePlus offers following kubectl commands:
 **4. kubectl metrics**
 
 - ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and Memory).
-
 - ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs server-side component.
-
 - ``kubectl metrics workflow`` (upcoming): Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
 
 **5. kubectl grouplogs**
 
 - ``kubectl grouplogs cr``: Provides logs for all the containers of a Custom Resource instance.
-
 - ``kubectl grouplogs workflow``: Provides logs for all the containers of all the Pods that are part of the workflow defined by the provided Service instance.
 
 
 ## Example
 
 ``` 
+$ kubectl connections workflow Service wordpress
+Level:1, kind:Pod, name:wordpress-6697844b8f-4vlpt relationship-type:label
+Level:1, kind:Pod, name:wordpress-6697844b8f-8694c relationship-type:label
+Level:2, kind:Service, name:wordpress-mysql relationship-type:specproperty
+Level:3, kind:Pod, name:wordpress-mysql-5bf65959f8-w6d25 relationship-type:label
+
 $ kubectl metrics cr MysqlCluster cluster1 namespace1
 ---------------------------------------------------------- 
  Creator Account Identity: devdattakulkarni@gmail.com
@@ -61,20 +64,7 @@ $ kubectl metrics cr MysqlCluster cluster1 namespace1
 Total CPU(cores): 84m
 Total MEMORY(bytes): 302Mi
 ----------------------------------------------------------
-
-$ kubectl connections workflow Service wordpress
-Level:1, kind:Pod, name:wordpress-6697844b8f-4vlpt relationship-type:label
-Level:1, kind:Pod, name:wordpress-6697844b8f-8694c relationship-type:label
-Level:2, kind:Service, name:wordpress-mysql relationship-type:specproperty
-Level:3, kind:Pod, name:wordpress-mysql-5bf65959f8-w6d25 relationship-type:label
 ```
-
-If you are not using Operators or Custom Resources yet, you can still use KubePlus. Workflow related commands work with the built-in Service resource and do not depend on Operators or Custom Resources.
-
-``` kubectl connections workflow ```
-
-``` kubectl grouplogs workflow ```
-
 
 ## Try it:
 
@@ -100,7 +90,7 @@ administrators to evaluate different Operators against a standard set of require
 
 ## Operator FAQ
 
-New to Operators? Checkout [Operator FAQ](https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md)
+New to Operators? Checkout [Operator FAQ](https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md).
 
 
 ## Status
