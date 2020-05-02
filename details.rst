@@ -2,31 +2,13 @@
 KubePlus API Add-on
 =======================
 
-KubePlus API add-on simplifies building workflow automation using Kubernetes Custom APIs/ Resources by extending the Kubernetes resource graph and maintaining all implicit and explicit relationships of Custom Resources created through labels, annotations, spec properties or sub-resources. It brings uniformity in using variety of Custom APIs/Resources and allows users to discover and use them more efficiently and visualize their dependencies with other APIs/Resources for debugging and monitoring purpose. 
+KubePlus API add-on simplifies building workflow automation using Kubernetes Custom APIs/ Resources by extending the Kubernetes resource graph and maintaining all implicit and explicit relationships of Custom Resources created through labels, annotations, spec properties or sub-resources. This Custom Resource relationship graph is then used for improved visibility, monitoring and debuggability of Custom Resources. KubePlus API add-on additionally allows you to define workflow level Kubernetes Resource dependencies and then allows applying certain security or robustness policies to all these Resources together.
+It brings uniformity in using variety of Custom APIs/Resources and allows users to discover and use them more efficiently and visualize their dependencies with other APIs/Resources for debugging and monitoring purpose. 
 
 This tool is being developed as a part of our  `Platform as Code practice`_.
 
 .. _Platform as Code practice: https://cloudark.io/platform-as-code
 
-
-KubePlus API add-on offers following interfaces through kubectl:
-
-**1. kubectl man <Custom Resource>:** Provides information about how to use a Custom Resource.
-
-**2. kubectl composition <Custom Resource Instance>:** Provides information about sub resources created as part of handling a Custom Resource instance.
-
-**3. kubectl metrics cr <Custom Resource Instance>:** Provides various metrics for Custom Resource instance (number of sub-resources, number of pods, number of containers, number of nodes on which the pods run, total CPU and Memory).
-
-**4. kubectl metrics account <Account Name>:** Provides various metrics for an account identity - user / service account. (number of custom resources, number of Deployments/StatefulSets/ReplicaSets/DaemonSets/ReplicationControllers, number of Pods, total CPU and Memory).
-
-**5. kubectl crlogs <Custom Resource Instance>:** Provides logs for all the containers of a Custom Resource instance.
-
-**6. kubectl cr-relations <Custom Resource Instance>: (upcoming)** Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties / sub-resources.
-
-
-You enhance your Kubernetes CRD / Operator packages with a set of Platform-as-Code annotations and then use KubePlus API add-on for workflow modeling with Custom Resources introduced by those Operators. 
-
-KubePlus API add-on extends the Kubernetes resource graph and maintains all implicit and explicit relationships of Custom Resources created through labels, annotations, spec properties or sub-resources. This Custom Resource relationship graph is then exposed through the interfaces discussed above for improved visibility, monitoring and debuggability of Custom Resources. KubePlus API add-on additionally allows you to define workflow level Kubernetes Resource dependencies and then allows applying certain security or robustness policies to all these Resources together. 
 
 --------
 Details
@@ -91,7 +73,7 @@ The composition endpoint is used for obtaining runtime composition tree of Kuber
    :scale: 25%
    :align: center
 
-**cr-relationships endpoint**
+**cr-relationships endpoint (upcoming)**
 
 .. code-block:: bash
 
@@ -107,8 +89,8 @@ We provide kubectl plugins for these endpoints. In order to use the plugins you 
 
 Once this is done, you can use following above mentioned kubectl commands. 
 
-Platform-as-Code annotations on CRD packages
----------------------------------------------
+Platform-as-Code annotations on CRD
+------------------------------------
 
 In order to build and maintain Custom Resource relationship graph, KubePlus API add-on expects CRD packages to be updated with Platform-as-code annotations as described below. 
 
@@ -248,15 +230,6 @@ Install KubePlus:
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
    $ ./deploy-kubeplus.sh
-
-Install KubePlus kubectl plugins:
-
-We provide kubectl plugins for 'man' and 'composition' endpoints to simplify querying of the man page
-information and composition tree information about Custom Resources. In order to use the plugins you
-will need to add KubePlus folder to your PATH variable.
-
-.. code-block:: bash
-
    $ export PATH=$PATH:`pwd`
 
 
