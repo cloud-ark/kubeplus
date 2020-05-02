@@ -7,15 +7,15 @@ kubectl create -f helm-rbac-config.yaml
 helm init --service-account tiller
 
 # Deploy KubePlus API Server
-kubectl apply -f deploy/
+kubectl apply -f ../deploy/
 
 # Deploy KubePlus PlatformStack Operator
-kubectl apply -f platform-operator/artifacts/deployment/
+kubectl apply -f ../platform-operator/artifacts/deployment/
 
 # Deploy KubePlus Mutating Webhook
-cd mutating-webhook
+cd ../mutating-webhook
 make deploy
-cd ..
+cd -
 
 # Deploy KubePlus Mutating Webhook helper
-kubectl apply -f mutating-webhook-helper/deployment.yaml
+#kubectl apply -f mutating-webhook-helper/deployment.yaml

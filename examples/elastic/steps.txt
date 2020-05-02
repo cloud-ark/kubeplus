@@ -25,7 +25,7 @@ Steps:
    - kubectl apply -f deploy
 
 3) Setup Helm
-   - kubectl create -f helm-rbac-config.yaml
+   - kubectl create -f scripts/helm-rbac-config.yaml
    - helm init --service-account tiller
 
 4) Wait till Tiller Pod is running

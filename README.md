@@ -19,7 +19,7 @@ More details about KubePlus can be found [here](./details.rst). KubePlus is bein
 
 KubePlus offers following kubectl commands:
 
-**1. kubectl man:**
+**1. kubectl man**
 
 - ``kubectl man cr``: Provides information about how to use a Custom Resource.
 

@@ -49,7 +49,7 @@ Start helm and install operators
 ---------------------------------
 
 1) Setup
-    - kubectl create -f helm-rbac-config.yaml
+    - kubectl create -f scripts/helm-rbac-config.yaml
     - helm init --service-account tiller
 
 2) Wait till Tiller Pod is running
