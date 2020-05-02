@@ -10,7 +10,7 @@ function podLogs {
 		echo "No Pod found for Workflow from Service $serviceInstance in Namespace $namespace."
 	else
         for p in "${podlist[@]}"; do
-            python crlogs.py $p $namespace
+            python ./plugins/crlogs.py $p $namespace
         done;
 	fi
 }
@@ -29,10 +29,10 @@ fi
 IFS=$'\n' # field separator: '\n'
 declare -a podlist
 if [[ "$OSTYPE" == "darwin"* ]]; then
-	podlist=( $(./discovery-manager/kubediscovery-macos connections Service $serviceInstance $namespace | grep Pod | awk '{print $3}' | cut -d ':' -f2) )
+	podlist=( $(./plugins/kubediscovery-macos connections Service $serviceInstance $namespace | grep Pod | awk '{print $3}' | cut -d ':' -f2) )
 	podLogs "${podlist[@]}"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-	podlist=( $(./discovery-manager/kubediscovery-linux connections Service $serviceInstance $namespace | grep Pod | awk '{print $3}' | cut -d ':' -f2) )
+	podlist=( $(./plugins/kubediscovery-linux connections Service $serviceInstance $namespace | grep Pod | awk '{print $3}' | cut -d ':' -f2) )
 	podLogs "${podlist[@]}"
 else 
 	echo "$OSTYPE not supported."

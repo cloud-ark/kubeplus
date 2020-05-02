@@ -12,8 +12,8 @@ if [ $# = 3 ]; then
 fi
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-	./discovery-manager/kubediscovery-macos connections Service $serviceInstance $namespace
+	./plugins/kubediscovery-macos connections Service $serviceInstance $namespace
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-	./discovery-manager/kubediscovery-linux connections Service $serviceInstance $namespace 
+	./plugins/kubediscovery-linux connections Service $serviceInstance $namespace 
 	echo "$OSTYPE not supported."
 fi
