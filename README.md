@@ -2,6 +2,8 @@
 
 Kubernetes API set is comprised of built-in and Custom Resources. KubePlus API add-on simplifies building platform workflows in Kubernetes YAMLs leveraging these APIs. It offers kubectl plugins that simplify adoption of Custom Resources. It also offers cluster-side component for additional value-add for building and modeling secure and robust platform workflows. 
 
+KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
+
 
 ## Quick Details
 
@@ -12,7 +14,7 @@ The primary benefit of using KubePlus to DevOps engineers/Application developers
 - easily discover static and runtime information about Custom Resources available in their cluster.
 - aggregate Custom and built-in resources to build secure and robust platform workflows.
 
-More details about KubePlus can be found [here](./details.rst). KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
+More details about KubePlus can be found [here](./details.rst). 
 
 
 ## kubectl commands
