@@ -7,12 +7,6 @@ Kubernetes API set is comprised of built-in and Custom Resources. KubePlus API a
 
 Kubernetes Custom Resources and Custom Controllers, popularly known as [Operators](https://coreos.com/operators/), extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus API add-on simplifies creation of platform level workflows leveraging these Custom Resources.
 
-<img src="/docs/KubePlus-workflow.jpg" width="300" height="600">
-
-.. image:: ./docs/KubePlus-workflow.jpg
-   :scale: 15%
-   :align: center
-
 The primary benefit of using KubePlus to DevOps engineers/Application developers are:
 
 - easily discover static and runtime information about Custom Resources available in their cluster.
@@ -27,7 +21,7 @@ KubePlus offers following kubectl commands:
 
 **1. kubectl man:**
 
-      *``kubectl man cr``: Provides information about how to use a Custom Resource.
+- ``kubectl man cr``: Provides information about how to use a Custom Resource.
 
 **2. kubectl composition**
 
@@ -36,7 +30,6 @@ KubePlus offers following kubectl commands:
 **3. kubectl connections**
 
 - ``kubectl connections cr``(upcoming): Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties.
-
 - ``kubectl connections workflow``: Provides information about relationships between a Service object and all the downstream Pods related to it.
 
 **4. kubectl metrics**
@@ -69,19 +62,11 @@ Total CPU(cores): 84m
 Total MEMORY(bytes): 302Mi
 ----------------------------------------------------------
 
-$ kubectl metrics account devdattakulkarni@gmail.com
----------------------------------------------------------- 
- Creator Account Identity: devdattakulkarni@gmail.com
----------------------------------------------------------- 
- Number of Custom Resources: 3
- Number of Deployments: 1
- Number of StatefulSets: 0
- Number of ReplicaSets: 0
- Number of DaemonSets: 0
- Number of ReplicationControllers: 0
- Number of Pods: 0
-Total CPU(cores): 288m
-Total MEMORY(bytes): 524Mi
+$ kubectl connections workflow Service wordpress
+Level:1, kind:Pod, name:wordpress-6697844b8f-4vlpt relationship-type:label
+Level:1, kind:Pod, name:wordpress-6697844b8f-8694c relationship-type:label
+Level:2, kind:Service, name:wordpress-mysql relationship-type:specproperty
+Level:3, kind:Pod, name:wordpress-mysql-5bf65959f8-w6d25 relationship-type:label
 ```
 
 If you are not using Operators or Custom Resources yet, you can still use KubePlus. Workflow related commands work with the built-in Service resource and do not depend on Operators or Custom Resources.
@@ -97,21 +82,12 @@ If you are not using Operators or Custom Resources yet, you can still use KubePl
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
 ```
-
-- kubectl commands:
-
-```$ export PATH=`pwd`:$PATH```
-
-
+- kubectl commands: ```$ export PATH=`pwd`:$PATH```
 - Cluster-side component:
-
   - Use Kubernetes cluster with version 1.14.
-
   - Enable Kubernetes Metrics API Server on your cluster.
     - Hosted Kubernetes solutions like GKE has this already installed.
-
   - ```$ ./deploy-kubeplus.sh```
-
   - Check out [examples](./examples/moodle-with-presslabs/).
 
 
