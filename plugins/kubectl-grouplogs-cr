@@ -27,6 +27,6 @@ else
         #echo "Pods for Custom Resource $1 named $2 in Namespace $namespace."
         #for i in "${podlist[@]}"; do echo "$i"; done
         for p in "${podlist[@]}"; do
-            python crlogs.py $p $namespace
+            python ./plugins/crlogs.py $p $namespace
         done;
 fi

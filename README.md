@@ -1,6 +1,6 @@
 ## KubePlus Kubernetes API Add-on
 
-Kubernetes API is comprised of built-in and Custom Resources. KubePlus API add-on simplifies building application workflows in Kubernetes YAMLs leveraging these APIs. It offers kubectl plugins that simplify adoption of Custom Resources. It also offers server side component for additional value-add for building / modeling secure and robust workflows. 
+Kubernetes API is comprised of built-in and Custom Resources. KubePlus API add-on simplifies building platform workflows in Kubernetes YAMLs leveraging these APIs. It offers kubectl plugins that simplify adoption of Custom Resources. It also offers server side component for additional value-add for building / modeling secure and robust workflows. 
 
 ## kubectl commands
 
@@ -24,7 +24,7 @@ KubePlus offers following kubectl commands:
 
 - ``kubectl metrics cr``: Provides various metrics for Custom Resource instance (number of sub-resources, number of pods, number of containers, number of nodes on which the pods run, total CPU and Memory).
 
-- ``kubectl metrics account``: Provides various metrics for an account identity - user / service account. (number of custom resources, number of Deployments/StatefulSets/ReplicaSets/DaemonSets/ReplicationControllers, number of Pods, total CPU and Memory).
+- ``kubectl metrics account``: Provides various metrics for an account identity - user / service account. (number of custom resources, number of Deployments/StatefulSets/ReplicaSets/DaemonSets/ReplicationControllers, number of Pods, total CPU and Memory). Needs server-side component.
 
 - ``kubectl metrics workflow`` (upcoming): Provides CPU/Memory metrics for all the Pods that are part of a Workflow (direct and indirect descendants).
 
@@ -73,6 +73,23 @@ If you are not yet using Operators or Custom Resources, you can still use follow
 
 Details about KubePlus can be found [here](./details.rst). KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
+
+## Try it:
+
+- Use Kubernetes cluster with version 1.14.
+- Enable Kubernetes Metrics API Server on your cluster.
+  - Hosted Kubernetes solutions like GKE has this already installed.
+
+```
+   $ git clone https://github.com/cloud-ark/kubeplus.git
+   $ cd kubeplus
+   $ ./deploy-kubeplus.sh
+   $ export PATH=`pwd`:$PATH
+```
+
+Check out [examples](./details.rst).
+
+
 ## Quick details
 
 In order to use KubePlus all you need to do is enhance Custom Resource Definition (CRD) YAMLs with following annotations.
@@ -111,22 +128,6 @@ Here is an example of MysqlCluster Custom Resource Definition (CRD) enhanced wit
     scope: Namespaced
 ```
 
-## Try it:
-
-- Use Kubernetes cluster with version 1.14.
-- Enable Kubernetes Metrics API Server on your cluster.
-  - Hosted Kubernetes solutions like GKE has this already installed.
-
-```
-   $ git clone https://github.com/cloud-ark/kubeplus.git
-   $ cd kubeplus
-   $ ./deploy-kubeplus.sh
-   $ export PATH=`pwd`:$PATH
-```
-
-- ```kubectl workflow logs Service <service name>```
-
-Check out [examples](./details.rst).
 
 
 ## Status

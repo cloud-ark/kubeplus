@@ -7,4 +7,4 @@ fi
 
 account=$1
 
-python crmetrics.py $account
+python ./plugins/crmetrics.py $account
