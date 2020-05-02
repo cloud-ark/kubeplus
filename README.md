@@ -7,11 +7,13 @@ Kubernetes API set is comprised of built-in and Custom Resources. KubePlus API a
 
 Kubernetes Custom Resources and Custom Controllers, popularly known as [Operators](https://coreos.com/operators/), extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus API add-on simplifies creation of platform level workflows leveraging these Custom Resources.
 
+![](./docs/KubePlus-workflow.jpg)
+
 .. image:: ./docs/KubePlus-workflow.jpg
    :scale: 15%
    :align: center
 
-The primary benefit of using KubePlus to DevOps engineers are:
+The primary benefit of using KubePlus to DevOps engineers/Application developers are:
 
 - easily discover static and runtime information about Custom Resources available in their cluster.
 - aggregate Custom and built-in resources to build secure and robust platform workflows.
@@ -39,15 +41,15 @@ KubePlus offers following kubectl commands:
 
 **4. kubectl metrics**
 
-- ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (number of sub-resources, number of pods, number of containers, number of nodes on which the pods run, total CPU and Memory).
+- ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and Memory).
 
-- ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (number of custom resources, number of Deployments/StatefulSets/ReplicaSets/DaemonSets/ReplicationControllers, number of Pods, total CPU and Memory). Needs server-side component.
+- ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs server-side component.
 
-- ``kubectl metrics workflow`` (upcoming): Provides CPU/Memory metrics for all the Pods that are part of a workflow (direct and indirect descendants).
+- ``kubectl metrics workflow`` (upcoming): Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
 
 **5. kubectl grouplogs**
 
-- ``kubectl grouplogs cr``:Provides logs for all the containers of a Custom Resource instance.
+- ``kubectl grouplogs cr``: Provides logs for all the containers of a Custom Resource instance.
 
 - ``kubectl grouplogs workflow``: Provides logs for all the containers of all the Pods that are part of the workflow defined by the provided Service instance.
 
