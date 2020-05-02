@@ -229,7 +229,7 @@ Install KubePlus:
 
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
-   $ ./deploy-kubeplus.sh
+   $ ./script/deploy-kubeplus.sh
    $ export PATH=$PATH:`pwd`
 
 
