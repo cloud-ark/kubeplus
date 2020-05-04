@@ -5,7 +5,7 @@ Kubernetes API set is comprised of built-in and Custom Resources. KubePlus API a
 KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
 
-## Quick Details
+## Summary
 
 Kubernetes Custom Resources and Custom Controllers, popularly known as [Operators](https://coreos.com/operators/), extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus API add-on simplifies creation of platform level workflows leveraging these Custom Resources.
 
@@ -38,7 +38,7 @@ KubePlus offers following kubectl commands:
 
 - ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and Memory).
 - ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs server-side component.
-- ``kubectl metrics workflow`` (upcoming): Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
+- ``kubectl metrics workflow``: Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
 
 **5. kubectl grouplogs**
 

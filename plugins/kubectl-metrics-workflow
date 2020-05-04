@@ -1,8 +1,19 @@
 #!/bin/bash
 
-if (( $# < 1 )); then
-    echo "Coming soon.."
+if (( $# < 2 )); then
     echo "kubectl metrics workflow Service <Service Instance name> [<Namespace>]"
     exit 0
 fi
 
+serviceinstance=$2
+namespace="default"
+
+# If namespace is passed; use that                                                                                             
+if [ $# = 3 ]; then
+   namespace=$3
+fi
+
+#echo "Namespace:$namespace"
+#echo "ServiceInstance:$serviceinstance"
+
+python ./plugins/crmetrics.py service $serviceinstance $namespace
