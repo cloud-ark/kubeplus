@@ -74,7 +74,7 @@ Total MEMORY(bytes): 302Mi
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
 ```
-- kubectl commands: ```$ export PATH=`pwd`:$PATH```
+- kubectl commands: ```$ export PATH=`pwd`/plugins/:$PATH```
 - Cluster-side component:
   - Use Kubernetes cluster with version 1.14.
   - Enable Kubernetes Metrics API Server on your cluster.
