@@ -2,6 +2,7 @@ import subprocess
 import sys
 import json
 import re
+import platform
 
 class CRMetrics(object):
 
@@ -359,6 +360,38 @@ class CRMetrics(object):
 
 		return total_cpu, total_mem, total_count
 
+	def _get_pods_for_service(self, service_name, namespace):
+		pod_list = []
+		platf = platform.system()
+		cmd = ''
+		if platf == "Darwin":
+			cmd = './plugins/kubediscovery-macos connections Service ' + service_name + ' ' + namespace
+		if platf == "Linux":
+			cmd = './plugins/kubediscovery-linux connections Service ' + service_name + ' ' + namespace
+
+		if cmd:
+			output = ''
+			try:
+				output = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+										  stderr=subprocess.PIPE, shell=True).communicate()[0]
+				output = output.strip("\n")
+			except Exception as e:
+				print(e)
+
+			for line in output.split("\n"):
+				if line:
+					parts = line.split(" ")
+					kind = parts[1]
+					instance = parts[2]
+					kind_parts = kind.split(":")
+					if kind_parts[1] == "Pod":
+						instance_parts = instance.split(":")
+						instance_name = instance_parts[1]
+						pod = {}
+						pod['Namespace'] = namespace
+						pod['Name'] = instance_name
+						pod_list.append(pod)
+		return pod_list
 
 	def get_metrics_creator_account(self, account):
 		# 1. Get all custom resource instances - their count
@@ -441,15 +474,42 @@ class CRMetrics(object):
 		print("---------------------------------------------------------- ")
 
 
+	def get_metrics_service(self, service_name, namespace):
+
+		print("---------------------------------------------------------- ")
+		pod_list = self._get_pods_for_service(service_name, namespace)
+		print(" Number of Pods: " + str(len(pod_list)))
+
+		num_of_containers = self._parse_number_of_containers(pod_list)
+		print(" Number of Containers: " + str(num_of_containers))
+
+		num_of_hosts = self._parse_number_of_hosts(pod_list)
+		print(" Number of Nodes: " + str(num_of_hosts))
+
+		cpu, memory = self._get_cpu_memory_usage(pod_list)
+
+		print("Total CPU(cores): " + str(cpu) + "m")
+		print("Total MEMORY(bytes): " + str(memory) + "Mi")
+		print("---------------------------------------------------------- ")
+
+
+
 if __name__ == '__main__':
 	crLogs = CRMetrics()
 
-	if len(sys.argv) == 4: 
-		custom_resource = sys.argv[1]
-		custom_resource_instance = sys.argv[2]
-		namespace = sys.argv[3]
+	res_type = sys.argv[1]
+
+	if res_type == "cr":
+		custom_resource = sys.argv[2]
+		custom_resource_instance = sys.argv[3]
+		namespace = sys.argv[4]
 		crLogs.get_metrics_cr(custom_resource, custom_resource_instance, namespace)
 	
-	if len(sys.argv) == 2:
-		creator_account = sys.argv[1]
+	if res_type == "account":
+		creator_account = sys.argv[2]
 		crLogs.get_metrics_creator_account(creator_account)
+
+	if res_type == "service":
+		service_name = sys.argv[2]
+		namespace = sys.argv[3]
+		crLogs.get_metrics_service(service_name, namespace)
