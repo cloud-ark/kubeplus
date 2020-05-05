@@ -1,0 +1,4 @@
+[submodule "kubediscovery"]
+	path = kubediscovery
+	url = https://github.com/cloud-ark/kubediscovery.git
+	branch = master
