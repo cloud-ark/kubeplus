@@ -37,7 +37,7 @@ KubePlus offers following kubectl commands:
 **4. kubectl metrics**
 
 - ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and Memory).
-- ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs server-side component.
+- ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs on-cluster component.
 - ``kubectl metrics workflow``: Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
 
 **5. kubectl grouplogs**
@@ -50,10 +50,10 @@ KubePlus offers following kubectl commands:
 
 ``` 
 $ kubectl connections workflow Service wordpress
-Level:1, kind:Pod, name:wordpress-6697844b8f-4vlpt relationship-type:label
-Level:1, kind:Pod, name:wordpress-6697844b8f-8694c relationship-type:label
-Level:2, kind:Service, name:wordpress-mysql relationship-type:specproperty
-Level:3, kind:Pod, name:wordpress-mysql-5bf65959f8-w6d25 relationship-type:label
+Level:1 kind:Pod name:wordpress-6697844b8f-4vlpt relationship-type:label
+Level:1 kind:Pod name:wordpress-6697844b8f-8694c relationship-type:label
+Level:2 kind:Service name:wordpress-mysql relationship-type:specproperty
+Level:3 kind:Pod name:wordpress-mysql-5bf65959f8-w6d25 relationship-type:label
 
 $ kubectl metrics cr MysqlCluster cluster1 namespace1
 ---------------------------------------------------------- 
@@ -74,12 +74,12 @@ Total MEMORY(bytes): 302Mi
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
 ```
-- kubectl commands: ```$ export PATH=`pwd`/plugins/:$PATH```
-- Cluster-side component:
+- KubePlus kubectl commands: ```$ export PATH=`pwd`/plugins/:$PATH```
+- KubePlus on-cluster component:
   - Use Kubernetes cluster with version 1.14.
   - Enable Kubernetes Metrics API Server on your cluster.
     - Hosted Kubernetes solutions like GKE has this already installed.
-  - ```$ ./deploy-kubeplus.sh```
+  - ```$ ./scripts/deploy-kubeplus.sh```
   - Check out [examples](./examples/moodle-with-presslabs/).
 
 
