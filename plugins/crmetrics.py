@@ -34,12 +34,19 @@ class CRMetrics(object):
 
 	def _get_composition(self, custom_resource, custom_res_instance, namespace):
 
-		cmd = "\"/apis/platform-as-code/v1/composition?kind=" + custom_resource + "&instance=" + custom_res_instance + "&namespace=" + namespace + "\""
-		full_cmd = 'kubectl get --raw ' + cmd
+		#cmd = "\"/apis/platform-as-code/v1/composition?kind=" + custom_resource + "&instance=" + custom_res_instance + "&namespace=" + namespace + "\""
+		#full_cmd = 'kubectl get --raw ' + cmd
+
+		platf = platform.system()
+		cmd = ''
+		if platf == "Darwin":
+			cmd = './plugins/kubediscovery-macos composition ' + custom_resource + ' ' + custom_res_instance + ' ' + namespace
+		if platf == "Linux":
+			cmd = './plugins/kubediscovery-linux composition ' + custom_resource + ' ' + custom_res_instance + ' ' + namespace
 
 		out = ''
 		try:
-			out = subprocess.Popen(full_cmd, stdout=subprocess.PIPE,
+			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 								   stderr=subprocess.PIPE, shell=True).communicate()[0]
 		except Exception as e:
 			print(e)
