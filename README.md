@@ -14,7 +14,12 @@ The primary benefit of using KubePlus to DevOps engineers/Application developers
 - easily discover static and runtime information about Custom Resources available in their cluster.
 - aggregate Custom and built-in resources to build secure and robust platform workflows.
 
-More details about KubePlus can be found [here](./details.rst). 
+
+In order to use kubectl commands on Custom Resources, all you need to do is add certain
+annotations on the corresponding Custom Resource Definition (CRD) objects. The specific annotations and other details about KubePlus can be found [here](./details.rst).
+
+Even if you are not using Kubernetes Operators or Custom Resources yet, you can 
+start using KubePlus kubectl commands with built-in Service resources.
 
 
 ## kubectl commands
@@ -31,25 +36,29 @@ KubePlus offers following kubectl commands:
 
 **3. kubectl connections**
 
+- ``kubectl connections service``: Provides information about relationships between a Service object and all the downstream Pods related to it.
 - ``kubectl connections cr``(upcoming): Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties.
-- ``kubectl connections workflow``: Provides information about relationships between a Service object and all the downstream Pods related to it.
+- ``kubectl connections workflow`` (upcoming): Provides information about relationships modeled using PlatformWorkflow CRD.
 
 **4. kubectl metrics**
 
 - ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and Memory).
+- ``kubectl metrics service``: Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
 - ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs on-cluster component.
-- ``kubectl metrics workflow``: Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
+- ``kubectl metrics workflow`` (upcoming): Provides CPU/Memory metrics for all the Pods that are descendants resources modeled using PlatformWorkflow CRD. 
 
 **5. kubectl grouplogs**
 
 - ``kubectl grouplogs cr``: Provides logs for all the containers of a Custom Resource instance.
-- ``kubectl grouplogs workflow``: Provides logs for all the containers of all the Pods that are part of the workflow defined by the provided Service instance.
+- ``kubectl grouplogs service``: Provides logs for all the containers of all the Pods that are related to a Service object.
+- ``kubectl grouplogs workflow`` (upcoming): Provides logs for all the containers of all the Pods that are part of the workflow defined modeled using PlatforkWorkflow CRD.
+
 
 
 ## Example
 
 ``` 
-$ kubectl connections workflow Service wordpress
+$ kubectl connections service wordpress
 Level:1 kind:Pod name:wordpress-6697844b8f-4vlpt relationship-type:label
 Level:1 kind:Pod name:wordpress-6697844b8f-8694c relationship-type:label
 Level:2 kind:Service name:wordpress-mysql relationship-type:specproperty
@@ -85,9 +94,7 @@ Total MEMORY(bytes): 302Mi
 
 ## Operator Maturity Model
 
-In order to build Platform workflows as code using Operators and Custom Resources, it is important for Cluster
-administrators to evaluate different Operators against a standard set of requirements. We have developed
-[Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) towards this focusing on Operator usage in multi-Operator environments. We use this model when curating community Operators for enterprise readiness. 
+In order to build Platform workflows as code using Operators and Custom Resources, it is important for Cluster administrators to evaluate different Operators against a standard set of requirements. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) towards this focusing on Operator usage in multi-Operator environments. We use this model when curating community Operators for enterprise readiness. 
 
 
 ## Operator FAQ

@@ -3,11 +3,11 @@
 function podLogs {
 	podlist=("$@")
 	echo "===Pods==="
-    for i in "${podlist[@]}"; do echo "$i"; done
+        for i in "${podlist[@]}"; do echo "$i"; done
 	echo "   "
 	if [ ${#podlist[@]} -eq 0 ];
 	then
-		echo "No Pod found for Workflow from Service $serviceInstance in Namespace $namespace."
+		echo "No Pod found associated with Service $serviceInstance in Namespace $namespace."
 	else
         for p in "${podlist[@]}"; do
             python ./plugins/crlogs.py $p $namespace
@@ -16,14 +16,14 @@ function podLogs {
 }
 
 if (( $# < 1 )); then
-    echo "kubectl grouplogs workflow Service <Service Instance name> [<Namespace>]"
+    echo "kubectl grouplogs service <Service Instance name> [<Namespace>]"
     exit 0
 fi
 
-serviceInstance=$2
+serviceInstance=$1
 namespace="default"
-if [ $# = 3 ]; then
-   namespace=$3 # If namespace is passed; use that
+if [ $# = 2 ]; then
+   namespace=$2 # If namespace is passed; use that
 fi
 
 IFS=$'\n' # field separator: '\n'
