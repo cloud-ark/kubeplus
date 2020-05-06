@@ -1,16 +1,16 @@
 #!/bin/bash
 
-if (( $# < 2 )); then
-    echo "kubectl metrics workflow Service <Service Instance name> [<Namespace>]"
+if (( $# < 1 )); then
+    echo "kubectl metrics service <Service Instance name> [<Namespace>]"
     exit 0
 fi
 
-serviceinstance=$2
+serviceinstance=$1
 namespace="default"
 
 # If namespace is passed; use that                                                                                             
-if [ $# = 3 ]; then
-   namespace=$3
+if [ $# = 2 ]; then
+   namespace=$2
 fi
 
 #echo "Namespace:$namespace"
