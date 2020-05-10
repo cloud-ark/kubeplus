@@ -400,6 +400,58 @@ class CRMetrics(object):
 						pod_list.append(pod)
 		return pod_list
 
+	def _get_pods_for_helmrelease(self, release_name):
+		cmd = "helm get " + release_name
+		try:
+			output = subprocess.Popen(cmd,
+									  stdout=subprocess.PIPE,
+									  stderr=subprocess.PIPE,
+									  shell=True).communicate()[0]
+			output = output.strip("\n")
+		except Exception as e:
+			print(e)
+
+		pod_list_to_return = []
+		kind = ''
+		instance = ''
+		namespace = ''
+		reachedEnd = False
+		for line in output.split("\n"):
+			allparts = line.split(" ")
+			parts = [i for i in allparts if i]
+			if parts:
+				if parts[0].startswith("apiVersion:"):
+					kind = ''
+					instance = ''
+					namespace = ''
+					reachedEnd = False
+					processed = False
+				if parts[0].startswith("kind:"):
+					kind = parts[1]
+				if parts[0].startswith("name:"):
+					instance = parts[1]
+				if parts[0].startswith("spec:"):
+					reachedEnd = True
+					if namespace == '':
+						namespace = 'default'
+				if parts[0].startswith("namespace:") and not reachedEnd:
+					namespace = parts[1]
+				if kind not in ['ConfigMap', 'CustomResourceDefinition', 'ClusterRole', 'ClusterRoleBinding']:
+					if kind != '' and instance != '' and namespace != '' and not processed:
+						processed = True
+						#print("Kind:"+ kind + " Namespace:" + namespace + " Instance:" + instance)
+						composition = self._get_composition(kind, instance, namespace)
+						pod_list = self._parse_number_of_pods(composition)
+						if pod_list:
+							#print(pod_list)
+							for p in pod_list:
+								pod = {}
+								pod['Name'] = p['Name']
+								pod['Namespace'] = p['Namespace']
+								pod_list_to_return.append(pod)
+		return pod_list_to_return
+
+
 	def get_metrics_creator_account(self, account):
 		# 1. Get all custom resource instances - their count
 		all_cpu = 0
@@ -463,21 +515,23 @@ class CRMetrics(object):
 
 		composition = self._get_composition(custom_resource, custom_res_instance, namespace)
 		num_of_resources = self._parse_number_of_resources(composition)
-		print(" Number of Sub-resources: " + str(num_of_resources))
+		print("Kubernetes Resources consumed:")
+		print("    Number of Sub-resources: " + str(num_of_resources))
 
 		pod_list = self._parse_number_of_pods(composition)
-		print(" Number of Pods: " + str(len(pod_list)))
+		print("    Number of Pods: " + str(len(pod_list)))
 
 		num_of_containers = self._parse_number_of_containers(pod_list)
-		print(" Number of Containers: " + str(num_of_containers))
+		print("    Number of Containers: " + str(num_of_containers))
 
 		num_of_hosts = self._parse_number_of_hosts(pod_list)
-		print(" Number of Nodes: " + str(num_of_hosts))
+		print("    Number of Nodes: " + str(num_of_hosts))
 
 		cpu, memory = self._get_cpu_memory_usage(pod_list)
 
-		print("Total CPU(cores): " + str(cpu) + "m")
-		print("Total MEMORY(bytes): " + str(memory) + "Mi")
+		print("Underlying Physical Resoures consumed:")
+		print("    Total CPU(cores): " + str(cpu) + "m")
+		print("    Total MEMORY(bytes): " + str(memory) + "Mi")
 		print("---------------------------------------------------------- ")
 
 
@@ -485,24 +539,47 @@ class CRMetrics(object):
 
 		print("---------------------------------------------------------- ")
 		pod_list = self._get_pods_for_service(service_name, namespace)
-		print(" Number of Pods: " + str(len(pod_list)))
+		print("Kubernetes Resources consumed:")
+		print("    Number of Pods: " + str(len(pod_list)))
 
 		num_of_containers = self._parse_number_of_containers(pod_list)
-		print(" Number of Containers: " + str(num_of_containers))
+		print("    Number of Containers: " + str(num_of_containers))
 
 		num_of_hosts = self._parse_number_of_hosts(pod_list)
-		print(" Number of Nodes: " + str(num_of_hosts))
+		print("    Number of Nodes: " + str(num_of_hosts))
 
 		cpu, memory = self._get_cpu_memory_usage(pod_list)
 
-		print("Total CPU(cores): " + str(cpu) + "m")
-		print("Total MEMORY(bytes): " + str(memory) + "Mi")
+		print("Underlying Physical Resoures consumed:")
+		print("    Total CPU(cores): " + str(cpu) + "m")
+		print("    Total MEMORY(bytes): " + str(memory) + "Mi")
+		print("---------------------------------------------------------- ")
+
+
+	def get_metrics_helmrelease(self, release_name):
+
+		print("---------------------------------------------------------- ")
+		pod_list = self._get_pods_for_helmrelease(release_name)
+		print("Kubernetes Resources consumed:")
+		print("    Number of Pods: " + str(len(pod_list)))
+
+		num_of_containers = self._parse_number_of_containers(pod_list)
+		print("    Number of Containers: " + str(num_of_containers))
+
+		num_of_hosts = self._parse_number_of_hosts(pod_list)
+		print("    Number of Nodes: " + str(num_of_hosts))
+
+		cpu, memory = self._get_cpu_memory_usage(pod_list)
+
+		print("Underlying Physical Resoures consumed:")
+		print("    Total CPU(cores): " + str(cpu) + "m")
+		print("    Total MEMORY(bytes): " + str(memory) + "Mi")
 		print("---------------------------------------------------------- ")
 
 
 
 if __name__ == '__main__':
-	crLogs = CRMetrics()
+	crMetrics = CRMetrics()
 
 	res_type = sys.argv[1]
 
@@ -510,13 +587,17 @@ if __name__ == '__main__':
 		custom_resource = sys.argv[2]
 		custom_resource_instance = sys.argv[3]
 		namespace = sys.argv[4]
-		crLogs.get_metrics_cr(custom_resource, custom_resource_instance, namespace)
+		crMetrics.get_metrics_cr(custom_resource, custom_resource_instance, namespace)
 	
 	if res_type == "account":
 		creator_account = sys.argv[2]
-		crLogs.get_metrics_creator_account(creator_account)
+		crMetrics.get_metrics_creator_account(creator_account)
 
 	if res_type == "service":
 		service_name = sys.argv[2]
 		namespace = sys.argv[3]
-		crLogs.get_metrics_service(service_name, namespace)
+		crMetrics.get_metrics_service(service_name, namespace)
+
+	if res_type == "helmrelease":
+		release_name = sys.argv[2]
+		crMetrics.get_metrics_helmrelease(release_name)

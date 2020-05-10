@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if (( $# < 1 )); then
+    echo "kubectl metrics helmrelease releasename"
+    exit 0
+fi
+
+releasename=$1
+
+python ./plugins/crmetrics.py "helmrelease" $releasename
