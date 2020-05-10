@@ -45,6 +45,7 @@ KubePlus offers following kubectl commands:
 - ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and Memory).
 - ``kubectl metrics service``: Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
 - ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs on-cluster component.
+- ``kubectl metrics helmrelease``: Provides CPU/Memory metrics for all the Pods that are part of a Helm release. 
 - ``kubectl metrics workflow`` (upcoming): Provides CPU/Memory metrics for all the Pods that are descendants resources modeled using PlatformWorkflow CRD. 
 
 **5. kubectl grouplogs**
