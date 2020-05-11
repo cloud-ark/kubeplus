@@ -139,18 +139,27 @@ class CRMetrics(object):
 			init_containers = json_output['spec']['containers']
 			#print(len(init_containers))
 			num_of_containers = num_of_containers + len(init_containers)
-
 		return num_of_containers
 
-	def _get_cpu_memory_usage(self, pod_list):
-		pod_usage_map = {}
-
-		total_cpu = 0
-		total_mem = 0
+	def _parse_persistentvolumeclaims(self, pod_list, namespace):
+		total_storage = 0
+		pvc_list = []
 		for pod in pod_list:
-			#print(pod['Name'])
-			cmd = "kubectl top pods " +  pod['Name'] + ' -n ' + pod['Namespace'] + " | grep -v NAME"
-
+			json_output = self._get_pod(pod)
+			if json_output['spec']['volumes']:
+				volumes = json_output['spec']['volumes']
+				for v in volumes:
+					#print(v)
+					if 'persistentVolumeClaim' in v:
+						pvc = v['persistentVolumeClaim']
+						pvc_name = pvc['claimName']
+						#print(pvc_name)
+						if pvc_name not in pvc_list:
+							pvc_list.append(pvc_name) 
+		#print('PersistentVolumeClaims')
+		#print(pvc_list)
+		for pvc in pvc_list:
+			cmd = "kubectl get pvc " + pvc + ' -n ' + namespace + " -o json"
 			out = ''
 			try:
 				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -158,31 +167,52 @@ class CRMetrics(object):
 				out = out.strip("\n")
 			except Exception as e:
 				print(e)
+			if out != '':
+				json_output = json.loads(out)
+				if 'status' in json_output:
+					phase = json_output['status']['phase']
+					if phase == "Bound":
+						if 'capacity' in json_output['status']:
+							capacity = json_output['status']['capacity']
+							storage = capacity['storage']
+							#print("Storage:" + storage)
+							temp = re.findall(r'\d+', storage) 
+							storage_nums = map(int, temp)
+							#print(storage_nums)
+							total_storage = total_storage + storage_nums[0]
+		return total_storage
 
+	def _get_cpu_memory_usage(self, pod_list):
+		pod_usage_map = {}
+		total_cpu = 0
+		total_mem = 0
+		for pod in pod_list:
+			#print(pod['Name'])
+			cmd = "kubectl top pods " +  pod['Name'] + ' -n ' + pod['Namespace'] + " | grep -v NAME"
+			out = ''
+			try:
+				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+									   stderr=subprocess.PIPE, shell=True).communicate()[0]
+				out = out.strip("\n")
+			except Exception as e:
+				print(e)
 			parts_trimmed = []
 			for line in out.split('\n'):
 				parts = line.split(" ")
- 
 				for x in parts: 
 					if x != "":
 						parts_trimmed.append(x)
-
 			if parts_trimmed:
-
 				temp = re.findall(r'\d+', parts_trimmed[1]) 
 				cpu_nums = list(map(int, temp)) 
 				#print(cpu_nums)
-
 				temp = re.findall(r'\d+', parts_trimmed[2]) 
 				mem_nums = list(map(int, temp)) 
 				#print(mem_nums)
-
 				total_cpu = total_cpu + cpu_nums[0]
 				#print(total_cpu)
-
 				total_mem = total_mem + mem_nums[0]
 				#print(total_mem)
-
 		return total_cpu, total_mem
 
 	def _get_cpu_memory_usage_rootres(self, kind, cmd, instance, namespace, account):
@@ -507,7 +537,6 @@ class CRMetrics(object):
 
 
 	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace):
-
 		print("---------------------------------------------------------- ")
 		accountidentity = self._get_identity(custom_resource, custom_res_instance, namespace)
 		print(" Creator Account Identity: " + accountidentity)
@@ -524,6 +553,8 @@ class CRMetrics(object):
 		num_of_containers = self._parse_number_of_containers(pod_list)
 		print("    Number of Containers: " + str(num_of_containers))
 
+		total_storage = self._parse_persistentvolumeclaims(pod_list, namespace)
+
 		num_of_hosts = self._parse_number_of_hosts(pod_list)
 		print("    Number of Nodes: " + str(num_of_hosts))
 
@@ -532,11 +563,10 @@ class CRMetrics(object):
 		print("Underlying Physical Resoures consumed:")
 		print("    Total CPU(cores): " + str(cpu) + "m")
 		print("    Total MEMORY(bytes): " + str(memory) + "Mi")
+		print("    Total Storage(bytes): " + str(total_storage) + "Gi")
 		print("---------------------------------------------------------- ")
 
-
 	def get_metrics_service(self, service_name, namespace):
-
 		print("---------------------------------------------------------- ")
 		pod_list = self._get_pods_for_service(service_name, namespace)
 		print("Kubernetes Resources consumed:")
@@ -545,6 +575,8 @@ class CRMetrics(object):
 		num_of_containers = self._parse_number_of_containers(pod_list)
 		print("    Number of Containers: " + str(num_of_containers))
 
+		total_storage = self._parse_persistentvolumeclaims(pod_list, namespace)
+
 		num_of_hosts = self._parse_number_of_hosts(pod_list)
 		print("    Number of Nodes: " + str(num_of_hosts))
 
@@ -553,11 +585,10 @@ class CRMetrics(object):
 		print("Underlying Physical Resoures consumed:")
 		print("    Total CPU(cores): " + str(cpu) + "m")
 		print("    Total MEMORY(bytes): " + str(memory) + "Mi")
+		print("    Total Storage(bytes): " + str(total_storage) + "Gi")
 		print("---------------------------------------------------------- ")
 
-
 	def get_metrics_helmrelease(self, release_name):
-
 		print("---------------------------------------------------------- ")
 		pod_list = self._get_pods_for_helmrelease(release_name)
 		print("Kubernetes Resources consumed:")
@@ -566,6 +597,10 @@ class CRMetrics(object):
 		num_of_containers = self._parse_number_of_containers(pod_list)
 		print("    Number of Containers: " + str(num_of_containers))
 
+		# TODO: What should be the namespace parameter for Helm releases?
+		# Currently setting to "default"
+		total_storage = self._parse_persistentvolumeclaims(pod_list, "default")
+
 		num_of_hosts = self._parse_number_of_hosts(pod_list)
 		print("    Number of Nodes: " + str(num_of_hosts))
 
@@ -574,8 +609,8 @@ class CRMetrics(object):
 		print("Underlying Physical Resoures consumed:")
 		print("    Total CPU(cores): " + str(cpu) + "m")
 		print("    Total MEMORY(bytes): " + str(memory) + "Mi")
+		print("    Total Storage(bytes): " + str(total_storage) + "Gi")
 		print("---------------------------------------------------------- ")
-
 
 
 if __name__ == '__main__':
