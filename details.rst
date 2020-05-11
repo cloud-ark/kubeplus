@@ -109,6 +109,7 @@ The 'composition' annotation is used to define Kubernetes's built-in resources t
 
 
 .. code-block:: bash
+
    platform-as-code/annotation-relationship
    platform-as-code/label-relationship
    platform-as-code/specproperty-relationship
