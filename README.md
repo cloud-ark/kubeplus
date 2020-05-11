@@ -36,8 +36,8 @@ KubePlus offers following kubectl commands:
 
 **3. kubectl connections**
 
+- ``kubectl connections cr``: Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties.
 - ``kubectl connections service``: Provides information about relationships between a Service object and all the downstream Pods related to it.
-- ``kubectl connections cr``(upcoming): Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties.
 - ``kubectl connections workflow`` (upcoming): Provides information about relationships modeled using PlatformWorkflow CRD.
 
 **4. kubectl metrics**
