@@ -2,8 +2,7 @@
 KubePlus API Add-on
 =======================
 
-KubePlus API add-on simplifies building workflow automation using Kubernetes Custom APIs/ Resources by extending the Kubernetes resource graph and maintaining all implicit and explicit relationships of Custom Resources created through labels, annotations, spec properties or sub-resources. This Custom Resource relationship graph is then used for improved visibility, monitoring and debuggability of Custom Resources. KubePlus API add-on additionally allows you to define workflow level Kubernetes Resource dependencies and then allows applying certain security or robustness policies to all these Resources together.
-It brings uniformity in using variety of Custom APIs/Resources and allows users to discover and use them more efficiently and visualize their dependencies with other APIs/Resources for debugging and monitoring purpose. 
+KubePlus API add-on simplifies building Kubernetes-native workflow automation using Kubernetes Custom APIs/ Resources by extending the Kubernetes resource graph and maintaining all implicit and explicit relationships of Custom Resources created through labels, annotations, spec properties or sub-resources. This Custom Resource relationship graph is then used for improved visibility, monitoring and debuggability of workflows. KubePlus API add-on additionally allows you to define workflow level Kubernetes resource dependencies and allows applying security or robustness policies to all the workflow resources together. 
 
 This tool is being developed as a part of our  `Platform as Code practice`_.
 
@@ -14,83 +13,41 @@ This tool is being developed as a part of our  `Platform as Code practice`_.
 Details
 --------
 
-Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus API add-on simplifies creation of platform workflows leveraging these Custom Resources.
+Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus API add-on simplifies creation of Kubernertes-native platform workflows leveraging these Custom Resources.
 
 .. image:: ./docs/KubePlus-workflow.jpg
    :scale: 15%
    :align: center
 
-The main benefit of using KubePlus to application/microservice developers are:
+The main benefit of using KubePlus to DevOps engineers/application developers are:
 
 - easily discover static and runtime information about Custom Resources available in their cluster.
-- Aggregate resources at workflow level to ensure robustness and security for the end to end workflow.
+- aggregate Custom and built-in resources to build secure and robust platform workflows.
 
-KubePlus API Add-on provides discovery endpoints, binding functions, and an orchestration mechanism to enable application developers to define platform workflows using Kubernetes Custom and built-in resources.
+KubePlus API Add-on provides discovery commands, binding functions, and an orchestration mechanism to enable DevOps engineers/application developers to define Kubernetes-native platform workflows using Kubernetes Custom and built-in resources.
 
-You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
+.. You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
 
 .. _Operators: https://coreos.com/operators/
 
 .. _as Code: https://cloudark.io/platform-as-code
 
 
+.. KubePlus API add-on Components
+.. -------------------------------
+   .. .. image:: ./docs/KubePlus-API-Addon-Components.png
+..   :height: 100px
+..   :width: 200 px
+..   :align: center
+
+
 KubePlus API add-on Components
 -------------------------------
-
-.. image:: ./docs/KubePlus-API-Addon-Components.png
-   :height: 100px
-   :width: 200 px
-   :align: center
-
-Kubectl Endpoints
-------------------
-
-KubePlus API add-on offers following custom endpoints for static and runtime information discovery about Custom Resources:
-
-**man endpoint**
-
-.. code-block:: bash
-
-   kubectl get --raw "/apis/platform-as-code/v1/man"
-
-The man endpoint is used for obtaining static usage information about a Custom Resource. Here is an example
-of using 'man' endpoint for 'MysqlCluster' Custom Resource.
-
-.. image:: ./docs/kubectl-man-Moodle.png
-   :scale: 25%
-   :align: center
+KubePlus API add-on is made up of - Platform-as-Code Annotations, client-side kubectl plugins, and server-side components (binding functions and PlatformWorkflow CRD).
 
 
-**composition endpoint**
-
-.. code-block:: bash
-
-   kubectl get --raw "/apis/platform-as-code/v1/composition"
-
-The composition endpoint is used for obtaining runtime composition tree of Kubernetes built-in resources that are created by the Operator as part of handling a Custom Resource instance. Here is an example of using 'composition' endpoint on 'MysqlCluster' Custom Resource instance.
-
-.. image:: ./docs/kubectl-composition-moodle.png
-   :scale: 25%
-   :align: center
-
-**cr-relationships endpoint (upcoming)**
-
-.. code-block:: bash
-
-   kubectl get --raw "/apis/platform-as-code/v1/relationships"
-
-The cr-relationships endpoint is used for querying relationships of a Custom Resource Instance created through labels, annotations, spec properties or sub-resources. This endpoint is currently under development.
-
-We provide kubectl plugins for these endpoints. In order to use the plugins you need to add KubePlus folder to your PATH variable.
-
-.. code-block:: bash
-
-   $ export PATH=$PATH:`pwd`
-
-Once this is done, you can use following above mentioned kubectl commands. 
-
-Platform-as-Code annotations on CRD
-------------------------------------
+Platform-as-Code annotations
+-----------------------------
 
 In order to build and maintain Custom Resource relationship graph, KubePlus API add-on expects CRD packages to be updated with Platform-as-code annotations as described below. 
 
@@ -114,8 +71,7 @@ The 'composition' annotation is used to define Kubernetes's built-in resources t
    platform-as-code/label-relationship
    platform-as-code/specproperty-relationship
 
-Above annotations are used to declare annotation / label / spec-property based relationships that 
-instances of this Custom Resource can have with other Resources.  
+Above annotations are used to declare annotation / label / spec-property based relationships that instances of this Custom Resource can have with other Resources.  
 
 These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators
 in order to make Custom Resources discoverable and usable by application developers.
@@ -142,6 +98,33 @@ As an example, annotations on MysqlCluster Custom Resource Definition (CRD) are 
     scope: Namespaced
 
 
+Kubectl Plugins
+------------------
+
+KubePlus API add-on offers following kubectl plugins towards discovery and use of Custom Resources and obtaining insights into Kubernetes-native application.
+
+.. code-block:: bash
+
+   $ kubectl man cr
+   $ kubectl composition cr
+   $ kubectl connections cr
+   $ kubectl connections service
+   $ kubectl connections workflow
+   $ kubectl metrics cr
+   $ kubectl metrics service
+   $ kubectl metrics account
+   $ kubectl metrics helmrelease
+   $ kubectl metrics workflow
+   $ kubectl grouplogs cr
+   $ kubectl grouplogs service
+   $ kubectl grouplogs workflow
+
+In order to use these plugins you need to add KubePlus folder to your PATH variable.
+
+.. code-block:: bash
+
+   $ export PATH=$PATH:`pwd`/plugins
+
 
 Implicit and Explicit Relationships
 ------------------------------------
@@ -164,25 +147,20 @@ Here is how the ``Fn::ImportValue()`` function can be used in a Custom Resource 
    :scale: 10%
    :align: right
 
-In the above example the name of the ``Service`` object which is child of ``cluster1`` Custom Resource instance 
-and whose name contains the string ``master`` is discovered at runtime and that value is injected as the value of
-``mySQLServiceName`` attribute in the ``moodle1`` Custom Resource Spec.
-
+In the above example the name of the ``Service`` object which is child of ``cluster1`` Custom Resource instance and whose name contains the string ``master`` is discovered at runtime and that value is injected as the value of ``mySQLServiceName`` attribute in the ``moodle1`` Custom Resource Spec.
 
 .. code-block:: bash
 
    2. Fn::AddLabel(label, <Resource>)
 
-This function adds the specified label to the specified resource by resolving the resource name using runtime
-information in a cluster.
+This function adds the specified label to the specified resource by resolving the resource name using runtime information in a cluster.
 
 
 .. code-block:: bash
 
    3. Fn::AddAnnotation(annotation, <Resource>)
 
-This function adds the specified annotation to the specified resource by resolving the resource name using runtime
-information in a cluster.
+This function adds the specified annotation to the specified resource by resolving the resource name using runtime information in a cluster.
 
 
 The ``AddLabel`` and ``AddAnnotation`` functions should be defined as annotations on those Custom Resources that
@@ -204,16 +182,11 @@ Formal grammar of ``ImportValue``, ``AddLabel``, ``AddAnnotation`` functions is 
 Check our `slide deck`_ in the Kubernetes Community Meeting for more details of the above example.
 
 
-PlatformStack Operator
------------------------
-Creating workflows requires treating the set of resources representing the workflow as a unit. For this purpose, KubePlus provides a Custom Resource of its own - PlatformStack. This Custom Resource enables application developers to define all the resources in a workflow as a unit along with the inter-dependencies between them. The dependency information is used for ensuring robustness and security of the workflows including, preventing out-of-order creation of resources and ensuring that resources that are still in use cannot be deleted. This CRD is being updated to enable applying certain workflow level security or robustness guarantees to all resources involved. 
+PlatformWorkflow Operator
+--------------------------
+Creating workflows requires treating the set of resources representing the workflow as a unit. For this purpose, KubePlus provides a Custom Resource of its own - PlatformWorkflow. This Custom Resource enables application developers to define all the resources in a workflow as a unit along with the inter-dependencies between them. The dependency information is used for ensuring robustness and security of the workflows including, preventing out-of-order creation of resources and ensuring that resources that are still in use cannot be deleted. This CRD is being updated to enable applying certain workflow level security or robustness guarantees to all resources involved. 
 
-PlatformStack Operator does not actually deploy any resources defined in a workflow. Resource creation is done by application developers as usual using 'kubectl'.
-
-
-.. image:: ./docs/platform-stack1.png
-   :scale: 10%
-   :align: center
+PlatformWorkflow Operator does not actually deploy any resources defined in a workflow. Resource creation is done by application developers as usual using 'kubectl'.
 
 
 Getting started
@@ -231,7 +204,7 @@ Install KubePlus:
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
    $ ./script/deploy-kubeplus.sh
-   $ export PATH=$PATH:`pwd`
+   $ export PATH=$PATH:`pwd`/plugins/
 
 
 Platform-as-Code examples:
@@ -262,10 +235,6 @@ Follow `contributing guidelines`_ to submit bug reports.
 
 .. _contributing guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md
 
-
-Status
--------
-Actively under development.
 
 
 KubePlus in Action
