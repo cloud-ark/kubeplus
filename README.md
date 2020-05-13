@@ -38,21 +38,19 @@ KubePlus offers following kubectl commands:
 
 - ``kubectl connections cr``: Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties.
 - ``kubectl connections service``: Provides information about relationships between a Service object and all the downstream Pods related to it.
-- ``kubectl connections workflow`` (upcoming): Provides information about relationships modeled using PlatformWorkflow CRD.
 
 **4. kubectl metrics**
 
 - ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and Memory).
 - ``kubectl metrics service``: Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
 - ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs on-cluster component.
-- ``kubectl metrics helmrelease``: Provides CPU/Memory metrics for all the Pods that are part of a Helm release. 
-- ``kubectl metrics workflow`` (upcoming): Provides CPU/Memory metrics for all the Pods that are descendants resources modeled using PlatformWorkflow CRD. 
+- ``kubectl metrics helmrelease``: Provides CPU/Memory metrics for all the Pods that are part of a Helm release.
 
 **5. kubectl grouplogs**
 
 - ``kubectl grouplogs cr``: Provides logs for all the containers of a Custom Resource instance.
 - ``kubectl grouplogs service``: Provides logs for all the containers of all the Pods that are related to a Service object.
-- ``kubectl grouplogs workflow`` (upcoming): Provides logs for all the containers of all the Pods that are part of the workflow defined modeled using PlatforkWorkflow CRD.
+- ``kubectl grouplogs helmrelease`` (upcoming): Provides logs for all the containers of all the Pods that are part of a Helm release.
 
 
 
