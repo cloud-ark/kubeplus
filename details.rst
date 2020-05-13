@@ -109,15 +109,13 @@ KubePlus API add-on offers following kubectl plugins towards discovery and use o
    $ kubectl composition cr
    $ kubectl connections cr
    $ kubectl connections service
-   $ kubectl connections workflow
    $ kubectl metrics cr
    $ kubectl metrics service
    $ kubectl metrics account
    $ kubectl metrics helmrelease
-   $ kubectl metrics workflow
    $ kubectl grouplogs cr
    $ kubectl grouplogs service
-   $ kubectl grouplogs workflow
+   $ kubectl grouplogs helmrelease
 
 In order to use these plugins you need to add KubePlus folder to your PATH variable.
 
