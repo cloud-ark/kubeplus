@@ -2,7 +2,10 @@ import subprocess
 import sys
 import json
 import re
+#import yaml
 import platform
+import pprint
+import time
 
 class CRMetrics(object):
 
@@ -177,7 +180,7 @@ class CRMetrics(object):
 							storage = capacity['storage']
 							#print("Storage:" + storage)
 							temp = re.findall(r'\d+', storage) 
-							storage_nums = map(int, temp)
+							storage_nums = list(map(int, temp))
 							#print(storage_nums)
 							total_storage = total_storage + storage_nums[0]
 		return total_storage
@@ -430,7 +433,7 @@ class CRMetrics(object):
 						pod_list.append(pod)
 		return pod_list
 
-	def _get_pods_for_helmrelease(self, release_name):
+	def _get_pods_for_helmrelease_2(self, release_name):
 		cmd = "helm get " + release_name
 		try:
 			output = subprocess.Popen(cmd,
@@ -441,6 +444,68 @@ class CRMetrics(object):
 		except Exception as e:
 			print(e)
 
+		pod_list_to_return = []
+
+		output1 = output.decode("utf-8")
+		#print(output1)
+		processed_output = []
+		start = False
+		for line in output1.split("\n"):
+			if not start and line == "---":
+				start = True
+			if start:
+				processed_output.append(line)
+				processed_output.append("\n")
+
+		#print("CBC")
+		#print(processed_output)
+		yamls = ''.join(processed_output)
+		#print("DEF")
+		#print(yamls)
+		yamls_bytes = yamls.encode()
+		#print("EFG")
+		#print(yamls_bytes)
+
+		for project in yaml.load_all(yamls_bytes):
+			#pprint.pprint(project)
+			if project != None:
+				kind = project['kind']
+				name = ''
+				namespace = 'default'
+				if 'metadata' in project:
+					if 'name' in project['metadata']:
+						name = project['metadata']['name']
+					if 'namespace' in project['metadata']:
+						name = project['metadata']['namespace']
+
+				if kind not in ['ConfigMap', 'CustomResourceDefinition', 'ClusterRole', 'ClusterRoleBinding']:
+					if kind != '' and name != '' and namespace != '':
+						#print("Kind:"+ kind + " Namespace:" + namespace + " Instance:" + instance)
+						composition = self._get_composition(kind, name, namespace)
+						pod_list = self._parse_number_of_pods(composition)
+						if pod_list:
+							#print(pod_list)
+							for p in pod_list:
+								pod = {}
+								pod['Name'] = p['Name']
+								pod['Namespace'] = p['Namespace']
+								pod_list_to_return.append(pod)
+		return pod_list_to_return
+
+	def _get_pods_for_helmrelease(self, release_name):
+		cmd = "helm get manifest " + release_name
+		try:
+			output = subprocess.Popen(cmd,
+									  stdout=subprocess.PIPE,
+									  stderr=subprocess.PIPE,
+									  shell=True).communicate()[0]
+			output = output.strip("\n")
+		except Exception as e:
+			print(e)
+
+		# TODO: Include all the kinds that do not create a Pod.
+		skipKinds = ['ConfigMap', 'CustomResourceDefinition', 'ClusterRole', 'ClusterRoleBinding',
+					 'Service', 'ServiceAccount', 'Role', 'RoleBinding']
 		pod_list_to_return = []
 		kind = ''
 		instance = ''
@@ -466,12 +531,21 @@ class CRMetrics(object):
 						namespace = 'default'
 				if parts[0].startswith("namespace:") and not reachedEnd:
 					namespace = parts[1]
-				if kind not in ['ConfigMap', 'CustomResourceDefinition', 'ClusterRole', 'ClusterRoleBinding']:
+
+				if kind not in skipKinds:
 					if kind != '' and instance != '' and namespace != '' and not processed:
 						processed = True
 						#print("Kind:"+ kind + " Namespace:" + namespace + " Instance:" + instance)
+						time1 = int(round(time.time() * 1000))
 						composition = self._get_composition(kind, instance, namespace)
+						time2 = int(round(time.time() * 1000))
+						#print("Composition time:" + str(time2-time1))
+
+						time3 = int(round(time.time() * 1000))
 						pod_list = self._parse_number_of_pods(composition)
+						time4 = int(round(time.time() * 1000))
+						#print("Pod list time:" + str(time4-time3))
+
 						if pod_list:
 							#print(pod_list)
 							for p in pod_list:
@@ -594,15 +668,24 @@ class CRMetrics(object):
 		print("Kubernetes Resources consumed:")
 		print("    Number of Pods: " + str(len(pod_list)))
 
+		time1 = int(round(time.time() * 1000))
 		num_of_containers = self._parse_number_of_containers(pod_list)
+		time2 = int(round(time.time() * 1000))
 		print("    Number of Containers: " + str(num_of_containers))
+		#print("      time:" + str(time2-time1))
 
 		# TODO: What should be the namespace parameter for Helm releases?
 		# Currently setting to "default"
+		time1 = int(round(time.time() * 1000))
 		total_storage = self._parse_persistentvolumeclaims(pod_list, "default")
+		time2 = int(round(time.time() * 1000))
+		#print("      pvc time:" + str(time2-time1))
 
+		time1 = int(round(time.time() * 1000))
 		num_of_hosts = self._parse_number_of_hosts(pod_list)
+		time2 = int(round(time.time() * 1000))
 		print("    Number of Nodes: " + str(num_of_hosts))
+		#print("      time:" + str(time2-time1))
 
 		cpu, memory = self._get_cpu_memory_usage(pod_list)
 
