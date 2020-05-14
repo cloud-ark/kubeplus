@@ -1,0 +1,6 @@
+#!/bin/bash
+
+echo "kubectl metrics cr"
+echo "kubectl metrics service"
+echo "kubectl metrics helmrelease"
+echo "kubectl metrics account"

@@ -1,7 +1,22 @@
 #!/bin/bash
 
 if (( $# < 1 )); then
-    echo "Coming soon.."
     echo "kubectl connections cr <Custom Resource Kind> <Custom Resource Instance> [<Namespace>]"
     exit 0
 fi
+
+kind=$1
+instance=$2
+namespace="default"
+if [ $# = 3 ]; then
+   namespace=$3 # If namespace is passed; use that                                                                             
+fi
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    ./plugins/kubediscovery-macos connections $kind $instance $namespace
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    ./plugins/kubediscovery-linux connections $kind $instance $namespace
+else
+        echo "$OSTYPE not supported."
+fi
+
