@@ -1,9 +1,19 @@
 #!/bin/bash
 
-if (( $# < 1 )); then
+if (( $# < 0 )); then
     echo "kubectl man <Custom Resource>"
     exit 0
 fi
 
-echo "Custom Resource: $1"
-kubectl get --raw "/apis/platform-as-code/v1/man?kind=$1" 
+#echo "Custom Resource: $1"
+kind=$1
+#kubectl get --raw "/apis/platform-as-code/v1/man?kind=$1"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	./plugins/kubediscovery-macos man $kind
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+	./plugins/kubediscovery-linux man $kind
+else 
+	echo "$OSTYPE not supported."
+fi
+
+
