@@ -2,6 +2,7 @@ import subprocess
 import sys
 import json
 import re
+import os
 #import yaml
 import platform
 import pprint
@@ -41,11 +42,12 @@ class CRMetrics(object):
 		#full_cmd = 'kubectl get --raw ' + cmd
 
 		platf = platform.system()
+		kubeplus_home = os.getenv('KUBEPLUS_HOME')
 		cmd = ''
 		if platf == "Darwin":
-			cmd = './plugins/kubediscovery-macos composition ' + custom_resource + ' ' + custom_res_instance + ' ' + namespace
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos composition ' + custom_resource + ' ' + custom_res_instance + ' ' + namespace
 		if platf == "Linux":
-			cmd = './plugins/kubediscovery-linux composition ' + custom_resource + ' ' + custom_res_instance + ' ' + namespace
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux composition ' + custom_resource + ' ' + custom_res_instance + ' ' + namespace
 
 		out = ''
 		try:
@@ -240,7 +242,9 @@ class CRMetrics(object):
 
 		if account_identity == account:
 			count = count + 1
-			composition = self._get_composition(kind, instance, namespace)				
+			composition = self._get_composition(kind, instance, namespace)
+			#print("Composition:\n")
+			#print(composition)		
 			pod_list = self._parse_number_of_pods(composition)
 			#print(" Number of Pods: " + str(len(pod_list)))
 
@@ -386,28 +390,35 @@ class CRMetrics(object):
 		except Exception as e:
 			print(e)
 
+		#print("Instances:\n" + instances)
+		if instances == 'No resources found.':
+			return total_cpu, total_mem, total_count
+
 		for line in instances.split("\n"):
-			parts = line.split(" ")
-			namespace = parts[0]
-			instance = parts[1]
+			#print("line:" + line)
+			if line != '':
+				parts = line.split(" ")
+				namespace = parts[0]
+				instance = parts[1]
 
-			cmd1 = 'kubectl get ' + kind + ' ' + instance + ' -n ' + namespace + ' -o json'
-			cpu, memory, count = self._get_cpu_memory_usage_rootres(kind, cmd1, instance, namespace, account)
+				cmd1 = 'kubectl get ' + kind + ' ' + instance + ' -n ' + namespace + ' -o json'
+				cpu, memory, count = self._get_cpu_memory_usage_rootres(kind, cmd1, instance, namespace, account)
 
-			total_cpu = total_cpu + cpu
-			total_mem = total_mem + memory
-			total_count = total_count + count
+				total_cpu = total_cpu + cpu
+				total_mem = total_mem + memory
+				total_count = total_count + count
 
 		return total_cpu, total_mem, total_count
 
 	def _get_pods_for_service(self, service_name, namespace):
 		pod_list = []
 		platf = platform.system()
+		kubeplus_home = os.getenv('KUBEPLUS_HOME')
 		cmd = ''
 		if platf == "Darwin":
-			cmd = './plugins/kubediscovery-macos connections Service ' + service_name + ' ' + namespace
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Service ' + service_name + ' ' + namespace
 		if platf == "Linux":
-			cmd = './plugins/kubediscovery-linux connections Service ' + service_name + ' ' + namespace
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections Service ' + service_name + ' ' + namespace
 
 		if cmd:
 			output = ''
@@ -599,15 +610,18 @@ class CRMetrics(object):
 		all_cpu = cr_cpu + ssets_cpu + rsets_cpu + dsets_cpu + rcsets_cpu + p_cpu
 		all_mem = cr_mem + ssets_mem + rsets_mem + dsets_mem + rcsets_mem + p_mem
 
-		print(" Number of Custom Resources: " + str(cr_count))
-		print(" Number of Deployments: " + str(dep_count))
-		print(" Number of StatefulSets: " + str(ss_count))
-		print(" Number of ReplicaSets: " + str(rsets_count))
-		print(" Number of DaemonSets: " + str(dsets_count))
-		print(" Number of ReplicationControllers: " + str(rcsets_count))
-		print(" Number of Pods: " + str(p_count))
-		print("Total CPU(cores): " + str(all_cpu) + "m")
-		print("Total MEMORY(bytes): " + str(all_mem) + "Mi")
+		print("Kubernetes Resources consumed:")
+		print("    Number of Custom Resources: " + str(cr_count))
+		print("    Number of Deployments: " + str(dep_count))
+		print("    Number of StatefulSets: " + str(ss_count))
+		print("    Number of ReplicaSets: " + str(rsets_count))
+		print("    Number of DaemonSets: " + str(dsets_count))
+		print("    Number of ReplicationControllers: " + str(rcsets_count))
+		print("    Number of Pods: " + str(p_count))
+		print("Underlying Physical Resoures consumed:")
+		print("    Total CPU(cores): " + str(all_cpu) + "m")
+		print("    Total MEMORY(bytes): " + str(all_mem) + "Mi")
+		print("    Total Storage(bytes): (Upcoming)")
 
 
 	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace):

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Delete KubePlus API Server
-kubectl delete -f ../deploy/
+# kubectl delete -f ../deploy/
 
 # Delete KubePlus PlatformStack Operator
 kubectl delete -f ../platform-operator/artifacts/deployment/

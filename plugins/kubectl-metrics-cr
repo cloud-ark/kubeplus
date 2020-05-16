@@ -14,4 +14,4 @@ if [ $# = 3 ]; then
    namespace=$3
 fi
 
-python ./plugins/crmetrics.py "cr" $customres $instance $namespace
+python /$KUBEPLUS_HOME/plugins/crmetrics.py "cr" $customres $instance $namespace

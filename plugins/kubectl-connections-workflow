@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "Upcoming..."
+exit 0
+
 if (( $# < 1 )); then
     echo "kubectl connections workflow <PlatformWorkflow Instance name> [<Namespace>]"
     exit 0
@@ -12,9 +15,9 @@ if [ $# = 2 ]; then
 fi
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-	./plugins/kubediscovery-macos connections PlatformWorkflow $instance $namespace
+	/$KUBEPLUS_HOME/plugins/kubediscovery-macos connections PlatformWorkflow $instance $namespace
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-	./plugins/kubediscovery-linux connections PlatformWorkflow $instance $namespace
+	/$KUBEPLUS_HOME/plugins/kubediscovery-linux connections PlatformWorkflow $instance $namespace
 else
 	echo "$OSTYPE not supported."
 fi
