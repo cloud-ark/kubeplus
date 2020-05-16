@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if (( $# < 1 )); then
-    echo "kubectl metrics helmrelease releasename"
+    echo "kubectl metrics helmrelease <releasename>"
     exit 0
 fi
 

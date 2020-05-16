@@ -24,10 +24,10 @@ instance=$2
 #echo "PodList: $podlist"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    podlist=(`./plugins/kubediscovery-macos composition $kind $instance $namespace | python -m json.tool | grep -B 1 -A 4 Pod | grep Name | grep -v Namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`)
+    podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-macos composition $kind $instance $namespace | python -m json.tool | grep -B 1 -A 4 Pod | grep Name | grep -v Namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`)
 
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    podlist=(`./plugins/kubediscovery-linux composition $kind $instance $namespace | python -m json.tool | grep -B 1 -A 4 Pod | grep Name | grep -v Namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`)
+    podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-linux composition $kind $instance $namespace | python -m json.tool | grep -B 1 -A 4 Pod | grep Name | grep -v Namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`)
    
 else
         echo "$OSTYPE not supported."
@@ -41,6 +41,6 @@ else
         #echo "Pods for Custom Resource $1 named $2 in Namespace $namespace."
         #for i in "${podlist[@]}"; do echo "$i"; done
         for p in "${podlist[@]}"; do
-            python ./plugins/crlogs.py $p $namespace
+            python $KUBEPLUS_HOME/plugins/crlogs.py $p $namespace
         done;
 fi

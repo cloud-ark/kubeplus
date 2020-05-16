@@ -9,9 +9,9 @@ fi
 kind=$1
 #kubectl get --raw "/apis/platform-as-code/v1/man?kind=$1"
 if [[ "$OSTYPE" == "darwin"* ]]; then
-	./plugins/kubediscovery-macos man $kind
+	/$KUBEPLUS_HOME/plugins/kubediscovery-macos man $kind
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-	./plugins/kubediscovery-linux man $kind
+	/$KUBEPLUS_HOME/plugins/kubediscovery-linux man $kind
 else 
 	echo "$OSTYPE not supported."
 fi
