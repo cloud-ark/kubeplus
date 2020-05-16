@@ -60,10 +60,8 @@ Steps:
    - kubectl describe customresourcedefinitions moodles.moodlecontroller.kubeplus
 
 9) Find more information like how-to use, Spec properties, etc. for each Kind
-   - kubectl get --raw "/apis/platform-as-code/v1/man?kind=MysqlCluster"
-   - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
-   - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
-   - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
+   - kubectl man MysqlCluster
+   - kubectl man Moodle
 
 10) Deploy Moodle Platform Stack in namespace1
    - cd namespace1
@@ -85,7 +83,7 @@ Steps:
          Update moodle1-gke.yaml to include 'domainName' attribute, e.g.: 'domainName: www.moodle1.net'.
 
      - Find the name of the MysqlCluster 'master' Service corresponding to the cluster1 MysqlCluster.
-       - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=MysqlCluster&instance=cluster1&namespace=namespace1" | python -mjson.tool
+       - kubectl composition MysqlCluster cluster1 namespace1
 
      - Add that name in moodle1.yaml / moodle1-gke.yaml in Spec.mySQLServiceName field
 
@@ -131,7 +129,7 @@ Steps:
           - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
 11) Check the composition of Moodle instance
-    - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=namespace1" | python -mjson.tool
+    - kubectl composition Moodle moodle1 namespace1
 
 12) Deploy Moodle2 instance in namespace2
     - cd ../namespace2

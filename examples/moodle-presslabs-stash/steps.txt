@@ -78,7 +78,7 @@ Create Moodle instance and take its backups
 
    - Create MysqlCluster Custom Resource instance.
      - Find how to use MysqlCluster Custom Resource
-       - kubectl get --raw "/apis/platform-as-code/v1/man?kind=MysqlCluster"
+       - kubectl man MysqlCluster
 
      We are also going to configure periodic backups for this Cluster as part of the Spec definition.
      Setting up a MysqlCluster involves three things:
@@ -106,11 +106,7 @@ Create Moodle instance and take its backups
    - Once MysqlCluster pods are ready, deploy Moodle
 
      - Find how to use Moodle Custom Resource
-       - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
-
-     - Find out Spec properties of Moodle Custom Resource
-       - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
-       - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
+       - kubectl man Moodle
 
      - In the Moodle Spec you need to reference the MysqlCluster endpoints so that Moodle can
        use the MysqlCluster. The relevant Spec properties are: mysqlSQLServiceName, mysqlUserName, mysqlUserPassword. 
@@ -127,7 +123,7 @@ Create Moodle instance and take its backups
          Update moodle1-gke.yaml to include 'domainName' attribute, e.g.: 'domainName: www.moodle1.net'.
 
      - Find the name of the MysqlCluster 'master' Service corresponding to the cluster1 MysqlCluster.
-       - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=MysqlCluster&instance=cluster1&namespace=namespace1" | python -mjson.tool
+       - kubectl composition MysqlCluster cluster1 namespace1
 
      - Add that name in moodle1.yaml / moodle1-gke.yaml in Spec.mySQLServiceName field
 
@@ -181,16 +177,16 @@ Create Moodle instance and take its backups
 2) In order to take Volume backup we are going to use Custom Resources from the Stash Operator.
    Stash Operator defines the 'Restic' Custom Resource for this purpose.
    Find out how to use the Restic Custom Resource:
-   - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Restic"
+   - kubectl man Restic
 
    - Restic Custom Resource needs two things as input. First, the mount path of the Volume that needs to be backed up. 
    Second, the Deployment in which the Volume is mounted needs to be given some label and that label needs to be specified in the Restic Custom Resource's selector.
 
    - Use the 'man' endpoint for Moodle Kind to find the Volume mount path that the Moodle Operator uses for the Moodle data volume.
-    - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
+    - kubectl man Moodle
 
    - Use the 'composition' endpoint for moodle1 instance to find the name of the Deployment object that is created as part of creating moodle1 Custom Resource instance.
-    - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=namespace1" | python -mjson.tool
+    - kubectl composition Moodle moodle1 namespace1
 
 3) Add a label to the Moodle deployment
     - kubectl label -n namespace1 deployments moodle1 app=moodle-deploy
@@ -233,7 +229,7 @@ Recover a snapshot
 
 2) We are going to use the 'Recovery' Custom Resource from Stash Operator to recover the Volume.
    - Check how to use the 'Recovery' Custom Resource
-     - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Recovery"
+     - kubectl man Recovery
    The Stash Operator recovers the Volume in a PersistentVolumeClaim.
 
 3) Create PersistentVolumeClaim

@@ -47,10 +47,8 @@ Steps:
    - kubectl describe customresourcedefinitions moodles.moodlecontroller.kubeplus
 
 9) Find more information like how-to use, Spec properties, etc. for each Kind
-   - kubectl get --raw "/apis/platform-as-code/v1/man?kind=MysqlCluster"
-   - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
-   - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle"  | python -m json.tool
-   - kubectl get --raw "/apis/platform-as-code/v1/explain?kind=Moodle.MoodleSpec"  | python -m json.tool
+   - kubectl man MysqlCluster
+   - kubectl man Moodle
 
 10) Deploy Moodle Platform Stack in namespace1
    
@@ -93,8 +91,7 @@ Steps:
           - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
 11) Check the composition of Moodle instance
-    - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=default" | python -mjson.tool
-
+    - kubectl composition Moodle moodle1
 
 
 Troubleshooting

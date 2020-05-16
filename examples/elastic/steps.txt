@@ -45,14 +45,14 @@ Steps:
    - kubectl describe customresourcedefinitions elasticsearches.elasticsearch.k8s.elastic.co
 
 9) Check static information such as how-to use guide for the Elasticsearch Kind
-   - kubectl get --raw "/apis/platform-as-code/v1/man?kind=Elasticsearch"
+   - kubectl man Elasticsearch
 
 10) Deploy Elasticsearch instance
     - kubectl create -f es.yaml
 
 11) Check dynamic information such as the native Kubernetes resources that are created by the Operator
     for managing Elasticsearch custom resource instance
-    - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Elasticsearch&instance=quickstart"| python -mjson.tool
+    - kubectl composition Elasticsearch quickstart
 
 
 
