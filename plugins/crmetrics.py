@@ -18,18 +18,18 @@ class CRMetrics(object):
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									stderr=subprocess.PIPE, shell=True).communicate()[0]
-
-			json_output = json.loads(out)
-
-			if 'metadata' in json_output:
-				metadata = json_output['metadata']
-				#print(metadata)
-				if 'annotations' in json_output['metadata']:
-					annotations = json_output['metadata']['annotations']
-					#print(annotations)
-					if 'accountidentity' in json_output['metadata']['annotations']:
-						accountidentity = json_output['metadata']['annotations']['accountidentity']
-						#print(accountidentity)
+			out = out.decode('utf-8')
+			if out:
+				json_output = json.loads(out)
+				if json_output and 'metadata' in json_output:
+					metadata = json_output['metadata']
+					#print(metadata)
+					if 'annotations' in json_output['metadata']:
+						annotations = json_output['metadata']['annotations']
+						#print(annotations)
+						if 'accountidentity' in json_output['metadata']['annotations']:
+							accountidentity = json_output['metadata']['annotations']['accountidentity']
+							#print(accountidentity)
 
 		except Exception as e:
 			print(e)
@@ -53,10 +53,13 @@ class CRMetrics(object):
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 								   stderr=subprocess.PIPE, shell=True).communicate()[0]
+			out = out.decode('utf-8')
 		except Exception as e:
 			print(e)
 
-		json_output = json.loads(out)
+		json_output = {}
+		if out:
+			json_output = json.loads(out)
 
 		return json_output
 
@@ -110,6 +113,7 @@ class CRMetrics(object):
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 								   stderr=subprocess.PIPE, shell=True).communicate()[0]
+			out = out.decode('utf-8')
 		except Exception as e:
 			print(e)
 
@@ -135,15 +139,18 @@ class CRMetrics(object):
 	def _parse_number_of_containers(self, pod_list):
 		num_of_containers = 0
 
+		#print(pod_list)
 		for pod in pod_list:
 			json_output = self._get_pod(pod)
 			containers = json_output['spec']['containers']
+			#print(containers)
 			#print(len(containers))
 			num_of_containers = num_of_containers + len(containers)
 
-			init_containers = json_output['spec']['containers']
-			#print(len(init_containers))
-			num_of_containers = num_of_containers + len(init_containers)
+			if 'initContainers' in json_output['spec']:
+				init_containers = json_output['spec']['initContainers']
+				#print(len(init_containers))
+				num_of_containers = num_of_containers + len(init_containers)
 		return num_of_containers
 
 	def _parse_persistentvolumeclaims(self, pod_list, namespace):
@@ -169,6 +176,7 @@ class CRMetrics(object):
 			try:
 				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									   stderr=subprocess.PIPE, shell=True).communicate()[0]
+				out = out.decode('utf-8')
 				out = out.strip("\n")
 			except Exception as e:
 				print(e)
@@ -198,10 +206,12 @@ class CRMetrics(object):
 			try:
 				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									   stderr=subprocess.PIPE, shell=True).communicate()[0]
+				out = out.decode('utf-8')
 				out = out.strip("\n")
 			except Exception as e:
 				print(e)
 			parts_trimmed = []
+			#print(out)
 			for line in out.split('\n'):
 				parts = line.split(" ")
 				for x in parts: 
@@ -230,6 +240,7 @@ class CRMetrics(object):
 		try:
 			out1 = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									stderr=subprocess.PIPE, shell=True).communicate()[0]
+			out1 = out1.decode('utf-8')
 			json_output = json.loads(out1)
 			kind = json_output['kind']
 
@@ -269,6 +280,7 @@ class CRMetrics(object):
 		try:
 			crds = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									stderr=subprocess.PIPE, shell=True).communicate()[0]
+			crds = crds.decode('utf-8')
 			crds = crds.strip("\n")
 
 		except Exception as e:
@@ -281,6 +293,7 @@ class CRMetrics(object):
 			try:
 				out, err = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 										stderr=subprocess.PIPE, shell=True).communicate()
+				out = out.decode('utf-8')
 			except Exception as e:
 				print(e)
 
@@ -347,6 +360,7 @@ class CRMetrics(object):
 		try:
 			out, _ = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									stderr=subprocess.PIPE, shell=True).communicate()
+			out = out.decode('utf-8')
 			out = out.strip()
 		except Exception as e:
 			print(e)
@@ -386,6 +400,7 @@ class CRMetrics(object):
 		try:
 			instances = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									stderr=subprocess.PIPE, shell=True).communicate()[0]
+			instances = instances.decode('utf-8')
 			instances = instances.strip("\n")
 		except Exception as e:
 			print(e)
@@ -410,6 +425,30 @@ class CRMetrics(object):
 
 		return total_cpu, total_mem, total_count
 
+	def _get_pods_for_cr_connections(self, cr, cr_instance, namespace):
+		pod_list = []
+		platf = platform.system()
+		kubeplus_home = os.getenv('KUBEPLUS_HOME')
+		cmd = ''
+		if platf == "Darwin":
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace
+		if platf == "Linux":
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace
+
+		if cmd:
+			#print(cmd)
+			output = ''
+			try:
+				output = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+										  stderr=subprocess.PIPE, shell=True).communicate()[0]
+				output = output.decode('utf-8')
+				output = output.strip("\n")
+			except Exception as e:
+				print(e)
+
+			pod_list = self._parse_pods_from_connections_op(output)
+		return pod_list
+
 	def _get_pods_for_service(self, service_name, namespace):
 		pod_list = []
 		platf = platform.system()
@@ -425,23 +464,31 @@ class CRMetrics(object):
 			try:
 				output = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 										  stderr=subprocess.PIPE, shell=True).communicate()[0]
-				output = output.strip("\n")
+				output = output.decode('utf-8')
 			except Exception as e:
 				print(e)
 
-			for line in output.split("\n"):
-				if line:
-					parts = line.split(" ")
-					kind = parts[1]
-					instance = parts[2]
-					kind_parts = kind.split(":")
-					if kind_parts[1] == "Pod":
-						instance_parts = instance.split(":")
-						instance_name = instance_parts[1]
-						pod = {}
-						pod['Namespace'] = namespace
-						pod['Name'] = instance_name
-						pod_list.append(pod)
+			pod_list = self._parse_pods_from_connections_op(output)
+		return pod_list
+
+	def _parse_pods_from_connections_op(self, output):
+		#print("OUTPUT ----")
+		#print(output)
+		pod_list = []
+		for line in output.split("\n"):
+			#print(line)
+			if line:
+				parts = line.split(" ")
+				kind = parts[1]
+				instance = parts[2]
+				kind_parts = kind.split(":")
+				if kind_parts[1] == "Pod":
+					instance_parts = instance.split(":")
+					instance_name = instance_parts[1]
+					pod = {}
+					pod['Namespace'] = namespace
+					pod['Name'] = instance_name
+					pod_list.append(pod)
 		return pod_list
 
 	def _get_pods_for_helmrelease_2(self, release_name):
@@ -451,6 +498,7 @@ class CRMetrics(object):
 									  stdout=subprocess.PIPE,
 									  stderr=subprocess.PIPE,
 									  shell=True).communicate()[0]
+			output = output.decode('utf-8')
 			output = output.strip("\n")
 		except Exception as e:
 			print(e)
@@ -510,6 +558,7 @@ class CRMetrics(object):
 									  stdout=subprocess.PIPE,
 									  stderr=subprocess.PIPE,
 									  shell=True).communicate()[0]
+			output = output.decode('utf-8')
 			output = output.strip("\n")
 		except Exception as e:
 			print(e)
@@ -624,35 +673,54 @@ class CRMetrics(object):
 		print("    Total Storage(bytes): (Upcoming)")
 
 
-	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace):
-		print("---------------------------------------------------------- ")
+	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace, opformat):
 		accountidentity = self._get_identity(custom_resource, custom_res_instance, namespace)
-		print(" Creator Account Identity: " + accountidentity)
-		print("---------------------------------------------------------- ")
-
 		composition = self._get_composition(custom_resource, custom_res_instance, namespace)
 		num_of_resources = self._parse_number_of_resources(composition)
-		print("Kubernetes Resources consumed:")
-		print("    Number of Sub-resources: " + str(num_of_resources))
+		pod_list_comp = self._parse_number_of_pods(composition)
+		num_of_containers_comp = self._parse_number_of_containers(pod_list_comp)
+		total_storage_comp = self._parse_persistentvolumeclaims(pod_list_comp, namespace)
+		num_of_hosts_comp = self._parse_number_of_hosts(pod_list_comp)
+		cpu_comp, memory_comp = self._get_cpu_memory_usage(pod_list_comp)
+		pod_list_conn = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace)
+		num_of_containers_conn = self._parse_number_of_containers(pod_list_conn)
+		total_storage_conn = self._parse_persistentvolumeclaims(pod_list_conn, namespace)
+		num_of_hosts_conn = self._parse_number_of_hosts(pod_list_conn)
+		cpu_conn, memory_conn = self._get_cpu_memory_usage(pod_list_conn)
 
-		pod_list = self._parse_number_of_pods(composition)
-		print("    Number of Pods: " + str(len(pod_list)))
+		num_of_pods = len(pod_list_comp) + len(pod_list_conn)
+		num_of_containers = num_of_containers_comp + num_of_containers_conn
+		num_of_hosts = num_of_hosts_comp + num_of_hosts_conn
+		cpu = cpu_comp + cpu_conn
+		memory = memory_comp + memory_conn
+		total_storage = total_storage_comp + total_storage_conn
 
-		num_of_containers = self._parse_number_of_containers(pod_list)
-		print("    Number of Containers: " + str(num_of_containers))
-
-		total_storage = self._parse_persistentvolumeclaims(pod_list, namespace)
-
-		num_of_hosts = self._parse_number_of_hosts(pod_list)
-		print("    Number of Nodes: " + str(num_of_hosts))
-
-		cpu, memory = self._get_cpu_memory_usage(pod_list)
-
-		print("Underlying Physical Resoures consumed:")
-		print("    Total CPU(cores): " + str(cpu) + "m")
-		print("    Total MEMORY(bytes): " + str(memory) + "Mi")
-		print("    Total Storage(bytes): " + str(total_storage) + "Gi")
-		print("---------------------------------------------------------- ")
+		if opformat == 'json':
+			op = {}
+			op['accountidentity'] = accountidentity
+			op['subresources'] = num_of_resources
+			op['pods'] = str(num_of_pods)
+			op['containers'] = str(num_of_containers)
+			op['nodes'] = str(num_of_hosts)
+			op['cpu'] = str(cpu) + "m"
+			op['memory'] = str(memory) + "Mi"
+			op['storage'] = str(total_storage) + "Gi"
+			json_op = json.dumps(op)
+			print(json_op)
+		else:
+			print("---------------------------------------------------------- ")
+			print(" Creator Account Identity: " + accountidentity)
+			print("---------------------------------------------------------- ")
+			print("Kubernetes Resources consumed:")
+			print("    Number of Sub-resources: " + str(num_of_resources))
+			print("    Number of Pods: " + str(num_of_pods))
+			print("    Number of Containers: " + str(num_of_containers))
+			print("    Number of Nodes: " + str(num_of_hosts))
+			print("Underlying Physical Resoures consumed:")
+			print("    Total CPU(cores): " + str(cpu) + "m")
+			print("    Total MEMORY(bytes): " + str(memory) + "Mi")
+			print("    Total Storage(bytes): " + str(total_storage) + "Gi")
+			print("---------------------------------------------------------- ")
 
 	def get_metrics_service(self, service_name, namespace):
 		print("---------------------------------------------------------- ")
@@ -719,7 +787,8 @@ if __name__ == '__main__':
 		custom_resource = sys.argv[2]
 		custom_resource_instance = sys.argv[3]
 		namespace = sys.argv[4]
-		crMetrics.get_metrics_cr(custom_resource, custom_resource_instance, namespace)
+		outputformat = sys.argv[5]
+		crMetrics.get_metrics_cr(custom_resource, custom_resource_instance, namespace, outputformat)
 	
 	if res_type == "account":
 		creator_account = sys.argv[2]

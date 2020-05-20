@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if (( $# < 2 )); then
-    echo "kubectl grouplogs cr <Custom Resource> <Resource Instance> [<Namespace>]"
+    echo "kubectl grouplogs composition cr <Custom Resource> <Resource Instance> [<Namespace>]"
     exit 0
 fi
 
@@ -25,12 +25,10 @@ instance=$2
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-macos composition $kind $instance $namespace | python -m json.tool | grep -B 1 -A 4 Pod | grep Name | grep -v Namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`)
-
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-linux composition $kind $instance $namespace | python -m json.tool | grep -B 1 -A 4 Pod | grep Name | grep -v Namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`)
-   
 else
-        echo "$OSTYPE not supported."
+    echo "$OSTYPE not supported."
 	exit
 fi
 

@@ -1,5 +1,6 @@
 #!/bin/bash
 
-echo "kubectl grouplogs cr"
+echo "kubectl grouplogs cr composition"
+echo "kubectl grouplogs cr connections"
 echo "kubectl grouplogs service"
 echo "kubectl grouplogs helmrelease"

@@ -13,7 +13,8 @@ class CRLogs(object):
 			try:
 				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 										stderr=subprocess.PIPE, shell=True).communicate()[0]
-				print(out)
+				if out:
+					print(out)
 			except Exception as e:
 				print(e)
 
@@ -23,13 +24,14 @@ class CRLogs(object):
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									stderr=subprocess.PIPE, shell=True).communicate()[0]
 
-			json_output = json.loads(out)
-			containers = json_output['spec']['containers']
-			self._get_container_logs(pod, namespace, containers)
+			if out:
+				json_output = json.loads(out)
+				containers = json_output['spec']['containers']
+				self._get_container_logs(pod, namespace, containers)
 			
-			if 'initContainers' in json_output['spec']:
-				init_containers = json_output['spec']['initContainers']
-				self._get_container_logs(pod, namespace, init_containers)
+				if 'initContainers' in json_output['spec']:
+					init_containers = json_output['spec']['initContainers']
+					self._get_container_logs(pod, namespace, init_containers)
 
 		except Exception as e:
 			print(e)

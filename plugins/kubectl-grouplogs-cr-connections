@@ -1,0 +1,36 @@
+#!/bin/bash
+
+if (( $# < 2 )); then
+    echo "kubectl grouplogs cr connections <Custom Resource> <Resource Instance> [<Namespace>]"
+    exit 0
+fi
+
+namespace="default"
+
+# If namespace is passed; use that
+if [ $# = 3 ]; then
+   namespace=$3
+fi
+
+kind=$1
+instance=$2
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $kind $instance $namespace | grep Pod | awk '{print $3}' | sed 's/:/ /'g | awk '{print $2}'`)
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace | grep Pod | awk '{print $3}' | sed 's/:/ /'g | awk '{print $2}'`)
+else
+    echo "$OSTYPE not supported."
+	exit
+fi
+
+if [ ${#podlist[@]} -eq 0 ];
+then
+	echo "No Pod found connected to Custom Resource $1 named $2 in Namespace $namespace."
+else
+        #echo "Pods for Custom Resource $1 named $2 in Namespace $namespace."
+        #for i in "${podlist[@]}"; do echo "$i"; done
+        for p in "${podlist[@]}"; do
+            python $KUBEPLUS_HOME/plugins/crlogs.py $p $namespace
+        done;
+fi
