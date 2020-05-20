@@ -1,17 +1,19 @@
 #!/bin/bash
 
-if (( $# < 2 )); then
-    echo "kubectl metrics cr <Custom Resource> <Resource Instance> [<Namespace>]"
+if (( $# < 3 )); then
+    echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> [-o json]"
     exit 0
 fi
 
 customres=$1
 instance=$2
-namespace="default"
+namespace="$3"
 
-# If namespace is passed; use that
-if [ $# = 3 ]; then
-   namespace=$3
+output="pretty"
+if [ $# == 5 ]; then
+   output=$5
 fi
 
-python /$KUBEPLUS_HOME/plugins/crmetrics.py "cr" $customres $instance $namespace
+#echo $output
+
+python /$KUBEPLUS_HOME/plugins/crmetrics.py "cr" $customres $instance $namespace $output

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if (( $# < 0 )); then
-    echo "kubectl man <Custom Resource>"
+if (( $# < 1 )); then
+    echo "kubectl man <Custom Resource Kind>"
     exit 0
 fi
 

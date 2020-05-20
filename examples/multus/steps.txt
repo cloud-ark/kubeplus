@@ -1,0 +1,7 @@
+1. kubectl man NetworkAttachmentDefinition
+2. kubectl create -f networkattachmentdefinition.yaml
+3. kubectl create -f macvlan-conf.yml
+4. kubectl create -f sample-pod.yml
+5. kubectl connections cr NetworkAttachmentDefinition macvlan-conf
+6. kubectl metrics cr NetworkAttachmentDefinition macvlan-conf default
+7. kubectl grouplogs cr connections NetworkAttachmentDefinition macvlan-conf default

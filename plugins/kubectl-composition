@@ -8,7 +8,7 @@
 #done
 
 if (( $# < 2 )); then
-    echo "kubectl composition <Custom Resource> <Custom Resource Instance> [<Namespace>]"
+    echo "kubectl composition <Custom Resource Kind> <Custom Resource Instance> [<Namespace>]"
     exit 0
 fi
 
