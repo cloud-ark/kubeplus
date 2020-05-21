@@ -16,4 +16,4 @@ fi
 #echo "Namespace:$namespace"
 #echo "ServiceInstance:$serviceinstance"
 
-python ./plugins/crmetrics.py service $serviceinstance $namespace
+python /$KUBEPLUS_HOME/plugins/crmetrics.py service $serviceinstance $namespace
