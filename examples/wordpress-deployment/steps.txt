@@ -1,0 +1,7 @@
+1. kubectl apply -f mysql-deployment.yaml
+2. kubectl get pods
+   -> Wait till wordpress-mysql Pods are running
+3. kubectl apply -f wordpress-deployment.yaml
+4. kubectl connections service wordpress
+5. kubectl metrics service wordpress
+6. kubectl grouplogs service wordpress

@@ -1,13 +1,13 @@
 ## KubePlus Kubernetes API Add-on
 
-Kubernetes API set is comprised of built-in and Custom Resources. KubePlus API add-on simplifies building platform workflows in Kubernetes YAMLs leveraging these APIs. It offers kubectl plugins that simplify adoption of Custom Resources. It also offers cluster-side component for additional value-add for building and modeling secure and robust platform workflows. 
+Kubernetes API set is comprised of built-in and Custom Resources. KubePlus API add-on simplifies building platform workflows in Kubernetes YAMLs leveraging these APIs. It offers kubectl plugins that simplify adoption of Custom Resources. It also offers cluster-side component for building and modeling secure and robust platform workflows. 
 
 KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
 
 ## Summary
 
-Kubernetes Custom Resources and Custom Controllers, popularly known as [Operators](https://coreos.com/operators/), extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus API add-on simplifies creation of platform level workflows leveraging these Custom Resources.
+Kubernetes Custom Resources and Custom Controllers, popularly known as [Operators](https://coreos.com/operators/), extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build their Kubernetes-native application platform stacks. KubePlus API add-on simplifies creation of platform workflows leveraging Custom Resources in such stacks.
 
 The primary benefit of using KubePlus to DevOps engineers/Application developers are:
 
@@ -85,7 +85,7 @@ Total MEMORY(bytes): 302Mi
 - KubePlus kubectl commands:
   - ```$ export PATH=`pwd`/plugins/:$PATH```
   - ```$ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>```
-- KubePlus on-cluster component:
+- KubePlus cluster-side component:
   - Use Kubernetes cluster with version 1.14.
   - Enable Kubernetes Metrics API Server on your cluster.
     - Hosted Kubernetes solutions like GKE has this already installed.
