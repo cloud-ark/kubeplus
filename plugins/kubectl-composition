@@ -1,12 +1,5 @@
 #!/bin/bash
 
-#echo "You provided $# arguments"
-
-#for arg in "$@"
-#do
-#    echo "$arg"
-#done
-
 if (( $# < 2 )); then
     echo "kubectl composition <Custom Resource Kind> <Custom Resource Instance> [<Namespace>]"
     exit 0
@@ -18,12 +11,6 @@ namespace="default"
 if [ $# = 3 ]; then
    namespace=$3
 fi
-
-#echo "Custom Resource: $1"
-#echo "Custom Resource Instance: $2"
-#echo "Namespace: $namespace"
-#echo "======================"
-#kubectl get --raw "/apis/platform-as-code/v1/composition?kind=$1&instance=$2&namespace=$namespace" | python -m json.tool
 
 kind=$1
 instance=$2

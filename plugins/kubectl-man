@@ -5,9 +5,8 @@ if (( $# < 1 )); then
     exit 0
 fi
 
-#echo "Custom Resource: $1"
 kind=$1
-#kubectl get --raw "/apis/platform-as-code/v1/man?kind=$1"
+
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	/$KUBEPLUS_HOME/plugins/kubediscovery-macos man $kind
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then

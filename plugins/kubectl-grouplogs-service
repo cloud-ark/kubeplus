@@ -29,10 +29,10 @@ fi
 IFS=$'\n' # field separator: '\n'
 declare -a podlist
 if [[ "$OSTYPE" == "darwin"* ]]; then
-	podlist=( $($KUBEPLUS_HOME/plugins/kubediscovery-macos connections Service $serviceInstance $namespace | grep Pod | awk '{print $3}' | cut -d ':' -f2) )
+	podlist=( $($KUBEPLUS_HOME/plugins/kubediscovery-macos connections Service $serviceInstance $namespace -o flat | grep Pod | awk '{print $3}' | cut -d ':' -f2) )
 	podLogs "${podlist[@]}"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-	podlist=( $($KUBEPLUS_HOME/plugins/kubediscovery-linux connections Service $serviceInstance $namespace | grep Pod | awk '{print $3}' | cut -d ':' -f2) )
+	podlist=( $($KUBEPLUS_HOME/plugins/kubediscovery-linux connections Service $serviceInstance $namespace -o flat | grep Pod | awk '{print $3}' | cut -d ':' -f2) )
 	podLogs "${podlist[@]}"
 else 
 	echo "$OSTYPE not supported."

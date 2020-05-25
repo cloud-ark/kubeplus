@@ -16,9 +16,9 @@ kind=$1
 instance=$2
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $kind $instance $namespace | grep Pod | awk '{print $3}' | sed 's/:/ /'g | awk '{print $2}'`)
+    podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $kind $instance $namespace -o flat | grep Pod | awk '{print $3}' | sed 's/:/ /'g | awk '{print $2}'`)
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace | grep Pod | awk '{print $3}' | sed 's/:/ /'g | awk '{print $2}'`)
+    podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o flat | grep Pod | awk '{print $3}' | sed 's/:/ /'g | awk '{print $2}'`)
 else
     echo "$OSTYPE not supported."
 	exit
