@@ -1,4 +1,4 @@
-## KubePlus - Tooling for Kubernetes native Application Workflows
+## KubePlus - Tooling for Kubernetes native Application Stacks
 
 One of the key reasons for Kubernetes’s popularity is its extensibility. Kubernetes API extensions (commonly referred as [Operators](https://coreos.com/operators/)) extend Kubernetes API and enable adding application specific workflow automation in Kubernetes-native manner. There are a wide variety of Operators built today for softwares like databases, key-value stores, API gateways etc. to run on Kubernetes. Enterprise DevOps teams assemble required Kubernetes Operators and create their Kubernetes-native application stacks. The key challenge when working with such stacks is the need to easily discover and use the available Custom APIs/Resources in a cluster towards creating required application-specific workflows. 
 
@@ -25,14 +25,9 @@ The specific annotations and how to use them can be found [here](./details.rst))
 Typically, a Kubernetes-native application workflow is identified using one of the following three things: a top-level Service resource, a Custom Resource instance, or a Helm release. 
 KubePlus provides client-side kubectl plugins to visualize and monitor Kubernetes-native application workflows. 
 
-### Cluster-side component
+### In-cluster component (optional)
 
-KubePlus provides server-side PlatformWorkflow Operator to define workflows involving multiple Custom Resources that depend on the sub-resources created by their respective Operators.
-
-
-### Operator Maturity Model
-
-In order to build Kubernetes-native application workflows using Operators and Custom Resources, it is important for Cluster administrators to evaluate different Operators against a standard set of requirements. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) towards this focusing on Operator usage in multi-Operator environments. We use this model when curating community Operators for enterprise readiness. 
+KubePlus provides PlatformWorkflow Operator to define workflows involving multiple Custom Resources that depend on the sub-resources created by their respective Operators.
 
 
 ## KubePlus kubectl commands
@@ -95,15 +90,18 @@ Total MEMORY(bytes): 302Mi
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
 ```
+- Enable Kubernetes Metrics API Server on your cluster.
+  - Hosted Kubernetes solutions like GKE has this already installed.
 - KubePlus kubectl commands:
   - ```$ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>```
   - ```$ export PATH=`pwd`/plugins/:$PATH```
-- KubePlus cluster-side component:
-  - Use Kubernetes cluster with version 1.14.
-  - Enable Kubernetes Metrics API Server on your cluster.
-    - Hosted Kubernetes solutions like GKE has this already installed.
+- KubePlus In-cluster component:
   - ```$ ./scripts/deploy-kubeplus.sh```
   - Check out [examples](./examples/moodle-with-presslabs/).
+
+## Operator Maturity Model
+
+In order to build Kubernetes-native application workflows using Operators and Custom Resources, it is important for Cluster administrators to evaluate different Operators against a standard set of requirements. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) towards this focusing on Operator usage in multi-Operator environments. We use this model when curating community Operators for enterprise readiness. 
 
 
 ## Status
