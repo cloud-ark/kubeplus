@@ -3,7 +3,6 @@ import sys
 import json
 import re
 import os
-#import yaml
 import platform
 import pprint
 import time
@@ -11,9 +10,7 @@ import time
 class CRMetrics(object):
 
 	def _get_identity(self, custom_resource, custom_res_instance, namespace):
-
 		cmd = 'kubectl get ' + custom_resource + ' ' + custom_res_instance + ' -n ' + namespace + ' -o json'
-
 		accountidentity = ''
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -23,24 +20,15 @@ class CRMetrics(object):
 				json_output = json.loads(out)
 				if json_output and 'metadata' in json_output:
 					metadata = json_output['metadata']
-					#print(metadata)
 					if 'annotations' in json_output['metadata']:
 						annotations = json_output['metadata']['annotations']
-						#print(annotations)
 						if 'accountidentity' in json_output['metadata']['annotations']:
 							accountidentity = json_output['metadata']['annotations']['accountidentity']
-							#print(accountidentity)
-
 		except Exception as e:
 			print(e)
-
 		return accountidentity
 
 	def _get_composition(self, custom_resource, custom_res_instance, namespace):
-
-		#cmd = "\"/apis/platform-as-code/v1/composition?kind=" + custom_resource + "&instance=" + custom_res_instance + "&namespace=" + namespace + "\""
-		#full_cmd = 'kubectl get --raw ' + cmd
-
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME')
 		cmd = ''
@@ -48,7 +36,6 @@ class CRMetrics(object):
 			cmd = kubeplus_home + '/plugins/kubediscovery-macos composition ' + custom_resource + ' ' + custom_res_instance + ' ' + namespace
 		if platf == "Linux":
 			cmd = kubeplus_home + '/plugins/kubediscovery-linux composition ' + custom_resource + ' ' + custom_res_instance + ' ' + namespace
-
 		out = ''
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -56,11 +43,9 @@ class CRMetrics(object):
 			out = out.decode('utf-8')
 		except Exception as e:
 			print(e)
-
 		json_output = {}
 		if out:
 			json_output = json.loads(out)
-
 		return json_output
 
 	def _count_resources(self, json_block):
@@ -68,43 +53,34 @@ class CRMetrics(object):
 		if 'Children' in json_block:
 			child_list = json_block['Children']
 			num_of_resources = num_of_resources + len(child_list)
-
 			for child in child_list:
 				child_resources = self._count_resources(child)
 				num_of_resources = num_of_resources + child_resources
-
 		return num_of_resources
 
 	def _parse_number_of_resources(self, composition):
 		num_of_resources = 0
-
 		if composition:
 			json_block = composition[0]
 			num_of_resources = self._count_resources(json_block)
-
 		return num_of_resources
 
 	def _get_pods(self, json_block):
 		pod_list = []
-
 		if json_block['Kind'] == 'Pod':
 			pod_list.append(json_block)
-
 		if 'Children' in json_block:
 			child_list = json_block['Children']
 			for child in child_list:
 				child_pod_list = self._get_pods(child)
 				pod_list = pod_list + child_pod_list
-
 		return pod_list
 
 	def _parse_number_of_pods(self, composition):
 		pod_list = []
-
 		if composition:
 			json_block = composition[0]
 			pod_list = self._get_pods(json_block)
-
 		return pod_list
 
 	def _get_pod(self, pod):
@@ -116,7 +92,6 @@ class CRMetrics(object):
 			out = out.decode('utf-8')
 		except Exception as e:
 			print(e)
-
 		json_output = ''
 		if out != '':
 			json_output = json.loads(out)
@@ -124,7 +99,6 @@ class CRMetrics(object):
 
 	def _parse_number_of_hosts(self, pod_list):
 		num_of_hosts = 0
-
 		host_list = []
 		for pod in pod_list:
 			json_output = self._get_pod(pod)
@@ -133,23 +107,16 @@ class CRMetrics(object):
 					hostIP = json_output['status']['hostIP']
 					if hostIP not in host_list:
 						host_list.append(hostIP)
-
 		return len(host_list)
 
 	def _parse_number_of_containers(self, pod_list):
 		num_of_containers = 0
-
-		#print(pod_list)
 		for pod in pod_list:
 			json_output = self._get_pod(pod)
 			containers = json_output['spec']['containers']
-			#print(containers)
-			#print(len(containers))
 			num_of_containers = num_of_containers + len(containers)
-
 			if 'initContainers' in json_output['spec']:
 				init_containers = json_output['spec']['initContainers']
-				#print(len(init_containers))
 				num_of_containers = num_of_containers + len(init_containers)
 		return num_of_containers
 
@@ -161,15 +128,11 @@ class CRMetrics(object):
 			if json_output['spec']['volumes']:
 				volumes = json_output['spec']['volumes']
 				for v in volumes:
-					#print(v)
 					if 'persistentVolumeClaim' in v:
 						pvc = v['persistentVolumeClaim']
 						pvc_name = pvc['claimName']
-						#print(pvc_name)
 						if pvc_name not in pvc_list:
-							pvc_list.append(pvc_name) 
-		#print('PersistentVolumeClaims')
-		#print(pvc_list)
+							pvc_list.append(pvc_name)
 		for pvc in pvc_list:
 			cmd = "kubectl get pvc " + pvc + ' -n ' + namespace + " -o json"
 			out = ''
@@ -200,7 +163,6 @@ class CRMetrics(object):
 		total_cpu = 0
 		total_mem = 0
 		for pod in pod_list:
-			#print(pod['Name'])
 			cmd = "kubectl top pods " +  pod['Name'] + ' -n ' + pod['Namespace'] + " | grep -v NAME"
 			out = ''
 			try:
@@ -211,7 +173,6 @@ class CRMetrics(object):
 			except Exception as e:
 				print(e)
 			parts_trimmed = []
-			#print(out)
 			for line in out.split('\n'):
 				parts = line.split(" ")
 				for x in parts: 
@@ -219,19 +180,14 @@ class CRMetrics(object):
 						parts_trimmed.append(x)
 			if parts_trimmed:
 				temp = re.findall(r'\d+', parts_trimmed[1]) 
-				cpu_nums = list(map(int, temp)) 
-				#print(cpu_nums)
+				cpu_nums = list(map(int, temp))
 				temp = re.findall(r'\d+', parts_trimmed[2]) 
-				mem_nums = list(map(int, temp)) 
-				#print(mem_nums)
+				mem_nums = list(map(int, temp))
 				total_cpu = total_cpu + cpu_nums[0]
-				#print(total_cpu)
 				total_mem = total_mem + mem_nums[0]
-				#print(total_mem)
 		return total_cpu, total_mem
 
 	def _get_cpu_memory_usage_rootres(self, kind, cmd, instance, namespace, account):
-
 		account_identity = ''
 		cpu = 0
 		memory = 0
@@ -243,7 +199,6 @@ class CRMetrics(object):
 			out1 = out1.decode('utf-8')
 			json_output = json.loads(out1)
 			kind = json_output['kind']
-
 			if 'metadata' in json_output:
 				if 'annotations' in json_output['metadata']:
 					if 'accountidentity' in json_output['metadata']['annotations']:
@@ -254,27 +209,14 @@ class CRMetrics(object):
 		if account_identity == account:
 			count = count + 1
 			composition = self._get_composition(kind, instance, namespace)
-			#print("Composition:\n")
-			#print(composition)		
 			pod_list = self._parse_number_of_pods(composition)
-			#print(" Number of Pods: " + str(len(pod_list)))
-
 			cpu, memory = self._get_cpu_memory_usage(pod_list)
-			#print("    Custom Resource: " + kind)
-			#print("    Kind: " + kind)
-			#print("    Name: " + instance)
-			#print("    Namespace: " + namespace)
-			#print("    CPU(cores): " + str(cpu) + "m")
-			#print("    MEMORY(bytes): " + str(memory) + "Mi")
-			#print("    ------    ")
-
 		return cpu, memory, count
 
 	def _get_metrics_cr_instances(self, account):
 		total_cpu = 0
 		total_mem = 0
 		total_count = 0
-
 		cmd = 'kubectl get crds | grep -v NAME | awk \'{print $1}\''
 		crds = ''
 		try:
@@ -282,7 +224,6 @@ class CRMetrics(object):
 									stderr=subprocess.PIPE, shell=True).communicate()[0]
 			crds = crds.decode('utf-8')
 			crds = crds.strip("\n")
-
 		except Exception as e:
 			print(e)
 
@@ -298,7 +239,7 @@ class CRMetrics(object):
 				print(e)
 
 			for line in out.split("\n"):
-				if line != 'No resources found.': #or err != 'No resources found.':
+				if line != 'No resources found.':
 					if line == '':
 						continue
 					parts = line.split(" ")
@@ -306,7 +247,6 @@ class CRMetrics(object):
 					for x in parts: 
 						if x != "":
 							parts_trimmed.append(x)
-
 					if parts_trimmed:
 						namespace = parts_trimmed[0]
 						instance = parts_trimmed[1]
@@ -366,7 +306,6 @@ class CRMetrics(object):
 			print(e)
 
 		for p in out.split("\n"):
-			#print(p)
 			parts = p.split(" ")
 			pod = {}
 			pod['Namespace'] = parts[0]
@@ -379,14 +318,7 @@ class CRMetrics(object):
 						if account_identity == account:
 							pod_list.append(pod)
 							count = count + 1
-							#print("    Name: " + parts[1])
-							#print("    Namespace: " + parts[0])
-
 		cpu, mem = self._get_cpu_memory_usage(pod_list)
-		#print("    CPU(cores): " + str(cpu) + "m")
-		#print("    MEMORY(bytes): " + str(mem) + "Mi")
-		#print("    ------    ")
-
 		return cpu, mem, count
 
 	def _get_metrics_kind(self, kind, account):
@@ -405,12 +337,10 @@ class CRMetrics(object):
 		except Exception as e:
 			print(e)
 
-		#print("Instances:\n" + instances)
 		if instances == 'No resources found.':
 			return total_cpu, total_mem, total_count
 
 		for line in instances.split("\n"):
-			#print("line:" + line)
 			if line != '':
 				parts = line.split(" ")
 				namespace = parts[0]
@@ -431,12 +361,11 @@ class CRMetrics(object):
 		kubeplus_home = os.getenv('KUBEPLUS_HOME')
 		cmd = ''
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o flat'
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o flat'
 
 		if cmd:
-			#print(cmd)
 			output = ''
 			try:
 				output = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -455,9 +384,9 @@ class CRMetrics(object):
 		kubeplus_home = os.getenv('KUBEPLUS_HOME')
 		cmd = ''
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Service ' + service_name + ' ' + namespace
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Service ' + service_name + ' ' + namespace + ' -o flat'
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections Service ' + service_name + ' ' + namespace
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections Service ' + service_name + ' ' + namespace + ' -o flat'
 
 		if cmd:
 			output = ''
@@ -472,11 +401,8 @@ class CRMetrics(object):
 		return pod_list
 
 	def _parse_pods_from_connections_op(self, output):
-		#print("OUTPUT ----")
-		#print(output)
 		pod_list = []
 		for line in output.split("\n"):
-			#print(line)
 			if line:
 				parts = line.split(" ")
 				kind = parts[1]
