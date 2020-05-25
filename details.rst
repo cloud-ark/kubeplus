@@ -46,56 +46,68 @@ KubePlus API add-on Components
 KubePlus API add-on is made up of - Platform-as-Code Annotations, client-side kubectl plugins, and server-side components (binding functions and PlatformWorkflow CRD).
 
 
-Platform-as-Code annotations
------------------------------
+Platform-as-Code Resource annotations
+--------------------------------------
 
 In order to build and maintain Custom Resource relationship graph, KubePlus API add-on expects CRD packages to be updated with Platform-as-code annotations as described below. 
 
 .. code-block:: bash
 
-   platform-as-code/usage
+   resource/usage
 
 The 'usage' annotation is used to define usage information for a Custom Resource.
 The value for 'usage' annotation is the name of the ConfigMap that stores the usage information.
 
 .. code-block:: bash
 
-   platform-as-code/composition
+   resource/composition
 
 The 'composition' annotation is used to define Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance.
 
 
 .. code-block:: bash
 
-   platform-as-code/annotation-relationship
-   platform-as-code/label-relationship
-   platform-as-code/specproperty-relationship
+   resource/annotation-relationship
+   resource/label-relationship
+   resource/specproperty-relationship
 
 Above annotations are used to declare annotation / label / spec-property based relationships that instances of this Custom Resource can have with other Resources.  
 
 These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators
 in order to make Custom Resources discoverable and usable by application developers.
 
-As an example, annotations on MysqlCluster Custom Resource Definition (CRD) are shown below:
+As an example, annotations on Moodle Custom Resource Definition (CRD) are shown below:
 
 .. code-block:: yaml
 
   apiVersion: apiextensions.k8s.io/v1beta1
   kind: CustomResourceDefinition
   metadata:
-    name: mysqlclusters.mysql.presslabs.org
+    name: moodles.moodlecontroller.kubeplus
     annotations:
-      helm.sh/hook: crd-install
-      platform-as-code/usage: mysqlcluster-usage.usage
-      platform-as-code/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
+      resource/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
+      resource/usage: moodle-operator-usage.usage
+      resource/specproperty-relationship: "on:INSTANCE.spec.mySQLServiceName, value:Service.spec.metadata.name"
   spec:
-    group: mysql.presslabs.org
+    group: moodlecontroller.kubeplus
+    version: v1
     names:
-      kind: MysqlCluster
-      plural: mysqlclusters
-      shortNames:
-      - mysql
+      kind: Moodle
+      plural: moodles
     scope: Namespaced
+
+The specproperty relationship defines that an instance of Moodle Custom Resource is connected to a Service object through it's mySQLServiceName spec attribute. The value of this attribute the name of a Service object. Below is an example of a Kubernetes-native application workflow in which a Moodle Custom Resource instance is bound to a MysqlCluster Custom Resource instance through the Service object that is created by the MysqlCluster Operator. The specproperty relationship helps discover this relationship as seen below:
+
+.. code-block:: bash
+
+  (venv) Devs-MacBook:kubeplus devdatta$ kubectl connections cr Moodle moodle1 namespace1
+  Level:0 kind:Moodle name:moodle1 Owner:/
+  Level:1 kind:Service name:cluster1-mysql-master Owner:MysqlCluster/cluster1
+  Level:2 kind:Pod name:cluster1-mysql-0 Owner:MysqlCluster/cluster1
+  Level:3 kind:Service name:cluster1-mysql-nodes Owner:MysqlCluster/cluster1
+  Level:3 kind:Service name:cluster1-mysql Owner:MysqlCluster/cluster1
+  Level:2 kind:Pod name:moodle1-5847c6b69c-mtwg8 Owner:Moodle/moodle1
+  Level:3 kind:Service name:moodle1 Owner:Moodle/moodle1
 
 
 Kubectl Plugins
@@ -121,6 +133,7 @@ In order to use these plugins you need to add KubePlus folder to your PATH varia
 
 .. code-block:: bash
 
+   $ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>
    $ export PATH=$PATH:`pwd`/plugins
 
 
@@ -249,6 +262,13 @@ KubePlus in Action
 3. Kubernetes Community Meeting demo_
 
 .. _demo: https://www.youtube.com/watch?v=taOrKGkZpEc&feature=youtu.be
+
+
+
+Operator FAQ
+-------------
+
+New to Operators? Checkout [Operator FAQ](https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md).
 
 
 

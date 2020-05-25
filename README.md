@@ -1,30 +1,43 @@
-## KubePlus Kubernetes API Add-on
+## KubePlus - Tooling for Kubernetes-native Application Stacks
 
-Kubernetes API set is comprised of built-in and Custom Resources. KubePlus API add-on simplifies building platform workflows in Kubernetes YAMLs leveraging these APIs. It offers kubectl plugins that simplify adoption of Custom Resources. It also offers cluster-side component for building and modeling secure and robust platform workflows. 
+One of the key reasons for Kubernetes’s popularity is its extensibility. Kubernetes API extensions (commonly referred as [Operators](https://coreos.com/operators/)) extend Kubernetes API and enable adding application specific workflow automation in Kubernetes-native manner. There are a wide variety of Operators built today for softwares like databases, key-value stores, API gateways etc. to run on Kubernetes. Enterprise DevOps teams assemble required Kubernetes Operators and create their Kubernetes-native application stacks. The key challenge when working with such stacks is the need to easily discover and use the available Custom APIs/Resources in a cluster towards creating required application-specific workflows. 
+
+KubePlus consists of suite of tools that simplify building, visualizing and monitoring Kubernetes-native application workflows that are made up of Kubernetes's built-in and Custom Resources available in a cluster.
+
+You can start using KubePlus by simply annotating your Custom Resource Definitions (CRDs) with certain annotations (outlined below). 
+If you are not yet using Kubernetes Operators or Custom Resources, 
+you can still use KubePlus to visualize and monitor application workflows that are made up of Kubernetes's built-in resources such as Services and Pods.
 
 KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
-
 ## Summary
 
-Kubernetes Custom Resources and Custom Controllers, popularly known as [Operators](https://coreos.com/operators/), extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build their Kubernetes-native application platform stacks. KubePlus API add-on simplifies creation of platform workflows leveraging Custom Resources in such stacks.
+KubePlus tool suite consists of:
 
-The primary benefit of using KubePlus to DevOps engineers/Application developers are:
+**Resource Annotations**
 
-- easily discover static and runtime information about Custom Resources available in their cluster.
-- aggregate Custom and built-in resources to build secure and robust platform workflows.
+At its core, the Kubernetes resource model is built around the notion of relationships. Kubernetes offers following mechanisms to define resource relationships - labels with label selectors, annotations and spec properties. Kubernetes-native application workflows are built by establishing relationships between built-in and/or Custom Resources. For instance, a Service is connected to a Pod through labels and label selectors. When working with Operators and Custom Resources, it is important that such relationships be easy to discover, define and use.
+KubePlus provides a set of annotations to encode such relationships in a standard manner.
+The specific annotations and how to use them can be found [here](./details.rst))
+
+**Client-side plugins**
+
+Typically, a Kubernetes-native application workflow is identified using one of the following three things: a top-level Service resource, a Custom Resource instance, or a Helm release. 
+KubePlus provides client-side kubectl plugins to visualize and monitor Kubernetes-native application workflows. 
+
+**Cluster-side component**
+
+KubePlus provides server-side PlatformWorkflow Operator to define workflows involving multiple Custom Resources that depend on the sub-resources created by their respective Operators.
 
 
-In order to use kubectl commands on Custom Resources, all you need to do is add certain
-annotations on the corresponding Custom Resource Definition (CRD) objects. The specific annotations and other details about KubePlus can be found [here](./details.rst).
+**Operator Maturity Model**
 
-Even if you are not using Kubernetes Operators or Custom Resources yet, you can 
-start using KubePlus kubectl commands with built-in Service resources.
+In order to build Kubernetes-native application workflows using Operators and Custom Resources, it is important for Cluster administrators to evaluate different Operators against a standard set of requirements. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) towards this focusing on Operator usage in multi-Operator environments. We use this model when curating community Operators for enterprise readiness. 
 
 
-## kubectl commands
+## KubePlus kubectl commands
 
-KubePlus offers following kubectl commands:
+KubePlus offers following kubectl commands (as kubectl plugins)
 
 **1. kubectl man**
 
@@ -83,24 +96,14 @@ Total MEMORY(bytes): 302Mi
    $ cd kubeplus
 ```
 - KubePlus kubectl commands:
-  - ```$ export PATH=`pwd`/plugins/:$PATH```
   - ```$ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>```
+  - ```$ export PATH=`pwd`/plugins/:$PATH```
 - KubePlus cluster-side component:
   - Use Kubernetes cluster with version 1.14.
   - Enable Kubernetes Metrics API Server on your cluster.
     - Hosted Kubernetes solutions like GKE has this already installed.
   - ```$ ./scripts/deploy-kubeplus.sh```
   - Check out [examples](./examples/moodle-with-presslabs/).
-
-
-## Operator Maturity Model
-
-In order to build Platform workflows as code using Operators and Custom Resources, it is important for Cluster administrators to evaluate different Operators against a standard set of requirements. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) towards this focusing on Operator usage in multi-Operator environments. We use this model when curating community Operators for enterprise readiness. 
-
-
-## Operator FAQ
-
-New to Operators? Checkout [Operator FAQ](https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md).
 
 
 ## Status
