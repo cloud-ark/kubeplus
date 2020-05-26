@@ -1,6 +1,6 @@
 ## KubePlus - Tooling for Kubernetes native Application Stacks
 
-One of the key reasons for Kubernetes’s popularity is its extensibility. Kubernetes API extensions (commonly referred as [Operators](https://coreos.com/operators/)) extend Kubernetes API and enable adding application specific workflow automation in Kubernetes-native manner. There are a wide variety of Operators built today for softwares like databases, key-value stores, API gateways etc. to run on Kubernetes. Enterprise DevOps teams assemble required Kubernetes Operators and create their Kubernetes-native application stacks. The key challenge when working with such stacks is the need to easily discover and use the available Custom APIs/Resources in a cluster towards creating required application-specific workflows. 
+One of the key reasons for Kubernetes’s popularity is its extensibility. Kubernetes API extensions (commonly referred as [Operators](https://coreos.com/operators/)) extend Kubernetes API and enable adding application specific workflow automation in Kubernetes-native manner. There are a wide variety of Operators built today for softwares like databases, key-value stores, API gateways etc. to run on Kubernetes. Enterprise DevOps teams assemble required Kubernetes Operators and create their Kubernetes-native application stacks. The key challenge when working with such stacks is the need to easily discover and use the Custom APIs/Resources available in a cluster towards creating required application-specific workflows. 
 
 KubePlus consists of suite of tools that simplify building, visualizing and monitoring Kubernetes-native application workflows that are made up of Kubernetes's built-in and Custom Resources available in a cluster.
 
@@ -12,23 +12,19 @@ KubePlus is being developed as part of our [Platform as Code practice](https://c
 
 ## Summary
 
-KubePlus tool suite consists of:
+KubePlus tool suite consists of following components - CRD Annotations, client-side kubectl plugins, and an optional in-cluster component.
 
-### Resource Annotations
+### CRD Annotations
 
-At its core, the Kubernetes resource model is built around the notion of relationships. Kubernetes offers following mechanisms to define resource relationships - labels with label selectors, annotations and spec properties. Kubernetes-native application workflows are built by establishing relationships between built-in and/or Custom Resources. For instance, a Service is connected to a Pod through labels and label selectors. When working with Operators and Custom Resources, it is important that such relationships be easy to discover, define and use.
-KubePlus provides a set of annotations to encode such relationships in a standard manner.
-The specific annotations and how to use them can be found [here](./details.rst))
+Application workflows are built by establishing relationships between Kubernetes built-in and/or Custom Resources. (e.g. a Service is connected to a Pod through labels.) Kubernetes offers labels, annotations and spec properties to define resource relationships. When working with Custom Resources introduced by Operators, it is important that Operator developer's assumptions around what relationships can be established with a Custom Resource and what actions will be performed as a result of them are clearly articulated. KubePlus provides a set of annotations on Custom Resource Definitions to encode such assumptions. The specific annotations and how to use them can be found [here](./details.rst))
 
-### Client-side plugins
+### Client-side kubectl plugins
 
-Typically, a Kubernetes-native application workflow is identified using one of the following three things: a top-level Service resource, a Custom Resource instance, or a Helm release. 
-KubePlus provides client-side kubectl plugins to visualize and monitor Kubernetes-native application workflows. 
+KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds Kubernetes resource relationship graph. KubePlus offers number of kubectl plugins that internally leverages this graph and enables teams to visualize and monitor application workflows.  
 
 ### In-cluster component (optional)
 
-KubePlus provides PlatformWorkflow Operator to define workflows involving multiple Custom Resources that depend on the sub-resources created by their respective Operators.
-
+KubePlus also provides an optional PlatformWorkflow Operator that further helps teams define application workflows that are hard to realize using just helm charts.
 
 ## KubePlus kubectl commands
 
@@ -90,7 +86,7 @@ Total MEMORY(bytes): 302Mi
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
 ```
-- Enable Kubernetes Metrics API Server on your cluster.
+- To obtain metrics, enable Kubernetes Metrics API Server on your cluster.
   - Hosted Kubernetes solutions like GKE has this already installed.
 - KubePlus kubectl commands:
   - ```$ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>```
