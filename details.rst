@@ -109,6 +109,21 @@ The specproperty relationship defines that an instance of Moodle Custom Resource
   Level:2 kind:Pod name:moodle1-5847c6b69c-mtwg8 Owner:Moodle/moodle1
   Level:3 kind:Service name:moodle1 Owner:Moodle/moodle1
 
+Here are examples of defining the ``resource/label-relationship`` and ``resoure/annotation`` relationship.
+
+.. code-block:: bash
+
+  resource/annotation-relationship: on:Pod, key:k8s.v1.cni.cncf.io/networks, value:INSTANCE.metadata.name
+
+This annotation-relationship annotation is defined on NetworkAttachmentDefinition CRD available from the Multus Operator. It defines that the relationship between a Pod and an instance of NetworkAttachmentDefinition Custom Resource instance is through the ``k8s.v1.cni.cncf.io/networks`` annotation. This annotation needs to be defined on a Pod and the value of the annotation is the name of the NetworkAttachmentDefinition Custom resource instance.
+
+.. code-block:: bash
+
+  resource/specproperty-relationship: "on:INSTANCE.spec.volumeMounts, value:Deployment.spec.containers.volumemounts.mountpath"
+  resource/label-relationship: "on:Deployment, value:INSTANCE.spec.selector"
+
+Above annotations are defined on the Restic Custom Resource available from the Stash Operator. Restic Custom Resource needs two things as input. First, the mount path of the Volume that needs to be backed up. Second, the Deployment in which the Volume is mounted needs to be given some label and that label needs to be specified in the Restic Custom Resource's selector.
+
 
 Kubectl Plugins
 ------------------
