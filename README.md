@@ -2,7 +2,7 @@
 
 One of the key reasons for Kubernetes’s popularity is its extensibility. Kubernetes API extensions (commonly referred as [Operators](https://coreos.com/operators/)) extend Kubernetes API and enable adding application specific workflow automation in Kubernetes-native manner. There are a wide variety of Operators built today for softwares like databases, key-value stores, API gateways etc. to run on Kubernetes. Enterprise DevOps teams assemble required Kubernetes Operators and create their Kubernetes-native application stacks. The key challenge when working with such stacks is the need to easily discover and use the Custom APIs/Resources available in a cluster towards creating required application-specific workflows. 
 
-KubePlus consists of suite of tools that simplify building, visualizing and monitoring Kubernetes-native application workflows that are made up of Kubernetes's built-in and Custom Resources available in a cluster.
+KubePlus consists of suite of tools that simplify building, visualizing and monitoring Kubernetes application workflows that are made up of Kubernetes's built-in and Custom Resources available in a cluster.
 
 You can start using KubePlus by simply annotating your Custom Resource Definitions (CRDs) with certain annotations (outlined below). 
 If you are not yet using Kubernetes Operators or Custom Resources, 
@@ -41,7 +41,8 @@ KubePlus offers following kubectl commands (as kubectl plugins)
 **3. kubectl connections**
 
 - ``kubectl connections cr``: Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties.
-- ``kubectl connections service``: Provides information about relationships between a Service object and all the downstream Pods related to it.
+- ``kubectl connections service``: Shows all the Pod and Service resources that can be reached from the given service through labels, annotations, or spec properties. 
+- ``kubectl connections pod``: Shows all the Service and Pod resources that can be reached from the given pod through labels, annotations, or spec properties.
 
 **4. kubectl metrics**
 
@@ -62,10 +63,20 @@ KubePlus offers following kubectl commands (as kubectl plugins)
 
 ``` 
 $ kubectl connections service wordpress
-Level:1 kind:Pod name:wordpress-6697844b8f-4vlpt relationship-type:label
-Level:1 kind:Pod name:wordpress-6697844b8f-8694c relationship-type:label
-Level:2 kind:Service name:wordpress-mysql relationship-type:specproperty
-Level:3 kind:Pod name:wordpress-mysql-5bf65959f8-w6d25 relationship-type:label
+Level:0 kind:Service name:wordpress Owner:/
+Level:1 kind:Pod name:wordpress-6697844b8f-7m627 Owner:Deployment/wordpress
+Level:1 kind:Pod name:wordpress-6697844b8f-kx7wg Owner:Deployment/wordpress
+Level:2 kind:Service name:wordpress-mysql Owner:/
+Level:3 kind:Pod name:wordpress-mysql-5bf65959f8-fmxpx Owner:Deployment/wordpress-mysql
+
+
+$ kubectl connections pod wordpress-mysql-5bf65959f8-fmxpx default 
+Level:0 kind:Pod name:wordpress-mysql-5bf65959f8-fmxpx Owner:Deployment/wordpress-mysql
+Level:1 kind:Service name:wordpress-mysql Owner:/
+Level:2 kind:Pod name:wordpress-6697844b8f-7m627 Owner:Deployment/wordpress
+Level:2 kind:Pod name:wordpress-6697844b8f-kx7wg Owner:Deployment/wordpress
+Level:3 kind:Service name:wordpress Owner:/
+
 
 $ kubectl metrics cr MysqlCluster cluster1 namespace1
 ---------------------------------------------------------- 
@@ -97,7 +108,7 @@ Total MEMORY(bytes): 302Mi
 
 ## Operator Maturity Model
 
-In order to build Kubernetes-native application workflows using Operators and Custom Resources, it is important for Cluster administrators to evaluate different Operators against a standard set of requirements. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) towards this focusing on Operator usage in multi-Operator environments. We use this model when curating community Operators for enterprise readiness. 
+In order to build Kubernetes application workflows using Operators and Custom Resources, it is important for Cluster administrators to evaluate different Operators against a standard set of requirements. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) towards this focusing on Operator usage in multi-Operator environments. We use this model when curating community Operators for enterprise readiness. 
 
 
 ## Status

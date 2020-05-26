@@ -2,3 +2,4 @@
 
 echo "kubectl connections cr"
 echo "kubectl connections service"
+echo "kubectl connections pod"
