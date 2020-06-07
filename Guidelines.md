@@ -1,7 +1,7 @@
-# Kubernetes Operator Maturity Model Guidelines for multi-Operator Stacks
+# Kubernetes Operator Maturity Model Guidelines for Kubernetes native Stacks
 
-We have developed Operator Maturity Model to help calibrate an Operator's readiness to work alongside other Operators in multi-Operator environments. The model consists of six stages.
-Below we present the guidelines related to each of these stages. These guidelines help when creating workflows consisting of Custom Resources from different Operators.
+We have developed Operator Maturity Model to help calibrate an Operator's readiness to work alongside other Operators in Kubernetes native stacks. The model consists of six stages.
+Below we present the guidelines related to each of these stages. These guidelines help when creating application-specific workflows consisting of Custom Resources from different Operators.
 
 ![](./docs/Maturity-Model.jpg)
 
@@ -150,8 +150,8 @@ Kubernetes's built-in mechanisms instead. This is especially true in multi-Opera
 Application developers will need to know details about how to use Custom Resources of your Operator. 
 This information goes beyond what is available through Custom Resource Spec properties.
 Consider creating a Unix style ``man page`` for your Custom Resources.
-For each Custom Resource include following information - if there are any implementation assumptions made by the Operator author, at a high-level how to use the Custom Resource, service account and RBAC needs of your Operator, service account and RBAC needs of your Custom Resource's Pods, any hard coded values such as those for resource requests/limits, disruption budgets, service accounts, tolerations, etc. In order to enable users to discover this information in Kubernetes-native manner, you can use our 'platform-as-code/usage' annotation on the CRD definition YAML. Create a ConfigMap with the usage information 
-and add following annotation on your CRD definition YAML: 'platform-as-code/usage'. Set the value of this
+For each Custom Resource include following information - if there are any implementation assumptions made by the Operator author, at a high-level how to use the Custom Resource, service account and RBAC needs of your Operator, service account and RBAC needs of your Custom Resource's Pods, any hard coded values such as those for resource requests/limits, disruption budgets, service accounts, tolerations, etc. In order to enable users to discover this information in Kubernetes-native manner, you can use our 'resource/usage' annotation on the CRD definition YAML. Create a ConfigMap with the usage information 
+and add following annotation on your CRD definition YAML: 'resource/usage'. Set the value of this
 annotation to the name of the ConfigMap that you have created with the usage information. Once this is done,
 users will be able to access this information in Kubernetes-native manner using 'kubectl man <Custom Resource>'
 command (once KubePlus API Add-on is installed by cluster administrator in your cluster).
@@ -204,7 +204,7 @@ In any case, choosing one of these three mechanisms is better than other approac
 
 ### Document Service Account needs of your Operator
 
-Your Operator may be need to use a specific service account with specific permissions. Clearly document the service account needs of your Operator. Include this information in the ConfigMap that you will add for the 'usage' platform-as-code annotation on the CRD. In multi-Operator stacks, knowing the service accounts and their RBAC
+Your Operator may be need to use a specific service account with specific permissions. Clearly document the service account needs of your Operator. Include this information in the ConfigMap that you will add for the 'resource/usage' annotation on the CRD. In multi-Operator stacks, knowing the service accounts and their RBAC
 permissions enables users to know the security posture of the stack.
 Be explicit in defining only the required permissions and nothing more. This ensures that the cluster is safe against
 unintended actions by any of the Operators (malicious/byzantine actions of compromised Operators 
@@ -335,7 +335,7 @@ metadata:
   name: postgreses.postgrescontroller.kubeplus
   annotations:
     helm.sh/hook: crd-install
-    platform-as-code/composition: Deployment, Service
+    resource/composition: Deployment, Service
 spec:
   group: postgrescontroller.kubeplus
   version: v1
@@ -434,7 +434,7 @@ Custom Resources when failures occur. One of the key things as part of this is t
 native resources are created by the Operator when instantiating a Custom Resource instance.
 It is helpful to document this information as part of your Operator's documentation. 
 In order to enable users to discover this information in Kubernetes-native manner, you can use
-our 'platform-as-code/composition' annotation on the CRD definition YAML. The value of this annotation
+our 'resource/composition' annotation on the CRD definition YAML. The value of this annotation
 is the list of all the Kubernetes resources such as Deployment, ConfigMap, Secret, etc. that an Operator
 creates as part of creating a Custom Resource instance. Once this is done, users will be able to use
 the 'kubectl composition <Custom Resource> <Custom Resource instance>' command to find the runtime
@@ -449,8 +449,8 @@ Here is an example of defining 'usage' and 'composition' annotations on Moodle C
     name: moodles.moodlecontroller.kubeplus
     annotations:
       helm.sh/hook: crd-install
-      platform-as-code/usage: moodle-operator-usage.usage
-      platform-as-code/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
+      resource/usage: moodle-operator-usage.usage
+      resource/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
 ```
 
 By defining composition annotation for every CRD, it will be possible to find workflow-level resource composition tree. This will aid in visualization of runtime structure of the workflows.
@@ -466,7 +466,7 @@ For Operator developers it is critical to consider how their Operator works with
 
   * Operator runs in a non-default namespace and Custom Resource instances can be created in that namespace.
 
-Given these options, it will help consumers of your Operator if there is a clear documentation of how namespaces are used by your Operator. Include this information in the ConfigMap that you will add for the 'usage' platform-as-code annotation on the CRD so that this information will be available as part of the Custom Resource man page.
+Given these options, it will help consumers of your Operator if there is a clear documentation of how namespaces are used by your Operator. Include this information in the ConfigMap that you will add for the 'resource/usage' annotation on the CRD so that this information will be available as part of the Custom Resource man page.
 If this information is defined for every Operator installed in the cluster, it will be possible for application developers to understand support for namespaces for Custom Resource workflows as a whole.
 
 
