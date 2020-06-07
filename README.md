@@ -93,15 +93,29 @@ Total MEMORY(bytes): 302Mi
 
 ## Try it:
 
+- To obtain metrics, enable Kubernetes Metrics API Server on your cluster.
+  - Hosted Kubernetes solutions like GKE has this already installed.
+
+- KubePlus kubectl commands:
+
+```
+   $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins-1.0.0.tar.gz
+   $ gunzip kubeplus-kubectl-plugins-1.0.0.tar.gz
+   $ tar -xvf kubeplus-kubectl-plugins-1.0.0.tar
+   $ export $KUBEPLUS_HOME=`pwd`
+   $ export $PATH=$KUBEPLUS_HOME/plugins/:$PATH
+   $ kubectl kubeplus commands
+```
+
+- In-cluster component:
+
 ```
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
 ```
-- To obtain metrics, enable Kubernetes Metrics API Server on your cluster.
-  - Hosted Kubernetes solutions like GKE has this already installed.
 - KubePlus kubectl commands:
   - ```$ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>```
-  - ```$ export PATH=`pwd`/plugins/:$PATH```
+  - ```$ export PATH=$KUBEPLUS_HOME/plugins/:$PATH```
 - KubePlus In-cluster component:
   - ```$ ./scripts/deploy-kubeplus.sh```
   - Check out [examples](./examples/moodle-with-presslabs/).

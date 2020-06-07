@@ -1,0 +1,16 @@
+#!/bin/bash
+
+
+echo "kubectl man cr"
+echo "kubectl composition"
+echo "kubectl connections cr"
+echo "kubectl connections service"
+echo "kubectl connections pod"
+echo "kubectl metrics cr"
+echo "kubectl metrics service"
+echo "kubectl metrics account"
+echo "kubectl metrics helmrelease"
+echo "kubectl grouplogs cr composition"
+echo "kubectl grouplogs cr connections"
+echo "kubectl grouplogs service"
+echo "kubectl grouplogs helmrelease"
