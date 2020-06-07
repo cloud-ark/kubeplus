@@ -402,8 +402,12 @@ class CRMetrics(object):
 
 	def _parse_pods_from_connections_op(self, output):
 		pod_list = []
+		print(output)
+		start = False
 		for line in output.split("\n"):
-			if line:
+			if line.startswith("Level"):
+				start = True
+			if line and start:
 				parts = line.split(" ")
 				kind = parts[1]
 				instance = parts[2]
