@@ -2,7 +2,7 @@
 
 echo "::KubePlus kubectl commands::"
 echo "---"
-echo "1. kubectl man - Show Man page information about a Custom Resource"
+echo "1. kubectl man cr - Show Man page information about a Custom Resource"
 echo "---"
 echo "2. kubectl composition - Show composition tree of a Custom Resource instance"
 echo "---"

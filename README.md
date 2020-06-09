@@ -26,7 +26,7 @@ KubePlus offers following kubectl commands (as kubectl plugins)
 
 **1. kubectl man**
 
-- ``kubectl man ``: Provides information about how to use a Custom Resource.
+- ``kubectl man cr ``: Provides information about how to use a Custom Resource.
 
 **2. kubectl composition**
 
