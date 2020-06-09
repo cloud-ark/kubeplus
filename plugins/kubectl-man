@@ -1,11 +1,11 @@
 #!/bin/bash
 
-if (( $# < 1 )); then
-    echo "kubectl man <Custom Resource Kind>"
+if (( $# < 2 )); then
+    echo "kubectl man cr <Custom Resource Kind>"
     exit 0
 fi
 
-kind=$1
+kind=$2
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	/$KUBEPLUS_HOME/plugins/kubediscovery-macos man $kind
