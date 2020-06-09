@@ -1,28 +1,22 @@
 ## KubePlus - Tooling for Kubernetes native Application Stacks
 
-One of the key reasons for Kubernetes’s popularity is its extensibility. Kubernetes API extensions (commonly referred as [Operators](https://coreos.com/operators/)) extend Kubernetes API and enable adding application specific workflow automation in Kubernetes-native manner. There are a wide variety of Operators built today for softwares like databases, key-value stores, API gateways etc. to run on Kubernetes. Enterprise DevOps teams assemble required Kubernetes Operators and create their Kubernetes-native application stacks. The key challenge when working with such stacks is the need to easily discover and use the Custom APIs/Resources available in a cluster towards creating required application-specific workflows. 
-
-KubePlus consists of suite of tools that simplify building, visualizing and monitoring Kubernetes application workflows that are made up of Kubernetes's built-in and Custom Resources available in a cluster.
-
-You can start using KubePlus by simply annotating your Custom Resource Definitions (CRDs) with certain annotations (outlined below). 
-If you are not yet using Kubernetes Operators or Custom Resources, 
-you can still use KubePlus to visualize and monitor application workflows that are made up of Kubernetes's built-in resources such as Services and Pods.
+Kubernetes native stacks are built by extending base Kubernetes Resource set with Operators and Custom Resources. Application workflows on Kubernetes are realized by establishing connections between Kubernetes Resources. These connections can be based on various relationships such as labels, annotations, ownership, etc. KubePlus simplifies building, visualizing and monitoring Kubernetes application workflows that are made up of Kubernetes's built-in and Custom Resources available in a cluster.
 
 KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
 ## Summary
 
-KubePlus tool suite consists of following components - CRD Annotations, client-side kubectl plugins, and an optional in-cluster component.
+KubePlus tool suite consists of following components - CRD Annotations, client-side kubectl plugins, and an optional cluster-side component.
 
 ### CRD Annotations
 
-Application workflows are built by establishing relationships between Kubernetes built-in and/or Custom Resources. (e.g. a Service is connected to a Pod through labels.) Kubernetes offers labels, annotations and spec properties to define resource relationships. When working with Custom Resources introduced by Operators, it is important that Operator developer's assumptions around what relationships can be established with a Custom Resource and what actions will be performed as a result of them are clearly articulated. KubePlus provides a set of annotations on Custom Resource Definitions to encode such assumptions. The specific annotations and how to use them can be found [here](./details.rst))
+In Kubernetes application workflows are built by establishing relationships between Kubernetes built-in and/or Custom Resources. (e.g. a Service is connected to a Pod through labels.) When working with Custom Resources introduced by Operators, it is important that Operator developer's assumptions around what relationships can be established with a Custom Resource and what actions will be performed as a result of them are clearly articulated. KubePlus provides a set of annotations on Custom Resource Definitions to encode such assumptions. The specific annotations and how to use them can be found [here](./details.rst))
 
 ### Client-side kubectl plugins
 
-KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds Kubernetes resource relationship graph. KubePlus offers number of kubectl plugins that internally leverages this graph and enables teams to visualize and monitor application workflows.  
+KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds Kubernetes resource relationship graphs. KubePlus offers number of kubectl plugins that internally leverages this graph and enables teams to visualize and monitor application workflows.  
 
-### In-cluster component (optional)
+### Cluster-side component (optional)
 
 KubePlus also provides an optional PlatformWorkflow Operator that further helps teams define application workflows that are hard to realize using just helm charts.
 
@@ -32,7 +26,7 @@ KubePlus offers following kubectl commands (as kubectl plugins)
 
 **1. kubectl man**
 
-- ``kubectl man cr``: Provides information about how to use a Custom Resource.
+- ``kubectl man ``: Provides information about how to use a Custom Resource.
 
 **2. kubectl composition**
 
@@ -46,9 +40,9 @@ KubePlus offers following kubectl commands (as kubectl plugins)
 
 **4. kubectl metrics**
 
-- ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and Memory).
+- ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and total Memory consumption).
 - ``kubectl metrics service``: Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
-- ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs on-cluster component.
+- ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs cluster-side component.
 - ``kubectl metrics helmrelease``: Provides CPU/Memory metrics for all the Pods that are part of a Helm release.
 
 **5. kubectl grouplogs**
@@ -63,19 +57,20 @@ KubePlus offers following kubectl commands (as kubectl plugins)
 
 ``` 
 $ kubectl connections service wordpress
-Level:0 kind:Service name:wordpress Owner:/
-Level:1 kind:Pod name:wordpress-6697844b8f-7m627 Owner:Deployment/wordpress
-Level:1 kind:Pod name:wordpress-6697844b8f-kx7wg Owner:Deployment/wordpress
-Level:2 kind:Service name:wordpress-mysql Owner:/
-Level:3 kind:Pod name:wordpress-mysql-5bf65959f8-fmxpx Owner:Deployment/wordpress-mysql
 
-
-$ kubectl connections pod wordpress-mysql-5bf65959f8-fmxpx default 
-Level:0 kind:Pod name:wordpress-mysql-5bf65959f8-fmxpx Owner:Deployment/wordpress-mysql
-Level:1 kind:Service name:wordpress-mysql Owner:/
-Level:2 kind:Pod name:wordpress-6697844b8f-7m627 Owner:Deployment/wordpress
-Level:2 kind:Pod name:wordpress-6697844b8f-kx7wg Owner:Deployment/wordpress
-Level:3 kind:Service name:wordpress Owner:/
+------ Branch 1 ------
+Level:0 Service/wordpress
+Level:1 Pod/wordpress-6697844b8f-5rhlj [related to Service/wordpress by:label]
+Level:2 ReplicaSet/wordpress-6697844b8f [related to Pod/wordpress-6697844b8f-5rhlj by:owner reference]
+Level:3 Deployment/wordpress [related to ReplicaSet/wordpress-6697844b8f by:owner reference]
+Level:3 Pod/wordpress-6697844b8f-cldvt [related to ReplicaSet/wordpress-6697844b8f by:owner reference]
+Level:3 Pod/wordpress-6697844b8f-k5qbm [related to ReplicaSet/wordpress-6697844b8f by:owner reference]
+------ Branch 2 ------
+Level:0 Service/wordpress
+Level:1 Pod/wordpress-6697844b8f-cldvt [related to Service/wordpress by:label]
+------ Branch 3 ------
+Level:0 Service/wordpress
+Level:1 Pod/wordpress-6697844b8f-k5qbm [related to Service/wordpress by:label]
 
 
 $ kubectl metrics cr MysqlCluster cluster1 namespace1
@@ -107,7 +102,7 @@ Total MEMORY(bytes): 302Mi
    $ kubectl kubeplus commands
 ```
 
-- In-cluster component:
+- Cluster-side component:
 
 ```
    $ git clone https://github.com/cloud-ark/kubeplus.git
@@ -116,7 +111,7 @@ Total MEMORY(bytes): 302Mi
 - KubePlus kubectl commands:
   - ```$ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>```
   - ```$ export PATH=$KUBEPLUS_HOME/plugins/:$PATH```
-- KubePlus In-cluster component:
+- KubePlus Cluster-side component:
   - ```$ ./scripts/deploy-kubeplus.sh```
   - Check out [examples](./examples/moodle-with-presslabs/).
 
