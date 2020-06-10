@@ -106,9 +106,9 @@ Total MEMORY(bytes): 302Mi
 - KubePlus kubectl commands:
 
 ```
-   $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins-1.0.0.tar.gz
-   $ gunzip kubeplus-kubectl-plugins-1.0.0.tar.gz
-   $ tar -xvf kubeplus-kubectl-plugins-1.0.0.tar
+   $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins-1.0.1.tar.gz
+   $ gunzip kubeplus-kubectl-plugins-1.0.1.tar.gz
+   $ tar -xvf kubeplus-kubectl-plugins-1.0.1.tar
    $ export KUBEPLUS_HOME=`pwd`
    $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
    $ kubectl kubeplus commands
