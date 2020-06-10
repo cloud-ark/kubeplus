@@ -1,22 +1,36 @@
 ## KubePlus - Tooling for Kubernetes native Application Stacks
 
-Kubernetes native stacks are built by extending base Kubernetes Resource set with Operators and Custom Resources. Application workflows on Kubernetes are realized by establishing connections between Kubernetes Resources. These connections can be based on various relationships such as labels, annotations, ownership, etc. KubePlus simplifies building, visualizing and monitoring Kubernetes application workflows that are made up of Kubernetes's built-in and Custom Resources available in a cluster.
+Kubernetes native stacks are built by extending Kubernetes Resource set (APIs) with Operators and their Custom Resources. Application workflows on Kubernetes are realized by establishing connections between Kubernetes Resources (APIs). These connections can be based on various relationships such as labels, annotations, ownership, etc.
 
-KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
+![](./docs/application-workflow.png)
+
+KubePlus tooling simplifies building, visualizing and monitoring these application workflows. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
 ## Summary
 
-KubePlus tool suite consists of following components - CRD Annotations, client-side kubectl plugins, and an optional cluster-side component.
+KubePlus tooling consists of - kubectl plugins, CRD annotations and (optional) cluster-side add-on.
+
+![](./docs/Kubernetes-native-stack-with-KubePlus.jpg)
 
 ### CRD Annotations
 
-In Kubernetes application workflows are built by establishing relationships between Kubernetes built-in and/or Custom Resources. (e.g. a Service is connected to a Pod through labels.) When working with Custom Resources introduced by Operators, it is important that Operator developer's assumptions around what relationships can be established with a Custom Resource and what actions will be performed as a result of them are clearly articulated. KubePlus provides a set of annotations on Custom Resource Definitions to encode such assumptions. The specific annotations and how to use them can be found [here](./details.rst))
+In Kubernetes application workflows are built by establishing relationships between Kubernetes built-in and/or Custom Resources. (e.g. a Service is connected to a Pod through labels.) When working with Custom Resources introduced by Operators, it is important that Operator developer's assumptions around what relationships can be established with a Custom Resource and what actions will be performed as a result of them are clearly articulated. KubePlus provides following annotations on Custom Resource Definitions to encode such assumptions.
+
+```
+resource/usage
+resource/composition
+resource/annotation-relationship
+resource/label-relationship
+resource/specproperty-relationship
+```
+
+More details on how to use these annotations can be found [here](./details.rst))
 
 ### Client-side kubectl plugins
 
-KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds Kubernetes resource relationship graphs. KubePlus offers number of kubectl plugins that internally leverages this graph and enables teams to visualize and monitor application workflows.  
+KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds Kubernetes resource relationship graphs. KubePlus offers a variety of kubectl plugins that internally leverage this graph and enable teams to visualize and monitor application workflows.
 
-### Cluster-side component (optional)
+### Cluster-side add-on (optional)
 
 KubePlus also provides an optional PlatformWorkflow Operator that further helps teams define application workflows that are hard to realize using just helm charts.
 

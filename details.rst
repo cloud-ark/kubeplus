@@ -1,8 +1,8 @@
 =======================
-KubePlus API Add-on
+KubePlus tooling
 =======================
 
-KubePlus API add-on simplifies building Kubernetes-native workflow automation using Kubernetes Custom APIs/ Resources by extending the Kubernetes resource graph and maintaining all implicit and explicit relationships of Custom Resources created through labels, annotations, spec properties or sub-resources. This Custom Resource relationship graph is then used for improved visibility, monitoring and debuggability of workflows. KubePlus API add-on additionally allows you to define workflow level Kubernetes resource dependencies and allows applying security or robustness policies to all the workflow resources together. 
+KubePlus tooling simplifies building Kubernetes-native workflow automation using Kubernetes Custom APIs/ Resources by extending the Kubernetes resource graph and maintaining all implicit and explicit relationships of Custom Resources created through labels, annotations, spec properties or sub-resources. This Custom Resource relationship graph is then used for improved visibility, monitoring and debuggability of workflows. KubePlus tooling additionally allows you to define workflow level Kubernetes resource dependencies and allows applying security or robustness policies to all the workflow resources together. 
 
 This tool is being developed as a part of our  `Platform as Code practice`_.
 
@@ -13,9 +13,9 @@ This tool is being developed as a part of our  `Platform as Code practice`_.
 Details
 --------
 
-Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus API add-on simplifies creation of Kubernertes-native platform workflows leveraging these Custom Resources.
+Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus tooling simplifies creation of Kubernertes-native platform workflows leveraging these Custom Resources.
 
-.. image:: ./docs/KubePlus-workflow.jpg
+.. image:: ./docs/Kubernetes-native-stack-with-KubePlus.jpg
    :scale: 15%
    :align: center
 
@@ -41,15 +41,15 @@ KubePlus API Add-on provides discovery commands, binding functions, and an orche
 ..   :align: center
 
 
-KubePlus API add-on Components
+KubePlus Components
 -------------------------------
-KubePlus API add-on is made up of - Platform-as-Code Annotations, client-side kubectl plugins, and server-side components (binding functions and PlatformWorkflow CRD).
+KubePlus tooling is made up of - Platform-as-Code Annotations, client-side kubectl plugins, and server-side components (binding functions and PlatformWorkflow CRD).
 
 
 Platform-as-Code Resource annotations
 --------------------------------------
 
-In order to build and maintain Custom Resource relationship graph, KubePlus API add-on expects CRD packages to be updated with Platform-as-code annotations as described below. 
+In order to build and maintain Custom Resource relationship graph, KubePlus expects CRD packages to be updated with annotations as described below. 
 
 .. code-block:: bash
 
@@ -128,7 +128,7 @@ Above annotations are defined on the Restic Custom Resource available from the S
 Kubectl Plugins
 ------------------
 
-KubePlus API add-on offers following kubectl plugins towards discovery and use of Custom Resources and obtaining insights into Kubernetes-native application.
+KubePlus offers following kubectl plugins towards discovery and use of Custom Resources and obtaining insights into Kubernetes-native application.
 
 .. code-block:: bash
 
@@ -155,7 +155,7 @@ In order to use these plugins you need to add KubePlus folder to your PATH varia
 Implicit and Explicit Relationships
 ------------------------------------
 
-Custom Resource relationships can be categorized into two categories. Explicit relationships based on labels/annotations/spec-properties are static and can be hard-coded into Helm charts / YAML files before the deployment. Implicit relationships can not be hard coded pre-deployment and need to be resolved run-time. Example of implicit relationship can be – Restic Custom Resource depends on label on Moodle Custom Resources Deployment sub-resource which gets created only after Moodle resource is created. KubePlus API add-on offers additional functions that can be used directly in the YAML definitions to define such implicit dependencies. 
+Custom Resource relationships can be categorized into two categories. Explicit relationships based on labels/annotations/spec-properties are static and can be hard-coded into Helm charts / YAML files before the deployment. Implicit relationships can not be hard coded pre-deployment and need to be resolved run-time. Example of implicit relationship can be – Restic Custom Resource depends on label on Moodle Custom Resources Deployment sub-resource which gets created only after Moodle resource is created. KubePlus offers additional functions that can be used directly in the YAML definitions to define such implicit dependencies. 
 
 .. code-block:: bash
 
