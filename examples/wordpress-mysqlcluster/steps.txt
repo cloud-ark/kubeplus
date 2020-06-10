@@ -52,6 +52,9 @@ Steps:
      - Base64 decode the value of cluster1-secret and add that value to WORDPRESS_DB_PASSWORD environment variable 
 
      - kubectl create -f wordpress-pod.yaml
+     - kubectl create -f wordpress-service.yaml
+     - kubectl create -f wordpress-ingress.yaml
+     - kubectl create -f clusterissuer.yaml
 
 10) Check the connections
     - kubectl connections cr MysqlCluster cluster1 namespace1
