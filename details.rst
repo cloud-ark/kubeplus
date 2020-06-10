@@ -43,12 +43,12 @@ KubePlus API Add-on provides discovery commands, binding functions, and an orche
 
 
 KubePlus Components
--------------------------------
+----------------------
 KubePlus tooling is made up of - CRD Annotations, client-side kubectl plugins, and server-side components (binding functions and PlatformWorkflow CRD).
 
 
-Resource annotations
-----------------------
+CRD annotations
+-----------------
 
 In order to build and maintain Custom Resource relationship graph, KubePlus expects CRD packages to be updated with annotations as described below. 
 
@@ -126,8 +126,8 @@ This annotation-relationship annotation is defined on NetworkAttachmentDefinitio
 Above annotations are defined on the Restic Custom Resource available from the Stash Operator. Restic Custom Resource needs two things as input. First, the mount path of the Volume that needs to be backed up. Second, the Deployment in which the Volume is mounted needs to be given some label and that label needs to be specified in the Restic Custom Resource's selector.
 
 
-Kubectl Plugins
-------------------
+Client-side kubectl plugins
+----------------------------
 
 KubePlus offers following kubectl plugins towards discovery and use of Custom Resources and obtaining insights into Kubernetes-native application.
 
@@ -153,8 +153,11 @@ In order to use these plugins you need to add KubePlus folder to your PATH varia
    $ export PATH=$PATH:`pwd`/plugins
 
 
-Implicit and Explicit Relationships
-------------------------------------
+Cluster-side add-on 
+---------------------
+
+Binding Functions
+------------------
 
 Custom Resource relationships can be categorized into two categories. Explicit relationships based on labels/annotations/spec-properties are static and can be hard-coded into Helm charts / YAML files before the deployment. Implicit relationships can not be hard coded pre-deployment and need to be resolved run-time. Example of implicit relationship can be – Restic Custom Resource depends on label on Moodle Custom Resources Deployment sub-resource which gets created only after Moodle resource is created. KubePlus offers additional functions that can be used directly in the YAML definitions to define such implicit dependencies. 
 
