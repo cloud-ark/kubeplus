@@ -24,7 +24,7 @@ resource/label-relationship
 resource/specproperty-relationship
 ```
 
-More details on how to use these annotations can be found [here](./details.rst))
+More details on how to use these annotations can be found [here](./details.rst)
 
 ### Client-side kubectl plugins
 
@@ -123,7 +123,7 @@ Total MEMORY(bytes): 302Mi
 - KubePlus kubectl commands:
   - ```$ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>```
   - ```$ export PATH=$KUBEPLUS_HOME/plugins/:$PATH```
-- KubePlus Cluster-side component:
+- KubePlus Cluster-side add-on:
   - ```$ ./scripts/deploy-kubeplus.sh```
   - Check out [examples](./examples/moodle-with-presslabs/).
 
