@@ -16,7 +16,8 @@ Details
 Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus tooling simplifies creation of Kubernertes-native platform workflows leveraging these Custom Resources.
 
 .. image:: ./docs/Kubernetes-native-stack-with-KubePlus.jpg
-   :scale: 15%
+   :height: 300px
+   :width: 300px
    :align: center
 
 The main benefit of using KubePlus to DevOps engineers/application developers are:
@@ -43,11 +44,11 @@ KubePlus API Add-on provides discovery commands, binding functions, and an orche
 
 KubePlus Components
 -------------------------------
-KubePlus tooling is made up of - Platform-as-Code Annotations, client-side kubectl plugins, and server-side components (binding functions and PlatformWorkflow CRD).
+KubePlus tooling is made up of - CRD Annotations, client-side kubectl plugins, and server-side components (binding functions and PlatformWorkflow CRD).
 
 
-Platform-as-Code Resource annotations
---------------------------------------
+Resource annotations
+----------------------
 
 In order to build and maintain Custom Resource relationship graph, KubePlus expects CRD packages to be updated with annotations as described below. 
 
@@ -210,7 +211,7 @@ Check our `slide deck`_ in the Kubernetes Community Meeting for more details of 
 
 PlatformWorkflow Operator
 --------------------------
-Creating workflows requires treating the set of resources representing the workflow as a unit. For this purpose, KubePlus provides a Custom Resource of its own - PlatformWorkflow. This Custom Resource enables application developers to define all the resources in a workflow as a unit along with the inter-dependencies between them. The dependency information is used for ensuring robustness and security of the workflows including, preventing out-of-order creation of resources and ensuring that resources that are still in use cannot be deleted. This CRD is being updated to enable applying certain workflow level security or robustness guarantees to all resources involved. 
+Creating workflows requires treating the set of resources representing the workflow as a unit. For this purpose, KubePlus provides a Custom Resource of its own - PlatformWorkflow. This Custom Resource enables application developers to define all the resources in a workflow as a unit along with the inter-dependencies between them. The dependency information is used for ensuring robustness and security of the workflows including, preventing out-of-order creation of resources and ensuring that resources that are still in use cannot be deleted.
 
 PlatformWorkflow Operator does not actually deploy any resources defined in a workflow. Resource creation is done by application developers as usual using 'kubectl'.
 
@@ -283,7 +284,9 @@ KubePlus in Action
 Operator FAQ
 -------------
 
-New to Operators? Checkout [Operator FAQ](https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md).
+New to Operators? Checkout `Operator FAQ`_
+
+.. _Operator FAQ: https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md.
 
 
 
