@@ -1,0 +1,45 @@
+(venv) Devs-MacBook:kubediscovery devdatta$ kubectl metrics cr ClusterIssuer wordpress-stack namespace1
+Discovering connections - Level: 0, Kind:ClusterIssuer, instance:wordpress-stack
+Discovering connections - Level: 1, Kind:Ingress, instance:wordpress-ingress
+Discovering connections - Level: 2, Kind:Service, instance:wordpress
+Discovering connections - Level: 3, Kind:Pod, instance:wordpress-pod
+Discovering connections - Level: 4, Kind:Service, instance:cluster1-mysql-master
+Discovering connections - Level: 5, Kind:Pod, instance:cluster1-mysql-0
+Discovering connections - Level: 6, Kind:Service, instance:cluster1-mysql-nodes
+Discovering connections - Level: 7, Kind:MysqlCluster, instance:cluster1
+Discovering connections - Level: 8, Kind:StatefulSet, instance:cluster1-mysql
+Discovering connections - Level: 8, Kind:Service, instance:cluster1-mysql
+Discovering connections - Level: 8, Kind:Service, instance:cluster1-mysql-master
+Discovering connections - Level: 8, Kind:Service, instance:cluster1-mysql-nodes
+Discovering connections - Level: 8, Kind:ConfigMap, instance:cluster1-mysql
+
+::Final connections graph::
+------ Branch 1 ------
+Level:0 kind:ClusterIssuer name:wordpress-stack
+Level:1 kind:Ingress name:wordpress-ingress [related to ClusterIssuer/wordpress-stack by:annotation]
+Level:2 kind:Service name:wordpress [related to Ingress/wordpress-ingress by:specproperty]
+Level:3 kind:Pod name:wordpress-pod [related to Service/wordpress by:label]
+Level:4 kind:Service name:cluster1-mysql-master [related to Pod/wordpress-pod by:envvariable]
+Level:5 kind:Pod name:cluster1-mysql-0 [related to Service/cluster1-mysql-master by:label]
+Level:6 kind:Service name:cluster1-mysql [related to Pod/cluster1-mysql-0 by:label]
+Level:6 kind:Service name:cluster1-mysql-nodes [related to Pod/cluster1-mysql-0 by:envvariable]
+Level:6 kind:Service name:cluster1-mysql-nodes [related to Pod/cluster1-mysql-0 by:label]
+Level:7 kind:MysqlCluster name:cluster1 [related to Service/cluster1-mysql-nodes by:owner reference]
+Level:8 kind:Service name:cluster1-mysql [related to MysqlCluster/cluster1 by:owner reference]
+Level:8 kind:Service name:cluster1-mysql-master [related to MysqlCluster/cluster1 by:owner reference]
+Level:8 kind:ConfigMap name:cluster1-mysql [related to MysqlCluster/cluster1 by:owner reference]
+Level:8 kind:StatefulSet name:cluster1-mysql [related to MysqlCluster/cluster1 by:owner reference]
+Level:9 kind:Pod name:cluster1-mysql-0 [related to StatefulSet/cluster1-mysql by:owner reference]
+---------------------------------------------------------- 
+ Creator Account Identity: 
+---------------------------------------------------------- 
+Kubernetes Resources consumed:
+    Number of Sub-resources: 0
+    Number of Pods: 2
+    Number of Containers: 7
+    Number of Nodes: 1
+Underlying Physical Resoures consumed:
+    Total CPU(cores): 26m
+    Total MEMORY(bytes): 307Mi
+    Total Storage(bytes): 21Gi
+---------------------------------------------------------- 
