@@ -421,7 +421,16 @@ class CRMetrics(object):
 					pod = {}
 					pod['Namespace'] = namespace
 					pod['Name'] = instance_name
-					pod_list.append(pod)
+					if len(pod_list) > 0:
+						present = False
+						for p in pod_list:
+							if p['Name'] == instance_name and p['Namespace'] == namespace:
+								present = True
+								break
+						if not present:
+							pod_list.append(pod)
+					else:
+						pod_list.append(pod)
 		return pod_list
 
 	def _get_pods_for_helmrelease_2(self, release_name):
