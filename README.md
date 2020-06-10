@@ -10,8 +10,6 @@ KubePlus tooling simplifies building, visualizing and monitoring these applicati
 
 KubePlus tooling consists of - kubectl plugins, CRD annotations and (optional) cluster-side add-on.
 
-![](./docs/Kubernetes-native-stack-with-KubePlus.jpg)
-
 ### CRD Annotations
 
 In Kubernetes application workflows are built by establishing relationships between Kubernetes built-in and/or Custom Resources. (e.g. a Service is connected to a Pod through labels.) When working with Custom Resources introduced by Operators, it is important that Operator developer's assumptions around what relationships can be established with a Custom Resource and what actions will be performed as a result of them are clearly articulated. KubePlus provides following annotations on Custom Resource Definitions to encode such assumptions.
@@ -66,25 +64,21 @@ KubePlus offers following kubectl commands (as kubectl plugins)
 - ``kubectl grouplogs helmrelease`` (upcoming): Provides logs for all the containers of all the Pods that are part of a Helm release.
 
 
-
 ## Example
 
-``` 
-$ kubectl connections service wordpress
+![](./docs/cluster-issuer.png)
 
+``` 
+$ kubectl connections service wordpress namespace1
+
+::Final connections graph::
 ------ Branch 1 ------
 Level:0 Service/wordpress
-Level:1 Pod/wordpress-6697844b8f-5rhlj [related to Service/wordpress by:label]
-Level:2 ReplicaSet/wordpress-6697844b8f [related to Pod/wordpress-6697844b8f-5rhlj by:owner reference]
-Level:3 Deployment/wordpress [related to ReplicaSet/wordpress-6697844b8f by:owner reference]
-Level:3 Pod/wordpress-6697844b8f-cldvt [related to ReplicaSet/wordpress-6697844b8f by:owner reference]
-Level:3 Pod/wordpress-6697844b8f-k5qbm [related to ReplicaSet/wordpress-6697844b8f by:owner reference]
+Level:1 Pod/wordpress-pod [related to Service/wordpress by:label]
 ------ Branch 2 ------
 Level:0 Service/wordpress
-Level:1 Pod/wordpress-6697844b8f-cldvt [related to Service/wordpress by:label]
------- Branch 3 ------
-Level:0 Service/wordpress
-Level:1 Pod/wordpress-6697844b8f-k5qbm [related to Service/wordpress by:label]
+Level:1 Ingress/wordpress-ingress [related to Service/wordpress by:specproperty]
+Level:2 ClusterIssuer/wordpress-stack [related to Ingress/wordpress-ingress by:annotation]
 
 
 $ kubectl metrics cr MysqlCluster cluster1 namespace1

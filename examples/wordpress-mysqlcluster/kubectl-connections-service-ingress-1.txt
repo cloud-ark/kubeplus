@@ -1,0 +1,14 @@
+(venv) Devs-MacBook:kubediscovery devdatta$ kubectl connections service wordpress namespace1
+Discovering connections - Level: 0, Kind:Service, instance:wordpress
+Discovering connections - Level: 1, Kind:Pod, instance:wordpress-pod
+Discovering connections - Level: 1, Kind:Ingress, instance:wordpress-ingress
+Discovering connections - Level: 2, Kind:ClusterIssuer, instance:wordpress-stack
+
+::Final connections graph::
+------ Branch 1 ------
+Level:0 Service/wordpress
+Level:1 Pod/wordpress-pod [related to Service/wordpress by:label]
+------ Branch 2 ------
+Level:0 Service/wordpress
+Level:1 Ingress/wordpress-ingress [related to Service/wordpress by:specproperty]
+Level:2 ClusterIssuer/wordpress-stack [related to Ingress/wordpress-ingress by:annotation]
