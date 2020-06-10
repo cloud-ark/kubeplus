@@ -3,7 +3,7 @@
 Kubernetes native stacks are built by extending Kubernetes Resource set (APIs) with Operators and their Custom Resources. Application workflows on Kubernetes are realized by establishing connections between Kubernetes Resources (APIs). These connections can be based on various relationships such as labels, annotations, ownership, etc.
 
 <p align="center">
-<img src="./docs/application-workflow.png" width="600" height="300">
+<img src="./docs/application-workflow.png" width="800" height="300">
 </p>
 
 KubePlus tooling simplifies building, visualizing and monitoring these application workflows. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
