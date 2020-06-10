@@ -24,7 +24,7 @@ resource/label-relationship
 resource/specproperty-relationship
 ```
 
-More details on how to use these annotations can be found [here](./details.rst)
+More details on how to use these annotations can be found [here](./details.rst).
 
 ### Client-side kubectl plugins
 
