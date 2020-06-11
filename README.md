@@ -69,7 +69,7 @@ KubePlus offers following kubectl commands (as kubectl plugins)
 ## Example
 
 <p align="center">
-<img src="./docs/clusterissuer-mysqlcluster.png" width="600" height="300" class="center">
+<img src="./docs/clusterissuer-mysqlcluster.png" width="750" height="300" class="center">
 </p>
 
 ``` 
