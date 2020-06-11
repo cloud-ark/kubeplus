@@ -18,8 +18,9 @@ Steps:
 3) Wait till Tiller Pod is running
    - kubectl get pods -n kube-system
 
-4) Once Helm Pod is ready, deploy MySQL Operator. 
+4) Once Helm Pod is ready, deploy MySQL Operator and apply Cert-Manager CRDs
    - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-4.tgz?raw=true
+   - kubectl create -f cert-manager-crds-release0.8.yaml
 
 5) Wait till MysqlCluster Operator Pod is ready
    - kubectl get pods
