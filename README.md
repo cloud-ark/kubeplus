@@ -69,11 +69,13 @@ KubePlus offers following kubectl commands (as kubectl plugins)
 ## Example
 
 <p align="center">
-<img src="./docs/clusterissuer-mysqlcluster.png" width="400" height="200" class="center">
+<img src="./docs/clusterissuer-mysqlcluster.png" width="600" height="300" class="center">
 </p>
 
 ``` 
-$ ::Final connections graph::
+$ kubectl connections service wordpress namespace1
+
+::Final connections graph::
 ------ Branch 1 ------
 Level:0 Service/wordpress
 Level:1 Pod/wordpress-pod [related to Service/wordpress by:label]
