@@ -109,6 +109,24 @@ Underlying Physical Resoures consumed:
 ---------------------------------------------------------- 
 ```
 
+Here is the CRD annotation on the ClusterIssuer Custom Resource:
+
+```
+resource/annotation-relationship: on:Ingress, key:cert-manager.io/cluster-issuer, value:INSTANCE.metadata.name
+```
+The is a annotation-relationship annotation. It defines that Cert Manager looks for 
+``cert-manager.io/cluster-issuer`` annotation on Ingress resources. The value of this
+annotation is the name of the ClusterIssuer instance.
+
+Here is the CRD annotation on the MysqlCluster Custom Resource:
+
+```
+resource/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
+```
+
+This is the composition annotation. It identifies the set of resources that will be created by MysqlCluster Operator as part of instantiating the MysqlCluster Custom Resource instance.
+
+
 [Try above example](https://github.com/cloud-ark/kubeplus/blob/master/examples/wordpress-mysqlcluster/steps.txt) in your cluster.
 
 Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationship-graphs-for-application-level-insights-70139e19fb0) to understand more about why tracking resource relationships is useful in Kubernetes.
