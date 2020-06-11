@@ -69,34 +69,45 @@ KubePlus offers following kubectl commands (as kubectl plugins)
 ## Example
 
 <p align="center">
-<img src="./docs/cluster-issuer.png" width="400" height="200" class="center">
+<img src="./docs/clusterissuer-mysqlcluster.png" width="400" height="200" class="center">
 </p>
 
 ``` 
-$ kubectl connections service wordpress namespace1
-
-::Final connections graph::
+$ ::Final connections graph::
 ------ Branch 1 ------
 Level:0 Service/wordpress
 Level:1 Pod/wordpress-pod [related to Service/wordpress by:label]
+Level:2 Service/cluster1-mysql-master [related to Pod/wordpress-pod by:envvariable]
+Level:3 Pod/cluster1-mysql-0 [related to Service/cluster1-mysql-master by:label]
+Level:4 Service/cluster1-mysql-nodes [related to Pod/cluster1-mysql-0 by:envvariable]
+Level:4 Service/cluster1-mysql [related to Pod/cluster1-mysql-0 by:label]
+Level:4 Service/cluster1-mysql-nodes [related to Pod/cluster1-mysql-0 by:label]
+Level:5 MysqlCluster/cluster1 [related to Service/cluster1-mysql-nodes by:owner reference]
+Level:6 Service/cluster1-mysql [related to MysqlCluster/cluster1 by:owner reference]
+Level:6 Service/cluster1-mysql-master [related to MysqlCluster/cluster1 by:owner reference]
+Level:6 ConfigMap/cluster1-mysql [related to MysqlCluster/cluster1 by:owner reference]
+Level:6 StatefulSet/cluster1-mysql [related to MysqlCluster/cluster1 by:owner reference]
+Level:7 Pod/cluster1-mysql-0 [related to StatefulSet/cluster1-mysql by:owner reference]
 ------ Branch 2 ------
 Level:0 Service/wordpress
 Level:1 Ingress/wordpress-ingress [related to Service/wordpress by:specproperty]
 Level:2 ClusterIssuer/wordpress-stack [related to Ingress/wordpress-ingress by:annotation]
 
 
-$ kubectl metrics cr MysqlCluster cluster1 namespace1
+$ kubectl metrics service wordpress namespace1
 ---------------------------------------------------------- 
- Creator Account Identity: devdattakulkarni@gmail.com
+Kubernetes Resources consumed:
+    Number of Pods: 2
+    Number of Containers: 7
+    Number of Nodes: 1
+Underlying Physical Resoures consumed:
+    Total CPU(cores): 25m
+    Total MEMORY(bytes): 307Mi
+    Total Storage(bytes): 21Gi
 ---------------------------------------------------------- 
- Number of Sub-resources: 7
- Number of Pods: 2
- Number of Containers: 16
- Number of Nodes: 1
-Total CPU(cores): 84m
-Total MEMORY(bytes): 302Mi
-----------------------------------------------------------
 ```
+
+Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationship-graphs-for-application-level-insights-70139e19fb0) to understand more about above example.
 
 ## Try it:
 
