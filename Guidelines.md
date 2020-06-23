@@ -253,6 +253,8 @@ workflow.
 In order to support multi-tenant use-cases, your Operator should support creating resources within different namespaces rather than just in the namespace
 in which it is deployed (or the default namespace). This will allow your Operator to support multi-tenancy through namespaces. When all the Custom Resources and Operators support namespaces, it is possible to create multi-tenant workflows.
 
+Moreover, document whether your Operator is able to create/manage resources in the same namespace in which it is deployed, or can it handle resource creation in other namespaces. If it does support cross-namespace resource management, document how to provide the Operator with necessary privileges on such other namespaces (if this means that the Operator Pod needs to be deployed with cluster-admin privileges document that.)
+
 
 ### Define Custom Resource Node Affinity rules
 
