@@ -38,9 +38,9 @@ Configurability guidelines focus on configuration and customization of Custom Re
 Security guidelines focus on Operator support of multi-tenancy and ability to define appropriate authorization controls
 for workflows.
 
-[9. Document Service Account needs of your Operator](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-service-account-needs-of-your-operator)
+[9. Define Service Account for Operator Pod](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-service-account-for-operator-pod)
 
-[10. Evaluate Service Account needs for Custom Resource Pods](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#evaluate-service-account-needs-for-custom-resource-pods)
+[10. Define Service Account for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-service-account-for-custom-resources)
 
 [11. Define SecurityContext and PodSecurityPolicies for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-securitycontext-and-podsecuritypolicies-for-custom-resources)
 
@@ -211,24 +211,14 @@ In any case, choosing one of these three mechanisms is better than other approac
 
 ## Security
 
-### Document Service Account needs of your Operator
+### Define Service Account for Operator Pod
 
-Your Operator may be need to use a specific service account with specific permissions. Clearly document the service account needs of your Operator. Include this information in the ConfigMap that you will add for the 'resource/usage' annotation on the CRD. In multi-Operator stacks, knowing the service accounts and their RBAC
-permissions enables users to know the security posture of the stack.
-Be explicit in defining only the required permissions and nothing more. This ensures that the cluster is safe against
-unintended actions by any of the Operators (malicious/byzantine actions of compromised Operators 
-or benign faults appearing in the Operators).
+Your Operator may be need to use a specific service account with specific permissions. Clearly document the service account needs of your Operator Pod. Include this information in the ConfigMap that you will add for the 'resource/usage' annotation on the CRD. In multi-Operator stacks, knowing the service accounts and their RBAC permissions enables users to know the security posture of the stack. Be explicit in defining only the required permissions and nothing more. This ensures that the cluster is safe against unintended actions by any of the Operators (malicious/byzantine actions of compromised Operators or benign faults appearing in the Operators).
 
 
-### Evaluate Service Account needs for Custom Resource Pods
+### Define Service Account for Custom Resources
 
-Your Custom Resource's Pods may need to run with specific service account permissions. If that is the case, one
-of the decisions you will need to make is whether that service account should be provided by application
-developers. If so, provide an attribute in Custom Resource Spec
-definition to define the service account. Alternatively, if the Custom Controller is hard coding
-the service account name in the underlying Pod's Spec, then surface this information through the Custom Resource ``man page``.
-If all the Custom Resources have service accounts defined, it enables users to understand the complete security
-posture of the workflows.
+Your Custom Resource's Pods may need to run with specific service account permissions. If that is the case, one of the decisions you will need to make is whether that service account should be provided by application developers. If so, provide an attribute in Custom Resource Spec definition to define the service account. Alternatively, if the Custom Controller is hard coding the service account name in the underlying Pod's Spec, then surface this information through the Custom Resource ``man page``. If all the Custom Resources have service accounts defined, it enables users to understand the complete security posture of the workflows.
 
 
 ### Define SecurityContext and PodSecurityPolicies for Custom Resources
