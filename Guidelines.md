@@ -1,99 +1,92 @@
-# Kubernetes Operator Maturity Model Guidelines for Kubernetes native Stacks
+# Kubernetes Operator Maturity Model Guidelines for building Kubernetes native Stacks
 
-We have developed Operator Maturity Model to help calibrate an Operator's readiness to work alongside other Operators in Kubernetes native stacks. The model consists of six stages.
-Below we present the guidelines related to each of these stages. These guidelines help when creating application-specific workflows consisting of Custom Resources from different Operators.
+Kubernetes extensions (commonly referred as Operators) extend Kubernetes Resource set (APIs) and enable adding application-specific platform workflow automation in Kubernetes native manner e.g. Operators for softwares like databases, key-value stores, API gateways etc. Enterprise DevOps teams use Kubernetes Operators and create their Kubernetes native stacks.  We have developed the Operator Maturity Model to help calibrate an Operator's readiness to work alongside other Operators in Kubernetes native stacks. 
+
+The model is divided into six categories with a set of guidelines in each category. 
 
 ![](./docs/Maturity-Model.jpg)
 
 
 ## Consumability
 
-Consumability guidelines focus on accessibility properties of Custom Resources 
-that make it easy for application developers to build Custom Resource workflows.
+Consumability guidelines focus on design of Custom Resources (APIs) to simplify their use in building platform workflows.
 
 [1. Design Custom Resource as a declarative API and avoid inputs as imperative actions](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#design-custom-resource-as-a-declarative-api-and-avoid-inputs-as-imperative-actions)
 
 [2. Make Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#make-custom-resource-type-definitions-compliant-with-kube-openapi)
 
-[3. Consider to use kubectl as the primary interaction mechanism](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#consider-to-use-kubectl-as-the-primary-interaction-mechanism)
+[3. Consider using kubectl as the primary interaction mechanism](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#consider-to-use-kubectl-as-the-primary-interaction-mechanism)
 
 [4. Define Man page for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-man-page-for-your-custom-resources)
 
 
 ## Configurability
 
-Configurability guidelines focus on configuration and customization of Custom Resource workflows. 
+Configurability guidelines focus on simplifying configuration of Custom Resources (APIs).
 
-[5. Document Custom Resource Spec Property dependencies](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-custom-resource-spec-property-dependencies)
+[5. Document labels, annotations or spec property based dependencies for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-labels-annotations-or-spec-property-based-dependencies-for-your-custom-resources)
 
-[6. Document labels and annotations based dependencies for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-labels-and-annotations-based-dependencies-for-your-custom-resources)
+[6. Define Resource limits and Resource requests for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-resource-limits-and-resource-requests-for-custom-resources)
 
-[7. Define Resource limits and Resource requests for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-resource-limits-and-resource-requests-for-custom-resources)
-
-[8. Use ConfigMap or Custom Resource Annotation or Custom Resource Spec definition for underlying resource configuration](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#use-configmap-or-custom-resource-annotation-or-custom-resource-spec-definition-for-underlying-resource-configuration)
+[7. Use ConfigMap or Custom Resource Annotation or Custom Resource Spec definition as an input mechanism for configuring the underlying software](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#use-configmap-or-custom-resource-annotation-or-custom-resource-spec-definition-as-an-input-mechanism-for-configuring-the-underlying-software)
 
 
 ## Security
 
-Security guidelines focus on Operator support of multi-tenancy and ability to define appropriate authorization controls
-for workflows.
+Security guidelines help in applying authorization controls and building multi-tenant workflows.
 
-[9. Define Service Account for Operator Pod](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-service-account-for-operator-pod)
+[8. Define Service Account for Operator Pod](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-service-account-for-operator-pod)
 
-[10. Define Service Account for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-service-account-for-custom-resources)
+[9. Define Service Account for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-service-account-for-custom-resources)
 
-[11. Define SecurityContext and PodSecurityPolicies for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-securitycontext-and-podsecuritypolicies-for-custom-resources)
+[10. Define SecurityContext and PodSecurityPolicies for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-securitycontext-and-podsecuritypolicies-for-custom-resources)
 
-[12. Make Custom Controllers Namespace aware](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#make-custom-controllers-namespace-aware)
+[11. Make Custom Controllers Namespace aware](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#make-custom-controllers-namespace-aware)
 
-[13. Define Custom Resource Node Affinity rules](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-node-affinity-rules)
+[12. Define Custom Resource Node Affinity rules](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-node-affinity-rules)
 
-[14. Define Custom Resource Pod Affinity rules](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-pod-affinity-rules)
+[13. Define Custom Resource Pod Affinity rules](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-pod-affinity-rules)
 
-[15. Define NetworkPolicy for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-networkpolicy-for-custom-resources)
+[14. Define NetworkPolicy for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-networkpolicy-for-custom-resources)
 
 
 ## Robustness
 
-Robustness guidelines focus on ensuring stability of workflows with respect to their
-resource needs, their interdependencies, input validations, and garbage collection.
+Robustness guidelines offer guidance in designing Custom Resources so that workflows built using them are stable and robust.
 
-[16. Set OwnerReferences for underlying resources owned by your Custom Resource](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#set-ownerreferences-for-underlying-resources-owned-by-your-custom-resource)
+[15. Set OwnerReferences for underlying resources owned by your Custom Resource](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#set-ownerreferences-for-underlying-resources-owned-by-your-custom-resource)
 
-[17. Document Resource dependency information of your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-resource-dependency-information-of-your-custom-resources)
+[16. Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-spec-validation-rules-as-part-of-custom-resource-definition-yaml)
 
-[18. Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-spec-validation-rules-as-part-of-custom-resource-definition-yaml)
+[17. Design for robustness against side-car injection into Custom Resource Pods](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#design-for-robustness-against-side-car-injection-into-custom-resource-pods)
 
-[19. Design for robustness against side-car injection into Custom Resource Pods](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#design-for-robustness-against-side-car-injection-into-custom-resource-pods)
+[18. Define Custom Resource Anti-Affinity rules](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-anti-affinity-rules)
 
-[20. Define Custom Resource Anti-Affinity rules](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-anti-affinity-rules)
+[19. Define Custom Resource Taint Toleration rules](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-taint-toleration-rules)
 
-[21. Define Custom Resource Taint Toleration rules](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-custom-resource-taint-toleration-rules)
-
-[22. Define PodDisruptionBudget for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-poddisruptionbudget-for-custom-resources)
+[20. Define PodDisruptionBudget for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-poddisruptionbudget-for-custom-resources)
 
 
 ## Debuggability
 
-Debuggability guidelines focus on Operator and Custom Resource properties that enable easy debugging of Custom Resource workflows.
+Debuggability guidelines offer guidance so that the workflows built using Custom Resources are easy to debug.
 
-[23. Enable Audit logs for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#enable-audit-logs-for-custom-resources)
+[21. Enable Audit logs for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#enable-audit-logs-for-custom-resources)
 
-[24. Decide Custom Resource Metrics Collection strategy](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#decide-custom-resource-metrics-collection-strategy)
+[22. Decide Custom Resource Metrics Collection strategy](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#decide-custom-resource-metrics-collection-strategy)
 
-[25. Expose Custom Resource Composition Information](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#expose-custom-resource-composition-information)
+[23. Expose Custom Resource Composition Information](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#expose-custom-resource-composition-information)
 
 
 ## Portability
 
-Portability guidelines focus on Operator and Custom Resource properties that enable deploying the Operators and workflows
-on any Kubernetes distribution, on-prem or on cloud.
+Portability guidelines focus on Operator and Custom Resource properties that enable deploying the Operators and workflows on any Kubernetes distribution, on-prem or on cloud.
 
-[26. Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#package-operator-as-helm-chart)
+[24. Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#package-operator-as-helm-chart)
 
-[27. Register CRDs as YAML Spec in Helm chart rather than in Operator code](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#register-crds-as-yaml-spec-in-helm-chart-rather-than-in-operator-code)
+[25. Register CRDs as YAML Spec in Helm chart rather than in Operator code](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#register-crds-as-yaml-spec-in-helm-chart-rather-than-in-operator-code)
 
-[28. Include CRD installation hints in Helm chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#include-crd-installation-hints-in-helm-chart)
+[26. Include CRD installation hints in Helm chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#include-crd-installation-hints-in-helm-chart)
 
 
 # Detail Guidelines
@@ -124,11 +117,12 @@ When defining the types corresponding to your Custom Resources, you should use k
   }
 ```
 
-Defining this annotation on your type definition would enable Kubernetes API Server 
-to generate documentation for your Custom Resource Spec properties. This can then be viewed using ``kubectl explain`` command. In multi-Operator setups, this guideline ensures consistency in how users can discover Spec properties of different Custom Resources needed in their workflows.
+Defining this annotation on your type definition would enable Kubernetes API Server to generate documentation for your Custom Resource Spec properties. This can then be viewed using ``kubectl explain`` command. In multi-Operator setups, this guideline ensures consistency in how users can discover Spec properties of different Custom Resources needed in their workflows.
 
 
-### Consider to use kubectl as the primary interaction mechanism
+### Consider using kubectl as the primary interaction mechanism
+
+Before introducing new CLI for your Operator, validate if you can use Kubernetes's built-in mechanisms instead. This is especially true in multi-Operator setups. Having to use different CLIs will not be a great user experience.
 
 Custom Resources introduced by your Operator will naturally work with kubectl.
 However, there might be operations that you want to support for which the declarative nature of Custom Resources
@@ -136,51 +130,56 @@ is not appropriate. An example of such an action is historical record of how Pos
 that might be supported by the Postgres Operator. Such an action does not fit naturally into the declarative
 format of Custom Resource Definition. For such actions, we encourage you to consider using Kubernetes
 extension mechanisms of Aggregated API servers and Custom Sub-resources. These mechanisms 
-will allow you to continue using kubectl as the primary interaction point for your Operator. Before considering to introduce new CLI for your Operator, validate if you can use Kubernetes's built-in mechanisms instead. This is especially true in multi-Operator setups. Having to use different CLIs will not be a great user experience. 
+will allow you to continue using kubectl as the primary interaction point for your Operator. 
+
 Refer to [this blog post](https://medium.com/@cloudark/comparing-kubernetes-api-extension-mechanisms-of-custom-resource-definition-and-aggregated-api-64f4ca6d0966) to learn more about various Kubernetes extension mechanisms.
 
 
 ### Define Man page for your Custom Resources
 
-Application developers will need to know details about how to use Custom Resources of your Operator. 
-This information goes beyond what is available through Custom Resource Spec properties.
-Consider creating a Unix style ``man page`` for your Custom Resources.
+Application developers will need to know details about how to use Custom Resources of your Operator. This information goes beyond what is available through Custom Resource Spec properties. Consider creating a Unix style ``man page`` for your Custom Resources.
 For each Custom Resource include following information - if there are any implementation assumptions made by the Operator author, how to use the Custom Resource, service account and RBAC needs of your Operator, service account and RBAC needs of your Custom Resource's Pods, any hard coded values such as those for resource requests/limits, pod disruption budgets, taints and tolerations, etc. Clearly document this information in the Operator's documentation.
 
-We also provide a way to integrate this information with the Operator packaging itself.
-Create a ConfigMap with the Custom Resource usage information 
-and add following annotation on your CRD definition YAML: 'resource/usage'. Set the value of this annotation to the name of the ConfigMap that you have created with the usage information. Once this is done, users will be able to access the usage information using 'kubectl man <Custom Resource>' command, after installing the KubePlus kubectl plugins.
+Our KubePlus tooling also provides a way to integrate this information with the Operator packaging itself. Create a ConfigMap with the Custom Resource usage information 
+and add following annotation on your CRD definition YAML: 'resource/usage'. Set the value of this annotation to the name of the ConfigMap that you have created with the usage information. Once this is done, users will be able to access the usage information using 'kubectl man <Custom Resource>' command after installing the KubePlus kubectl plugins.
 
-If all the Operators in a multi-Operator stack support man pages for their Custom Resources, application developers will be able to find out information about how to use the various Custom Resources easily.
+If all the Operators in a multi-Operator stack support man pages for their Custom Resources, DevOps engineers will be able to find out information about how to use the various Custom Resources easily.
 
 
 ## Configurability
 
 
-### Document Custom Resource Spec Property dependencies
+### Document labels, annotations or spec property based dependencies for your Custom Resources
 
-Are values of any of your Custom Resource Spec Properties dependent on any other Custom or built-in Resources? If yes, explicitly document this information.
+Your Custom Resources may need certain labels or annotations to be added on Kubernetes resources for its operation. It may also depend on spec property of another resource. 
+Document this information explicitly, preferably as part of  the man page of your relevant Custom Resource. This information will be critical for building workflows involving your Custom Resources.
 
-### Document labels and annotations based dependencies for your Custom Resources
-
-Your Operator may need certain labels or annotations to be added on Kubernetes resources for its operation. Document this information explicitly, preferably as part of  the man page of your relevant Custom Resource. This information will be critical for building workflows involving your Custom Resources.
-
-In order to enable users to discover this information in Kubernetes-native manner, you can use our resource annotations on the CRD definition YAML. We provide following three annotations for this purpose:
+To explore their platform workflows built using various Kubernetes resources, it is important to know such dependencies. Our Platform-as-Code tooling offers following CRD annotations to capture these dependencies and then uses them for building resource relationship graphs needed to visualize or troubleshoot platform workflows.:
 
 ```
 resource/annotation-relationship
 resource/label-relationship
 resource/specproperty-relationship
 ```
-Above annotations are used to declare annotation / label / spec-property based relationships that instances of that Custom Resource can have with other Resources.
-Here is an example of using the specproperty-relationship annotation:
 
+Above annotations are used to declare annotation / label / spec-property based relationships that instances of a Custom Resource can have with other Resources. If your CRDs have such annotations, KubePlus’s ‘kubectl connections’ command will work for platform workflows that use your Custom Resources and will be able to print the entire resource relationship graph of that workflow. 
+
+Here is a simple example of how a CRD annotation on ClusterIssuer Custom Resource enables KubePlus to show various resource relationships in its workflow.
+
+ClusterIssuer Custom Resource works based on annotation relationship on Ingress resources. So we have annotated this ClusterIssuer CRD with the following Platform-as-Code annotation: 
 ```
-resource/annotation-relationship: on:Pod, key:k8s.v1.cni.cncf.io/networks, value:INSTANCE.metadata.name
+resource/annotation-relationship: on:Ingress, key:cert-manager.io/cluster-issuer, value:INSTANCE.metadata.name
 ```
-
-This annotation-relationship annotation is defined on NetworkAttachmentDefinition CRD available from the [Multus Operator](https://github.com/intel/multus-cni). It defines that the relationship between a Pod and an instance of NetworkAttachmentDefinition Custom Resource instance is through the k8s.v1.cni.cncf.io/networks annotation. This annotation needs to be defined on a Pod and the value of the annotation is the name of the NetworkAttachmentDefinition Custom resource instance.
-
+This enables KubePlus to show all resource relationship graphs involving ClusterIssuer Custom Resource as shown below:
+```
+$ kubectl connections cr ClusterIssuer wordpress-stack namespace1
+::Final connections graph::                       
+------ Branch 1 ------                       
+Level:0 ClusterIssuer/wordpress-stack                       
+Level:1 Ingress/wordpress-ingress [related to ClusterIssuer/wordpress-stack by:annotation]                       
+Level:2 Service/wordpress [related to Ingress/wordpress-ingress by:specproperty]                       
+Level:3 Pod/wordpress-pod [related to Service/wordpress by:label]
+```
 
 ### Define Resource limits and Resource requests for Custom Resources
 
@@ -191,7 +190,7 @@ This helps with ensuring ``atomicity`` for deploying workflows of Custom Resourc
 Atomicity in this context means that either all the Custom Resources in a workflow are deployed or none are. There is no intermediate state where some of the Custom Resources are deployed and others are not. The atomicity property is only achievable if Kubernetes is able to provide ``guaranteed`` QoS to all the Custom Resources in a workflow. This is only possible if each Custom Resource defines resource requests and limits and the corresponding Operator is implemented to propagate these values to the Custom Resource's underlying Pod's containers.
 
 
-### Use ConfigMap or Custom Resource Annotation or Custom Resource Spec definition for underlying resource configuration
+### Use ConfigMap or Custom Resource Annotation or Custom Resource Spec definition as an input mechanism for configuring the underlying software
 
 An Operator generally needs to take configuration parameter as inputs for the underlying resource that it is managing.
 We have seen three different approaches being used towards this in the community: using ConfigMaps, using Annotations, or using Custom Resource Spec definition itself. There are pros and cons of each of these approaches.
@@ -206,7 +205,7 @@ Custom Resource Spec definition.
 [Oracle MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/user/clusters.md) uses ConfigMap.
 [PressLabs MySQL Operator](https://github.com/presslabs/mysql-operator) uses Custom Resource [Spec definition](https://github.com/presslabs/mysql-operator/blob/master/examples/example-cluster.yaml#L22). DataStax's [Cassandra Operator](https://github.com/datastax/cass-operator) uses Spec definition.
 
-In any case, choosing one of these three mechanisms is better than other approaches, such as using a initContainer to download config file/data from remote storage (s3, github, etc.), or using Pod environment variables for passing in configuration data for the underlying resource. The problem with these approaches is that at the workflow level they can lead to inconsistency of providing inputs to different Custom Resources. This in turn can make it difficult to redeploy/reproduce the workflows on different clusters.
+Choosing one of these three mechanisms is better than other approaches, such as using a initContainer to download config file/data from remote storage (s3, github, etc.), or using Pod environment variables for passing in configuration data for the underlying resource. The problem with these approaches is that at the workflow level they can lead to inconsistency of providing inputs to different Custom Resources. This in turn can make it difficult to redeploy/reproduce the workflows on different clusters.
 
 
 ## Security
@@ -218,7 +217,7 @@ Your Operator may be need to use a specific service account with specific permis
 
 ### Define Service Account for Custom Resources
 
-Your Custom Resource's Pods may need to run with specific service account permissions. If that is the case, one of the decisions you will need to make is whether that service account should be provided by application developers. If so, provide an attribute in Custom Resource Spec definition to define the service account. Alternatively, if the Custom Controller is hard coding the service account name in the underlying Pod's Spec, then surface this information through the Custom Resource ``man page``. If all the Custom Resources have service accounts defined, it enables users to understand the complete security posture of the workflows.
+Your Custom Resource's Pods may need to run with specific service account permissions. If that is the case, one of the decisions you will need to make is whether that service account should be provided by DevOps engineers. If so, provide an attribute in Custom Resource Spec definition to define the service account. Alternatively, if the Custom Controller is hard coding the service account name in the underlying Pod's Spec, then surface this information through the Custom Resource ``man page``. If all the Custom Resources have service accounts defined, it enables users to understand the complete security posture of the workflows.
 
 
 ### Define SecurityContext and PodSecurityPolicies for Custom Resources
@@ -240,7 +239,7 @@ workflow.
 
 ### Make Custom Controllers namespace aware
 
-In order to support multi-tenant use-cases, your Operator should support creating resources within different namespaces rather than just in the namespace
+To support multi-tenant use-cases, your Operator should support creating resources within different namespaces rather than just in the namespace
 in which it is deployed (or the default namespace). This will allow your Operator to support multi-tenancy through namespaces. When all the Custom Resources and Operators support namespaces, it is possible to create multi-tenant workflows.
 
 Moreover, document whether your Operator is able to create/manage resources in the same namespace in which it is deployed, or can it handle resource creation in other namespaces. If it does support cross-namespace resource management, document how to provide the Operator with necessary privileges on such other namespaces (if this means that the Operator Pod needs to be deployed with cluster-admin privileges document that.)
@@ -285,16 +284,6 @@ being created. OwnerReference setting is essential for correct garbage collectio
 It also helps with finding runtime composition tree of your Custom Resource instances.
 If all the Operators are correctly handling OwnerReferences, then the garbage collection benefit will get
 extended for the entire workflow consisting of Custom Resources.
-
-
-### Document Resource dependency information of your Custom Resources
-
-In order to use your Custom Resource correctly, other Kubernetes built-in resource or Custom Resource from same
-or different Operator may need to be created first. Explicitly document such dependencies as part of your Operator's man page. This information will be useful for Application developers in creating workflows consisting of Custom and built-in
-resources. You can also use our KubePlus API Add-on which provides ``PlatformWorkflow`` CRD to capture this type of dependency information. KubePlus API Add-on uses this information for several purposes such as - preventing out-of-order creation of Kubernetes resources, ensuring that Custom or built-in resources that are in use as part of some workflows are not inadvertently deleted. 
-
-
-
 
 ### Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML
 
@@ -374,7 +363,7 @@ fields are provided - 'minAvailable' and 'maxUnavailable'. minAvailable is the m
 should be always running in a cluster. maxUnavailable is complementary and defines the maximum number of Pods
 that can be unavailable in a cluster. These two fields provide a way to control the availability of Pods in a cluster.
 When implementing the controller for your Custom Resource, carefully consider such availability requirements for your Custom Resource Pods. If you decide to implement PDB for your Custom Resource Pods, consider whether
-the disruption budget should be set by application developers. 
+the disruption budget should be set by DevOps engineers. 
 If yes, then ensure that the Custom Resource Spec definition has a field to specify a disruption budget.
 Implement the Custom Controller to pass this value to the Pod Spec.
 If on the other hand you decide to hard code this choice in your Custom Controller implementation then
@@ -411,27 +400,8 @@ When using Custom Resources of your Operator, Application developers will often 
 Custom Resources when failures occur. One of the key things as part of this is to know what Kubernetes's
 native resources are created by the Operator when instantiating a Custom Resource instance.
 It is helpful to document this information as part of your Operator's documentation. 
-In order to enable users to discover this information in Kubernetes-native manner, you can use
-our 'resource/composition' annotation on the CRD definition YAML. The value of this annotation
-is the list of all the Kubernetes resources that an Operator
-creates as part of creating a Custom Resource instance. Once this is done, users will be able to use
-the 'kubectl composition <Custom Resource> <Custom Resource instance>' command to find the runtime
-composition tree of all the Kubernetes resource that are created by the Operator as part of instantiating
-a Custom Resource instance. This information can then aid debugging of the workflows.
-Here is an example of defining 'composition' annotations on Moodle CRD.
 
-```
-  apiVersion: apiextensions.k8s.io/v1beta1
-  kind: CustomResourceDefinition
-  metadata:
-    name: moodles.moodlecontroller.kubeplus
-    annotations:
-      helm.sh/hook: crd-install
-      resource/usage: moodle-operator-usage.usage
-      resource/composition: Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress
-```
-
-By defining composition annotation for every CRD, it will be possible to find workflow-level resource composition tree. This will aid in visualization of runtime structure of the workflows.
+To enable users to discover this information in Kubernetes-native manner, you can use our 'resource/composition' annotation on the CRD definition YAML. The value of this annotation is the list of all the Kubernetes resources that an Operator creates as part of creating a Custom Resource instance. Once this is done, users will be able to use KubePlus 'kubectl composition ' command to find the runtime composition tree of all the Kubernetes resource that are created by the Operator as part of instantiating a Custom Resource instance. This information can then aid debugging of the workflows.
 
 
 ## Portability
@@ -474,7 +444,7 @@ Helm chart that might refer to the Custom Resources defined by the CRDs.
 ```
 
 In Helm 3.0 the crd-install annotation is no longer supported. Instead, a separate directory
-named ``crd`` needs to be created as part of the Helm chart directory in which all the CRDs
+named ``crds`` needs to be created as part of the Helm chart directory in which all the CRDs
 are to be specified. By defining CRDs inside this directory, Helm 3.0 guarantees to install
 the CRDs before installing other templates, which may consist of Custom Resources introduced by that CRD.
 Installing CRDs first is important -- otherwise creation of Custom Resource workflows will fail as the Kubernetes cluster control plane won't be able to recognize the Custom Resources used in your workflows.
