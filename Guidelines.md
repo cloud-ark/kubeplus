@@ -15,7 +15,7 @@ Consumability guidelines focus on design of Custom Resources (APIs) to simplify 
 
 [2. Make Custom Resource Type definitions compliant with Kube OpenAPI](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#make-custom-resource-type-definitions-compliant-with-kube-openapi)
 
-[3. Consider using kubectl as the primary interaction mechanism](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#consider-to-use-kubectl-as-the-primary-interaction-mechanism)
+[3. Consider using kubectl as the primary interaction mechanism](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#consider-using-kubectl-as-the-primary-interaction-mechanism)
 
 [4. Define Man page for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-man-page-for-your-custom-resources)
 
