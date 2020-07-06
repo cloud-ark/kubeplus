@@ -20,12 +20,12 @@ Kubernetes Custom Resources and Custom Controllers, popularly known as `Operator
    :width: 200px
    :align: center
 
-The main benefit of using KubePlus to DevOps engineers/application developers are:
+The main benefit of using KubePlus to DevOps engineers are:
 
 - easily discover static and runtime information about Custom Resources available in their cluster.
 - aggregate Custom and built-in resources to build secure and robust platform workflows.
 
-KubePlus API Add-on provides discovery commands, binding functions, and an orchestration mechanism to enable DevOps engineers/application developers to define Kubernetes-native platform workflows using Kubernetes Custom and built-in resources.
+KubePlus API Add-on provides discovery commands, binding functions, and an orchestration mechanism to enable DevOps engineers to define Kubernetes-native platform workflows using Kubernetes Custom and built-in resources.
 
 .. You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
 
@@ -74,8 +74,7 @@ The 'composition' annotation is used to define Kubernetes's built-in resources t
 
 Above annotations are used to declare annotation / label / spec-property based relationships that instances of this Custom Resource can have with other Resources.  
 
-These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators
-in order to make Custom Resources discoverable and usable by application developers.
+These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by DevOps engineers.
 
 As an example, annotations on Moodle Custom Resource Definition (CRD) are shown below:
 
@@ -97,7 +96,7 @@ As an example, annotations on Moodle Custom Resource Definition (CRD) are shown 
       plural: moodles
     scope: Namespaced
 
-The specproperty relationship defines that an instance of Moodle Custom Resource is connected to a Service object through it's mySQLServiceName spec attribute. The value of this attribute the name of a Service object. Below is an example of a Kubernetes-native application workflow in which a Moodle Custom Resource instance is bound to a MysqlCluster Custom Resource instance through the Service object that is created by the MysqlCluster Operator. The specproperty relationship helps discover this relationship as seen below:
+The specproperty relationship defines that an instance of Moodle Custom Resource is connected to a Service object through it's mySQLServiceName spec attribute. The value of this attribute the name of a Service object. Below is an example of a Kubernetes platform workflow in which a Moodle Custom Resource instance is bound to a MysqlCluster Custom Resource instance through the Service object that is created by the MysqlCluster Operator. The specproperty relationship helps discover this relationship as seen below:
 
 .. code-block:: bash
 
@@ -214,9 +213,9 @@ Check our `slide deck`_ in the Kubernetes Community Meeting for more details of 
 
 PlatformWorkflow Operator
 --------------------------
-Creating workflows requires treating the set of resources representing the workflow as a unit. For this purpose, KubePlus provides a Custom Resource of its own - PlatformWorkflow. This Custom Resource enables application developers to define all the resources in a workflow as a unit along with the inter-dependencies between them. The dependency information is used for ensuring robustness and security of the workflows including, preventing out-of-order creation of resources and ensuring that resources that are still in use cannot be deleted.
+Creating workflows requires treating the set of resources representing the workflow as a unit. For this purpose, KubePlus provides a Custom Resource of its own - PlatformWorkflow. This Custom Resource enables DevOps engineers to define all the resources in a workflow as a unit along with the inter-dependencies between them. The dependency information is used for ensuring robustness and security of the workflows including, preventing out-of-order creation of resources and ensuring that resources that are still in use cannot be deleted.
 
-PlatformWorkflow Operator does not actually deploy any resources defined in a workflow. Resource creation is done by application developers as usual using 'kubectl'.
+PlatformWorkflow Operator does not actually deploy any resources defined in a workflow. Resource creation is done by DevOps engineers as usual using 'kubectl'.
 
 
 Getting started
