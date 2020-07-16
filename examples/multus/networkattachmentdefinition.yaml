@@ -3,8 +3,8 @@ kind: CustomResourceDefinition
 metadata:
   name: network-attachment-definitions.k8s.cni.cncf.io
   annotations:
-    platform-as-code/annotation-relationship: "on:Pod, key:k8s.v1.cni.cncf.io/networks, value:INSTANCE.metadata.name"
-    platform-as-code/usage: network-attachment-definition-usage.usage
+    resource/annotation-relationship: "on:Pod, key:k8s.v1.cni.cncf.io/networks, value:INSTANCE.metadata.name"
+    resource/usage: network-attachment-definition-usage.usage
 spec:
   group: k8s.cni.cncf.io
   version: v1
