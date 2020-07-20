@@ -24,7 +24,7 @@ resource/label-relationship
 resource/specproperty-relationship
 ```
 
-More details on how to use these annotations can be found [here](./details.rst).
+More details on how to use these annotations can be found [here](./details.rst). We maintain a table of annotations for Open source Operators that we curate [here](./Operator-annotations.md).
 
 ### Client-side kubectl plugins
 
