@@ -7,6 +7,7 @@
 3. Add resource annotations on the CassandraDatacenter CRD
    - kubectl annotate crd cassandradatacenters.cassandra.datastax.com resource/annotation-relationship="on:Secret, key:cassandra.datastax.com/watched-by, value:contains(INSTANCE.metadata.name)"
    - kubectl annotate crd cassandradatacenters.cassandra.datastax.com resource/composition="StatefulSet, Service, PodDisruptionBudget"
+   - kubectl annotate crd cassandradatacenters.cassandra.datastax.com resource/label-relationship="on:PersistentVolumeClaim, key:cassandra.datastax.com/datacenter, value:INSTANCE.metadata.name"
 
 4. Install Cert Manager Operator
    - https://cert-manager.io/docs/installation/kubernetes/
