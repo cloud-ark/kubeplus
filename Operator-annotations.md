@@ -7,10 +7,14 @@ Platform-as-Code Resource Annotations on Operator CRDs
 | | | | | resource/composition="StatefulSet, Service, PodDisruptionBudget"
 | | | | | resource/label-relationship="on:PersistentVolumeClaim, key:cassandra.datastax.com/datacenter, value:INSTANCE.metadata.name"
 |
+|
 | 2.     | CertManager (JetStack) | https://github.com/jetstack/cert-manager | ClusterIssuer | resource/annotation-relationship="on:Ingress, key:cert-manager.io/cluster-issuer, value:INSTANCE.metadata.name"
+|
 |
 | 3.     | MySQL (PressLabs) | https://github.com/presslabs/mysql-operator | MysqlCluster | resource/composition="StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget"
 |
+|
 | 4.     | Multus (Intel) | https://github.com/intel/multus-cni | NetworkAttachmentDefinition | resource/annotation-relationship="on:Pod, key:k8s.v1.cni.cncf.io/networks, value:INSTANCE.metadata.name"
+|
 |
 | 5.     | Elasticsearch (Elastic) | https://github.com/elastic/cloud-on-k8s | Elasticsearch | resource/composition="Pod, Service, Secret, ConfigMap"
