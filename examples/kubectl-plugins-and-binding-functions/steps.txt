@@ -1,5 +1,5 @@
-DevOps Engineer Window:
-------------------------
+Cluster Admin:
+--------------
 1. git clone https://github.com/cloud-ark/kubeplus.git
 
 2. Deploy KubePlus:
@@ -18,8 +18,8 @@ DevOps Engineer Window:
    - kubectl get pods; wait till the Operator Pods and KubePlus Pods are ready
 
 
-Application Developer Window:
-------------------------------
+Platform Engineer:
+-------------------
 1. Create cluster-secret
    - kubectl create -f cluster-secret.yaml
 
