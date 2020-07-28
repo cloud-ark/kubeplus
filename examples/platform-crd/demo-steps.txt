@@ -4,8 +4,8 @@ DevOps Engineer Window:
 ./deploy-kubeplus.sh
 
 2. Install Operator Helm Charts - Mysql Operator, Moodle Operator
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz?raw=true
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.4.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-5.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.5.0.tgz?raw=true
 
 3. Check pods
    - kubectl get pods

@@ -61,6 +61,115 @@ type StringStack struct {
 	Mutex sync.Mutex
 }
 
+
+var (
+
+	KindPluralMap  map[string]string
+	kindVersionMap map[string]string
+	kindGroupMap map[string]string
+
+	REPLICA_SET  string
+	DEPLOYMENT   string
+	POD          string
+	CONFIG_MAP   string
+	SERVICE      string
+	SECRET       string
+	PVCLAIM      string
+	PV           string
+	ETCD_CLUSTER string
+	INGRESS      string
+	STATEFULSET  string
+	DAEMONSET    string
+	RC           string
+	PDB 		 string
+)
+
+func init() {
+
+	DEPLOYMENT = "Deployment"
+	REPLICA_SET = "ReplicaSet"
+	POD = "Pod"
+	CONFIG_MAP = "ConfigMap"
+	SERVICE = "Service"
+	SECRET = "Secret"
+	PVCLAIM = "PersistentVolumeClaim"
+	PV = "PersistentVolume"
+	ETCD_CLUSTER = "EtcdCluster"
+	INGRESS = "Ingress"
+	STATEFULSET = "StatefulSet"
+	DAEMONSET = "DaemonSet"
+	RC = "ReplicationController"
+	PDB = "PodDisruptionBudget"
+
+	KindPluralMap = make(map[string]string)
+	kindVersionMap = make(map[string]string) 
+	kindGroupMap = make(map[string]string)
+	
+	KindPluralMap[DEPLOYMENT] = "deployments"
+	kindVersionMap[DEPLOYMENT] = "apis/apps/v1"
+	kindGroupMap[DEPLOYMENT] = "apps"
+
+	KindPluralMap[REPLICA_SET] = "replicasets"
+	kindVersionMap[REPLICA_SET] = "apis/apps/v1"
+	kindGroupMap[REPLICA_SET] = "apps"
+
+	KindPluralMap[DAEMONSET] = "daemonsets"
+	kindVersionMap[DAEMONSET] = "apis/apps/v1"
+	kindGroupMap[DAEMONSET] = "apps"
+
+	KindPluralMap[RC] = "replicationcontrollers"
+	kindVersionMap[RC] = "api/v1"
+	kindGroupMap[RC] = ""
+
+	KindPluralMap[PDB] = "poddisruptionbudgets"
+	kindVersionMap[PDB] = "apis/policy/v1beta1"
+	kindGroupMap[PDB] = "policy"
+
+	KindPluralMap[POD] = "pods"
+	kindVersionMap[POD] = "api/v1"
+	kindGroupMap[POD] = ""
+
+	KindPluralMap[SERVICE] = "services"
+	kindVersionMap[SERVICE] = "api/v1"
+	kindGroupMap[SERVICE] = ""
+
+	KindPluralMap[INGRESS] = "ingresses"
+	kindVersionMap[INGRESS] = "networking.k8s.io/v1beta1"//"extensions/v1beta1"
+	kindGroupMap[INGRESS] = "networking.k8s.io"
+
+	KindPluralMap[SECRET] = "secrets"
+	kindVersionMap[SECRET] = "api/v1"
+	kindGroupMap[SECRET] = ""
+
+	KindPluralMap[PVCLAIM] = "persistentvolumeclaims"
+	kindVersionMap[PVCLAIM] = "api/v1"
+	kindGroupMap[PVCLAIM] = ""
+
+	KindPluralMap[PV] = "persistentvolumes"
+	kindVersionMap[PV] = "api/v1"
+	kindGroupMap[PV] = ""
+
+	KindPluralMap[STATEFULSET] = "statefulsets"
+	kindVersionMap[STATEFULSET] = "apis/apps/v1"
+	kindGroupMap[STATEFULSET] = "apps"
+
+	KindPluralMap[CONFIG_MAP] = "configmaps"
+	kindVersionMap[CONFIG_MAP] = "api/v1"
+	kindGroupMap[CONFIG_MAP] = ""
+}
+
+func getKindAPIDetails(kind string) (string, string, string, string) {
+	kindplural := KindPluralMap[kind]
+	kindResourceApiVersion := kindVersionMap[kind]
+	kindResourceGroup := kindGroupMap[kind]
+
+	parts := strings.Split(kindResourceApiVersion, "/")
+	kindAPI := parts[len(parts)-1]
+
+	return kindplural, kindResourceApiVersion, kindAPI, kindResourceGroup
+}
+
+
 func (s *StringStack) Len() int {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
