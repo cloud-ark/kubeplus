@@ -157,8 +157,9 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
   - ```$ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>```
   - ```$ export PATH=$KUBEPLUS_HOME/plugins/:$PATH```
 - KubePlus Cluster-side add-on:
-  - ```$ ./scripts/deploy-kubeplus.sh```
-  - Check out [examples](./examples/moodle-with-presslabs/).
+  - ```cd scripts```
+  - ```$ ./deploy-kubeplus.sh```
+  - Check out [examples](./examples/kubectl-plugins-and-binding-functions/).
 
 ## Operator Maturity Model
 

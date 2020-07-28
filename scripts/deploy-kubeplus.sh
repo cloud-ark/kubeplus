@@ -18,5 +18,5 @@ make deploy
 cd -
 
 # Deploy Mutating Webhook helper
-kubectl apply -f ../deploy/kubeplus-components.yaml
+kubectl apply -f ../deploy/kubeplus-components-1.yaml
 
