@@ -12,4 +12,4 @@ make delete
 cd -
 
 # Delete KubePlus Mutating Webhook helper
-#kubectl delete -f mutating-webhook-helper/deployment.yaml
+kubectl delete -f ../deploy/kubeplus-components-1.yaml
