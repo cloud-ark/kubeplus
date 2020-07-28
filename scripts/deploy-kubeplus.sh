@@ -10,10 +10,13 @@ helm init --service-account tiller
 # kubectl apply -f ../deploy/
 
 # Deploy KubePlus PlatformStack Operator
-kubectl apply -f ../platform-operator/artifacts/deployment/
+# kubectl apply -f ../platform-operator/artifacts/deployment/
 
 # Deploy KubePlus Mutating Webhook
 cd ../mutating-webhook
 make deploy
 cd -
+
+# Deploy Mutating Webhook helper
+kubectl apply -f ../deploy/kubeplus-components.yaml
 

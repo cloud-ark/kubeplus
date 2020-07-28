@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/buger/jsonparser"
 
@@ -34,6 +35,8 @@ var (
 	webhook_namespace = "default"
  
 	kubeclientset *kubernetes.Clientset
+
+	helper chan string
 )
 
 type WebhookServer struct {
@@ -73,6 +76,19 @@ func init() {
 	cfg, _ := rest.InClusterConfig()
 	kubeclientset, _ = kubernetes.NewForConfig(cfg)
 
+	//TODO: Helper that tracks resource creation and puts labels/annotations
+	//once they are available.
+	//helper = make(chan string)
+	//go helperHandler()
+}
+
+func helperHandler() {
+	for {
+		val := <- helper
+		fmt.Printf("..helperHandler value:%s\n", val)
+
+		time.Sleep(10*time.Second)
+	}
 }
 
 // main mutation process
@@ -89,45 +105,23 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	fmt.Println(req.UserInfo.Username)
 	fmt.Println("=== User ===")
 
-	//userInfo, _, _, err := jsonparser.Get()
-
-	//fmt.Println(req.Kind.Kind)
-
 	var patchOperations []patchOperation
 	patchOperations = make([]patchOperation, 0)
 
-	// Add user identity annotation
-	annotations1 := make(map[string]string, 0)
-	fmt.Printf("First Annotations:%v", annotations1)
-	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
-	if err != nil {
-		fmt.Printf("Error in parsing existing annotations")
-	} else {
-		json.Unmarshal(allAnnotations, &annotations1)
-		fmt.Printf("All Annotations:%v\n", annotations1)
+	specResolvedPatches, errResponse := getSpecResolvedPatch(ar)
+	if errResponse != nil {
+		return errResponse
+	}
+	for _, specResolvedPatch := range specResolvedPatches {
+		patchOperations = append(patchOperations, specResolvedPatch)
 	}
 
-	delete(annotations1, accountidentity)
-	fmt.Printf("All Annotations:%v\n", annotations1)
-	annotations1[accountidentity] = req.UserInfo.Username
-	updateConfigMap(req.UserInfo.Username)
-
-	//userIdentity := map[string]string{"useridentity": req.UserInfo.Username}
-	//annotations1 = append(annotations1, userIdentity)
-	//userIdentityJSON, _ := json.Marshal(userIdentity)
-	//allAnnotations = append(allAnnotations, userIdentityJSON)
-	fmt.Printf("All Annotations:%v\n", annotations1)
-	//fmt.Printf("All Annotations:%s", fmt.Sprintf("%v", annotations1))
-	patch := patchOperation{
-		Op:    "replace",
-		Path:  "/metadata/annotations",
-		Value: annotations1,
-	}
-
-	patchOperations = append(patchOperations, patch)
+	annotationPatch := getAccountIdentityAnnotationPatch(ar)
+	patchOperations = append(patchOperations, annotationPatch)
 
 	fmt.Printf("PatchOperations:%v\n", patchOperations)
 	patchBytes, _ := json.Marshal(patchOperations)
+	fmt.Printf("---------------------------------\n")
 	// marshal the struct into bytes to pass into AdmissionResponse
 	return &v1beta1.AdmissionResponse{
 		Allowed: true,
@@ -137,9 +131,98 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			return &pt
 		}(),
 	}
+}
 
+func getAccountIdentityAnnotationPatch(ar *v1beta1.AdmissionReview) patchOperation {
+
+	req := ar.Request
+
+	kind := req.Kind.Kind
+	name := req.Name
+	namespace := req.Namespace
+
+	fmt.Println(kind)
+	fmt.Println(name)
+	fmt.Println(namespace)
+
+	// Add user identity annotation
+	annotations1 := make(map[string]string, 0)
+	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
+	if err != nil {
+		fmt.Printf("Error in parsing existing annotations")
+	} else {
+		json.Unmarshal(allAnnotations, &annotations1)
+		fmt.Printf("All Annotations:%v\n", annotations1)
+	}
+	delete(annotations1, accountidentity)
+	annotations1[accountidentity] = req.UserInfo.Username
+	fmt.Printf("All Annotations:%v\n", annotations1)
+
+	//updateConfigMap(req.UserInfo.Username)
+	//userIdentity := map[string]string{"useridentity": req.UserInfo.Username}
+	//annotations1 = append(annotations1, userIdentity)
+	//userIdentityJSON, _ := json.Marshal(userIdentity)
+	//allAnnotations = append(allAnnotations, userIdentityJSON)
+	//fmt.Printf("All Annotations:%s", fmt.Sprintf("%v", annotations1))
+	
+	patch := patchOperation{
+		Op:    "replace",
+		Path:  "/metadata/annotations",
+		Value: annotations1,
+	}
+
+	return patch
+}
+
+func getSpecResolvedPatch(ar *v1beta1.AdmissionReview) ([]patchOperation, *v1beta1.AdmissionResponse) {
+	fmt.Printf("Inside getSpecResolvedPatch...\n")
+	var patchOperations []patchOperation
+	patchOperations = make([]patchOperation, 0)
+
+	req := ar.Request
+	forResolve := ParseRequest(req.Object.Raw)
+	fmt.Printf("Objects To Resolve: %v\n", forResolve)
+	for i := 0; i < len(forResolve); i++ {
+		var resolveObj ResolveData
+		resolveObj = forResolve[i]
+		if resolveObj.FunctionType == ImportValue {
+			importString := resolveObj.ImportString
+			fmt.Printf("Import String: %s\n", importString)
+			value, err := ResolveImportString(importString)
+			fmt.Printf("ImportString:%s, Resolved ImportString value:%s", importString, value)
+			if err != nil {
+				return patchOperations, &v1beta1.AdmissionResponse{
+					Result: &metav1.Status{
+						Message: err.Error(),
+					},
+				}
+			}
+			patch := patchOperation{
+				Op:    "replace",
+				Path:  resolveObj.JSONTreePath,
+				Value: value,
+			}
+			patchOperations = append(patchOperations, patch)
+		}
+		 if resolveObj.FunctionType == AddLabel {
+		 	fmt.Printf("Path to resolve:%s\n",resolveObj.JSONTreePath)
+		 	fmt.Printf("Value to resolve:%s\n", resolveObj.Value)
+			_, err := AddResourceLabel(resolveObj.Value)
+			if err != nil {
+				fmt.Printf("Could not add Label to: %s", resolveObj.Value)
+			}
+			// TODO: Helper to put the label if the resource is not yet created.
+		 	//helper <- resolveObj.Value
+		}
+	}
+	return patchOperations, nil
+}
+
+func (whsvr *WebhookServer) mutate_prev(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	// Work-in-Progress: Below code is currently Work-in-progress hence
 	// returning above.
+
+	req := ar.Request
 
 	var entry Entry
 	var kind string
@@ -196,6 +279,8 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		}
 	}
 
+	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
+
 	fmt.Println("--- Annotation Values: ---")
 	jsonparser.ObjectEach(allAnnotations, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 
@@ -211,6 +296,9 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		}
 		return nil
 	})
+
+	var patchOperations []patchOperation
+	patchOperations = make([]patchOperation, 0)
 
 	//fmt.Println("----- Stored data: -----")
 	//fmt.Printf("Data: %v\n", annotations.KindToEntry)
@@ -269,7 +357,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 
 	}
 	fmt.Printf("PatchOperations:%v\n", patchOperations)
-	patchBytes, _ = json.Marshal(patchOperations)
+	patchBytes, _ := json.Marshal(patchOperations)
 	// marshal the struct into bytes to pass into AdmissionResponse
 	return &v1beta1.AdmissionResponse{
 		Allowed: true,

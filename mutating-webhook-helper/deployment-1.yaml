@@ -1,0 +1,18 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kubeplus-webhook-helper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mutating-webhook-helper
+  template:
+    metadata:
+      labels:
+        app: mutating-webhook-helper
+    spec:
+      containers:
+        - name: mutating-webhook-helper
+          image: lmecld/mutating-webhook-helper:latest
+          imagePullPolicy: IfNotPresent

@@ -28,8 +28,8 @@ Steps:
    - kubectl get pods -n kube-system
 
 4) Once Helm Pod is ready, deploy Moodle and MySQL Operators
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz?raw=true
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.4.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-5.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.5.0.tgz?raw=true
 
 5) Wait till both Operator Pods are ready
    - kubectl get pods

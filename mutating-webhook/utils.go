@@ -11,30 +11,75 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"strconv"
+	//"context"
 
 	"k8s.io/client-go/util/retry"
 	"encoding/json"
+	"path/filepath"
 
 	// apiv1 "k8s.io/api/core/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/buger/jsonparser"
 
-		"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/dynamic"
+
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	platformstackclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
 	platformstackv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/platformstackcontroller/v1alpha1"
 
 )
 
-var platformStackMap map[string]PlatformStackData
+var (
+	cfg *rest.Config
+	err error
+	dynamicClient dynamic.Interface
+	platformStackMap map[string]PlatformStackData
+)
 
 func init() {
+	cfg, err = buildConfig()
+	if err != nil {
+		panic(err.Error())
+	}
 	platformStackMap = make(map[string]PlatformStackData)
+}
+
+func buildConfig() (*rest.Config, error) {
+	if home := homeDir(); home != "" {
+		kubeconfig := filepath.Join(home, ".kube", "config")
+		cfg, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
+		if err != nil {
+			fmt.Printf("kubeconfig error:%s\n", err.Error())
+			fmt.Printf("Trying inClusterConfig..")
+			cfg, err = rest.InClusterConfig()
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return cfg, nil
+}
+
+func homeDir() string {
+	if h := os.Getenv("HOME"); h != "" {
+		return h
+	}
+	return os.Getenv("USERPROFILE") // windows
+}
+
+func getDynamicClient() (dynamic.Interface, error) {
+	if dynamicClient == nil {
+		dynamicClient, err = dynamic.NewForConfig(cfg)
+	}
+	return dynamicClient, err
 }
 
 func getResourceLabels1(req []byte) map[string]string {
@@ -325,23 +370,28 @@ func AddResourceLabel(addLabelDefinition string) (string, error) {
 	key := keyVal[0]
 	val := keyVal[1]
 
-	kind, namespace, resourceName, subKind, _, _, _ := parseImportString(args[1])
+	kind, namespace, resourceName, subKind, nameFilterPredicate, _, _ := parseImportString(args[1])
 
 	//namespace, kind, crdKindName, subKind, err := ParseCompositionPath(args[1])
-	fmt.Printf("Parsed Composition Path: %s, %s, %s, %s\n", namespace, kind, resourceName, subKind)
+	fmt.Printf("Parsed Composition Path: %s, %s, %s, %s, %s\n", namespace, kind, resourceName, subKind, nameFilterPredicate)
 	jsonData := QueryCompositionEndpoint(kind, namespace, resourceName)
 	fmt.Printf("Queried KubeDiscovery: %s\n", string(jsonData))
-	name, err := ParseDiscoveryJSON(jsonData, subKind, "")
-	if err != nil {
-		return "", err
-	}
-	//found one resource that matches "Deployment"
-	fmt.Printf("Found name: %s\n", name)
-	switch subKind {
-		case "Deployment":
-		AddDeploymentLabel(key, val, name, namespace)
-	}
 
+	AddLabelSubresources(jsonData, subKind, nameFilterPredicate, key, val, kind, resourceName, namespace)
+
+	/*switch subKind {
+		case "Deployment":
+			name, err := ParseDiscoveryJSON(jsonData, subKind, "")
+			if err != nil {
+				return "", err
+			}
+			//found one resource that matches "Deployment"
+			fmt.Printf("Found name: %s\n", name)
+			AddDeploymentLabel(key, val, name, namespace)
+		case "*":
+			fmt.Printf("Adding Label on all sub resources.\n")
+			AddLabelSubresources(jsonData, key, val, kind, resourceName, namespace)
+	}*/
 	return val, nil
 }
 
@@ -469,7 +519,7 @@ func ParseRequestHelper(data []byte, needResolving *[]ResolveData, stringStack *
 			ParseRequestHelper(value, needResolving, stringStack)
 			stringStack.Pop()
 		} else {
-			//fmt.Printf("ParseRequestHelper Key:%s\n", key)
+			//fmt.Printf("ParseRequestHelper Key:%s\n", string(key))
 			stringStack.Push(string(key))
 			jsonPath := stringStack.Peek()
 			//fmt.Printf("ParseRequestHelper Jsonpath:%s\n", jsonPath)
@@ -489,12 +539,12 @@ func ParseRequestHelper(data []byte, needResolving *[]ResolveData, stringStack *
 				stringStack.Pop()
 			} else if hasLabelFunc {
 
-				val, err := AddResourceLabel(val)
+				//val, err := AddResourceLabel(val)
 
-				if err != nil {
+				/*if err != nil {
 					stringStack.Pop()
 					return err
-				}
+				}*/
 
 				needResolve := ResolveData{
 					JSONTreePath: jsonPath,
@@ -587,11 +637,11 @@ func ResolveSubKind(importString string) (string, error) {
 
 	kind, namespace, resourceName, subKind, nameFilterPredicate, specProperty, specFilterPredicate := parseImportString(importString)
 
-	fmt.Printf("Kind:%s, Namespace:%s, resourceName:%s, SubKind:%s, NameFilterPredicate:%s SpecProp:%s, SpecFilter:%s", 
+	fmt.Printf("Kind:%s, Namespace:%s, resourceName:%s, SubKind:%s, NameFilterPredicate:%s SpecProp:%s, SpecFilter:%s\n", 
 		kind, namespace, resourceName, subKind, nameFilterPredicate, specProperty, specFilterPredicate)
 
 	jsonData := QueryCompositionEndpoint(kind, namespace, resourceName)
-	fmt.Printf("Queried KubeDiscovery: %s\n", string(jsonData))
+	fmt.Printf(" ABC Queried KubeDiscovery: %s\n", string(jsonData))
 	name, err := ParseDiscoveryJSON(jsonData, subKind, nameFilterPredicate)
 	if err != nil {
 		return "", err
@@ -758,17 +808,90 @@ func ParseDiscoveryJSONHelper(composition []byte, subKind string, subName *[]str
 	return fmt.Errorf("Could not find a name for kind")
 }
 
+func AddLabelSubresources(composition []byte, subKind, nameFilterPredicate, labelkey, labelvalue, kind, resourceName, namespace string) error {
+	//addLabel(labelkey, labelvalue, kind, resourceName, namespace)
+	jsonparser.ArrayEach(composition, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		AddLabelSubresourcesHelper(value, subKind, nameFilterPredicate, labelkey, labelvalue, namespace)
+	})
+	return fmt.Errorf("Could not all label to all sub resources.")
+}
+
+func AddLabelSubresourcesHelper(composition []byte, subKind, nameFilterPredicate, labelkey, labelvalue, namespace string) error {
+	jsonparser.ObjectEach(composition, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		//fmt.Printf("Datatype:%s key:%s\n", dataType.String(), string(key))
+		if dataType.String() == "array" {
+			// go through each children object.
+			jsonparser.ArrayEach(value, func(value1 []byte, dataType jsonparser.ValueType, offset int, err error) {
+				// Debug prints
+				kind1, _ := jsonparser.GetUnsafeString(value1, "Kind")
+				name1, _ := jsonparser.GetUnsafeString(value1, "Name")
+				fmt.Printf(" AddLabelSubresources kind:%s\n", kind1)
+				fmt.Printf(" AddLabelSubresources name:%s\n", name1)
+				fmt.Printf(" AddLabelSubresources subKind:%s\n", subKind)
+				fmt.Printf(" AddLabelSubresources filterPredicate:%s\n", nameFilterPredicate)
+				if strings.Contains(subKind, kind1) {
+					if strings.Contains(name1, nameFilterPredicate) {
+						addLabel(labelkey, labelvalue, kind1, name1, namespace)
+					}
+				}
+				AddLabelSubresourcesHelper(value1, subKind, nameFilterPredicate, labelkey, labelvalue, namespace)
+			})
+		} else {
+			return nil
+		}
+		return nil
+	})
+	return fmt.Errorf("Could not all label to all sub resources.")
+}
+
+func addLabel(labelkey, labelvalue, kind, resource, namespace string) {
+	fmt.Printf("Adding label kind:%s, resource:%s, namespace:%s\n", kind, resource, namespace)
+
+	dynamicClient, err := getDynamicClient()
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+	}
+	resourceKindPlural, _, resourceApiVersion, resourceGroup := getKindAPIDetails(kind)
+	res := schema.GroupVersionResource{Group: resourceGroup,
+									   Version: resourceApiVersion,
+									   Resource: resourceKindPlural}
+	obj, err1 := dynamicClient.Resource(res).Namespace(namespace).Get(resource, metav1.GetOptions{})
+	if err1 != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		return
+	}
+
+	objCopy := obj.DeepCopy()
+	labelMap := objCopy.GetLabels()
+	if labelMap == nil {
+		labelMap = make(map[string]string)
+	}
+	labelMap[labelkey] = labelvalue
+	objCopy.SetLabels(labelMap)
+
+	fmt.Printf("Before adding label.\n")
+	_, err = dynamicClient.Resource(res).Namespace(namespace).Update(objCopy, metav1.UpdateOptions{})
+	fmt.Printf("Done adding label.\n")
+
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+	}
+}
+
 func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
 	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, crdKindName, namespace)
-	serviceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
-	servicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
+	fmt.Printf("Inside QueryCompositionEndpoint...\n")
+	serviceHost, servicePort := getServiceEndpoint()
+	fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
-	url1 = fmt.Sprintf("https://%s:%s/apis/platform-as-code/v1/composition?%s", serviceHost, servicePort, args)
+	url1 = fmt.Sprintf("http://%s:%s/apis/platform-as-code/v1/composition?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
 	body := queryAPIServer(url1)
 	return body
 }
 
 func queryResourceDetailsEndpoint(kind, name, namespace string) []byte {
+	fmt.Printf("..Inside queryResourceDetailsEndpoint...")
 	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, name, namespace)
 	serviceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
 	servicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
@@ -783,13 +906,57 @@ func queryAPIsEndpoint(kind, namespace, crdKindName string) []byte {
 	serviceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
 	servicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
 	var url1 string
-	url1 = fmt.Sprintf("https://%s:%s/apis?%s", serviceHost, servicePort, args)
+	url1 = fmt.Sprintf("http://%s:%s/apis?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
 	body := queryAPIServer(url1)
 	return body
 }
 
-// Used to query KubeDiscovery api server
+func getServiceEndpoint() (string, string) {
+	fmt.Printf("..Inside getServiceEndpoint...\n")
+	namespace := "default" // Use the namespace in which kubeplus is deployed.
+	discoveryService := "discovery-service"
+	cfg, _ := rest.InClusterConfig()
+	kubeClient, _ := kubernetes.NewForConfig(cfg)
+	serviceClient := kubeClient.CoreV1().Services(namespace)
+	discoveryServiceObj, _ := serviceClient.Get(discoveryService, metav1.GetOptions{})
+	host := discoveryServiceObj.Spec.ClusterIP
+	port := discoveryServiceObj.Spec.Ports[0].Port
+	stringPort := strconv.Itoa(int(port))
+    fmt.Printf("Host:%s, Port:%s\n", host, stringPort)
+	return host, stringPort
+}
+
 func queryAPIServer(url1 string) []byte {
+	fmt.Printf("..inside queryKubeAPIServer")
+	u, err := url.Parse(url1)
+	if err != nil {
+		panic(err)
+	}
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("sending request failed: %s", err.Error())
+		fmt.Println(err)
+	}
+	defer resp.Body.Close()
+	resp_body, _ := ioutil.ReadAll(resp.Body)
+
+	//fmt.Println(resp.Status)
+	//fmt.Println(string(resp_body))
+	//fmt.Println("Exiting QueryCompositionEndpoint")
+	return resp_body
+}
+
+// Used to query KubeDiscovery api server
+func queryKubeAPIServer(url1 string) []byte {
+	fmt.Printf("..inside queryKubeAPIServer")
 	caToken := getToken()
 	caCertPool := getCACert()
 	u, err := url.Parse(url1)
