@@ -38,32 +38,31 @@ KubePlus also provides an optional PlatformWorkflow Operator that further helps 
 
 KubePlus offers following kubectl commands (as kubectl plugins)
 
-**1. kubectl man**
+**1. kubectl composition**
 
-- ``kubectl man cr ``: Provides information about how to use a Custom Resource.
+- ``kubectl composition``: Provides information about sub resources created for a Kubernetes Resource instance.
 
-**2. kubectl composition**
+**2. kubectl connections**
 
-- ``kubectl composition cr``: Provides information about sub resources created for a Custom Resource instance.
+- ``kubectl connections``: Provides information about relationships of a Kubernetes Resource instance (custom or built-in) with other resources (custom or built-in) via labels / annotations / spec properties / owner.
 
-**3. kubectl connections**
-
-- ``kubectl connections cr``: Provides information about relationships of a Custom Resource instance with other resources (custom or built-in) via labels / annotations / spec properties.
-- ``kubectl connections service``: Shows all the Pod and Service resources that can be reached from the given service through labels, annotations, or spec properties. 
-- ``kubectl connections pod``: Shows all the Service and Pod resources that can be reached from the given pod through labels, annotations, or spec properties.
-
-**4. kubectl metrics**
+**3. kubectl metrics**
 
 - ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and total Memory consumption).
 - ``kubectl metrics service``: Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
 - ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs cluster-side component.
 - ``kubectl metrics helmrelease``: Provides CPU/Memory metrics for all the Pods that are part of a Helm release.
 
-**5. kubectl grouplogs**
+**4. kubectl grouplogs**
 
 - ``kubectl grouplogs cr``: Provides logs for all the containers of a Custom Resource instance.
 - ``kubectl grouplogs service``: Provides logs for all the containers of all the Pods that are related to a Service object.
 - ``kubectl grouplogs helmrelease`` (upcoming): Provides logs for all the containers of all the Pods that are part of a Helm release.
+
+**5. kubectl man**
+
+- ``kubectl man cr ``: Provides information about how to use a Custom Resource.
+
 
 
 ## Example
@@ -73,7 +72,7 @@ KubePlus offers following kubectl commands (as kubectl plugins)
 </p>
 
 ``` 
-$ kubectl connections service wordpress namespace1
+$ kubectl connections Service wordpress namespace1
 
 ::Final connections graph::
 ------ Branch 1 ------
@@ -139,9 +138,9 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
 - KubePlus kubectl commands:
 
 ```
-   $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins:latest.tar.gz
-   $ gunzip kubeplus-kubectl-plugins:latest.tar.gz
-   $ tar -xvf kubeplus-kubectl-plugins:latest.tar
+   $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins-latest.tar.gz
+   $ gunzip kubeplus-kubectl-plugins-latest.tar.gz
+   $ tar -xvf kubeplus-kubectl-plugins-latest.tar
    $ export KUBEPLUS_HOME=`pwd`
    $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
    $ kubectl kubeplus commands
