@@ -13,19 +13,19 @@ This tool is being developed as a part of our  `Platform as Code practice`_.
 Details
 --------
 
-Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus tooling simplifies creation of Kubernertes-native platform workflows leveraging these Custom Resources.
+Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus tooling simplifies creation of Kubernertes-native platform workflows leveraging Custom Resources available through the various Operators.
 
 .. image:: ./docs/Kubernetes-native-stack-with-KubePlus.jpg
    :height: 200px
    :width: 200px
    :align: center
 
-The main benefit of using KubePlus to DevOps engineers are:
+The main benefit of using KubePlus to DevOps/Platform engineers are:
 
 - easily discover static and runtime information about Custom Resources available in their cluster.
 - aggregate Custom and built-in resources to build secure and robust platform workflows.
 
-KubePlus API Add-on provides discovery commands, binding functions, and an orchestration mechanism to enable DevOps engineers to define Kubernetes-native platform workflows using Kubernetes Custom and built-in resources.
+KubePlus provides discovery commands, binding functions, and an orchestration mechanism to enable DevOps/Platform engineers to define Kubernetes-native platform workflows using Kubernetes Custom and built-in resources.
 
 .. You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
 
@@ -50,14 +50,14 @@ KubePlus tooling is made up of - CRD Annotations, client-side kubectl plugins, a
 CRD annotations
 -----------------
 
-In order to build and maintain Custom Resource relationship graph, KubePlus expects CRD packages to be updated with annotations as described below. 
+In order to build and maintain Custom Resource relationship graph, KubePlus expects CRD packages to be updated with annotations described below. 
 
 .. code-block:: bash
 
    resource/usage
 
 The 'usage' annotation is used to define usage information for a Custom Resource.
-The value for 'usage' annotation is the name of the ConfigMap that stores the usage information.
+The value of 'usage' annotation is the name of the ConfigMap that stores the usage information.
 
 .. code-block:: bash
 
@@ -72,9 +72,9 @@ The 'composition' annotation is used to define Kubernetes's built-in resources t
    resource/label-relationship
    resource/specproperty-relationship
 
-Above annotations are used to declare annotation / label / spec-property based relationships that instances of this Custom Resource can have with other Resources.  
+The relationship annotations are used to declare annotation / label / spec-property based relationships that instances of this Custom Resource can have with other Resources.  
 
-These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by DevOps engineers.
+Above annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by DevOps/Platform engineers.
 
 As an example, annotations on Moodle Custom Resource Definition (CRD) are shown below:
 
@@ -96,11 +96,12 @@ As an example, annotations on Moodle Custom Resource Definition (CRD) are shown 
       plural: moodles
     scope: Namespaced
 
-The specproperty relationship defines that an instance of Moodle Custom Resource is connected to a Service object through it's mySQLServiceName spec attribute. The value of this attribute the name of a Service object. Below is an example of a Kubernetes platform workflow in which a Moodle Custom Resource instance is bound to a MysqlCluster Custom Resource instance through the Service object that is created by the MysqlCluster Operator. The specproperty relationship helps discover this relationship as seen below:
+The composition annotation declares the set of Kubernetes resources that are created by the Moodle Operator when instantiating a Moodle Custom Resource instance.
+The specproperty relationship defines that an instance of Moodle Custom Resource is connected through it's mySQLServiceName spec attribute to an instance of a Service resource through that resource's name (metadata.name). Below is an example of a Kubernetes platform workflow in which a Moodle Custom Resource instance is bound to a MysqlCluster Custom Resource instance through the Service resource that is created by the MysqlCluster Operator. The specproperty relationship helps discover this relationship as seen below:
 
 .. code-block:: bash
 
-  (venv) Devs-MacBook:kubeplus devdatta$ kubectl connections cr Moodle moodle1 namespace1
+  (venv) Devs-MacBook:kubeplus devdatta$ kubectl connections Moodle moodle1 namespace1
   Level:0 kind:Moodle name:moodle1 Owner:/
   Level:1 kind:Service name:cluster1-mysql-master Owner:MysqlCluster/cluster1
   Level:2 kind:Pod name:cluster1-mysql-0 Owner:MysqlCluster/cluster1
@@ -115,7 +116,7 @@ Here are examples of defining the ``resource/label-relationship`` and ``resoure/
 
   resource/annotation-relationship: on:Pod, key:k8s.v1.cni.cncf.io/networks, value:INSTANCE.metadata.name
 
-This annotation-relationship annotation is defined on NetworkAttachmentDefinition CRD available from the Multus Operator. It defines that the relationship between a Pod and an instance of NetworkAttachmentDefinition Custom Resource instance is through the ``k8s.v1.cni.cncf.io/networks`` annotation. This annotation needs to be defined on a Pod and the value of the annotation is the name of the NetworkAttachmentDefinition Custom resource instance.
+This annotation-relationship annotation is defined on NetworkAttachmentDefinition CRD available from the Multus Operator. It defines that the relationship between a Pod and an instance of NetworkAttachmentDefinition Custom Resource instance is through the ``k8s.v1.cni.cncf.io/networks`` annotation. This annotation needs to be defined on a Pod and the value of the annotation is the name of a NetworkAttachmentDefinition Custom resource instance.
 
 .. code-block:: bash
 
@@ -133,9 +134,8 @@ KubePlus offers following kubectl plugins towards discovery and use of Custom Re
 .. code-block:: bash
 
    $ kubectl man cr
-   $ kubectl composition cr
-   $ kubectl connections cr
-   $ kubectl connections service
+   $ kubectl composition
+   $ kubectl connections
    $ kubectl metrics cr
    $ kubectl metrics service
    $ kubectl metrics account
@@ -182,40 +182,34 @@ In the above example the name of the ``Service`` object which is child of ``clus
 
    2. Fn::AddLabel(label, <Resource>)
 
-This function adds the specified label to the specified resource by resolving the resource name using runtime information in a cluster.
+This function adds the specified label to the specified resource/sub-resource by resolving the resource name using runtime information in a cluster.
 
 
 .. code-block:: bash
 
    3. Fn::AddAnnotation(annotation, <Resource>)
 
-This function adds the specified annotation to the specified resource by resolving the resource name using runtime information in a cluster.
+This function adds the specified annotation to the specified resource/sub-resource by resolving the resource name using runtime information in a cluster.
 
 
 The ``AddLabel`` and ``AddAnnotation`` functions should be defined as annotations on those Custom Resources that
 need appropriate labels and/or annotations on other resources in a cluster for their operation.
-`Here`_ is an example of using the ``AddLabel`` function with the ``Restic`` Custom Resource.
+`Here`_ is an example of using the ``AddLabel`` function with the ``Moodle`` Custom Resource.
 
-.. _Here: https://github.com/cloud-ark/kubeplus/blob/master/examples/platform-crd/moodle-mysql-restic/restic.yaml#L8
+.. _Here: https://github.com/cloud-ark/kubeplus/blob/master/examples/kubectl-plugins-and-binding-functions/moodle1.yaml#L6
 
-Restic Custom Resource takes backups of Deployments. For this, it requires that the Deployment object be given a label.
-In order to take backup of Moodle Custom Resource, we need to add a label on its Deployment object. This is
-achieved using the ``AddLabel`` function defined as ``pac/action`` annotation on the Restic Custom Resource Spec.
-
+This example shows adding a label on the Service created by the Mysql Operator to which the Moodle Custom Resource is binding.
 
 Formal grammar of ``ImportValue``, ``AddLabel``, ``AddAnnotation`` functions is available in the `functions doc`_.
 
 .. _functions doc: https://github.com/cloud-ark/kubeplus/blob/master/docs/kubeplus-functions.txt
 
 
-Check our `slide deck`_ in the Kubernetes Community Meeting for more details of the above example.
-
-
 PlatformWorkflow Operator
 --------------------------
-Creating workflows requires treating the set of resources representing the workflow as a unit. For this purpose, KubePlus provides a Custom Resource of its own - PlatformWorkflow. This Custom Resource enables DevOps engineers to define all the resources in a workflow as a unit along with the inter-dependencies between them. The dependency information is used for ensuring robustness and security of the workflows including, preventing out-of-order creation of resources and ensuring that resources that are still in use cannot be deleted.
+Creating workflows requires treating the set of resources representing the workflow as a unit. For this purpose, KubePlus provides a Custom Resource of its own - PlatformWorkflow. This Custom Resource enables DevOps/Platform engineers to define all the resources in a workflow as a unit along with the inter-dependencies between them. The dependency information is used for ensuring robustness and security of the workflows which includes, preventing out-of-order creation of resources and ensuring that resources that are still in use cannot be deleted.
 
-PlatformWorkflow Operator does not actually deploy any resources defined in a workflow. Resource creation is done by DevOps engineers as usual using 'kubectl'.
+PlatformWorkflow Operator does not actually deploy any resources defined in a workflow. Resource creation is done by DevOps/Platform engineers as usual using 'kubectl'/'helm'.
 
 
 Getting started
@@ -232,9 +226,10 @@ Install KubePlus:
 
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
-   $ ./script/deploy-kubeplus.sh
-   $ export PATH=$PATH:`pwd`/plugins/
-
+   $ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>
+   $ export PATH=$PATH:`pwd`/plugins
+   $ cd scripts
+   $ ./deploy-kubeplus.sh
 
 Platform-as-Code examples:
 
@@ -245,7 +240,7 @@ Platform-as-Code examples:
 
 2. `Automatic discovery and binding`_
 
-.. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/platform-crd/steps.txt
+.. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/kubectl-plugins-and-binding-functions/steps.txt
 
 
 Comparison
