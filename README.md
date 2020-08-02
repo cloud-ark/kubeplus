@@ -1,6 +1,6 @@
 ## KubePlus - Tooling for Kubernetes native Application Stacks
 
-Kubernetes native stacks are built by extending Kubernetes clusters with Operators and their Custom Resources. In such setups, a DevOps engineer is faced with following challenges:
+Kubernetes native stacks are built by extending Kubernetes clusters with Operators and their Custom Resources. In such setups, a DevOps/Kubernetes Platform engineer is faced with following challenges:
 
 - How to use various Custom Resources available in the cluster?
 - How to define and create application-specific platform automation using the available Custom and built-in resources?
@@ -9,14 +9,14 @@ Kubernetes native stacks are built by extending Kubernetes clusters with Operato
 - How to track and correctly attribute physical resource consumption of such automation at application or team level?
 
 
-KubePlus solves these issues for DevOps teams. KubePlus tooling simplifies building, visualizing and monitoring Kubernetes platform workflows. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
+KubePlus solves these issues for DevOps/Kubernetes Platform teams. KubePlus tooling simplifies building, visualizing and monitoring Kubernetes platform workflows. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
 KubePlus tooling consists of three components - the Operator Maturity Model for multi-Operator scenarios, client-side kubectl plugins (see below), cluster-side runtime binding resolution component.
 
 
 ## Operator Maturity Model
 
-In order to install and use any Kubernetes Operators in their clusters, Cluster administrators need to evaluate different Operators against a standard set of requirements. Towards this we have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of a multi-Operator world. We use this model when curating community Operators for their multi-Operator readiness. 
+In order to install and use any Kubernetes Operators in their clusters, Cluster administrators need to evaluate different Operators against a standard set of requirements. Towards this we have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of a multi-Operator world. We use this model when curating community Operators for their multi-Operator readiness. If you are new to Operators, check out [Operator FAQ](https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md).
 
 ## Client-side kubectl plugins
 
@@ -32,7 +32,7 @@ resource/specproperty-relationship
 
 More details on how to use these annotations can be found [here](./details.rst). We maintain a table of annotations for Open source Operators that we curate [here](./Operator-annotations.md).
 
-KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies. KubePlus offers a variety of kubectl plugins (see below) that internally leverage this topology information and enable DevOps teams to visualize and monitor their platform workflows.
+KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies. KubePlus offers a variety of kubectl plugins (see below) that internally leverage this topology information and enable DevOps/Kubernetes Platform teams to visualize and monitor their platform workflows.
 
 
 ## Cluster-side add-on
