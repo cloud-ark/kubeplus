@@ -1,18 +1,24 @@
 ## KubePlus - Tooling for Kubernetes native Application Stacks
 
-Kubernetes native stacks are built by extending Kubernetes Resource set (APIs) with Operators and their Custom Resources. Application workflows on Kubernetes are realized by establishing connections between Kubernetes Resources (APIs). These connections can be based on various relationships such as labels, annotations, ownership, etc.
+Kubernetes native stacks are built by extending Kubernetes clusters with Operators and their Custom Resources. In such multi-Operator setups, a DevOps engineer is faced with following challenges:
 
-<p align="center">
-<img src="./docs/application-workflow.png" width="800" height="300">
-</p>
+- How to use various Custom Resources available in the cluster?
+- How to define and create application-specific platform automation using the available Custom and built-in resources?
+- How to discover the runtime relationships between different resources (Custom and built-in) in such automation?
+- How to troubleshoot issues in your platform automation?
+- How to track and correctly attribute physical resource consumption of such automation at application or team level?
 
-KubePlus tooling simplifies building, visualizing and monitoring these platform workflows. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
-## Summary
+KubePlus solves these issues in multi-Operator setups for DevOps teams. KubePlus tooling simplifies building, visualizing and monitoring Kubernetes platform workflows. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
-KubePlus tooling consists of - kubectl plugins, CRD annotations and (optional) cluster-side add-on.
+KubePlus tooling consists of three components - the Operator Maturity Model for multi-Operator scenarios, client-side kubectl plugins (see below), cluster-side runtime binding resolution component.
 
-### CRD Annotations
+
+## Operator Maturity Model
+
+In order to build application-specific Kubernetes platform automation using Operators and Custom Resources, it is important for Cluster administrators to evaluate different Operators against a standard set of requirements. Towards this we have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-Operator environments. Operator developers are using this model to ensure that their Operator is a good citizen of a multi-Operator world. We use this model when curating community Operators for their multi-Operator readiness. 
+
+## Client-side kubectl plugins
 
 In Kubernetes application-specific platform workflows are built by establishing relationships between Kubernetes built-in and/or Custom Resources. (e.g. a Service is connected to a Pod through labels.) When working with Custom Resources introduced by Operators, it is important that Operator developer's assumptions around what relationships can be established with a Custom Resource and what actions will be performed as a result of them are clearly articulated. KubePlus provides following annotations on Custom Resource Definitions to encode such assumptions.
 
@@ -26,25 +32,25 @@ resource/specproperty-relationship
 
 More details on how to use these annotations can be found [here](./details.rst). We maintain a table of annotations for Open source Operators that we curate [here](./Operator-annotations.md).
 
-### Client-side kubectl plugins
+KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds Kubernetes resource topologies using runtime information. KubePlus offers a variety of kubectl plugins (see below) that internally leverage this topology information and enable DevOps teams to visualize and monitor their platform workflows.
 
-KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds Kubernetes resource relationship graphs. KubePlus offers a variety of kubectl plugins that internally leverage this graph and enable teams to visualize and monitor platform workflows.
 
-### Cluster-side add-on (optional)
+## Cluster-side add-on
 
-KubePlus also provides an optional PlatformWorkflow Operator that further helps teams define platform workflows that are hard to realize using just helm charts.
+For establishing resource relationships using runtime information, KubePlus provides [binding functions](./details.rst#binding-functions) that can be used in your Kubernetes YAMLs. The binding functions are resolved on the cluster-side using runtime information.
 
-## KubePlus kubectl commands
 
-KubePlus offers following kubectl commands (as kubectl plugins)
+## KubePlus kubectl Plugins
+
+KubePlus offers following kubectl commands (as kubectl plugins):
 
 **1. kubectl composition**
 
-- ``kubectl composition``: Provides information about sub resources created for a Kubernetes Resource instance.
+- ``kubectl composition``: Provides information about sub resources created for a Kubernetes resource instance.
 
 **2. kubectl connections**
 
-- ``kubectl connections``: Provides information about relationships of a Kubernetes Resource instance (custom or built-in) with other resources (custom or built-in) via labels / annotations / spec properties / owner.
+- ``kubectl connections``: Provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via labels / annotations / spec properties / owner reference.
 
 **3. kubectl metrics**
 
@@ -62,7 +68,6 @@ KubePlus offers following kubectl commands (as kubectl plugins)
 **5. kubectl man**
 
 - ``kubectl man cr ``: Provides information about how to use a Custom Resource.
-
 
 
 ## Example
@@ -130,10 +135,8 @@ This is the composition annotation. It identifies the set of resources that will
 
 Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationship-graphs-for-application-level-insights-70139e19fb0) to understand more about why tracking resource relationships is useful in Kubernetes.
 
-## Try it:
 
-- To obtain metrics, enable Kubernetes Metrics API Server on your cluster.
-  - Hosted Kubernetes solutions like GKE has this already installed.
+## Try it:
 
 - KubePlus kubectl commands:
 
@@ -146,23 +149,18 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
    $ kubectl kubeplus commands
 ```
 
+- To obtain metrics, enable Kubernetes Metrics API Server on your cluster.
+  - Hosted Kubernetes solutions like GKE has this already installed.
+
 - Cluster-side component:
 
 ```
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
+  - cd scripts
+  - $ ./deploy-kubeplus.sh
 ```
-- KubePlus kubectl commands:
-  - ```$ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>```
-  - ```$ export PATH=$KUBEPLUS_HOME/plugins/:$PATH```
-- KubePlus Cluster-side add-on:
-  - ```cd scripts```
-  - ```$ ./deploy-kubeplus.sh```
   - Check out [examples](./examples/kubectl-plugins-and-binding-functions/).
-
-## Operator Maturity Model
-
-In order to build Kubernetes platform workflows using Operators and Custom Resources, it is important for Cluster administrators to evaluate different Operators against a standard set of requirements. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) towards this focusing on Operator usage in multi-Operator environments. We use this model when curating community Operators for enterprise readiness. 
 
 
 ## Status
