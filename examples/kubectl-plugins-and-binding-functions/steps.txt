@@ -50,7 +50,7 @@ Platform Engineer:
     - kubectl composition Moodle moodle1 
 
 12. Check Moodle connections:
-    - kubectl connections cr Moodle moodle1 
+    - kubectl connections Moodle moodle1 
 
 13. Check CRD
     - kubectl get customresourcedefinitions

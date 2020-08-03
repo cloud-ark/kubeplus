@@ -1,4 +1,4 @@
-(venv) Devs-MacBook:kubediscovery devdatta$ kubectl connections cr MysqlCluster cluster1 namespace1
+(venv) Devs-MacBook:kubediscovery devdatta$ kubectl connections MysqlCluster cluster1 namespace1
 Discovering connections - Level: 0, Kind:MysqlCluster, instance:cluster1
 Discovering connections - Level: 1, Kind:StatefulSet, instance:cluster1-mysql
 Discovering connections - Level: 2, Kind:Pod, instance:cluster1-mysql-0

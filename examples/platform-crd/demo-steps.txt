@@ -36,8 +36,7 @@ Application Developer Window:
    - kubectl create -f cluster1.yaml
 
 8. Show composition tree of cluster1
-   - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=MysqlCluster&instance=cluster1&namespace=defau\
-lt" | python -mjson.tool
+   - kubectl composition MysqlCluster cluster1
 
 9. From o/p of composition, highlight the Service objects
 
@@ -57,7 +56,7 @@ lt" | python -mjson.tool
     - Highlight the resolved service name
 
 16. Show moodle1 composition tree
-    - kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=default" | python -mjson.tool
+    kubectl composition Moodle moodle1 
 
 17. Show pods
     - kubectl get pods
@@ -65,9 +64,9 @@ lt" | python -mjson.tool
 18. Check CRD
     - kubectl get customresourcedefinitions
     - kubectl describe customresourcedefinitions moodles.moodlecontroller.kubeplus
-      - Check the 'platform-as-code/composition' annotation on the Moodle CRD
+      - Check the 'resource/composition' annotation on the Moodle CRD
     - kubectl describe customresourcedefinitions mysqlclusters.mysql.presslabs.org
-      - Check the 'platform-as-code/composition' annotation on MysqlCluster CRD
+      - Check the 'resource/composition' annotation on MysqlCluster CRD
 
 19. Feedback:
     - https://github.com/cloud-ark/kubeplus

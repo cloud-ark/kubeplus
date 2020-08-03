@@ -58,9 +58,9 @@ Steps:
      - kubectl create -f clusterissuer.yaml
 
 10) Check the connections
-    - kubectl connections cr MysqlCluster cluster1 namespace1
-    - kubectl connections service wordpress namespace1
-    - kubectl connections pod <Pod-name> namespace1
+    - kubectl connections MysqlCluster cluster1 namespace1
+    - kubectl connections Service wordpress namespace1
+    - kubectl connections <Pod-name> namespace1
 
 
 

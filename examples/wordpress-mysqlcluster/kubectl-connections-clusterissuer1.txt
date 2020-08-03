@@ -1,4 +1,4 @@
-(venv) Devs-MacBook:kubediscovery devdatta$ kubectl connections cr ClusterIssuer wordpress-stack namespace1
+(venv) Devs-MacBook:kubediscovery devdatta$ kubectl connections ClusterIssuer wordpress-stack namespace1
 Discovering connections - Level: 0, Kind:ClusterIssuer, instance:wordpress-stack
 Discovering connections - Level: 1, Kind:Ingress, instance:wordpress-ingress
 Discovering connections - Level: 2, Kind:Service, instance:wordpress
