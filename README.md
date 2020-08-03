@@ -36,7 +36,14 @@ KubePlus leverages knowledge of relationships between Kubernetes built-in resour
 
 ## Cluster-side add-on
 
-For establishing dynamic resource relationships using runtime information, KubePlus provides [binding functions](./details.rst#binding-functions). These can be used in your Kubernetes YAMLs. The binding functions are resolved on the cluster-side using runtime information.
+For establishing dynamic resource relationships using run time information, KubePlus provides following binding functions. These are resolved by the KubePlus cluster-side add-on using information from the instantiated resources (Custom or built-in) in the cluster.
+
+```
+Fn::ImportValue(<Parameter>)
+Fn::AddLabel(label, <Resource>)
+Fn::AddAnnotation(annotation, <Resource>)
+```
+Details about binding functions can be found [here](./details.rst#binding-functions). Binding functions are defined in Kubernetes YAMLs. 
 
 
 ## KubePlus kubectl Plugins
