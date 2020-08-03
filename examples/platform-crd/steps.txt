@@ -95,10 +95,10 @@ Steps:
           - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
 10) Check the composition of Moodle instance
-    - kubectl get composition Moodle moodle1 default
+    - kubectl composition Moodle moodle1 default
 
 11) Check the composition of MysqlCluster instance
-    - kubectl get composition MysqlCluster cluster1 default
+    - kubectl composition MysqlCluster cluster1 default
 
 
 

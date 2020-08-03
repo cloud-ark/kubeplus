@@ -21,6 +21,6 @@
    - kubectl create -f clusterissuer.yaml
 
 7. Visualize workflow:
-   - kubectl connections cr CassandraDatacenter dc1 default
-   - kubectl connections service cluster1-dc1-service 
-   - kubectl connections cr ClusterIssuer cluster1-dc1 
+   - kubectl connections CassandraDatacenter dc1 default
+   - kubectl connections Service cluster1-dc1-service 
+   - kubectl connections ClusterIssuer cluster1-dc1 

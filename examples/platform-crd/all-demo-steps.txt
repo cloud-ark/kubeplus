@@ -1,8 +1,8 @@
 Application Developer Workflow:
 -------------------------------
 1. kubectl get pods
-2. kubectl get --raw "/apis/platform-as-code/v1/man?kind=Moodle"
-3. kubectl get --raw "/apis/platform-as-code/v1/man?kind=MysqlCluster"
+2. kubectl man Moodle
+3. kubectl man MysqlCluster
 4. more platform.yaml
 5. kubectl create -f platform.yaml
 6. kubectl create -f moodle1.yaml
@@ -10,12 +10,12 @@ Application Developer Workflow:
 8. more cluster1.yaml
 9. kubectl create -f cluster1.yaml
 10. kubectl get pods
-11. kubectl get --raw "/apis/platform-as-code/v1/composition?kind=MysqlCluster&instance=cluster1&namespace=default" | python -mjson.tool
+11. kubectl composition MysqlCluster cluster1 default
 12. more moodle1.yaml
 13. kubectl create -f moodle1.yaml
 14. kubectl describe moodles moodle1
 15. kubectl get pods
-16. kubectl get --raw "/apis/platform-as-code/v1/composition?kind=Moodle&instance=moodle1&namespace=default" | python -mjson.tool
+16. kubectl composition Moodle moodle1
 
 
 

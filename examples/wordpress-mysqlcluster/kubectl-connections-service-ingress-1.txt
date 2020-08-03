@@ -1,4 +1,4 @@
-(venv) Devs-MacBook:kubediscovery devdatta$ kubectl connections service wordpress namespace1
+(venv) Devs-MacBook:kubediscovery devdatta$ kubectl connections Service wordpress namespace1
 Discovering connections - Level: 0, Kind:Service, instance:wordpress
 Discovering connections - Level: 1, Kind:Pod, instance:wordpress-pod
 Discovering connections - Level: 1, Kind:Ingress, instance:wordpress-ingress
