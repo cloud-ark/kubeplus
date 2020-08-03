@@ -4,7 +4,7 @@
 # kubectl delete -f ../deploy/
 
 # Delete KubePlus PlatformStack Operator
-kubectl delete -f ../platform-operator/artifacts/deployment/
+# kubectl delete -f ../platform-operator/artifacts/deployment/
 
 # Delete KubePlus Mutating Webhook
 cd ../mutating-webhook
