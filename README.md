@@ -1,15 +1,14 @@
 ## KubePlus - Tooling for Kubernetes native Application Stacks
 
-Kubernetes native stacks are built by extending Kubernetes clusters with Operators and their Custom Resources. In such setups, a DevOps/Kubernetes Platform engineer is faced with following challenges:
+Kubernetes native stacks are built by extending Kubernetes clusters with Operators and Custom Resources. In such setups, a DevOps engineer is faced with following challenges:
 
-- How to use various Custom Resources available in the cluster?
-- How to define and create application-specific platform automation using the available Custom and built-in resources?
+- How to define and create application-specific platform automation using the Custom and built-in resources available in the cluster?
 - How to discover the runtime relationships between different resources (Custom and built-in) in such automation?
-- How to troubleshoot issues in your platform automation?
-- How to track and correctly attribute physical resource consumption of such automation at application or team level?
+- How to troubleshoot issues in such platform automation workflows?
+- How to track and correctly attribute physical resource consumption of such workflows at application or team level?
 
 
-KubePlus solves these issues for DevOps/Kubernetes Platform teams. KubePlus tooling simplifies building, visualizing and monitoring Kubernetes platform workflows. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
+KubePlus solves these issues for DevOps teams. KubePlus tooling simplifies building, visualizing and monitoring Kubernetes platform automation workflows. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
 KubePlus tooling consists of three components - the Operator Maturity Model for multi-Operator scenarios, client-side kubectl plugins (see below), cluster-side runtime binding resolution component.
 
@@ -32,7 +31,7 @@ resource/specproperty-relationship
 
 More details on how to use these annotations can be found [here](./details.rst). We maintain a table of annotations for Open source Operators that we curate [here](./Operator-annotations.md).
 
-KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies. KubePlus offers a variety of kubectl plugins (see below) that internally leverage this topology information and enable DevOps/Kubernetes Platform teams to visualize and monitor their platform workflows.
+KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies. KubePlus offers a variety of kubectl plugins (see below) that internally leverage this topology information and enable DevOps teams to visualize and monitor their platform workflows.
 
 
 ## Cluster-side add-on
@@ -157,8 +156,8 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
 ```
    $ git clone https://github.com/cloud-ark/kubeplus.git
    $ cd kubeplus
-  - cd scripts
-  - $ ./deploy-kubeplus.sh
+   $ cd scripts
+   $ ./deploy-kubeplus.sh
 ```
   - Check out [examples](./examples/kubectl-plugins-and-binding-functions/).
 
