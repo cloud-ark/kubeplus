@@ -17,6 +17,7 @@ type Function int
 const (
 	ImportValue Function = 0
 	AddLabel    Function = 1
+	AddAnnotation Function = 2
 )
 
 // ResolveData ...

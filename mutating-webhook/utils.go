@@ -357,8 +357,8 @@ func AddDeploymentLabel(key, value string, name, namespace string) {
 	}
 }
 
-func AddResourceLabel(addLabelDefinition string) (string, error) {
-
+func getLabelAnnotationKeyVal(addLabelDefinition string) (string, string, string) {
+	//Fn::AddLabel(application/moodle1, MysqlCluster:default.cluster1:Service(filter=master))
 	start := strings.Index(addLabelDefinition, "(")
 	end := strings.LastIndex(addLabelDefinition, ")")
 	args := strings.Split(addLabelDefinition[start+1:end], ",")
@@ -369,15 +369,41 @@ func AddResourceLabel(addLabelDefinition string) (string, error) {
 	keyVal := strings.Split(keyValLabel, "/")
 	key := keyVal[0]
 	val := keyVal[1]
+	resourceString := args[1]
 
-	kind, namespace, resourceName, subKind, nameFilterPredicate, _, _ := parseImportString(args[1])
+	return key, val, resourceString
+}
+
+func AddResourceAnnotation(addAnnotationDefinition string) (string, error) {
+
+	key, val, resourceString := getLabelAnnotationKeyVal(addAnnotationDefinition)
+	kind, namespace, resourceName, subKind, nameFilterPredicate, _, _ := parseImportString(resourceString)
 
 	//namespace, kind, crdKindName, subKind, err := ParseCompositionPath(args[1])
 	fmt.Printf("Parsed Composition Path: %s, %s, %s, %s, %s\n", namespace, kind, resourceName, subKind, nameFilterPredicate)
 	jsonData := QueryCompositionEndpoint(kind, namespace, resourceName)
 	fmt.Printf("Queried KubeDiscovery: %s\n", string(jsonData))
 
-	AddLabelSubresources(jsonData, subKind, nameFilterPredicate, key, val, kind, resourceName, namespace)
+	// Annotation values cannot contain '/'
+	// We should reject annotation values if they contain '/'
+	AddLabelAnnotationSubresources(AddAnnotation, jsonData, subKind, nameFilterPredicate, key, val, kind, resourceName, namespace)
+	return val, nil
+}
+
+func AddResourceLabel(addLabelDefinition string) (string, error) {
+
+	key, val, resourceString := getLabelAnnotationKeyVal(addLabelDefinition)
+
+	kind, namespace, resourceName, subKind, nameFilterPredicate, _, _ := parseImportString(resourceString)
+
+	//namespace, kind, crdKindName, subKind, err := ParseCompositionPath(args[1])
+	fmt.Printf("Parsed Composition Path: %s, %s, %s, %s, %s\n", namespace, kind, resourceName, subKind, nameFilterPredicate)
+	jsonData := QueryCompositionEndpoint(kind, namespace, resourceName)
+	fmt.Printf("Queried KubeDiscovery: %s\n", string(jsonData))
+
+	// Label values cannot contain '/'
+	// We should reject label values if they contain '/'
+	AddLabelAnnotationSubresources(AddLabel, jsonData, subKind, nameFilterPredicate, key, val, kind, resourceName, namespace)
 
 	/*switch subKind {
 		case "Deployment":
@@ -526,6 +552,7 @@ func ParseRequestHelper(data []byte, needResolving *[]ResolveData, stringStack *
 			val := strings.TrimSpace(string(value))
 			hasImportFunc := strings.Contains(val, "Fn::ImportValue")
 			hasLabelFunc := strings.Contains(val, "Fn::AddLabel")
+			hasAnnotationFunc := strings.Contains(val, "Fn::AddAnnotation")
 			if hasImportFunc {
 				start := strings.Index(val, "(")
 				end := strings.LastIndex(val, ")")
@@ -550,6 +577,17 @@ func ParseRequestHelper(data []byte, needResolving *[]ResolveData, stringStack *
 					JSONTreePath: jsonPath,
 					Value:        val,
 					FunctionType: AddLabel,
+				}
+				*needResolving = append(*needResolving, needResolve)
+				stringStack.Pop()
+				// I would use defer here but am unsure
+				// how it works with all the recursion and returns..
+			} else if hasAnnotationFunc {
+
+				needResolve := ResolveData{
+					JSONTreePath: jsonPath,
+					Value:        val,
+					FunctionType: AddAnnotation,
 				}
 				*needResolving = append(*needResolving, needResolve)
 				stringStack.Pop()
@@ -808,15 +846,15 @@ func ParseDiscoveryJSONHelper(composition []byte, subKind string, subName *[]str
 	return fmt.Errorf("Could not find a name for kind")
 }
 
-func AddLabelSubresources(composition []byte, subKind, nameFilterPredicate, labelkey, labelvalue, kind, resourceName, namespace string) error {
+func AddLabelAnnotationSubresources(functype Function, composition []byte, subKind, nameFilterPredicate, labelkey, labelvalue, kind, resourceName, namespace string) error {
 	//addLabel(labelkey, labelvalue, kind, resourceName, namespace)
 	jsonparser.ArrayEach(composition, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		AddLabelSubresourcesHelper(value, subKind, nameFilterPredicate, labelkey, labelvalue, namespace)
+		AddLabelAnnotationSubresourcesHelper(functype, value, subKind, nameFilterPredicate, labelkey, labelvalue, namespace)
 	})
 	return fmt.Errorf("Could not all label to all sub resources.")
 }
 
-func AddLabelSubresourcesHelper(composition []byte, subKind, nameFilterPredicate, labelkey, labelvalue, namespace string) error {
+func AddLabelAnnotationSubresourcesHelper(functype Function, composition []byte, subKind, nameFilterPredicate, labelkey, labelvalue, namespace string) error {
 	jsonparser.ObjectEach(composition, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		//fmt.Printf("Datatype:%s key:%s\n", dataType.String(), string(key))
 		if dataType.String() == "array" {
@@ -825,16 +863,21 @@ func AddLabelSubresourcesHelper(composition []byte, subKind, nameFilterPredicate
 				// Debug prints
 				kind1, _ := jsonparser.GetUnsafeString(value1, "Kind")
 				name1, _ := jsonparser.GetUnsafeString(value1, "Name")
-				fmt.Printf(" AddLabelSubresources kind:%s\n", kind1)
-				fmt.Printf(" AddLabelSubresources name:%s\n", name1)
-				fmt.Printf(" AddLabelSubresources subKind:%s\n", subKind)
-				fmt.Printf(" AddLabelSubresources filterPredicate:%s\n", nameFilterPredicate)
+				fmt.Printf(" AddLabelAnnotationSubresources kind:%s\n", kind1)
+				fmt.Printf(" AddLabelAnnotationSubresources name:%s\n", name1)
+				fmt.Printf(" AddLabelAnnotationSubresources subKind:%s\n", subKind)
+				fmt.Printf(" AddLabelAnnotationSubresources filterPredicate:%s\n", nameFilterPredicate)
 				if strings.Contains(subKind, kind1) {
-					if strings.Contains(name1, nameFilterPredicate) {
-						addLabel(labelkey, labelvalue, kind1, name1, namespace)
+					if nameFilterPredicate == "" || strings.Contains(name1, nameFilterPredicate) {
+						if functype == AddLabel {
+							addLabel(labelkey, labelvalue, kind1, name1, namespace)
+						}
+						if functype == AddAnnotation {
+							addAnnotation(labelkey, labelvalue, kind1, name1, namespace)
+						}
 					}
 				}
-				AddLabelSubresourcesHelper(value1, subKind, nameFilterPredicate, labelkey, labelvalue, namespace)
+				AddLabelAnnotationSubresourcesHelper(functype, value1, subKind, nameFilterPredicate, labelkey, labelvalue, namespace)
 			})
 		} else {
 			return nil
@@ -878,6 +921,40 @@ func addLabel(labelkey, labelvalue, kind, resource, namespace string) {
 	}
 }
 
+func addAnnotation(labelkey, labelvalue, kind, resource, namespace string) {
+	fmt.Printf("Adding annotation kind:%s, resource:%s, namespace:%s\n", kind, resource, namespace)
+
+	dynamicClient, err := getDynamicClient()
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+	}
+	resourceKindPlural, _, resourceApiVersion, resourceGroup := getKindAPIDetails(kind)
+	res := schema.GroupVersionResource{Group: resourceGroup,
+									   Version: resourceApiVersion,
+									   Resource: resourceKindPlural}
+	obj, err1 := dynamicClient.Resource(res).Namespace(namespace).Get(resource, metav1.GetOptions{})
+	if err1 != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		return
+	}
+
+	objCopy := obj.DeepCopy()
+	annotationMap := objCopy.GetAnnotations()
+	if annotationMap == nil {
+		annotationMap = make(map[string]string)
+	}
+	annotationMap[labelkey] = labelvalue
+	objCopy.SetAnnotations(annotationMap)
+
+	fmt.Printf("Before adding annotations.\n")
+	_, err = dynamicClient.Resource(res).Namespace(namespace).Update(objCopy, metav1.UpdateOptions{})
+	fmt.Printf("Done adding annotations.\n")
+
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+	}
+}
+
 func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
 	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, crdKindName, namespace)
 	fmt.Printf("Inside QueryCompositionEndpoint...\n")
@@ -886,29 +963,7 @@ func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/platform-as-code/v1/composition?%s", serviceHost, servicePort, args)
 	fmt.Printf("Url:%s\n", url1)
-	body := queryAPIServer(url1)
-	return body
-}
-
-func queryResourceDetailsEndpoint(kind, name, namespace string) []byte {
-	fmt.Printf("..Inside queryResourceDetailsEndpoint...")
-	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, name, namespace)
-	serviceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
-	servicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
-	var url1 string
-	url1 = fmt.Sprintf("https://%s:%s/apis/platform-as-code/v1/resourceDetails?%s", serviceHost, servicePort, args)
-	body := queryAPIServer(url1)
-	return body
-}
-
-func queryAPIsEndpoint(kind, namespace, crdKindName string) []byte {
-	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, crdKindName, namespace)
-	serviceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
-	servicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
-	var url1 string
-	url1 = fmt.Sprintf("http://%s:%s/apis?%s", serviceHost, servicePort, args)
-	fmt.Printf("Url:%s\n", url1)
-	body := queryAPIServer(url1)
+	body := queryKubeDiscoveryService(url1)
 	return body
 }
 
@@ -927,8 +982,8 @@ func getServiceEndpoint() (string, string) {
 	return host, stringPort
 }
 
-func queryAPIServer(url1 string) []byte {
-	fmt.Printf("..inside queryKubeAPIServer")
+func queryKubeDiscoveryService(url1 string) []byte {
+	fmt.Printf("..inside queryKubeDiscoveryService")
 	u, err := url.Parse(url1)
 	if err != nil {
 		panic(err)
@@ -954,7 +1009,31 @@ func queryAPIServer(url1 string) []byte {
 	return resp_body
 }
 
+/// Functions to query Kubediscovery running as an Aggregated API Server 
+/// Not used anymore
 // Used to query KubeDiscovery api server
+func queryResourceDetailsEndpoint(kind, name, namespace string) []byte {
+	fmt.Printf("..Inside queryResourceDetailsEndpoint...")
+	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, name, namespace)
+	serviceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
+	servicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
+	var url1 string
+	url1 = fmt.Sprintf("https://%s:%s/apis/platform-as-code/v1/resourceDetails?%s", serviceHost, servicePort, args)
+	body := queryKubeAPIServer(url1)
+	return body
+}
+
+func queryAPIsEndpoint(kind, namespace, crdKindName string) []byte {
+	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, crdKindName, namespace)
+	serviceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
+	servicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/apis?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeAPIServer(url1)
+	return body
+}
+
 func queryKubeAPIServer(url1 string) []byte {
 	fmt.Printf("..inside queryKubeAPIServer")
 	caToken := getToken()

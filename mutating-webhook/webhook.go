@@ -204,12 +204,22 @@ func getSpecResolvedPatch(ar *v1beta1.AdmissionReview) ([]patchOperation, *v1bet
 			}
 			patchOperations = append(patchOperations, patch)
 		}
-		 if resolveObj.FunctionType == AddLabel {
+		if resolveObj.FunctionType == AddLabel {
 		 	fmt.Printf("Path to resolve:%s\n",resolveObj.JSONTreePath)
 		 	fmt.Printf("Value to resolve:%s\n", resolveObj.Value)
 			_, err := AddResourceLabel(resolveObj.Value)
 			if err != nil {
 				fmt.Printf("Could not add Label to: %s", resolveObj.Value)
+			}
+			// TODO: Helper to put the label if the resource is not yet created.
+		 	//helper <- resolveObj.Value
+		}
+		if resolveObj.FunctionType == AddAnnotation {
+		 	fmt.Printf("Path to resolve:%s\n",resolveObj.JSONTreePath)
+		 	fmt.Printf("Value to resolve:%s\n", resolveObj.Value)
+			_, err := AddResourceAnnotation(resolveObj.Value)
+			if err != nil {
+				fmt.Printf("Could not add annotation to: %s", resolveObj.Value)
 			}
 			// TODO: Helper to put the label if the resource is not yet created.
 		 	//helper <- resolveObj.Value
