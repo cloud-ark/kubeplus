@@ -357,7 +357,7 @@ func AddDeploymentLabel(key, value string, name, namespace string) {
 	}
 }
 
-func getLabelAnnotationKeyVal(addLabelDefinition string) (string, string, string) {
+func getLabelAnnotationKeyVal(addLabelDefinition string) (string, string, string, error) {
 	//Fn::AddLabel(application/moodle1, MysqlCluster:default.cluster1:Service(filter=master))
 	start := strings.Index(addLabelDefinition, "(")
 	end := strings.LastIndex(addLabelDefinition, ")")
@@ -370,13 +370,21 @@ func getLabelAnnotationKeyVal(addLabelDefinition string) (string, string, string
 	key := keyVal[0]
 	val := keyVal[1]
 	resourceString := args[1]
+	if len(keyVal) > 2 {
+		return "", "", "", fmt.Errorf("Value cannot contain '/' %s", keyVal[2])
+	}
 
-	return key, val, resourceString
+	return key, val, resourceString, nil
 }
 
 func AddResourceAnnotation(addAnnotationDefinition string) (string, error) {
 
-	key, val, resourceString := getLabelAnnotationKeyVal(addAnnotationDefinition)
+	key, val, resourceString, err := getLabelAnnotationKeyVal(addAnnotationDefinition)
+
+	if err != nil {
+		return "", fmt.Errorf("Annotation value cannot contain '/' %s", val)
+	}
+
 	kind, namespace, resourceName, subKind, nameFilterPredicate, _, _ := parseImportString(resourceString)
 
 	//namespace, kind, crdKindName, subKind, err := ParseCompositionPath(args[1])
@@ -392,7 +400,11 @@ func AddResourceAnnotation(addAnnotationDefinition string) (string, error) {
 
 func AddResourceLabel(addLabelDefinition string) (string, error) {
 
-	key, val, resourceString := getLabelAnnotationKeyVal(addLabelDefinition)
+	key, val, resourceString,  err := getLabelAnnotationKeyVal(addLabelDefinition)
+
+	if err != nil {
+		return "", fmt.Errorf("Label value cannot contain '/' %s", val)
+	}
 
 	kind, namespace, resourceName, subKind, nameFilterPredicate, _, _ := parseImportString(resourceString)
 
@@ -405,19 +417,6 @@ func AddResourceLabel(addLabelDefinition string) (string, error) {
 	// We should reject label values if they contain '/'
 	AddLabelAnnotationSubresources(AddLabel, jsonData, subKind, nameFilterPredicate, key, val, kind, resourceName, namespace)
 
-	/*switch subKind {
-		case "Deployment":
-			name, err := ParseDiscoveryJSON(jsonData, subKind, "")
-			if err != nil {
-				return "", err
-			}
-			//found one resource that matches "Deployment"
-			fmt.Printf("Found name: %s\n", name)
-			AddDeploymentLabel(key, val, name, namespace)
-		case "*":
-			fmt.Printf("Adding Label on all sub resources.\n")
-			AddLabelSubresources(jsonData, key, val, kind, resourceName, namespace)
-	}*/
 	return val, nil
 }
 
