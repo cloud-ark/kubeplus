@@ -210,6 +210,11 @@ func getSpecResolvedPatch(ar *v1beta1.AdmissionReview) ([]patchOperation, *v1bet
 			_, err := AddResourceLabel(resolveObj.Value)
 			if err != nil {
 				fmt.Printf("Could not add Label to: %s", resolveObj.Value)
+				return patchOperations, &v1beta1.AdmissionResponse{
+					Result: &metav1.Status{
+						Message: err.Error(),
+					},
+				}
 			}
 			// TODO: Helper to put the label if the resource is not yet created.
 		 	//helper <- resolveObj.Value
@@ -220,6 +225,11 @@ func getSpecResolvedPatch(ar *v1beta1.AdmissionReview) ([]patchOperation, *v1bet
 			_, err := AddResourceAnnotation(resolveObj.Value)
 			if err != nil {
 				fmt.Printf("Could not add annotation to: %s", resolveObj.Value)
+				return patchOperations, &v1beta1.AdmissionResponse{
+					Result: &metav1.Status{
+						Message: err.Error(),
+					},
+				}
 			}
 			// TODO: Helper to put the label if the resource is not yet created.
 		 	//helper <- resolveObj.Value
