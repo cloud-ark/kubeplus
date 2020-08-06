@@ -792,22 +792,24 @@ func ParseDiscoveryJSON(composition []byte, subKind string, filterPredicate stri
 
 	fmt.Printf("ParseDiscoveryJSON Names:%v\n", names)
 
-	if filterPredicate == "" {
-		return names[0], nil
-	} else {
-		for _, name := range names {
-			// Return the first name that matches the filterPredicate
-			if strings.Contains(name, filterPredicate) {
-				return name, nil
+	if len(names) > 0 {
+		if filterPredicate == "" {
+			return names[0], nil
+		} else {
+			for _, name := range names {
+				// Return the first name that matches the filterPredicate
+				if strings.Contains(name, filterPredicate) {
+					return name, nil
+				}
 			}
 		}
-	}
 
-	if len(names) == 1 {
-		name = names[0]
-		return name, nil
+		if len(names) == 1 {
+			name = names[0]
+			return name, nil
+		}
 	}
-	return "", fmt.Errorf("Name of resource was not found. Resource Kind : %s with composition data: %s", subKind, string(composition))
+	return "", fmt.Errorf("Resource not found. Kind:%s", subKind)
 }
 
 // Finds the name of the subresource of a CRD resource

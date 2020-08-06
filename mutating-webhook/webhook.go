@@ -105,6 +105,9 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	fmt.Println(req.UserInfo.Username)
 	fmt.Println("=== User ===")
 
+	// TODO: Check if dependent resources have been created or not
+	// checkDependency(ar)
+
 	var patchOperations []patchOperation
 	patchOperations = make([]patchOperation, 0)
 
@@ -131,6 +134,35 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			return &pt
 		}(),
 	}
+}
+
+func checkDependency(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+
+	req := ar.Request
+	kind := req.Kind.Kind
+	name := req.Name
+	namespace := req.Namespace
+
+	dependencyCreated, dependentElements := CheckDependency(kind, name, namespace, req.Object.Raw)
+	fmt.Printf("DependencyCreated:%v, dependencyElements:%v\n", dependencyCreated, dependentElements)
+
+	if !dependencyCreated {
+		errorMessage := "Dependent Resources not created:\n"
+		for _, elem := range dependentElements {
+			depName := elem.Name
+			depNamespace := elem.Namespace
+			depKind := elem.Kind
+			msg := fmt.Sprintf("   %s %s %s\n", depKind, depName, depNamespace)
+			errorMessage = errorMessage + msg
+		}
+		fmt.Printf("Error:%s\n", errorMessage)
+		return &v1beta1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: errorMessage,
+				},
+			}
+	}
+	return nil
 }
 
 func getAccountIdentityAnnotationPatch(ar *v1beta1.AdmissionReview) patchOperation {
