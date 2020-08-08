@@ -391,6 +391,9 @@ func AddResourceAnnotation(addAnnotationDefinition string) (string, error) {
 	fmt.Printf("Parsed Composition Path: %s, %s, %s, %s, %s\n", namespace, kind, resourceName, subKind, nameFilterPredicate)
 	jsonData := QueryCompositionEndpoint(kind, namespace, resourceName)
 	fmt.Printf("Queried KubeDiscovery: %s\n", string(jsonData))
+	if string(jsonData) == "[]" {
+		return "", fmt.Errorf("Resource for adding annotation not found.\n")
+	}
 
 	// Annotation values cannot contain '/'
 	// We should reject annotation values if they contain '/'
@@ -412,6 +415,9 @@ func AddResourceLabel(addLabelDefinition string) (string, error) {
 	fmt.Printf("Parsed Composition Path: %s, %s, %s, %s, %s\n", namespace, kind, resourceName, subKind, nameFilterPredicate)
 	jsonData := QueryCompositionEndpoint(kind, namespace, resourceName)
 	fmt.Printf("Queried KubeDiscovery: %s\n", string(jsonData))
+	if string(jsonData) == "[]" {
+		return "", fmt.Errorf("Resource for adding label not found.\n")
+	}
 
 	// Label values cannot contain '/'
 	// We should reject label values if they contain '/'

@@ -170,7 +170,7 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
 
 ## Support
 
-Raise questions here on Github or reach our team on [Slack](https://join.slack.com/t/cloudark/shared_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw)
+Raise questions here on Github or reach out our team on [Slack](https://join.slack.com/t/cloudark/shared_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw).
 
 
 ## Status
