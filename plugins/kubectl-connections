@@ -5,21 +5,22 @@
 #echo "kubectl connections pod"
 
 if (( $# < 2 )); then
-    echo "kubectl connections <Kind> <Instance> [<Namespace>] (default value='default')"
+    echo "kubectl connections <Kind> <Instance> <Namespace> [-o json] (default value='flat')"
     exit 0
 fi
 
 kind=$1
 instance=$2
-namespace="default"
-if [ $# = 3 ]; then
-   namespace=$3 # If namespace is passed; use that                                                                             
+namespace=$3
+output="flat"
+if [ $# = 5 ]; then
+   output=$5 # If output format is passed; use that
 fi
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $kind $instance $namespace
+    /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $kind $instance $namespace -o $output
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace
+    /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o $output
 else
         echo "$OSTYPE not supported."
 fi
