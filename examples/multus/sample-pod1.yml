@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: samplepod1
+  annotations:
+    k8s.v1.cni.cncf.io/networks: '[
+            {"name": "macvlan-conf"
+            }]'
+spec:
+  containers:
+  - name: samplepod
+    command: ["/bin/bash", "-c", "trap : TERM INT; sleep infinity & wait"]
+    image: dougbtv/centos-network
+    ports:
+    - containerPort: 80
