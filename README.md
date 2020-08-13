@@ -2,8 +2,10 @@
 
 Kubernetes native stacks are built by extending Kubernetes clusters with a variety of Operators. DevOps engineers are faced with the following challenges while running workloads on such stacks:
 
--How to discover and use Custom Resources introduced by the Operators for building platform automation in Kubernetes YAMLs? 
+-How to discover and use Custom Resources introduced by the Operators for building platform automation in Kubernetes YAMLs?
+
 -How to create linkages between multiple YAMLs or Helm charts coming from different teams / members? 
+
 -How to troubleshoot automation in Kubernetes YAMLs?
 
 KubePlus addresses these issues for the DevOps teams with its tooling for Operator stacks. It simplifies building and analyzing platform automation in multi-Operator environments. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
@@ -23,11 +25,11 @@ If you are new to Operators, check out [Operator FAQ](https://github.com/cloud-a
 Operators add Custom Resources (e.g. Mysqlcluster) to the cluster on top of the built-in resources (e.g. Pod, Service). The idea is to leverage all these available Resources or APIs on the cluster to build your platform automation in Kubernetes YAMLs or Helm charts. DevOps engineers often face challenges in discovery and use of Custom Resources and troubleshooting the workflows built using them.  We have developed a mechanism to address this challenge. A set of annotations are added on CRDs (Custom Resource Definitions) to capture Operator developer’s assumptions. And then they are leveraged by our kubectl plugins that simplify building and maintaining platform automation that uses Custom Resources. 
 This mechanism is built on the fact that workflows are built in Kubernetes YAMLs by establishing relationships between available resources. These relationships are primarily of four types. 
 
--(1) Owner references – A resource internally creates additional resources (e.g. MysqlCluster when instantiated, creates additional Services and Pods). These sub-resources are related to the parent resource through Owner reference relationship
+(1) Owner references – A resource internally creates additional resources (e.g. MysqlCluster when instantiated, creates additional Services and Pods). These sub-resources are related to the parent resource through Owner reference relationship
 
--(2) Labels and (3) Annotations – Labels or Annotations are key/value pairs that are attached to Kubernetes resources. Resource A can depend on a specific label or annotation to be given on to Resource B to take an action. 
+(2) Labels and (3) Annotations – Labels or Annotations are key/value pairs that are attached to Kubernetes resources. Resource A can depend on a specific label or annotation to be given on to Resource B to take an action. 
 
--(4) Spec Properties – Resource A’s Spec property may depend on some value coming from Resource B. 
+(4) Spec Properties – Resource A’s Spec property may depend on some value coming from Resource B. 
 
 Here is a sample workflow for deploying wordpress application that can be built in YAML by creating the resources and relationships as shown below.
 
@@ -148,9 +150,11 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
 
 In enterprises, Helm charts and Kubernetes YAML manifests typically come from multiple teams. The Kubernetes cluster administrator team may want to link these varid YAML resources with each other using information about already running resources in the cluster. For establishing such dynamic resource relationships using run time information, KubePlus provides following binding functions. They help us establish label, annotation or SpecProperty based relationships discussed above. KubePlus cluster-side add-on intercepts the YAML deployment and resolves its runtime dependencies that are on other resources running on the cluster. 
 
--```Fn::ImportValue(<ResourceType:ResourceName:SubResource(filter=”<>”)>)``` - This function, if used as a part of the YAML definition, allows us to import a specific value (such as name) of the running instance of a resource and attach it as a spec property of the resource being deployed.
--```Fn::AddLabel(<labelkey>,<ResourceType:ResourceName:SubResource(filter=”<>”)>)``` - This function, if used as a part of the YAML definition, allows us to import a specific value (such as name) of the running instance of a resource and attach it as a label to the resource being deployed. 
--```Fn::AddAnnotation((<annotationkey>,<ResourceType:ResourceName:SubResource(filter=”<>”)>)``` - This function, if used as a part of the YAML definition, allows us to import a specific value (such as name) of the running instance of a resource and attach it as a annotation to the resource being deployed.
+-```Fn::ImportValue(<ResourceType:ResourceName:SubResource(filter=”<>”)>)```: This function, if used as a part of the YAML definition, allows us to import a specific value (such as name) of the running instance of a resource and attach it as a spec property of the resource being deployed.
+
+-```Fn::AddLabel(<labelkey>,<ResourceType:ResourceName:SubResource(filter=”<>”)>)```: This function, if used as a part of the YAML definition, allows us to import a specific value (such as name) of the running instance of a resource and attach it as a label to the resource being deployed. 
+
+-```Fn::AddAnnotation((<annotationkey>,<ResourceType:ResourceName:SubResource(filter=”<>”)>)```: This function, if used as a part of the YAML definition, allows us to import a specific value (such as name) of the running instance of a resource and attach it as a annotation to the resource being deployed.
 
 These functions support filter predicates or regular expressions. Binding functions are defined in Kubernetes YAMLs. 
 
