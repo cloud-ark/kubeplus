@@ -1,25 +1,39 @@
-## KubePlus - Tooling for Kubernetes native Application Stacks
+## KubePlus - Tooling for Kubernetes Operator stacks
 
-Kubernetes native stacks are built by extending Kubernetes clusters with Operators and Custom Resources. In such setups, a DevOps engineer is faced with following challenges:
+Kubernetes native stacks are built by extending Kubernetes clusters with a variety of Operators. DevOps engineers are faced with the following challenges while running workloads on such stacks:
 
-- How to define and create application-specific platform automation using the Custom and built-in resources available in the cluster?
-- How to discover the runtime relationships between different resources (Custom and built-in) in such automation?
-- How to troubleshoot issues in such platform automation workflows?
-- How to track and correctly attribute physical resource consumption of such workflows at application or team level?
+-How to discover and use Custom Resources introduced by the Operators for building platform automation in Kubernetes YAMLs? 
+-How to create linkages between multiple YAMLs or Helm charts coming from different teams / members? 
+-How to troubleshoot automation in Kubernetes YAMLs?
 
-
-KubePlus solves these issues for DevOps teams. KubePlus tooling simplifies building, visualizing and monitoring Kubernetes platform automation workflows. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
+KubePlus addresses these issues for the DevOps teams with its tooling for Operator stacks. It simplifies building and analyzing platform automation in multi-Operator environments. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
 KubePlus tooling consists of three components - the Operator Maturity Model for multi-Operator scenarios, client-side kubectl plugins (see below), cluster-side runtime binding resolution component.
 
 
 ## Operator Maturity Model
 
-In order to install and use any Kubernetes Operators in their clusters, Cluster administrators need to evaluate different Operators against a standard set of requirements. Towards this we have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of a multi-Operator world. We use this model when curating community Operators for their multi-Operator readiness. If you are new to Operators, check out [Operator FAQ](https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md).
+While DevOps teams want to adopt whatever exists in the community and build on top of that, they need a way to evaluate the community Kubernetes Operators. They also need a set of guidelines for developing their own Operator/s that complement community Operators. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of a multi-Operator world. It is being used for curating community Operators for building purpose-built stacks.
+
+If you are new to Operators, check out [Operator FAQ](https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md).
 
 ## Client-side kubectl plugins
 
-In Kubernetes application-specific platform workflows are built by establishing relationships between Kubernetes built-in and/or Custom Resources. Such relationships can be created using Kubernetes mechanisms of - labels, annotations, Spec properties or owner references. When working with Custom Resources introduced by Operators, it is important that the Operator developer's assumptions around what relationships can be established with a Custom Resource and what actions will be performed as a result of them are clearly articulated. KubePlus provides following annotations to encode such assumptions. These annotations are to be added on a Custom Resource Definition (example below):
+
+Operators add Custom Resources (e.g. Mysqlcluster) to the cluster on top of the built-in resources (e.g. Pod, Service). The idea is to leverage all these available Resources or APIs on the cluster to build your platform automation in Kubernetes YAMLs or Helm charts. DevOps engineers often face challenges in discovery and use of Custom Resources and troubleshooting the workflows built using them.  We have developed a mechanism to address this challenge. A set of annotations are added on CRDs (Custom Resource Definitions) to capture Operator developer’s assumptions. And then they are leveraged by our kubectl plugins that simplify building and maintaining platform automation that uses Custom Resources. 
+This mechanism is built on the fact that workflows are built in Kubernetes YAMLs by establishing relationships between available resources. These relationships are primarily of four types. 
+
+-(1) Owner references – A resource internally creates additional resources (e.g. MysqlCluster when instantiated, creates additional Services and Pods). These sub-resources are related to the parent resource through Owner reference relationship
+
+-(2) Labels and (3) Annotations – Labels or Annotations are key/value pairs that are attached to Kubernetes resources. Resource A can depend on a specific label or annotation to be given on to Resource B to take an action. 
+
+-(4) Spec Properties – Resource A’s Spec property may depend on some value coming from Resource B. 
+
+Here is a sample workflow for deploying wordpress application that can be built in YAML by creating the resources and relationships as shown below.
+
+
+KubePlus offers following CRD annotations that help Operator developers capture assumptions they have made around what type of relationships can be established with the Custom Resources of their Operators.
+
 
 ```
 resource/usage
@@ -29,26 +43,11 @@ resource/label-relationship
 resource/specproperty-relationship
 ```
 
-More details on how to use these annotations can be found [here](./details.rst). We maintain a table of annotations for Open source Operators that we curate [here](./Operator-annotations.md).
+Here are some sample CRD annotations for community Operators that can be used to unlock KubePlus tooling for them [here](./Operator-annotations.md).
 
-KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies. KubePlus offers a variety of kubectl plugins (see below) that internally leverage this topology information and enable DevOps teams to visualize and monitor their platform workflows.
+KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies. KubePlus offers a variety of kubectl plugins that internally leverage this topology information and enable DevOps teams to analyze their platform workflows. 
 
-
-## Cluster-side add-on
-
-For establishing dynamic resource relationships using run time information, KubePlus provides following binding functions. These are resolved by the KubePlus cluster-side add-on using information from the instantiated resources (Custom or built-in) in the cluster.
-
-```
-Fn::ImportValue(<Parameter>)
-Fn::AddLabel(label, <Resource>)
-Fn::AddAnnotation(annotation, <Resource>)
-```
-Details about binding functions can be found [here](./details.rst#binding-functions). Binding functions are defined in Kubernetes YAMLs. 
-
-
-## KubePlus kubectl Plugins
-
-KubePlus offers following kubectl commands (as kubectl plugins):
+KubePlus currently offers following kubectl kubectl plugins:
 
 **1. kubectl composition**
 
@@ -73,7 +72,28 @@ KubePlus offers following kubectl commands (as kubectl plugins):
 
 **5. kubectl man**
 
-- ``kubectl man cr ``: Provides information about how to use a Custom Resource.
+- ``kubectl man <Custom Resource> ``: Provides information about how to use a Custom Resource.
+
+
+## Example
+
+In this example we have two Custom Resources ClusterIssuer and MysqlCluster. Their CRDs are annotated with following CRD annotations. 
+
+CRD annotation on the ClusterIssuer Custom Resource:
+
+```
+resource/annotation-relationship: on:Ingress, key:cert-manager.io/cluster-issuer, value:INSTANCE.metadata.name
+```
+
+This defines that CertManager looks for cert-manager.io/cluster-issuer annotation on Ingress resources. The value of this annotation is the name of the ClusterIssuer instance.
+
+CRD annotation on the MysqlCluster Custom Resource:
+
+```
+resource/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
+```
+
+This identifies the set of resources that will be created by the Operator as part of instantiating the MysqlCluster Custom Resource instance.
 
 
 ## Example
@@ -119,27 +139,37 @@ Underlying Physical Resoures consumed:
 ---------------------------------------------------------- 
 ```
 
-Here is the CRD annotation on the ClusterIssuer Custom Resource:
-
-```
-resource/annotation-relationship: on:Ingress, key:cert-manager.io/cluster-issuer, value:INSTANCE.metadata.name
-```
-The is a annotation-relationship annotation. It defines that Cert Manager looks for 
-``cert-manager.io/cluster-issuer`` annotation on Ingress resources. The value of this
-annotation is the name of the ClusterIssuer instance.
-
-Here is the CRD annotation on the MysqlCluster Custom Resource:
-
-```
-resource/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
-```
-
-This is the composition annotation. It identifies the set of resources that will be created by MysqlCluster Operator as part of instantiating the MysqlCluster Custom Resource instance.
-
-
 [Try above example](https://github.com/cloud-ark/kubeplus/blob/master/examples/wordpress-mysqlcluster/steps.txt) in your cluster.
 
 Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationship-graphs-for-application-level-insights-70139e19fb0) to understand more about why tracking resource relationships is useful in Kubernetes.
+
+
+## Cluster-side add-on
+
+In enterprises, Helm charts and Kubernetes YAML manifests typically come from multiple teams. The Kubernetes cluster administrator team may want to link these varid YAML resources with each other using information about already running resources in the cluster. For establishing such dynamic resource relationships using run time information, KubePlus provides following binding functions. They help us establish label, annotation or SpecProperty based relationships discussed above. KubePlus cluster-side add-on intercepts the YAML deployment and resolves its runtime dependencies that are on other resources running on the cluster. 
+
+-```Fn::ImportValue(<ResourceType:ResourceName:SubResource(filter=”<>”)>)``` - This function, if used as a part of the YAML definition, allows us to import a specific value (such as name) of the running instance of a resource and attach it as a spec property of the resource being deployed.
+-```Fn::AddLabel(<labelkey>,<ResourceType:ResourceName:SubResource(filter=”<>”)>)``` - This function, if used as a part of the YAML definition, allows us to import a specific value (such as name) of the running instance of a resource and attach it as a label to the resource being deployed. 
+-```Fn::AddAnnotation((<annotationkey>,<ResourceType:ResourceName:SubResource(filter=”<>”)>)``` - This function, if used as a part of the YAML definition, allows us to import a specific value (such as name) of the running instance of a resource and attach it as a annotation to the resource being deployed.
+
+These functions support filter predicates or regular expressions. Binding functions are defined in Kubernetes YAMLs. 
+
+[Here](./https://github.com/cloud-ark/kubeplus/blob/master/examples/kubectl-plugins-and-binding-functions/steps.txt) is an example of a YAML where we are creating a Moodle Custom Resource instance (moodle1) that depends on the name of a master Service from Mysqlcluster’s instance (cluster1).
+
+```
+apiVersion: moodlecontroller.kubeplus/v1
+kind: Moodle
+metadata:
+  name: moodle1
+  annotations:
+    function-AddLabel: "Fn::AddLabel(application/moodle1, MysqlCluster:default.cluster1:Service(filter=master))"
+spec:
+  plugins: ["profilecohort"]
+  mySQLServiceName: Fn::ImportValue(MysqlCluster:default.cluster1:Service(filter=master))
+  mySQLUserName: root
+  mySQLUserPassword: cluster1-secret.ROOT_PASSWORD 
+  moodleAdminEmail: test@test.com
+```
 
 
 ## Try it:
