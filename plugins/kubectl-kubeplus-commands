@@ -6,7 +6,7 @@ echo "1. kubectl man <Custom Resource Kind> - Show Man page information about a 
 echo "---"
 echo "2. kubectl composition - Show composition tree of a Kubernetes resource instance"
 echo "---"
-echo "3. kubectl connections - Show relationships of a Kubernetes resource with other resources.
+echo "3. kubectl connections - Show relationships of a Kubernetes resource with other resources."
 echo "---"
 echo "4. kubectl metrics cr - Get CPU/Memory/Storage consumption of a Custom Resource instance"
 echo "5. kubectl metrics service - Get CPU/Memory/Storage consumption of all the Pods reachable from a Service instance"
