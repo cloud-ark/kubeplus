@@ -16,10 +16,10 @@ spec:
       containers:
         - name: mutating-webhook-helper
           image: lmecld/mutating-webhook-helper:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always 
         - name: discovery-server
           image: lmecld/kubediscovery:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always 
 ---
 kind: Service
 apiVersion: v1
