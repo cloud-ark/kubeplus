@@ -32,7 +32,7 @@ Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resourc
 Here is a sample workflow for deploying wordpress application that can be built in YAML by creating the resources and relationships between them.
 
 <p align="center">
-<img src="./docs/wordpress-workflow.png" width="350" height="100" class="center">
+<img src="./docs/wordpress-workflow.png" width="350" height="200" class="center">
 </p>
 
 KubePlus offers following CRD annotations that help Operator developers capture assumptions they have made around what type of relationships can be established with the Custom Resources of their Operators.
@@ -102,7 +102,7 @@ This identifies the set of resources that will be created by the Operator as par
 <img src="./docs/clusterissuer-mysqlcluster.png" width="750" height="300" class="center">
 </p>
 
-Once these annotations are put, above resource topology can be discovered using ``kubectl connections`` plugin as follows:
+Once these annotations are added to the respective CRDs, above resource topology can be discovered using ``kubectl connections`` plugin as follows:
 
 ``` 
 $ kubectl connections Service wordpress namespace1
@@ -128,7 +128,7 @@ Level:1 Ingress/wordpress-ingress [related to Service/wordpress by:specproperty]
 Level:2 ClusterIssuer/wordpress-stack [related to Ingress/wordpress-ingress by:annotation]
 ```
 
-The resource consumption of this service can be obtained using ``kubectl metrics`` plugin as follows:
+The resource consumption of this resource topology can be obtained using ``kubectl metrics`` plugin as follows:
 
 ```
 $ kubectl metrics service wordpress namespace1
@@ -151,7 +151,7 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
 
 ## Cluster-side add-on
 
-In enterprises, Helm charts and Kubernetes YAML manifests can come from multiple teams. The Kubernetes cluster administrator team may want to link these varied YAML resources with each other using information about already running resources in the cluster. An example of this is - the requirement to use the name of a Service instance which is a child of a Custom Resource in the Spec property of new resource that the DevOps engineer wants to create. Typically such a Service's name is not known apriori as it created by the Operator. For establishing such dynamic resource relationships using run time information, KubePlus provides following binding functions. They help us establish label, annotation or SpecProperty based relationships discussed above between resources. KubePlus cluster-side add-on intercepts the YAML deployment and resolves its runtime dependencies that are on other resources running in the cluster. 
+In enterprises, Helm charts and Kubernetes YAML manifests can come from multiple teams. The Kubernetes DevOps team may want to link these varied YAML resources with each other using information about resources that are already running in their cluster. An example of this is the requirement of binding to a Service instance which is a child of a Custom Resource when defining the Spec property of a new resource that the DevOps engineer wants to create. Typically such a Service's name is not known apriori as the instance is created by the corresponding Operator. For establishing such dynamic resource relationships using run time information, KubePlus provides following binding functions. They help us establish label, annotation or SpecProperty based relationships discussed above between resources. KubePlus cluster-side add-on intercepts the YAML deployment and resolves its runtime dependencies that are on other resources running in the cluster. 
 
 - ```Fn::ImportValue(<ResourceType:ResourceName:SubResource(filter="<>")>)```: This function, if used as a part of the YAML definition, allows us to import a specific value (such as name) of the running instance of a resource and provide it as a spec property of the resource being deployed.
 
@@ -161,7 +161,7 @@ In enterprises, Helm charts and Kubernetes YAML manifests can come from multiple
 
 Filter predicates are supported to enable selecting subset of resources if multiple exists of the specified sub resource type. Currently filter predicates use substring matching. Support for regular expressions in filter predicate values will be added in the future.
 
-[Here](https://github.com/cloud-ark/kubeplus/blob/master/examples/kubectl-plugins-and-binding-functions/steps.txt) is an example of a YAML where we are creating a Moodle Custom Resource instance (moodle1) that depends on the name of a master Service from Mysqlcluster’s instance (cluster1).
+Here is an example of a YAML manifest where we are creating a Moodle Custom Resource instance (moodle1) that depends on the name of a master Service which is a child of Mysqlcluster instance (cluster1). You can try this example by following [these steps](https://github.com/cloud-ark/kubeplus/blob/master/examples/kubectl-plugins-and-binding-functions/steps.txt).
 
 ```
 apiVersion: moodlecontroller.kubeplus/v1
