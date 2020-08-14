@@ -159,7 +159,7 @@ In enterprises, Helm charts and Kubernetes YAML manifests can come from multiple
 
 - ```Fn::AddAnnotation(<annotationkey>,<ResourceType:ResourceName:SubResource(filter=”<>”)>)```: This function, if used as a part of the YAML definition, allows us to import a specific value (such as name) of the running instance of a resource and add it as an annotation to the resource being deployed.
 
-Filter predicates are supported to enable selecting subset of resources if multiple exists of the sub resource. Currently filter predicates use substring matching. Support for regular expressions in filter predicate values will be added in the future.
+Filter predicates are supported to enable selecting subset of resources if multiple exists of the specified sub resource type. Currently filter predicates use substring matching. Support for regular expressions in filter predicate values will be added in the future.
 
 [Here](https://github.com/cloud-ark/kubeplus/blob/master/examples/kubectl-plugins-and-binding-functions/steps.txt) is an example of a YAML where we are creating a Moodle Custom Resource instance (moodle1) that depends on the name of a master Service from Mysqlcluster’s instance (cluster1).
 
