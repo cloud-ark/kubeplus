@@ -88,7 +88,7 @@ Steps:
           - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
     - Find composition tree of Moodle1 instance
-      - kubectl composition Moodle moodle1 | python -m json.tool
+      - kubectl composition Moodle moodle1 default | python -m json.tool
 
 14) Update Moodle Deployment to install new Plugin
     - We will install 'wiris' plugin on 'moodle1' Moodle instance

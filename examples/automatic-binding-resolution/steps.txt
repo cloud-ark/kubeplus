@@ -91,7 +91,7 @@ Steps:
           - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
 11) Check the composition of Moodle instance
-    - kubectl composition Moodle moodle1
+    - kubectl composition Moodle moodle1 default
 
 
 Troubleshooting
