@@ -178,6 +178,48 @@ spec:
   moodleAdminEmail: test@test.com
 ```
 
+Here is the resolved spec
+
+```
+$ kubectl describe moodles moodle1
+
+Name:         moodle1
+Namespace:    default
+Labels:       <none>
+Annotations:  accountidentity: salesforce-testing-1@disco-horizon-103614.iam.gserviceaccount.com
+              function-AddLabel: Fn::AddLabel(application/moodle1, MysqlCluster:default.cluster1:Service(filter=master))
+API Version:  moodlecontroller.kubeplus/v1
+Kind:         Moodle
+Metadata:
+  :
+Spec:
+  Moodle Admin Email:    test@test.com
+  My SQL Service Name:   cluster1-mysql-master  ---> resolved
+  My SQL User Name:      root
+  My SQL User Password:  cluster1-secret.ROOT_PASSWORD
+  Plugins:
+    profilecohort
+```
+
+Here are the labels on the ```cluster1-mysql-master``` Service object:
+
+```
+$ kubectl get service cluster1-mysql-master -o json
+
+Name:              cluster1-mysql-master
+Namespace:         default
+Labels:            application=moodle1 ---> Label added
+Annotations:       <none>
+Selector:          app=mysql-operator,mysql_cluster=cluster1,role=master
+Type:              ClusterIP
+IP:                10.0.15.23
+Port:              mysql  3306/TCP
+TargetPort:        3306/TCP
+Endpoints:         10.8.1.136:3306
+Session Affinity:  None
+Events:            <none>
+```
+
 
 ## Try it:
 

@@ -27,7 +27,7 @@ Platform Engineer:
    - kubectl create -f cluster1.yaml
 
 3. Show composition tree of cluster1
-   - kubectl composition MysqlCluster cluster1
+   - kubectl composition MysqlCluster cluster1 default
 
 4. Check if cluster1 pods are ready
    - kubectl get pods
@@ -47,10 +47,10 @@ Platform Engineer:
     - kubectl get svc cluster1-mysql-master -o json | grep 'moodle1'
 
 11. See moodle1 composition tree
-    - kubectl composition Moodle moodle1 
+    - kubectl composition Moodle moodle1 default
 
 12. Check Moodle connections:
-    - kubectl connections Moodle moodle1 
+    - kubectl connections Moodle moodle1 default
 
 13. Check CRD
     - kubectl get customresourcedefinitions

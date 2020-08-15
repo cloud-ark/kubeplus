@@ -15,7 +15,7 @@ Application Developer Workflow:
 13. kubectl create -f moodle1.yaml
 14. kubectl describe moodles moodle1
 15. kubectl get pods
-16. kubectl composition Moodle moodle1
+16. kubectl composition Moodle moodle1 default
 
 
 
