@@ -20,7 +20,7 @@ While Kubernetes cluster administrators today want to adopt community Operators 
 ## Client-side kubectl plugins
 
 
-Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resources become first class components of that cluster alongside the built-in resources (e.g. Pod, Service). DevOps and application teams can leverage all these Resources/APIs available on their cluster to build their platform automation in Kubernetes YAMLs or Helm charts. In this process DevOps engineers often face challenges in discovery and use of Custom Resources and troubleshooting the workflows built using them.  We have developed a mechanism to address this challenge. A set of annotations are added on CRDs (Custom Resource Definitions) to capture Operator developer’s assumptions. These are then leveraged by our kubectl plugins that simplify building and maintaining platform automation that uses Custom Resources. Kubernetes cluster administrators can add these annotations to the CRDs in their cluster. This mechanism is built on the fact that workflows are built in Kubernetes YAMLs by establishing relationships between available resources. These relationships are primarily of four types. 
+Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resources become first class components of that cluster alongside the built-in resources (e.g. Pod, Service). DevOps and application teams can leverage all these Resources/APIs available on their cluster to build their platform automation in Kubernetes YAMLs or Helm charts. In this process DevOps engineers often face challenges in discovery and use of Custom Resources and troubleshooting the workflows built using them.  We have developed a mechanism to address this challenge. A set of annotations are added on CRDs (Custom Resource Definitions) to capture Operator developer’s assumptions. These are then leveraged by our kubectl plugins that simplify building and maintaining platform automation that uses Custom Resources. This mechanism is built on the fact that workflows are built in Kubernetes YAMLs by establishing relationships between available resources. These relationships are primarily of four types. 
 
 (1) Owner references – A resource internally creates additional resources (e.g. MysqlCluster when instantiated, creates Pods and Services). These sub-resources are related to the parent resource through Owner reference relationship.
 
@@ -45,11 +45,9 @@ resource/label-relationship
 resource/specproperty-relationship
 ```
 
-[Here](./Operator-annotations.md) are some sample CRD annotations for community Operators that can be used to unlock KubePlus tooling for them.
+[Here](./Operator-annotations.md) are some sample CRD annotations for community Operators that can be used to unlock KubePlus tooling for them. Kubernetes Operator developers can add these annotations to their CRDs or cluster administrators can add them later as well.
 
-KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies. KubePlus offers a variety of kubectl plugins that internally leverage this topology information. Once Kubernetes cluster administrators have added above annotations to the CRDs in their cluster, DevOps teams can use following KubePlus kubectl plugins to analyze their platform workflows. 
-
-KubePlus currently offers following kubectl plugins:
+KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies. KubePlus offers a variety of kubectl plugins that internally leverage this topology information. Once Kubernetes cluster administrators have added above annotations to the CRDs in their cluster, DevOps teams can use following KubePlus kubectl plugins to analyze their platform workflows:
 
 **1. kubectl composition**
 
@@ -150,13 +148,13 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
 
 ## Cluster-side add-on
 
-In enterprises, Helm charts and Kubernetes YAML manifests can come from multiple teams. A DevOps engineer may want to establish associations between their Kubernetes resource YAMLs with resources that are already running in their cluster. An example of this is the requirement to create a Kubernetes resource by binding to a Service instance which is a child of a Custom Resource instance running in the cluster. Typically such a Service's name is not known apriori as the instance is created by the corresponding Operator. For establishing such dynamic resource relationships using run time information, KubePlus provides following binding functions. They enable establishing label, annotation or SpecProperty based relationships, discussed above, between Kubernetes resources. KubePlus cluster-side add-on intercepts the YAML resources and resolves their runtime dependencies with respect to other resources running in the cluster.
+In enterprises, Helm charts and Kubernetes YAML manifests can come from multiple teams. A DevOps engineer may want to establish associations between their Kubernetes resource YAMLs with resources that are already running in their cluster. An example of this is the requirement to create a Kubernetes resource by binding to a Service instance which is a child of a Custom Resource instance running in the cluster. Typically, such a Service's name is not known apriori as the instance is created by the corresponding Operator. For establishing such dynamic resource relationships using run time information, KubePlus provides following binding functions. They enable establishing label, annotation or SpecProperty based relationships, discussed above, between Kubernetes resources. KubePlus cluster-side add-on intercepts the YAML resources and resolves their runtime dependencies with respect to other resources running in the cluster.
 
 - ```Fn::ImportValue(<ResourceType:ResourceName:SubResource(filter="<>")>)```: This function, if used as a part of the YAML definition, imports a specific value (such as name) of the running instance of a resource and provide it as a spec property of the resource being deployed.
 
-- ```Fn::AddLabel(<labelkey>,<ResourceType:ResourceName:SubResource(filter="<>")>)```: This function, if used as a part of the YAML definition, adds the specified label to the instance of the sub-resource specified in the function definition.
+- ```Fn::AddLabel(<labelkey>,<ResourceType:ResourceName:SubResource(filter="<>")>)```: This function is defined as an annotation on a Kubernetes YAML definition. It adds the specified label to the instance of the sub-resource specified in the function definition.
 
-- ```Fn::AddAnnotation(<annotationkey>,<ResourceType:ResourceName:SubResource(filter=”<>”)>)```: This function, if used as a part of the YAML definition, adds the specified annotations to the instance of the sub-resource specified in the function definition.
+- ```Fn::AddAnnotation(<annotationkey>,<ResourceType:ResourceName:SubResource(filter=”<>”)>)```: This function is defined as an annotation on a Kubernetes YAML definition. It adds the specified annotation to the instance of the sub-resource specified in the function definition.
 
 Filter predicates are supported to enable selecting subset of resources if multiple resources exists of the specified sub resource type. Currently filter predicates use substring matching. Support for regular expressions in filter predicate values will be added in the future.
 
