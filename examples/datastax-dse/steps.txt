@@ -22,5 +22,5 @@
 
 7. Visualize workflow:
    - kubectl connections CassandraDatacenter dc1 default
-   - kubectl connections Service cluster1-dc1-service 
-   - kubectl connections ClusterIssuer cluster1-dc1 
+   - kubectl connections Service cluster1-dc1-service default
+   - kubectl connections ClusterIssuer cluster1-dc1 default
