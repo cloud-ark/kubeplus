@@ -4,7 +4,7 @@ Kubernetes native stacks are built by extending Kubernetes clusters with a varie
 
 - How to discover and use Custom Resources introduced by the Operators for building platform automation in Kubernetes YAMLs?
 
-- How to create Kubernetes resource workflows that use information about other resources already running in the cluster?
+- How to create linkages between multiple Kubernetes YAMLs or Helm charts coming from different teams / members?
 
 - How to troubleshoot the platform automation defined in Kubernetes YAMLs?
 
