@@ -35,7 +35,7 @@ Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resourc
 Here is a sample workflow for deploying wordpress application that can be built in YAML by creating the resources and relationships between them.
 
 <p align="center">
-<img src="./docs/wordpress-workflow.png" width="350" height="200" class="center">
+<img src="./docs/wordpress-workflow.png" width="350" height="300" class="center">
 </p>
 
 KubePlus offers following CRD annotations that help Operator developers capture assumptions they have made around what type of relationships can be established with the Custom Resources of their Operators.
@@ -100,7 +100,7 @@ resource/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudg
 This identifies the set of resources that will be created by the Operator as part of instantiating the MysqlCluster Custom Resource instance. 
 
 <p align="center">
-<img src="./docs/clusterissuer-mysqlcluster.png" width="750" height="300" class="center">
+<img src="./docs/clusterissuer-mysqlcluster.png" width="900" height="300" class="center">
 </p>
 
 Once these annotations are added to the respective CRDs by the cluster administrator, above resource topology can be discovered by DevOps teams using ``kubectl connections`` plugin as follows:
