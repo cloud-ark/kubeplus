@@ -11,7 +11,7 @@ Kubernetes native stacks are built by extending Kubernetes clusters with a varie
 KubePlus is aimed at Kubernetes cluster administrators and enables them to address above issues for their DevOps teams. Specifically, KubePlus simplifies building and analyzing platform automation in multi-Operator environments. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
 <p align="center">
-<img src="./docs/kubeplus-components.png" width="500" height="200" class="center">
+<img src="./docs/kubeplus-components.png" width="700" height="200" class="center">
 </p>
 
 KubePlus tooling consists of three components - the Operator Maturity Model for multi-Operator scenarios, client-side kubectl plugins, cluster-side runtime binding resolution component.
