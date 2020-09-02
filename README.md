@@ -150,15 +150,15 @@ Underlying Physical Resoures consumed:
 Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationship-graphs-for-application-level-insights-70139e19fb0) to understand more about why tracking resource relationships is useful in Kubernetes.
 
 
-## Cluster-side add-on
+## Binding Functions (through Cluster-side add-on)
 
 In enterprises, Helm charts and Kubernetes YAML manifests can come from multiple teams. A DevOps engineer may want to establish associations between their Kubernetes resource YAMLs with resources that are already running in their cluster. An example of this is the requirement to create a Kubernetes resource by binding to a Service instance which is a child of a Custom Resource instance running in the cluster. Typically, such a Service's name is not known apriori as the instance is created by the corresponding Operator. For establishing such dynamic resource relationships using run time information, KubePlus provides following binding functions. They enable establishing label, annotation or SpecProperty based relationships, discussed above, between Kubernetes resources. KubePlus cluster-side add-on intercepts the YAML resources and resolves their runtime dependencies with respect to other resources running in the cluster.
 
-- ```Fn::ImportValue(<ResourceType:ResourceName:SubResource(filter="<>")>)```: This function, if used as a part of the YAML definition, imports a specific value (such as name) of the running instance of a resource and provide it as a spec property of the resource being deployed.
+- ```Fn::ImportValue(<ResourceType:ResourceName:SubResource(filter="<>")>)```: This function imports a specific value (such as name) of the running instance of a resource and provides it as a spec property of the resource being deployed.
 
-- ```Fn::AddLabel(<labelkey>,<ResourceType:ResourceName:SubResource(filter="<>")>)```: This function is defined as an annotation on a Kubernetes YAML definition. It adds the specified label to the instance of the sub-resource specified in the function definition.
+- ```Fn::AddLabel(<labelkey>,<ResourceType:ResourceName:SubResource(filter="<>")>)```: This function adds the specified label to the running instance of the resource specified in the function definition. It is defined as an annotation in YAML of the resource being deployed.
 
-- ```Fn::AddAnnotation(<annotationkey>,<ResourceType:ResourceName:SubResource(filter=”<>”)>)```: This function is defined as an annotation on a Kubernetes YAML definition. It adds the specified annotation to the instance of the sub-resource specified in the function definition.
+- ```Fn::AddAnnotation(<annotationkey>,<ResourceType:ResourceName:SubResource(filter=”<>”)>)```: This function adds the specified annotation to the running instance of the resource specified in the function definition. It is defined as an annotation in YAML of the resource being deployed.
 
 Filter predicates are supported to enable selecting subset of resources if multiple resources exists of the specified sub resource type. Currently filter predicates use substring matching. Support for regular expressions in filter predicate values will be added in the future.
 
