@@ -36,6 +36,29 @@ class CRLogs(object):
 		except Exception as e:
 			print(e)
 
+	def get_pods(self, resources):
+		pod_list = []
+		for resource in resources:
+			#print(resource)
+			if resource['Kind'] == 'Pod':
+				present = False
+				for p in pod_list:
+					if p['Name'] == resource['Name']:
+						present = True
+						break
+				if not present:
+					pod_list.append(resource)
+		#print(pod_list)
+		return pod_list
+
 if __name__ == '__main__':
 	crLogs = CRLogs()
-	crLogs.get_logs(sys.argv[1], sys.argv[2])
+	#crLogs.get_logs(sys.argv[1], sys.argv[2])
+	resources = sys.argv[1]
+	resource_json = json.loads(resources)
+	namespace = sys.argv[2]
+	pods = crLogs.get_pods(resource_json)
+	for pod in pods:
+		pod_name = pod['Name']
+		print(pod_name)
+		crLogs.get_logs(pod_name, namespace)

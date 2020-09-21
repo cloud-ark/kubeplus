@@ -45,7 +45,11 @@ class CRMetrics(object):
 			print(e)
 		json_output = {}
 		if out:
-			json_output = json.loads(out)
+			#print(out)
+			try:
+				json_output = json.loads(out)
+			except Exception as e:
+				print(e)
 		return json_output
 
 	def _count_resources(self, json_block):
@@ -166,6 +170,7 @@ class CRMetrics(object):
 			cmd = "kubectl top pods " +  pod['Name'] + ' -n ' + pod['Namespace'] + " | grep -v NAME"
 			out = ''
 			try:
+				#print(cmd)
 				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									   stderr=subprocess.PIPE, shell=True).communicate()[0]
 				out = out.decode('utf-8')
@@ -616,18 +621,22 @@ class CRMetrics(object):
 
 
 	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace, opformat):
-		accountidentity = self._get_identity(custom_resource, custom_res_instance, namespace)
-		
+		#accountidentity = self._get_identity(custom_resource, custom_res_instance, namespace)
+		accountidentity = ''
 		composition = self._get_composition(custom_resource, custom_res_instance, namespace)
 		num_of_resources = self._parse_number_of_resources(composition)
 
-		pod_list_conn = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace)
-		num_of_containers_conn = self._parse_number_of_containers(pod_list_conn)
-		total_storage_conn = self._parse_persistentvolumeclaims(pod_list_conn, namespace)
-		num_of_hosts_conn = self._parse_number_of_hosts(pod_list_conn)
-		cpu_conn, memory_conn = self._get_cpu_memory_usage(pod_list_conn)
+		pod_list = self._parse_number_of_pods(composition)
+		#print(pod_list)
+		#cpu, memory = self._get_cpu_memory_usage(pod_list)
 
-		num_of_pods = len(pod_list_conn)
+		#pod_list_conn = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace)
+		num_of_containers_conn = self._parse_number_of_containers(pod_list)
+		total_storage_conn = self._parse_persistentvolumeclaims(pod_list, namespace)
+		num_of_hosts_conn = self._parse_number_of_hosts(pod_list)
+		cpu_conn, memory_conn = self._get_cpu_memory_usage(pod_list)
+
+		num_of_pods = len(pod_list)
 		num_of_containers = num_of_containers_conn
 		num_of_hosts = num_of_hosts_conn
 		cpu = cpu_conn

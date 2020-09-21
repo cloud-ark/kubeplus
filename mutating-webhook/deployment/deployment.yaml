@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: crd-hook
-          image: lmecld/pac-mutating-admission-webhook:latest
+          image: lmecld/pac-mutating-admission-webhook:develop
           imagePullPolicy: Always
           args:
             - -tlsCertFile=/etc/webhook/certs/cert.pem
