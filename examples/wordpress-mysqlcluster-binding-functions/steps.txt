@@ -1,0 +1,69 @@
+Wordpress Platform Stack
+--------------------------
+
+
+Steps:
+-------
+
+1) Create Kubernetes Cluster
+   - Minikube
+     - Download Minikube (latest), download Helm (latest)
+     - minikube start --memory 4096
+  - GKE
+     - Create a GKE cluster with 4vCPUs and 15.00 GB memory minimum
+
+2) Install KubePlus
+   - git clone https://github.com/cloud-ark/kubeplus.git
+   - Follow README to install KubePlus kubectl commands and the cluster-side component.
+
+3) Setup Helm
+   - kubectl create -f scripts/helm-rbac-config.yaml
+   - helm init --service-account tiller
+
+4) Wait till Tiller Pod is running
+   - kubectl get pods -n kube-system
+
+5) Once Helm Pod is ready, deploy MySQL Operator. 
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-4.tgz?raw=true
+
+6) Wait till MysqlCluster Operator Pods is ready
+   - kubectl get pods
+
+7) Find available Custom Resources
+   - kubectl get customresourcedefinitions
+
+8) Find the Custom Resource Kind names
+   - kubectl describe customresourcedefinitions mysqlclusters.mysql.presslabs.org
+
+9) Find more information like how-to use, Spec properties, etc. for each Kind
+   - kubectl man MysqlCluster
+
+10) Deploy Wordpress in namespace1
+   - kubectl create ns namespace1
+   
+   - Create MysqlCluster Custom Resource instance
+     - kubectl create -f cluster1-secret.yaml
+     - kubectl create -f cluster1.yaml
+
+   - Wait till MysqlCluster pods are ready
+     - kubectl get pods -n namespace1
+
+   - Once MysqlCluster pods are ready, deploy Wordpress
+     - kubectl create -f wordpress.yaml
+
+11) Find Metrics of MysqlCluster instance
+    - kubectl metrics cr MysqlCluster cluster1 namespace1
+
+12) Find logs of all the Pods that are downstream of the wordpress service
+    - kubectl grouplogs service wordpress namespace1
+
+13) Check connections of wordpress Pod
+    - kubectl connections Pod wordpress namespace1
+
+14) Check wordpress.yaml
+
+15) Verify binding functions (ImportValue and AddLabel)
+    - kubectl describe pod wordpress-pod -n namespace1
+      -> Check that WORDPRESS_DB_HOST env variable has been resolved
+    - kubectl describe service cluster1-mysql-master -n namespace1
+      -> Check that 'application:wordpress' label has been added to the service  

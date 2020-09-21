@@ -545,11 +545,32 @@ func ParseRequest(data []byte) []ResolveData {
 // and then parses each json object child one by one.
 func ParseRequestHelper(data []byte, needResolving *[]ResolveData, stringStack *StringStack) {
 	jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+	    object := false
+	    array := false
 		if dataType.String() == "object" {
+			object = true
 			stringStack.Push(string(key))
 			ParseRequestHelper(value, needResolving, stringStack)
 			stringStack.Pop()
-		} else {
+		} 
+		if dataType.String() == "array" {
+			array = true
+			//fmt.Printf("Array Key:%s\n", key)
+			//fmt.Printf("Array value value:%v\n", string(value))
+			//fmt.Printf("StringStack:%s\n", string(stringStack))
+			stringStack.Push(string(key))
+			count := 0
+			jsonparser.ArrayEach(value, func(value1 []byte, dataType1 jsonparser.ValueType, offset1 int, err error) {
+				stringStack.Push(strconv.Itoa(count))
+				count = count + 1
+				//fmt.Printf("Value1:%v\n", string(value1))
+				ParseRequestHelper(value1, needResolving, stringStack)
+				stringStack.Pop()
+				return
+			})
+			stringStack.Pop()
+		}
+		if !object && !array {
 			//fmt.Printf("ParseRequestHelper Key:%s\n", string(key))
 			stringStack.Push(string(key))
 			jsonPath := stringStack.Peek()
@@ -570,14 +591,12 @@ func ParseRequestHelper(data []byte, needResolving *[]ResolveData, stringStack *
 				*needResolving = append(*needResolving, needResolve)
 				stringStack.Pop()
 			} else if hasLabelFunc {
-
 				//val, err := AddResourceLabel(val)
 
 				/*if err != nil {
 					stringStack.Pop()
 					return err
 				}*/
-
 				needResolve := ResolveData{
 					JSONTreePath: jsonPath,
 					Value:        val,
@@ -588,7 +607,6 @@ func ParseRequestHelper(data []byte, needResolving *[]ResolveData, stringStack *
 				// I would use defer here but am unsure
 				// how it works with all the recursion and returns..
 			} else if hasAnnotationFunc {
-
 				needResolve := ResolveData{
 					JSONTreePath: jsonPath,
 					Value:        val,
