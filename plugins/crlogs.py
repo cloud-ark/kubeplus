@@ -1,6 +1,8 @@
 import subprocess
 import sys
 import json
+import platform
+import os
 
 class CRLogs(object):
 
@@ -36,6 +38,64 @@ class CRLogs(object):
 		except Exception as e:
 			print(e)
 
+	def get_resources_connections(self, kind, instance, namespace, kubeconfig):
+		platf = platform.system()
+		kubeplus_home = os.getenv('KUBEPLUS_HOME')
+		cmd = ''
+		json_output = {}
+		if platf == "Darwin":
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' 
+		elif platf == "Linux":
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections '
+		else:
+			print("OS not supported:" + platf)
+			return json_output
+		cmd = cmd + kind + ' ' + instance + ' ' + namespace + ' -o json ' + ' --kubeconfig=' + kubeconfig
+		print(cmd)
+		out = ''
+		try:
+			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+								   stderr=subprocess.PIPE, shell=True).communicate()[0]
+			out = out.decode('utf-8')
+		except Exception as e:
+			print(e)
+		if out:
+			print(out)
+			try:
+				json_output = json.loads(out)
+			except Exception as e:
+				print(e)
+		return json_output
+
+	def get_resources_composition(self, kind, instance, namespace, kubeconfig):
+		platf = platform.system()
+		kubeplus_home = os.getenv('KUBEPLUS_HOME')
+		cmd = ''
+		json_output = {}
+		if platf == "Darwin":
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos composition ' 
+		elif platf == "Linux":
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux composition '
+		else:
+			print("OS not supported:" + platf)
+			return json_output
+		cmd = cmd + kind + ' ' + instance + ' ' + namespace + ' --kubeconfig=' + kubeconfig
+		print(cmd)
+		out = ''
+		try:
+			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+								   stderr=subprocess.PIPE, shell=True).communicate()[0]
+			out = out.decode('utf-8')
+		except Exception as e:
+			print(e)
+		if out:
+			print(out)
+			try:
+				json_output = json.loads(out)
+			except Exception as e:
+				print(e)
+		return json_output
+
 	def get_pods(self, resources):
 		pod_list = []
 		for resource in resources:
@@ -54,10 +114,22 @@ class CRLogs(object):
 if __name__ == '__main__':
 	crLogs = CRLogs()
 	#crLogs.get_logs(sys.argv[1], sys.argv[2])
-	resources = sys.argv[1]
-	resource_json = json.loads(resources)
-	namespace = sys.argv[2]
-	pods = crLogs.get_pods(resource_json)
+	#resources = sys.argv[1]
+	relation = sys.argv[1]
+	kind = sys.argv[2]
+	instance = sys.argv[3]
+	namespace = sys.argv[4]
+	kubeconfig = sys.argv[5]
+	print(kind + " " + instance + " " + namespace + " " + kubeconfig)
+	resources = {}
+	if relation == 'connections':
+		resources = crLogs.get_resources_connections(kind, instance, namespace, kubeconfig)
+		print(resources)
+	if relation == 'composition':
+		resources = crLogs.get_resources_composition(kind, instance, namespace, kubeconfig)
+		print(resources)
+	#resource_json = json.loads(resources)
+	pods = crLogs.get_pods(resources)
 	for pod in pods:
 		pod_name = pod['Name']
 		print(pod_name)

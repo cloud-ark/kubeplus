@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 #echo "kubectl connections cr"
 #echo "kubectl connections service"

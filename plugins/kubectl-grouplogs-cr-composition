@@ -1,19 +1,30 @@
 #!/bin/bash
 
-if (( $# < 2 )); then
-    echo "kubectl grouplogs cr composition <Custom Resource> <Resource Instance> [<Namespace>]"
+echo "Under construction..."
+exit 0
+
+if (( $# < 3 )); then
+    echo "kubectl grouplogs cr composition <Custom Resource> <Resource Instance> <Namespace> [--kubeconfig=<Absolute path to kubeconfig>]"
     exit 0
 fi
 
-namespace="default"
 
 # If namespace is passed; use that
-if [ $# = 3 ]; then
-   namespace=$3
-fi
+#if [ $# = 3 ]; then
+#   namespace=$3
+#fi
 
 kind=$1
 instance=$2
+namespace=$3
+
+# Only --kubeconfig specified
+kubeconfig=~/.kube/config
+if [ $# = 4 ] && [[ $4 == *"kubeconfig="* ]]; then
+    kubeconfig=$4
+fi
+
+python /$KUBEPLUS_HOME/plugins/crlogs.py composition $kind $instance $namespace $kubeconfig
 
 #echo "Custom Resource: $1"
 #echo "Custom Resource Instance: $2"
@@ -23,22 +34,22 @@ instance=$2
 #echo "Pod:$pod"
 #echo "PodList: $podlist"
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-macos composition $kind $instance $namespace | python -m json.tool | grep -B 1 -A 4 Pod | grep Name | grep -v Namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`)
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-linux composition $kind $instance $namespace | python -m json.tool | grep -B 1 -A 4 Pod | grep Name | grep -v Namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`)
-else
-    echo "$OSTYPE not supported."
-	exit
-fi
+#if [[ "$OSTYPE" == "darwin"* ]]; then
+#    podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-macos composition $kind $instance $namespace | python -m json.tool | grep -B 1 -A 4 Pod | grep Name | grep -v Namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`)
+#elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+#    podlist=(`$KUBEPLUS_HOME/plugins/kubediscovery-linux composition $kind $instance $namespace | python -m json.tool | grep -B 1 -A 4 Pod | grep Name | grep -v Namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`)
+#else
+#    echo "$OSTYPE not supported."
+#	exit
+#fi
 
-if [ ${#podlist[@]} -eq 0 ];
-then
-	echo "No Pod found for Custom Resource $1 named $2 in Namespace $namespace."
-else
-        #echo "Pods for Custom Resource $1 named $2 in Namespace $namespace."
-        #for i in "${podlist[@]}"; do echo "$i"; done
-        for p in "${podlist[@]}"; do
-            python $KUBEPLUS_HOME/plugins/crlogs.py $p $namespace
-        done;
-fi
+#if [ ${#podlist[@]} -eq 0 ];
+#then
+#	echo "No Pod found for Custom Resource $1 named $2 in Namespace $namespace."
+#else
+#        #echo "Pods for Custom Resource $1 named $2 in Namespace $namespace."
+#        #for i in "${podlist[@]}"; do echo "$i"; done
+#        for p in "${podlist[@]}"; do
+#            python $KUBEPLUS_HOME/plugins/crlogs.py $p $namespace
+#        done;
+#fi
