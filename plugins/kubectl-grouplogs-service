@@ -15,29 +15,40 @@ function podLogs {
 	fi
 }
 
-if (( $# < 1 )); then
-    echo "kubectl grouplogs service <Service Instance name> [<Namespace>]"
+if (( $# < 2 )); then
+    echo "kubectl grouplogs service <Service Instance name> <Namespace> [--kubeconfig=<Absolute path to kubeconfig>]"
     exit 0
 fi
 
 serviceInstance=$1
-namespace="default"
-if [ $# = 2 ]; then
-   namespace=$2 # If namespace is passed; use that
+namespace=$2
+
+# Only --kubeconfig specified
+kubeconfig=~/.kube/config
+if [ $# = 3 ] && [[ $3 == *"kubeconfig="* ]]; then
+	kubeconfig=$3
 fi
 
-IFS=$'\n' # field separator: '\n'
-declare -a podlist
-if [[ "$OSTYPE" == "darwin"* ]]; then
-	#podlist=( $($KUBEPLUS_HOME/plugins/kubediscovery-macos connections Service $serviceInstance $namespace -o flat | grep Pod | awk '{print $3}' | cut -d ':' -f2) )
-	#podLogs "${podlist[@]}"
-	service_output=$($KUBEPLUS_HOME/plugins/kubediscovery-macos connections Service $serviceInstance $namespace -o json)
-    python /$KUBEPLUS_HOME/plugins/crlogs.py $service_output $namespace
-elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-	#podlist=( $($KUBEPLUS_HOME/plugins/kubediscovery-linux connections Service $serviceInstance $namespace -o flat | grep Pod | awk '{print $3}' | cut -d ':' -f2) )
-	#podLogs "${podlist[@]}"
-	service_output=$($KUBEPLUS_HOME/plugins/kubediscovery-linux connections Service $serviceInstance $namespace -o json)
-    python /$KUBEPLUS_HOME/plugins/crlogs.py $service_output $namespace
-else 
-	echo "$OSTYPE not supported."
-fi
+#echo $kubeconfig
+
+#if [ $# = 2 ]; then
+#   namespace=$2 # If namespace is passed; use that
+#fi
+
+python /$KUBEPLUS_HOME/plugins/crlogs.py connections Service $serviceInstance $namespace $kubeconfig
+
+#IFS=$'\n' # field separator: '\n'
+#declare -a podlist
+#if [[ "$OSTYPE" == "darwin"* ]]; then
+#	#podlist=( $($KUBEPLUS_HOME/plugins/kubediscovery-macos connections Service $serviceInstance $namespace -o flat | grep Pod | awk '{print $3}' | cut -d ':' -f2) )
+#	#podLogs "${podlist[@]}"
+#	service_output=$($KUBEPLUS_HOME/plugins/kubediscovery-macos connections Service $serviceInstance $namespace -o json)
+#    python /$KUBEPLUS_HOME/plugins/crlogs.py $service_output $namespace
+#elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+#	#podlist=( $($KUBEPLUS_HOME/plugins/kubediscovery-linux connections Service $serviceInstance $namespace -o flat | grep Pod | awk '{print $3}' | cut -d ':' -f2) )
+#	#podLogs "${podlist[@]}"
+#	service_output=$($KUBEPLUS_HOME/plugins/kubediscovery-linux connections Service $serviceInstance $namespace -o json)
+#    python /$KUBEPLUS_HOME/plugins/crlogs.py $service_output $namespace
+#else 
+#	echo "$OSTYPE not supported."
+#fi
