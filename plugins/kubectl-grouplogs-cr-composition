@@ -19,7 +19,7 @@ instance=$2
 namespace=$3
 
 # Only --kubeconfig specified
-kubeconfig=~/.kube/config
+kubeconfig='--kubeconfig=~/.kube/config'
 if [ $# = 4 ] && [[ $4 == *"kubeconfig="* ]]; then
     kubeconfig=$4
 fi
