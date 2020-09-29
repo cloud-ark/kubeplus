@@ -7,6 +7,8 @@ import platform
 import pprint
 import time
 
+import utils
+
 class CRMetrics(object):
 
 	def _get_identity(self, custom_resource, custom_res_instance, namespace):
@@ -294,14 +296,12 @@ class CRMetrics(object):
 		cpu, mem, count = self._get_metrics_kind('replicationcontrollers', account)
 		return cpu, mem, count
 
-	def _get_metrics_pods(self, account):
-		cpu = 0
-		mem = 0
-		count = 0
+	def _get_pods_for_account(self, account):
 		pod_list = []
 
 		cmd = 'kubectl get pods --all-namespaces | grep -v NAME | awk \'{print $1 \" \" $2}\''
 		out = ''
+		#print(cmd)
 		try:
 			out, _ = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									stderr=subprocess.PIPE, shell=True).communicate()
@@ -310,21 +310,34 @@ class CRMetrics(object):
 		except Exception as e:
 			print(e)
 
+		#print("----")
+		#print(out)
+		#print("----")
 		for p in out.split("\n"):
 			parts = p.split(" ")
 			pod = {}
-			pod['Namespace'] = parts[0]
-			pod['Name'] = parts[1]
-			json_output = self._get_pod(pod)
-			if 'metadata' in json_output:
-				if 'annotations' in json_output['metadata']:
-					if 'accountidentity' in json_output['metadata']['annotations']:
-						account_identity = json_output['metadata']['annotations']['accountidentity']
-						if account_identity == account:
-							pod_list.append(pod)
-							count = count + 1
+			if len(parts) > 0:
+				pod['Namespace'] = parts[0]
+				pod['Name'] = parts[1]
+				json_output = self._get_pod(pod)
+				if 'metadata' in json_output:
+					if 'annotations' in json_output['metadata']:
+						if 'accountidentity' in json_output['metadata']['annotations']:
+							account_identity = json_output['metadata']['annotations']['accountidentity']
+							if account_identity == account:
+								pod_list.append(pod)
+							#count = count + 1
+		return pod_list
+
+	def _get_metrics_pods(self, account):
+		cpu = 0
+		mem = 0
+		count = 0
+		pod_list = self._get_pods_for_account(account)
+		print("Pods:")
+		print(pod_list)
 		cpu, mem = self._get_cpu_memory_usage(pod_list)
-		return cpu, mem, count
+		return cpu, mem, len(pod_list)
 
 	def _get_metrics_kind(self, kind, account):
 		total_mem = 0
@@ -389,9 +402,9 @@ class CRMetrics(object):
 		kubeplus_home = os.getenv('KUBEPLUS_HOME')
 		cmd = ''
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Service ' + service_name + ' ' + namespace + ' -o flat'
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Service ' + service_name + ' ' + namespace + ' -o json'
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections Service ' + service_name + ' ' + namespace + ' -o flat'
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections Service ' + service_name + ' ' + namespace + ' -o json'
 
 		if cmd:
 			output = ''
@@ -402,8 +415,17 @@ class CRMetrics(object):
 			except Exception as e:
 				print(e)
 
-			pod_list = self._parse_pods_from_connections_op(output)
-		return pod_list
+			if output:
+				try:
+					json_output = json.loads(output)
+				except Exception as e:
+					print(e)
+
+				pod_list = utils.get_pods(json_output)
+				res_list = utils.get_resources(json_output)
+
+			#pod_list = self._parse_pods_from_connections_op(output)
+		return pod_list, res_list
 
 	def _parse_pods_from_connections_op(self, output):
 		pod_list = []
@@ -562,6 +584,85 @@ class CRMetrics(object):
 								pod_list_to_return.append(pod)
 		return pod_list_to_return
 
+	def _get_pods_from_connections_pod(self, pod_name, namespace):
+		pod_list = []
+		platf = platform.system()
+		kubeplus_home = os.getenv('KUBEPLUS_HOME')
+		cmd = ''
+		if platf == "Darwin":
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Pod ' + ' ' + pod_name + ' ' + namespace + ' -o json'
+		if platf == "Linux":
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections Pod ' + ' ' + pod_name + ' ' + namespace + ' -o json'
+
+		#print(cmd)
+		if cmd:
+			output = ''
+			try:
+				output = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+										  stderr=subprocess.PIPE, shell=True).communicate()[0]
+				output = output.decode('utf-8')
+				output = output.strip("\n")
+			except Exception as e:
+				print(e)
+
+			if output:
+				try:
+					json_output = json.loads(output)
+				except Exception as e:
+					print(e)
+
+				pod_list = utils.get_pods(json_output)
+		return pod_list
+
+	def _get_metrics_creator_account_with_connections(self, account):
+
+		#print("---------------------------------------------------------- ")
+		#print(" Creator Account Identity: " + account)
+		#print("---------------------------------------------------------- ")
+
+		#print("Finding Pods created by account.." + account)
+
+		print("---------------------------------------------------------- ")
+		pod_list = self._get_pods_for_account(account)
+		print(pod_list)
+		pod_list_for_metrics = []
+
+		for pod in pod_list:
+			#print("Discovering connections for..." + pod['Namespace'] + "/" + pod['Name'])
+			connections_pod_list = self._get_pods_from_connections_pod(pod['Name'], pod['Namespace'])
+			#print(connections_pod_list)
+
+			for p in connections_pod_list:
+				seen = False
+				for p1 in pod_list_for_metrics:
+					if p1['Name'] == p['Name'] and p1['Namespace'] == p['Namespace']:
+						seen = True
+				if not seen:
+					pod_list_for_metrics.append(p)
+
+		print("Finding metrics for:")
+		for pod in pod_list_for_metrics:
+			print("    " + pod['Name'])
+		#print(pod_list_for_metrics)
+
+		cpu, mem = self._get_cpu_memory_usage(pod_list_for_metrics)
+		storage = 0
+		for p in pod_list_for_metrics:
+			stor = self._parse_persistentvolumeclaims([p], p['Namespace'])
+			storage = storage + stor
+
+		num_of_containers = self._parse_number_of_containers(pod_list_for_metrics)
+		num_of_hosts = self._parse_number_of_hosts(pod_list_for_metrics)
+
+		print("Kubernetes Resources created:")
+		print("    Number of Pods: " + str(len(pod_list_for_metrics)))
+		print("        Number of Containers: " + str(num_of_containers))
+		print("        Number of Nodes: " + str(num_of_hosts))
+		print("Underlying Physical Resoures consumed:")
+		print("    Total CPU(cores): " + str(cpu) + "m")
+		print("    Total MEMORY(bytes): " + str(mem) + "Mi")
+		print("    Total Storage(bytes): " + str(storage) + "Gi")
+		print("---------------------------------------------------------- ")
 
 	def get_metrics_creator_account(self, account):
 		# 1. Get all custom resource instances - their count
@@ -606,7 +707,7 @@ class CRMetrics(object):
 		all_cpu = cr_cpu + ssets_cpu + rsets_cpu + dsets_cpu + rcsets_cpu + p_cpu
 		all_mem = cr_mem + ssets_mem + rsets_mem + dsets_mem + rcsets_mem + p_mem
 
-		print("Kubernetes Resources consumed:")
+		print("Kubernetes Resources created:")
 		print("    Number of Custom Resources: " + str(cr_count))
 		print("    Number of Deployments: " + str(dep_count))
 		print("    Number of StatefulSets: " + str(ss_count))
@@ -621,7 +722,7 @@ class CRMetrics(object):
 
 
 	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace, opformat):
-		#accountidentity = self._get_identity(custom_resource, custom_res_instance, namespace)
+		accountidentity = self._get_identity(custom_resource, custom_res_instance, namespace)
 		accountidentity = ''
 		composition = self._get_composition(custom_resource, custom_res_instance, namespace)
 		num_of_resources = self._parse_number_of_resources(composition)
@@ -656,14 +757,15 @@ class CRMetrics(object):
 			json_op = json.dumps(op)
 			print(json_op)
 		else:
+			#print("---------------------------------------------------------- ")
+			#print(" Creator Account Identity: " + accountidentity)
+			#print("---------------------------------------------------------- ")
 			print("---------------------------------------------------------- ")
-			print(" Creator Account Identity: " + accountidentity)
-			print("---------------------------------------------------------- ")
-			print("Kubernetes Resources consumed:")
+			print("Kubernetes Resources created:")
 			print("    Number of Sub-resources: " + str(num_of_resources))
 			print("    Number of Pods: " + str(num_of_pods))
-			print("    Number of Containers: " + str(num_of_containers))
-			print("    Number of Nodes: " + str(num_of_hosts))
+			print("        Number of Containers: " + str(num_of_containers))
+			print("        Number of Nodes: " + str(num_of_hosts))
 			print("Underlying Physical Resoures consumed:")
 			print("    Total CPU(cores): " + str(cpu) + "m")
 			print("    Total MEMORY(bytes): " + str(memory) + "Mi")
@@ -672,17 +774,19 @@ class CRMetrics(object):
 
 	def get_metrics_service(self, service_name, namespace):
 		print("---------------------------------------------------------- ")
-		pod_list = self._get_pods_for_service(service_name, namespace)
-		print("Kubernetes Resources consumed:")
+		pod_list, res_list = self._get_pods_for_service(service_name, namespace)
+		#print(res_list)
+		print("Kubernetes Resources created:")
+		print("    Total Number of Resources: " + str(len(res_list)))
 		print("    Number of Pods: " + str(len(pod_list)))
 
 		num_of_containers = self._parse_number_of_containers(pod_list)
-		print("    Number of Containers: " + str(num_of_containers))
+		print("        Number of Containers: " + str(num_of_containers))
 
 		total_storage = self._parse_persistentvolumeclaims(pod_list, namespace)
 
 		num_of_hosts = self._parse_number_of_hosts(pod_list)
-		print("    Number of Nodes: " + str(num_of_hosts))
+		print("        Number of Nodes: " + str(num_of_hosts))
 
 		cpu, memory = self._get_cpu_memory_usage(pod_list)
 
@@ -695,13 +799,13 @@ class CRMetrics(object):
 	def get_metrics_helmrelease(self, release_name):
 		print("---------------------------------------------------------- ")
 		pod_list = self._get_pods_for_helmrelease(release_name)
-		print("Kubernetes Resources consumed:")
+		print("Kubernetes Resources created:")
 		print("    Number of Pods: " + str(len(pod_list)))
 
 		time1 = int(round(time.time() * 1000))
 		num_of_containers = self._parse_number_of_containers(pod_list)
 		time2 = int(round(time.time() * 1000))
-		print("    Number of Containers: " + str(num_of_containers))
+		print("        Number of Containers: " + str(num_of_containers))
 		#print("      time:" + str(time2-time1))
 
 		# TODO: What should be the namespace parameter for Helm releases?
@@ -740,7 +844,10 @@ if __name__ == '__main__':
 	
 	if res_type == "account":
 		creator_account = sys.argv[2]
-		crMetrics.get_metrics_creator_account(creator_account)
+		if len(sys.argv) == 4:
+			crMetrics._get_metrics_creator_account_with_connections(creator_account)
+		else:
+			crMetrics.get_metrics_creator_account(creator_account)
 
 	if res_type == "service":
 		service_name = sys.argv[2]
