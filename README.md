@@ -1,27 +1,17 @@
-## KubePlus - Tooling for Kubernetes Operator stacks
+## KubePlus - Simplify discovery and use of Custom Resources
 
 Kubernetes native stacks are built by extending Kubernetes clusters with a variety of Operators. DevOps engineers are faced with the following challenges while running workloads on such stacks:
 
 - How to discover and use Custom Resources introduced by the Operators for building platform automation in Kubernetes YAMLs?
 
-- How to create linkages between multiple Kubernetes YAMLs or Helm charts coming from different teams / members?
+- How to troubleshoot and monitor platform workflows defined in Kubernetes YAMLs involving Custom Resources?
 
-- How to troubleshoot the platform automation defined in Kubernetes YAMLs?
+KubePlus addresses above issues for DevOps teams. KubePlus tooling primarily consists of number of client-side kubectl plugins that simplify discovery and use of Custom Resources. 
 
-KubePlus is aimed at Kubernetes cluster administrators and enables them to address above issues for their DevOps teams. Specifically, KubePlus simplifies building and analyzing platform automation in multi-Operator environments. KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
-
-<p align="center">
-<img src="./docs/kubeplus-components.png" width="850" height="200" class="center">
-</p>
-
-KubePlus tooling consists of three components - the Operator Maturity Model for multi-Operator scenarios, client-side kubectl plugins, cluster-side runtime binding resolution component.
+KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
 
 
-## Operator Maturity Model
-
-While Kubernetes cluster administrators today want to adopt community Operators and enable their DevOps teams, they need a way to evaluate various Operators. They also need a set of guidelines for developing their own Operator/s that complement community Operators. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of a multi-Operator world. It is also being used by Kubernetes cluster administrators today for curating community Operators towards building their purpose-built stacks. (If you are new to Operators, check out [Operator FAQ](https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md)).
-
-## Client-side kubectl plugins
+## Kubeplus kubectl plugins
 
 
 Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resources become first class components of that cluster alongside the built-in resources (e.g. Pod, Service). DevOps and application teams can leverage all these Resources/APIs available on their cluster to build their platform automation in Kubernetes YAMLs or Helm charts. In this process DevOps engineers often face challenges in discovery and use of Custom Resources and troubleshooting the workflows built using them.  We have developed a mechanism to address this challenge. A set of annotations are added on CRDs (Custom Resource Definitions) to capture Operator developer’s assumptions. These are then leveraged by our kubectl plugins that simplify building and maintaining platform automation that uses Custom Resources. This mechanism is built on the fact that workflows are built in Kubernetes YAMLs by establishing relationships between available resources. These relationships are primarily of four types. 
@@ -150,78 +140,9 @@ Underlying Physical Resoures consumed:
 Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationship-graphs-for-application-level-insights-70139e19fb0) to understand more about why tracking resource relationships is useful in Kubernetes.
 
 
-## Binding Functions (through Cluster-side add-on)
+## Operator Maturity Model
 
-In enterprises, Helm charts and Kubernetes YAML manifests can come from multiple teams. A DevOps engineer may want to establish associations between their Kubernetes resource YAMLs with resources that are already running in their cluster. An example of this is the requirement to create a Kubernetes resource by binding to a Service instance which is a child of a Custom Resource instance running in the cluster. Typically, such a Service's name is not known apriori as the instance is created by the corresponding Operator. For establishing such dynamic resource relationships using run time information, KubePlus provides following binding functions. They enable establishing label, annotation or SpecProperty based relationships, discussed above, between Kubernetes resources. KubePlus cluster-side add-on intercepts the YAML resources and resolves their runtime dependencies with respect to other resources running in the cluster.
-
-- ```Fn::ImportValue(<ResourceType:ResourceName:SubResource(filter="<>")>)```: This function imports a specific value (such as name) of the running instance of a resource and provides it as a spec property of the resource being deployed.
-
-- ```Fn::AddLabel(<labelkey>,<ResourceType:ResourceName:SubResource(filter="<>")>)```: This function adds the specified label to the running instance of the resource specified in the function definition. It is defined as an annotation in YAML of the resource being deployed.
-
-- ```Fn::AddAnnotation(<annotationkey>,<ResourceType:ResourceName:SubResource(filter=”<>”)>)```: This function adds the specified annotation to the running instance of the resource specified in the function definition. It is defined as an annotation in YAML of the resource being deployed.
-
-Filter predicates are supported to enable selecting subset of resources if multiple resources exists of the specified sub resource type. Currently filter predicates use substring matching. Support for regular expressions in filter predicate values will be added in the future.
-
-Here is an example of a YAML manifest for creating a Moodle Custom Resource instance (moodle1) that binds to the Service objct which is a child of Mysqlcluster instance (cluster1).
-
-```
-apiVersion: moodlecontroller.kubeplus/v1
-kind: Moodle
-metadata:
-  name: moodle1
-  annotations:
-    function-AddLabel: "Fn::AddLabel(application/moodle1, MysqlCluster:default.cluster1:Service(filter=master))"
-spec:
-  plugins: ["profilecohort"]
-  mySQLServiceName: Fn::ImportValue(MysqlCluster:default.cluster1:Service(filter=master))
-  mySQLUserName: root
-  mySQLUserPassword: cluster1-secret.ROOT_PASSWORD 
-  moodleAdminEmail: test@test.com
-```
-
-Here is the resolved spec:
-
-```
-$ kubectl describe moodles moodle1
-
-Name:         moodle1
-Namespace:    default
-Labels:       <none>
-Annotations:  accountidentity: salesforce-testing-1@disco-horizon-103614.iam.gserviceaccount.com
-              function-AddLabel: Fn::AddLabel(application/moodle1, MysqlCluster:default.cluster1:Service(filter=master))
-API Version:  moodlecontroller.kubeplus/v1
-Kind:         Moodle
-Metadata:
-  :
-Spec:
-  Moodle Admin Email:    test@test.com
-  My SQL Service Name:   cluster1-mysql-master  ---> resolved
-  My SQL User Name:      root
-  My SQL User Password:  cluster1-secret.ROOT_PASSWORD
-  Plugins:
-    profilecohort
-```
-
-Here are the labels on the ```cluster1-mysql-master``` Service object:
-
-```
-$ kubectl get service cluster1-mysql-master -o json
-
-Name:              cluster1-mysql-master
-Namespace:         default
-Labels:            application=moodle1 ---> Label added
-Annotations:       <none>
-Selector:          app=mysql-operator,mysql_cluster=cluster1,role=master
-Type:              ClusterIP
-IP:                10.0.15.23
-Port:              mysql  3306/TCP
-TargetPort:        3306/TCP
-Endpoints:         10.8.1.136:3306
-Session Affinity:  None
-Events:            <none>
-```
-
-You can try this example by following [these steps](https://github.com/cloud-ark/kubeplus/blob/master/examples/kubectl-plugins-and-binding-functions/steps.txt).
+While Kubernetes cluster administrators today want to adopt community Operators and enable their DevOps teams, they need a way to evaluate various Operators. They also need a set of guidelines for developing their own Operator/s that complement community Operators. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of a multi-Operator world. It is also being used by Kubernetes cluster administrators today for curating community Operators towards building their purpose-built stacks. (If you are new to Operators, check out [Operator FAQ](https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md)).
 
 
 ## Try it:
@@ -240,13 +161,6 @@ You can try this example by following [these steps](https://github.com/cloud-ark
 - To obtain metrics, enable Kubernetes Metrics API Server on your cluster.
   - Hosted Kubernetes solutions like GKE has this already installed.
 
-- Cluster-side component:
-
-```
-   $ git clone https://github.com/cloud-ark/kubeplus.git
-   $ cd kubeplus/scripts
-   $ ./deploy-kubeplus.sh
-```
   - Check out [examples](./examples/).
 
 ## Support
