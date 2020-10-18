@@ -1,35 +1,35 @@
-## KubePlus - Simplify discovery and use of Custom Resources
+## KubePlus - Discovery and monitoring of Custom Resources and their dependencies
 
-Kubernetes native stacks are built by extending Kubernetes clusters with a variety of Operators. DevOps engineers are faced with the following challenges while running workloads on such stacks:
+DevOps teams are using Kubernetes Operators to build custom PaaSes. Kubernetes Operators add Custom Resources to the Kubernetes Resource set. Inventory and charge back for such a custom PaaS is a challenge today as there is no easy way to discover set of Kubernetes Resources belonging to an application stack. KubePlus addresses this issue by offering generic tooling for discovery and monitoring of Custom Resources and their dependencies.
 
-- How to discover and use Custom Resources introduced by the Operators for building platform automation in Kubernetes YAMLs?
+## What is KubePlus?
 
-- How to troubleshoot and monitor platform workflows defined in Kubernetes YAMLs involving Custom Resources?
-
-KubePlus addresses above issues for DevOps teams. KubePlus tooling primarily consists of number of client-side kubectl plugins that simplify discovery and use of Custom Resources. 
-
-KubePlus is being developed as part of our [Platform as Code practice](https://cloudark.io/platform-as-code).
-
-
-## Kubeplus kubectl plugins
-
-
-Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resources become first class components of that cluster alongside the built-in resources (e.g. Pod, Service). DevOps and application teams can leverage all these Resources/APIs available on their cluster to build their platform automation in Kubernetes YAMLs or Helm charts. In this process DevOps engineers often face challenges in discovery and use of Custom Resources and troubleshooting the workflows built using them.  We have developed a mechanism to address this challenge. A set of annotations are added on CRDs (Custom Resource Definitions) to capture Operator developer’s assumptions. These are then leveraged by our kubectl plugins that simplify building and maintaining platform automation that uses Custom Resources. This mechanism is built on the fact that workflows are built in Kubernetes YAMLs by establishing relationships between available resources. These relationships are primarily of four types. 
-
-(1) Owner references – A resource internally creates additional resources (e.g. MysqlCluster when instantiated, creates Pods and Services). These sub-resources are related to the parent resource through Owner reference relationship.
-
-(2) Labels and (3) Annotations – Labels or Annotations are key/value pairs that are attached to Kubernetes resources. Operator for Resource A can depend on a specific label or annotation to be given on Resource B to take some action.
-
-(4) Spec Properties – Resource A’s Spec property may depend on some value coming from Resource B. 
-
-Here is a sample workflow for deploying wordpress application that can be built in YAML by creating the resources and relationships between them.
+KubePlus is a generic tool that enables inventory and charge back for Kubernetes clusters extended with Operators. It uses a unique method of relationship tags defined on Kubernetes Operator packages (CRDs) to track Kubernetes Custom Resources and their relationships. The tags unlock KubePlus's ability to provide accurate discovery and monitoring for entire Resource set available on the cluster through a set of kubectl plugins.
 
 <p align="center">
-<img src="./docs/wordpress-workflow.png" width="350" height="300" class="center">
+<img src="./docs/KubePlus-new.png" width="350" height="300" class="center">
 </p>
 
-KubePlus offers following CRD annotations that help Operator developers capture assumptions they have made around what type of relationships can be established with the Custom Resources of their Operators.
 
+## Core of KubePlus - Resource Relationship graphs
+
+Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resources become first class components of that cluster alongside the built-in resources (e.g. Pod, Service). Platform stacks are realized by establishing relationships between these Kubernetes Resources (built-in or Custom) available on the cluster. These relationships are primarily of four types.
+ 
+(1) Owner references – A resource internally creates additional resources (e.g. MysqlCluster when instantiated, creates Pods and  Services). These sub-resources are related to the parent resource through Owner reference relationship.
+
+(2) Labels and (3) Annotations – Labels or Annotations are key/value pairs that are attached to Kubernetes resources. Resource A can depend on a specific label or annotation to be given on Resource B to take some action.
+
+(4) Spec Properties – Resource A’s Spec property may depend on a value coming from Resource B.
+
+<p align="center">
+<img src="./docs/resource-relationship-1.png" width="350" height="300" class="center">
+</p>
+
+KubePlus is able to construct Kubernetes Resource relationship graphs like above at runtime. This enables accurate inventory and chargeback tracking for custom PaaSes built using Kubernetes Operators.
+
+## Platform-as-Code tags on CRDs
+
+KubePlus offers following CRD annotations that help Operator developers capture assumptions they have made around what type of relationships can be established with the Custom Resources of their Operators.
 
 ```
 resource/usage
@@ -39,9 +39,13 @@ resource/label-relationship
 resource/specproperty-relationship
 ```
 
-[Here](./Operator-annotations.md) are some sample CRD annotations for community Operators that can be used to unlock KubePlus tooling for them. Kubernetes Operator developers can add these annotations to their CRDs or cluster administrators can add them later as well.
+Kubernetes Operator developers or cluster administrators can add these annotations to the CRDs. Here are some sample CRD annotations for community Operators that can be used to unlock KubePlus tooling for them.
 
-KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies. KubePlus offers a variety of kubectl plugins that internally leverage this topology information. Once Kubernetes cluster administrators have added above annotations to the CRDs in their cluster, DevOps teams can use following KubePlus kubectl plugins to analyze their platform workflows:
+KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies. KubePlus offers a variety of kubectl plugins that internally leverage this topology information.
+
+
+## Kubectl plugins
+
 
 **1. kubectl composition**
 
@@ -140,11 +144,6 @@ Underlying Physical Resoures consumed:
 Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationship-graphs-for-application-level-insights-70139e19fb0) to understand more about why tracking resource relationships is useful in Kubernetes.
 
 
-## Operator Maturity Model
-
-While Kubernetes cluster administrators today want to adopt community Operators and enable their DevOps teams, they need a way to evaluate various Operators. They also need a set of guidelines for developing their own Operator/s that complement community Operators. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of a multi-Operator world. It is also being used by Kubernetes cluster administrators today for curating community Operators towards building their purpose-built stacks. (If you are new to Operators, check out [Operator FAQ](https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md)).
-
-
 ## Try it:
 
 - KubePlus kubectl commands:
@@ -163,9 +162,15 @@ While Kubernetes cluster administrators today want to adopt community Operators 
 
   - Check out [examples](./examples/).
 
+
+## Operator Maturity Model
+
+As DevOps team build their custom PaaSes using community or in house developed Operators, they need a set of guidelines for Operator development or evaluation. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-tenant and multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators today for curating community Operators towards building their custom PaaSes.
+
+
 ## Support
 
-Submit issues here on Github or reach out to our team on [Slack](https://join.slack.com/t/cloudark/shared_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw).
+Submit issues on this repository or reach out to our team on [Slack](https://join.slack.com/t/cloudark/shared_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw).
 
 
 ## Status

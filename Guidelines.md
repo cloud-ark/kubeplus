@@ -1,6 +1,6 @@
 # Kubernetes Operator Maturity Model Guidelines for building Kubernetes native Stacks
 
-Kubernetes extensions (commonly referred as Operators) extend Kubernetes Resource set (APIs) and enable adding application-specific platform workflow automation in Kubernetes native manner e.g. Operators for softwares like databases, key-value stores, API gateways etc. Enterprise DevOps teams use Kubernetes Operators and create their Kubernetes native stacks.  We have developed the Operator Maturity Model to help calibrate an Operator's readiness to work alongside other Operators in Kubernetes native stacks. 
+Kubernetes Operators extend Kubernetes Resource set (APIs) and enable adding application-specific automation in Kubernetes native manner. Today Operators exist for softwares like databases, key-value stores, API gateways etc. Enterprise DevOps teams use Kubernetes Operators and create their Kubernetes native stacks.  We have developed the Operator Maturity Model to help calibrate an Operator's readiness to work alongside other Operators in Kubernetes native stacks. 
 
 The model is divided into six categories with a set of guidelines in each category. 
 
@@ -9,7 +9,7 @@ The model is divided into six categories with a set of guidelines in each catego
 
 ## Consumability
 
-Consumability guidelines focus on design of Custom Resources (APIs) to simplify their use in building platform workflows.
+Consumability guidelines focus on design of Custom Resources.
 
 [1. Design Custom Resource as a declarative API and avoid inputs as imperative actions](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#design-custom-resource-as-a-declarative-api-and-avoid-inputs-as-imperative-actions)
 
@@ -22,7 +22,7 @@ Consumability guidelines focus on design of Custom Resources (APIs) to simplify 
 
 ## Configurability
 
-Configurability guidelines focus on simplifying configuration of Custom Resources (APIs).
+Configurability guidelines focus on simplifying configuration of Custom Resources.
 
 [5. Document labels, annotations or spec property based dependencies for your Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#document-labels-annotations-or-spec-property-based-dependencies-for-your-custom-resources)
 
@@ -33,7 +33,7 @@ Configurability guidelines focus on simplifying configuration of Custom Resource
 
 ## Security
 
-Security guidelines help in applying authorization controls and building multi-tenant workflows.
+Security guidelines help in applying authorization controls and building multi-tenant application stacks using Kubernetes resources (built-in and custom).
 
 [8. Define Service Account for Operator Pod](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-service-account-for-operator-pod)
 
@@ -52,7 +52,7 @@ Security guidelines help in applying authorization controls and building multi-t
 
 ## Robustness
 
-Robustness guidelines offer guidance in designing Custom Resources so that workflows built using them are stable and robust.
+Robustness guidelines offer guidance in designing Custom Resources so that application stacks built using them are stable and robust.
 
 [15. Set OwnerReferences for underlying resources owned by your Custom Resource](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#set-ownerreferences-for-underlying-resources-owned-by-your-custom-resource)
 
@@ -69,7 +69,7 @@ Robustness guidelines offer guidance in designing Custom Resources so that workf
 
 ## Debuggability
 
-Debuggability guidelines offer guidance so that the workflows built using Custom Resources are easy to debug.
+Debuggability guidelines offer guidance so that the application stacks built using Custom Resources are easy to debug.
 
 [21. Enable Audit logs for Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#enable-audit-logs-for-custom-resources)
 
@@ -80,7 +80,7 @@ Debuggability guidelines offer guidance so that the workflows built using Custom
 
 ## Portability
 
-Portability guidelines focus on Operator and Custom Resource properties that enable deploying the Operators and workflows on any Kubernetes distribution, on-prem or on cloud.
+Portability guidelines focus on Operator and Custom Resource properties that enable deploying the Operators and the application stacks on any Kubernetes distribution, on-prem or on cloud.
 
 [24. Package Operator as Helm Chart](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#package-operator-as-helm-chart)
 
@@ -96,7 +96,8 @@ Portability guidelines focus on Operator and Custom Resource properties that ena
 
 ### Design Custom Resource as a declarative API and avoid inputs as imperative actions
 
-A declarative API is one in which you specify the desired state of the software that your Operator is managing using the Custom Resource Spec definition. Prefer declarative specification over any imperative actions in Custom Resource Spec  definition. In multi-Operator setups this requirement ensures correct composability of workflows created from multiple Custom resources. Also, having all the Custom Resource Spec inputs as declarative values provides easy way to determine the state of the overall workflow.
+A declarative API is one in which you specify the desired state of the software that your Operator is managing using the Custom Resource Spec definition. Prefer declarative specification over any imperative actions in Custom Resource Spec definition. 
+In multi-Operator setups having all the Custom Resource Spec inputs as declarative values provides easy way to determine the state of the entire application stack.
 
 
 ### Make Custom Resource Type definitions compliant with Kube OpenAPI
