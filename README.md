@@ -1,10 +1,10 @@
 ## KubePlus - Discovery and monitoring of Custom Resources and their dependencies
 
-DevOps teams are using Kubernetes Operators to build custom PaaSes. Kubernetes Operators add Custom Resources to the Kubernetes Resource set. Inventory and charge back for such a custom PaaS is a challenge today as there is no easy way to discover set of Kubernetes Resources belonging to an application stack. KubePlus addresses this issue by offering generic tooling for discovery and monitoring of Custom Resources and their dependencies.
+DevOps teams are using Kubernetes Operators to build custom PaaSes. Kubernetes Operators add Custom Resources to the Kubernetes Resource set. Inventory and chargeback for such a custom PaaS is a challenge today as there is no easy way to discover set of Kubernetes Resources belonging to an application stack. KubePlus addresses this issue by offering generic tooling for discovery and monitoring of Custom Resources and their dependencies.
 
 ## What is KubePlus?
 
-KubePlus is a generic tool that enables inventory and charge back for Kubernetes clusters extended with Operators. It uses a unique method of relationship tags defined on Kubernetes Operator packages (CRDs) to track Kubernetes Custom Resources and their relationships. The tags unlock KubePlus's ability to provide accurate discovery and monitoring for entire Resource set available on the cluster through a set of kubectl plugins.
+KubePlus is a generic tool that enables inventory and chargeback for Kubernetes clusters extended with Operators. It uses a unique method of relationship tags defined on Kubernetes Operator packages (CRDs) to track Kubernetes Custom Resources and their relationships. The tags unlock KubePlus's ability to provide accurate discovery and monitoring for entire Resource set available on the cluster through a set of kubectl plugins.
 
 <p align="center">
 <img src="./docs/KubePlus-new.png" width="450" height="300" class="center">
@@ -39,7 +39,7 @@ resource/label-relationship
 resource/specproperty-relationship
 ```
 
-Kubernetes Operator developers or cluster administrators can add these annotations to the CRDs. Here are some sample CRD annotations for community Operators that can be used to unlock KubePlus tooling for them.
+Kubernetes Operator developers or cluster administrators can add these annotations to the CRDs. [Here](https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md) are some sample CRD annotations for community Operators that can be used to unlock KubePlus tooling for them.
 
 KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies. KubePlus offers a variety of kubectl plugins that internally leverage this topology information.
 
