@@ -7,7 +7,7 @@ DevOps teams are using Kubernetes Operators to build custom PaaSes. Kubernetes O
 KubePlus is a generic tool that enables inventory and charge back for Kubernetes clusters extended with Operators. It uses a unique method of relationship tags defined on Kubernetes Operator packages (CRDs) to track Kubernetes Custom Resources and their relationships. The tags unlock KubePlus's ability to provide accurate discovery and monitoring for entire Resource set available on the cluster through a set of kubectl plugins.
 
 <p align="center">
-<img src="./docs/KubePlus-new.png" width="350" height="300" class="center">
+<img src="./docs/KubePlus-new.png" width="450" height="300" class="center">
 </p>
 
 
@@ -22,7 +22,7 @@ Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resourc
 (4) Spec Properties – Resource A’s Spec property may depend on a value coming from Resource B.
 
 <p align="center">
-<img src="./docs/resource-relationship-1.png" width="350" height="300" class="center">
+<img src="./docs/resource-relationship-1.png" width="500" height="300" class="center">
 </p>
 
 KubePlus is able to construct Kubernetes Resource relationship graphs like above at runtime. This enables accurate inventory and chargeback tracking for custom PaaSes built using Kubernetes Operators.
