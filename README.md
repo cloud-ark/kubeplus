@@ -22,7 +22,7 @@ Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resourc
 (4) Spec Properties – Resource A’s Spec property may depend on a value coming from Resource B.
 
 <p align="center">
-<img src="./docs/resource-relationship-1.png" width="500" height="300" class="center">
+<img src="./docs/resource-relationship-1.png" width="700" height="300" class="center">
 </p>
 
 KubePlus is able to construct Kubernetes Resource relationship graphs like above at runtime. This enables accurate inventory and chargeback tracking for custom PaaSes built using Kubernetes Operators.
@@ -94,7 +94,7 @@ resource/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudg
 This identifies the set of resources that will be created by the Operator as part of instantiating the MysqlCluster Custom Resource instance. 
 
 <p align="center">
-<img src="./docs/clusterissuer-mysqlcluster.png" width="900" height="300" class="center">
+<img src="./docs/clusterissuer-mysqlcluster.png" width="800" height="300" class="center">
 </p>
 
 Once these annotations are added to the respective CRDs by the cluster administrator, above resource topology can be discovered by DevOps teams using ``kubectl connections`` plugin as follows:
