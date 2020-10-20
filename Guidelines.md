@@ -1,4 +1,4 @@
-# Kubernetes Operator Maturity Model:  Operator readiness for multi-tenant and multi-Operator environment
+# Kubernetes Operator Maturity Model:  Operator readiness for multi-tenant and multi-Operator environments
 
 Kubernetes Operators extend Kubernetes Resource set (APIs) and enable adding application-specific platform workflow automation in Kubernetes native manner e.g. Operators for softwares like databases, key-value stores, API gateways etc. While Kubernetes Operators have become popular to package stateful applications in Kubernetes native manner, enterprise DevOps teams are using Kubernetes Operator pattern to create custom PaaSes. A PaaS requires an Operator’s readiness for multi-tenant and multi-Operator environment. We have developed a set of guidelines under Operator Maturity Model to enable this.
 
