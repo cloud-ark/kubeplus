@@ -81,23 +81,22 @@ Portability guidelines focus on Operator and Custom Resource properties that ena
 
 ## Consumability
 
+Consumability guidelines focus on design of Custom Resources (APIs) to simplify their use in building application stacks using them.
+
 ### Design Custom Resource as a declarative API and avoid inputs as imperative actions
 
-A declarative API is one in which you specify the desired state of the software that your Operator is managing using the Custom Resource Spec definition. Prefer declarative specification over any imperative actions in Custom Resource Spec definition. 
-In multi-Operator setups having all the Custom Resource Spec inputs as declarative values provides easy way to determine the state of the entire application stack.
-
+A declarative API is one in which you specify the desired state of the software that your Operator is managing using the Custom Resource Spec definition. Prefer declarative specification over any imperative actions in Custom Resource Spec definition. In multi-Operator setups this requirement ensures correct composability of workflows created from multiple Custom resources. Also, having all the Custom Resource Spec inputs as declarative values provides easy way to determine the state of the overall application stack.
 
 ### Make Custom Resource Type definitions compliant with Kube OpenAPI
 
 Kubernetes API details are documented using Swagger v1.2 and OpenAPI. [Kube OpenAPI](https://github.com/kubernetes/kube-openapi) supports a subset of OpenAPI features to satisfy kubernetes use-cases. As Operators extend Kubernetes API, it is important to follow Kube OpenAPI features to provide consistent user experience.
 Following actions are required to comply with Kube OpenAPI.
 
-Add documentation on your Custom Resource Type definition and on the various fields in it.
+- Add documentation on your Custom Resource Type definition and on the various fields in it.
 The field names need to be defined using following pattern:
 Kube OpenAPI name validation rules expect the field name in Go code and field name in JSON to be exactly 
 same with just the first letter in different case (Go code requires CamelCase, JSON requires camelCase).
-
-When defining the types corresponding to your Custom Resources, you should use kube-openapi annotation — ``+k8s:openapi-gen=true`` in the type definition to enable generating OpenAPI Spec documentation for your Custom Resources. An example of this annotation on type definition on CloudARK sample Postgres Custom Resource is shown below:
+- When defining the types corresponding to your Custom Resources, you should use kube-openapi annotation — ``+k8s:openapi-gen=true`` in the type definition to enable generating OpenAPI Spec documentation for your Custom Resources. An example of this annotation on type definition on CloudARK sample Postgres Custom Resource is shown below:
 ```
   // +k8s:openapi-gen=true
   type Postgres struct {
@@ -105,8 +104,7 @@ When defining the types corresponding to your Custom Resources, you should use k
   }
 ```
 
-Defining this annotation on your type definition would enable Kubernetes API Server to generate documentation for your Custom Resource Spec properties. This can then be viewed using ``kubectl explain`` command. In multi-Operator setups, this guideline ensures consistency in how users can discover Spec properties of different Custom Resources needed in their workflows.
-
+Defining this annotation on your type definition would enable Kubernetes API Server to generate documentation for your Custom Resource Spec properties. This can then be viewed using ``kubectl explain`` command.
 
 ### Consider using kubectl as the primary interaction mechanism
 
@@ -162,6 +160,8 @@ Choosing one of these three mechanisms is better than other approaches, such as 
 
 ## Security
 
+Security guidelines help in applying authorization controls and building multi-tenant stacks.
+
 ### Define Service Account for Operator Pod
 
 Your Operator may be need to use a specific service account with specific permissions. Clearly document the service account needs of your Operator Pod. Include this information in the ConfigMap that you will add for the 'resource/usage' annotation on the CRD. In multi-Operator stacks, knowing the service accounts and their RBAC permissions enables users to know the security posture of the stack. Be explicit in defining only the required permissions and nothing more. This ensures that the cluster is safe against unintended actions by any of the Operators (malicious/byzantine actions of compromised Operators or benign faults appearing in the Operators).
@@ -169,7 +169,8 @@ Your Operator may be need to use a specific service account with specific permis
 
 ### Define Service Account for Custom Resources
 
-Your Custom Resource's Pods may need to run with specific service account permissions. If that is the case, one of the decisions you will need to make is whether that service account should be provided by DevOps engineers. If so, provide an attribute in Custom Resource Spec definition to define the service account. Alternatively, if the Custom Controller is hard coding the service account name in the underlying Pod's Spec, then surface this information through the Custom Resource ``man page``. If all the Custom Resources have service accounts defined, it enables users to understand the complete security posture of the workflows.
+Your Custom Resource's Pods may need to run with specific service account permissions. If that is the case, one of the decisions you will need to make is whether that service account should be provided by DevOps engineers. If so, provide an attribute in Custom Resource Spec definition to define the service account. Alternatively, if the Custom Controller is hard coding the service account name in the underlying Pod's Spec, then expose this information as Operator’s assumption using 'resource/usage' CRD annotation discussed above. 
+If all the Custom Resources have service accounts defined, it enables users to understand the complete security posture of the workflows.
 
 
 ### Define SecurityContext and PodSecurityPolicies for Custom Resources
@@ -185,16 +186,15 @@ to provide the control of creating privileged Pods to Custom Resource user then 
 for this purpose in your Custom Resource Spec definition.
 
 If every Operator and Custom Resource is implemented to take SecurityContext and PodSecurityPolicies (PSPs) as input
-through Spec definition, then it will be possible to define a uniform security context and PSP for the entire
-workflow.
+through Spec definition, then it will be possible to define a uniform security context and PSP for the entire workflow.
 
 
 ### Make Custom Controllers namespace aware
 
 To support multi-tenant use-cases, your Operator should support creating resources within different namespaces rather than just in the namespace
-in which it is deployed (or the default namespace). This will allow your Operator to support multi-tenancy through namespaces. When all the Custom Resources and Operators support namespaces, it is possible to create multi-tenant workflows.
+in which it is deployed (or the default namespace). This will allow your Operator to support multi-tenancy through namespaces. When all the Custom Resources and Operators support namespaces, it is possible to create multi-tenant stacks in different namespaces.
 
-Moreover, document whether your Operator is able to create/manage resources in the same namespace in which it is deployed, or can it handle resource creation in other namespaces. If it does support cross-namespace resource management, document how to provide the Operator with necessary privileges on such other namespaces (if this means that the Operator Pod needs to be deployed with cluster-admin privileges document that.)
+Moreover, document whether your Operator is able to create/manage resources in the same namespace in which it is deployed, or can it handle resource creation in other namespaces. If it does support cross-namespace resource management, document how to provide the Operator with necessary privileges on such other namespaces (if this means that the Operator Pod needs to be deployed with cluster-admin privileges, document that.)
 
 
 ### Define Custom Resource Node Affinity rules
@@ -206,7 +206,7 @@ with the labels on the nodes when making scheduling decision.
 If your Custom Resource Pods need to be
 subject to this scheduling constraint then you will need to define the Custom Resource Spec to allow input of 
 such labels. The Custom Controller will need to be implemented to pass these labels to the underlying Custom Resource Pod Spec.
-In multi-Operator stacks if every Custom Resource supports node affinity rules, it will enable co-locating entire workflows on specific nodes.
+In multi-Operator stacks if every Custom Resource supports node affinity rules, it will enable co-locating entire application stacks on specific nodes.
 
 
 ### Define Custom Resource Pod Affinity rules
@@ -215,7 +215,7 @@ Kubernetes provides mechanism of [Pod Affinity](https://kubernetes.io/docs/conce
 Consider if your Custom Resource Pods need to be provided with such affinity rules corresponding
 to other Custom Resource Pods from same or other Operator. If so, provide an attribute in your Custom Resource
 Spec definition where such rules can be specified. The Custom Controller will need to be implemented to pass these 
-rules to the Custom Resource Pod Spec. In multi-Operator stacks if every Custom Resource supports pod affinity rules, it will enable co-locating entire workflows together on a node.
+rules to the Custom Resource Pod Spec. In multi-Operator stacks if every Custom Resource supports pod affinity rules, it will enable co-locating entire application stacks together on a node.
 
 
 ### Define NetworkPolicy for Custom Resources
@@ -225,9 +225,11 @@ a mechanism to define firewall rules to control network traffic for Pods. In cas
 to your Custom Resource's Pods then define a Spec attribute in your Custom Resource Spec definition to
 specify labels to be applied to the Custom Resource's underlying Pods. 
 Implement your Operator to apply this label to the underlying Pods that will be created by the Operator as part of handling a Custom Resource. Then it will be possible for users to specify NetworkPolicies for your Custom Resource Pods.
-In multi-Operator stacks if every Custom Resource supports NetworkPolicy labels then it will enable enforcing traffic restriction for entire workflow. 
+In multi-Operator stacks if every Custom Resource supports NetworkPolicy labels then it will enable enforcing traffic restriction for entire application stack. 
 
 ## Robustness
+
+Robustness guidelines offer guidance in designing Custom Resources so that application stacks built using them are stable and robust.
 
 ### Set OwnerReferences for underlying resources owned by your Custom Resource
 
@@ -235,7 +237,7 @@ An Operator will typically create one or more native Kubernetes resources as par
 being created. OwnerReference setting is essential for correct garbage collection of Custom Resources. 
 It also helps with finding runtime composition tree of your Custom Resource instances.
 If all the Operators are correctly handling OwnerReferences, then the garbage collection benefit will get
-extended for the entire workflow consisting of Custom Resources.
+extended for the entire application stack consisting of Custom Resources.
 
 
 ### Define Resource limits and Resource requests for Custom Resources
@@ -244,7 +246,7 @@ Kubernetes provides mechanism of [requests and limits](https://kubernetes.io/doc
 for these resources. A Pod with request and limits specified for every container is given ``guaranteed`` Quality-of-Service (QoS) by the Kubernetes scheduler. A Pod in which only resource requests are specified for at least one container is given ``burstable`` QoS. A Pod with no requests/limits specified is given ``best effort`` QoS.
 It is important to define resource requests and limits for your Custom Resources.
 This helps with ensuring ``atomicity`` for deploying workflows of Custom Resources.
-Atomicity in this context means that either all the Custom Resources in a workflow are deployed or none are. There is no intermediate state where some of the Custom Resources are deployed and others are not. The atomicity property is only achievable if Kubernetes is able to provide ``guaranteed`` QoS to all the Custom Resources in a workflow. This is only possible if each Custom Resource defines resource requests and limits and the corresponding Operator is implemented to propagate these values to the Custom Resource's underlying Pod's containers.
+Atomicity in this context means that either all the Custom Resources in a application stack are deployed or none are. There is no intermediate state where some of the Custom Resources are deployed and others are not. The atomicity property is only achievable if Kubernetes is able to provide ``guaranteed`` QoS to all the Custom Resources in a workflow. This is only possible if each Custom Resource defines resource requests and limits and the corresponding Operator is implemented to propagate these values to the Custom Resource's underlying Pod's containers.
 
 
 ### Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML
@@ -288,14 +290,13 @@ validation:
                 type: string 
 ```
 
-In the context of Custom Resource workflows, this requirement ensures that the entire workflow specifications
-can be correctly validated.  
+In the context of application stacks, this requirement ensures that the entire  stack can be validated for correctness.
 
 ### Design for robustness against side-car injection into Custom Resource Pods
 
 Certain Operators such as those that take Volume backups work by injecting side-car containers into the
 Custom Resource's Pods for which the Volume backup is being requested. Such an operation leads to restarting
-of those Pods, which can lead to intermittent failure of the workflow in which that Custom Resource is being used.
+of those Pods, which can lead to intermittent failure of the application stack in which that Custom Resource is being used.
 To prevent against such situations, design your Operator to subscribe to Pod restart events for your Custom Resources
 and ensure that the required Custom Resource guarantees are maintained on the Pod.
 
@@ -306,7 +307,7 @@ Kubernetes provides mechanism of [Pod Anti-Affinity](https://kubernetes.io/docs/
 Consider if your Custom Resource Pods need to be provided with such anti-affinity rules corresponding to 
 other Custom Resoures from other Operators. If so, provide an attribute in your Custom Resource
 Spec definition where such rules can be specified. Implement the Custom Controller to pass these 
-rules to the Custom Resource Pod Spec. These rules will be useful in deploying different Custom Resource workflows on separate nodes.
+rules to the Custom Resource Pod Spec. These rules will be useful in deploying different Custom Resource stacks on separate nodes.
 
 
 ### Define Custom Resource Taint Toleration rules
@@ -314,8 +315,7 @@ rules to the Custom Resource Pod Spec. These rules will be useful in deploying d
 Kubernetes provides mechanism of [taints and tolerations](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) to restrict scheduling of Pods on certain nodes. If you want your Custom Resource pods
 to be able to tolerate the taints on a node, define an attribute in your Custom Resource Spec definition
 where such tolerations can be specified. Implement the Custom Controller to pass the toleration labels to
-the Custom Resource Pod Spec. These rules will be useful in deploying certain Custom Resource workflows 
-on dedicated nodes which might be needed, for example, to provide differentiated quality-of-service for certain workflows.
+the Custom Resource Pod Spec. These rules will be useful in deploying certain application stacks on dedicated nodes which might be needed, for example, to provide differentiated quality-of-service for certain stacks.
 
 
 ### Define PodDisruptionBudget for Custom Resources
@@ -331,7 +331,7 @@ Implement the Custom Controller to pass this value to the Pod Spec.
 If on the other hand you decide to hard code this choice in your Custom Controller implementation then
 surface it to Custom Resource users throught its ``man page``.
 In multi-Operator stacks, if each Custom Resource contains PDB in its Spec it provides guarantee of stability
-of Custom Resource workflows as a whole. Without PDBs, it may happen that one Custom Resource gets disrupted if the Kubernetes scheduler comes under resource pressure causing entire workflow to fail.
+of Custom Resource workflows as a whole. Without PDBs, it may happen that one Custom Resource gets disrupted if the Kubernetes scheduler comes under resource pressure causing entire application stack to fail.
 
 ### Enable Audit logs for Custom Resources
 
@@ -339,7 +339,7 @@ Kubernetes API server allows creation of audit logs for incoming requests. This 
 administrators. It requires that cluster administrators define the Audit Policy to include tracking of all the Custom 
 Resources available in a cluster. Using the ``RequestResponse`` audit level is useful as that enables keeping track
 of the incoming Custom Resource requests and the responses sent by the API server.
-Once audit logs are enabled, it will be possible to use tools like [kubeprovenance](https://github.com/cloud-ark/kubeprovenance) to query history of Custom Resources and thus track the evolution of Custom Resource workflows over time.
+Once audit logs are enabled, it will be possible to use tools like [kubeprovenance](https://github.com/cloud-ark/kubeprovenance) to query history of Custom Resources and thus track the evolution of application stacks over time.
 
 
 ### Decide Custom Resource Metrics Collection strategy
@@ -353,6 +353,8 @@ Then, you can use external tooling like [kubeprovenance](https://github.com/clou
 to build the required metrics. Once metrics are collected, you should consider exposing them in Prometheus format.
 
 ## Portability
+
+Portability guidelines focus on Operator and Custom Resource properties that enable deploying the Operators and workflows on any Kubernetes distribution, on-prem or on cloud.
 
 ### Package Operator as Helm Chart
 
@@ -395,4 +397,4 @@ In Helm 3.0 the crd-install annotation is no longer supported. Instead, a separa
 named ``crds`` needs to be created as part of the Helm chart directory in which all the CRDs
 are to be specified. By defining CRDs inside this directory, Helm 3.0 guarantees to install
 the CRDs before installing other templates, which may consist of Custom Resources introduced by that CRD.
-Installing CRDs first is important -- otherwise creation of Custom Resource workflows will fail as the Kubernetes cluster control plane won't be able to recognize the Custom Resources used in your workflows.
+Installing CRDs first is important -- otherwise creation of Custom Resource workflows will fail as the Kubernetes cluster control plane won't be able to recognize the Custom Resources used in your stack.
