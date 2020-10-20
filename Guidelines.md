@@ -18,7 +18,7 @@ Consumability guidelines focus on design of Custom Resources.
 
 [3. Consider using kubectl as the primary interaction mechanism](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#consider-using-kubectl-as-the-primary-interaction-mechanism)
 
-[4. Expose Operator developer’s assumptions and requirements about Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#expose-operator-developer’s-assumptions-and-requirements-about-custom-resources)
+[4. Expose Operator developer’s assumptions and requirements about Custom Resources](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#expose-operator-developers-assumptions-and-requirements-about-custom-resources)
 
 [5. Use ConfigMap or Custom Resource Annotation or Custom Resource Spec definition as an input mechanism for configuring the underlying software](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#use-configmap-or-custom-resource-annotation-or-custom-resource-spec-definition-as-an-input-mechanism-for-configuring-the-underlying-software)
 
@@ -125,9 +125,9 @@ Refer to [this blog post](https://medium.com/@cloudark/comparing-kubernetes-api-
 ### Expose Operator developer’s assumptions and requirements about Custom Resources
 
 Application developers will need to know details about how to use Custom Resources of your Operator. This information goes beyond what is available through Custom Resource Spec properties. Here are some of the Operator developer assumptions that are not captured in your Spec definition: 
-- What sub resources will be created by the Custom Resource
-- Your Custom Resources may need certain labels or annotations to be added on Kubernetes resources for its operation. 
-- It may also depend on spec property of another resource. 
+- what sub resources will be created by the Custom Resource
+- your Custom Resources may need certain labels or annotations to be added on Kubernetes resources for its operation. 
+- it may also depend on spec property of another resource. 
 - service account and RBAC needs of your Operator, service account and RBAC needs of your Custom Resource's Pods
 - any hard-coded values such as those for resource requests/limits, Pod disruption budgets, taints and tolerations, etc. 
 
