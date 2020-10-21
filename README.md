@@ -168,7 +168,7 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
 As DevOps team build their custom PaaSes using community or in house developed Operators, they need a set of guidelines for Operator development or evaluation. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-tenant and multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators today for curating community Operators towards building their custom PaaSes.
 
 
-## Support
+## Contact
 
 Submit issues on this repository or reach out to our team on [Slack](https://join.slack.com/t/cloudark/shared_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw).
 
