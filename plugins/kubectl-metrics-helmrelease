@@ -1,10 +1,15 @@
 #!/bin/bash
 
 if (( $# < 1 )); then
-    echo "kubectl metrics helmrelease <releasename>"
+    echo "kubectl metrics helmrelease <releasename> [-o prometheus]"
     exit 0
 fi
 
 releasename=$1
 
-python /$KUBEPLUS_HOME/plugins/crmetrics.py "helmrelease" $releasename
+output="flat"
+if [ $# = 3 ]; then
+   output=$3 # If output format is passed; use that
+fi
+
+python /$KUBEPLUS_HOME/plugins/crmetrics.py "helmrelease" $releasename $output

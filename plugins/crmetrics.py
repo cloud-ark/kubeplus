@@ -797,15 +797,12 @@ class CRMetrics(object):
 		print("---------------------------------------------------------- ")
 
 	def get_metrics_helmrelease(self, release_name):
-		print("---------------------------------------------------------- ")
 		pod_list = self._get_pods_for_helmrelease(release_name)
-		print("Kubernetes Resources created:")
-		print("    Number of Pods: " + str(len(pod_list)))
 
 		time1 = int(round(time.time() * 1000))
 		num_of_containers = self._parse_number_of_containers(pod_list)
 		time2 = int(round(time.time() * 1000))
-		print("        Number of Containers: " + str(num_of_containers))
+
 		#print("      time:" + str(time2-time1))
 
 		# TODO: What should be the namespace parameter for Helm releases?
@@ -818,17 +815,53 @@ class CRMetrics(object):
 		time1 = int(round(time.time() * 1000))
 		num_of_hosts = self._parse_number_of_hosts(pod_list)
 		time2 = int(round(time.time() * 1000))
-		print("    Number of Nodes: " + str(num_of_hosts))
 		#print("      time:" + str(time2-time1))
 
 		cpu, memory = self._get_cpu_memory_usage(pod_list)
 
+		metrics_helm_release = {}
+		metrics_helm_release['num_of_pods'] = str(len(pod_list))
+		metrics_helm_release['num_of_containers'] = str(num_of_containers)
+		metrics_helm_release['num_of_hosts'] = str(num_of_hosts)
+		metrics_helm_release['cpu'] = str(cpu)
+		metrics_helm_release['memory'] = str(memory)
+		metrics_helm_release['storage'] = str(total_storage)
+		return metrics_helm_release
+
+	def print_metrics_helmrelease(self, metrics_helm_release):
+		num_of_pods = metrics_helm_release['num_of_pods']
+		num_of_containers = metrics_helm_release['num_of_containers']
+		num_of_hosts = metrics_helm_release['num_of_hosts']
+		cpu = metrics_helm_release['cpu']
+		memory = metrics_helm_release['memory']
+		total_storage = metrics_helm_release['storage']
+
+		print("---------------------------------------------------------- ")
+		print("Kubernetes Resources created:")
+		print("    Number of Pods: " + num_of_pods)
+		print("        Number of Containers: " + num_of_containers)
+		print("    Number of Nodes: " + num_of_hosts)
 		print("Underlying Physical Resoures consumed:")
 		print("    Total CPU(cores): " + str(cpu) + "m")
 		print("    Total MEMORY(bytes): " + str(memory) + "Mi")
 		print("    Total Storage(bytes): " + str(total_storage) + "Gi")
 		print("---------------------------------------------------------- ")
 
+	def prometheus_metrics_helmrelease(self, release_name, metrics_helm_release):
+		millis = int(round(time.time() * 1000))
+		metricsToReturn = ''
+		cpu = metrics_helm_release['cpu']
+		memory = metrics_helm_release['memory']
+		storage = metrics_helm_release['storage']
+		num_of_pods = metrics_helm_release['num_of_pods']
+		num_of_containers = metrics_helm_release['num_of_containers']
+		cpuMetrics = 'cpu{helmrelease="'+release_name+'"} ' + str(cpu) + ' ' + str(millis)
+		memoryMetrics = 'memory{helmrelease="'+release_name+'"} ' + str(memory) + ' ' + str(millis)
+		storageMetrics = 'storage{helmrelease="'+release_name+'"} ' + str(storage) + ' ' + str(millis)
+		numOfPods = 'pods{helmrelease="'+release_name+'"} ' + str(num_of_pods) + ' ' + str(millis)
+		numOfContainers = 'containers{helmrelease="'+release_name+'"} ' + str(num_of_containers) + ' ' + str(millis)
+		metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers
+		return metricsToReturn
 
 if __name__ == '__main__':
 	crMetrics = CRMetrics()
@@ -856,4 +889,12 @@ if __name__ == '__main__':
 
 	if res_type == "helmrelease":
 		release_name = sys.argv[2]
-		crMetrics.get_metrics_helmrelease(release_name)
+		op_format = sys.argv[3]
+		metrics_helm_release = crMetrics.get_metrics_helmrelease(release_name)
+		if op_format == "flat":
+			crMetrics.print_metrics_helmrelease(metrics_helm_release)
+		elif op_format == "prometheus":
+			prom_metrics = crMetrics.prometheus_metrics_helmrelease(release_name, metrics_helm_release)
+			print(prom_metrics)
+		else:
+			print("Unrecognized output format. Supported formats - flat/prometheus")
