@@ -25,6 +25,8 @@ type PlatformWorkflowSpec struct {
 	LabelSelector map[string]string `json:"labelSelector,omitempty"` 
 	// List of stack elements that forms this Platform Workflow
 	StackElements []StackElements `json:"stackElements"`
+	// Name of CRD to register
+	CustomAPI []CustomAPI `json:"customAPI"`
 }
 
 type StackElements struct {
@@ -43,6 +45,30 @@ type StackElements struct {
 type DependsOn struct {
 	// Name of the Resource that the Resource in which dependsOn is included actually dependsOn
 	Name string `json:"name"`
+}
+
+type CustomAPI struct {
+	// Kind of the Custom API
+	Kind string `json:"kind"`
+	// Version of the API Custom API
+	Version string `json:"version"`
+	// Group of the Custom API
+	Group string `json:"group"`
+	// Plural name for the Custom API
+	Plural string `json:"plural"`
+	// Helm chart URL
+	ChartURL string `json:"chartURL"`
+	// Chart name
+	ChartName string `json:"chartName"`
+	// Values
+	//Values []Values `json:"values,omitempty"`
+}
+
+type Values struct {
+	// Name - as used in values.yaml
+	Name string `json:"name"`
+	// Value - as specified in values.yaml
+	Value string `json:"value"`
 }
 
 // PlatformWorkflowStatus is the status for a PlatformWorkflow resource.

@@ -1,0 +1,47 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: example1s.example1.kubeplus
+  annotations:
+    platform-as-code/usage: mysqlcluster-usage.usage
+    platform-as-code/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
+    platform-as-code/relationship1-definedOnMultus-1: "annotation: k8s.v1.cni.cncf.io/networks, on: [Pod], value: instance.metadata.name"
+    platform-as-code/relationship1-definedOnMultus-2: "Pod:annotation:k8s.v1.cni.cncf.io/networks, value: instance.metadata.name" # not clear it is annotation based relationship
+    platform-as-code/relationship1-definedOnMultus-2: "Pod:annotation:k8s.v1.cni.cncf.io/networks, value: instance.metadata.name"
+    platform-as-code/relationship1-definedOnService: "label, on: [Pod], value: instance.spec.selector"
+    platform-as-code/relationship1-definedOnService-1: "Pod:labels, value: instance.spec.selector"
+    platform-as-code/relationship2: "annotation: certmanager.k8s.io/issuer, on: [Ingress], value: instance.metadata.name"
+    platform-as-code/relationship3: "label, on: [Prometheus], value: instance.spec.podMonitorSelector.matchLabels"
+    platform-as-code/relationship4: "specproperty: instance.spec.podMonitorSelector.matchLabels, from: [PodMonitor], value: instance.metadata.labels"
+    platform-as-code/relationship5: "specproperty: instance.spec.issuerRef.name, from: [ClusterIssuer], value: instance.metadata.name"
+    platform-as-code/relationship6: "specproperty: instance.spec.secretName, from: [Secret], value: instance.metadata.name"
+    platform-as-code/relationship7: "specproperty: instance.spec.secretName, to: [Pod], value: spec.serviceName"
+spec:
+  group: example1.kubeplus
+  version: v1alpha1
+  names:
+    kind: Example1
+    plural: example1s
+  scope: Namespaced
+  ---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: example1s.example1.kubeplus
+  annotations:
+    platform-as-code/usage: mysqlcluster-usage.usage
+    platform-as-code/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
+    platform-as-code/annotation-relationship1: "on:Pod, key:k8s.v1.cni.cncf.io/networks, value:INSTANCE.metadata.name"
+    platform-as-code/annotation-relationship2: "on:Service, key:k8s.v1.cni.cncf.io/networks, value:INSTANCE.metadata.name"
+    platform-as-code/label-relationship: "on:Pod, value:INSTANCE.spec.selector"
+    platform-as-code/specproperty-relationship4: "from:Secret.metadata.name, to:INSTANCE.spec.secretName"
+    platform-as-code/specproperty-relationship5: "from:INSTANCE.spec.secretName, to:Pod.spec.xyz"
+    platform-as-code/specproperty-relationship6: "from:INSTANCE.spec.metadata.name, to:Pod.spec.env"
+    platform-as-code/specproperty-relationship7: "from:INSTANCE.spec.metadata.name, to:Pod.spec.*"
+spec:
+  group: example1.kubeplus
+  version: v1alpha1
+  names:
+    kind: Example1
+    plural: example1s
+  scope: Namespaced

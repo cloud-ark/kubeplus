@@ -10,23 +10,113 @@ spec:
     plural: platformworkflows
   scope: Namespaced
 ---
-apiVersion: apps/v1beta1
-kind: Deployment
+#apiVersion: apps/v1beta1
+#kind: Deployment
+#metadata:
+#  name: kubeplus-platformoperator
+#spec:
+#  replicas: 1 
+#  selector:
+#    matchLabels:
+#      app: platform-operator
+#  template:
+#    metadata:
+#      labels:
+#        app: platform-operator
+#    spec:
+#      containers:
+#      - name: platform-operator
+        #image: lmecld/platform-operator:0.0.4-alpha2
+#        image: gcr.io/disco-horizon-103614/platform-operator:0.0.5
+#        imagePullPolicy: Always
+#        command: [ "/platform-operator"]
+#---
+apiVersion: v1
+kind: Pod
 metadata:
-  name: kubeplus-platformoperator
+  name: kubeplus
+  labels:
+    app: kubeplus
 spec:
-  replicas: 1 
+  containers:
+  - name: platform-operator
+    #image: lmecld/platform-operator:0.0.4-alpha2
+    image: gcr.io/disco-horizon-103614/platform-operator:0.0.5
+    imagePullPolicy: Always
+    command: [ "/platform-operator"]
+  - name: helmer
+    image: gcr.io/disco-horizon-103614/helm-pod:latest
+    imagePullPolicy: Always
+    command: ["/root/helm-pod"]
+    volumeMounts:
+    - mountPath: /chart
+      name: chart-volume
+  volumes:
+    - name: chart-volume
+      emptyDir: {}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: kubeplus
+spec:
   selector:
-    matchLabels:
-      app: platform-operator
-  template:
-    metadata:
-      labels:
-        app: platform-operator
-    spec:
-      containers:
-      - name: platform-operator
-        image: lmecld/platform-operator:0.0.4-alpha2
-        imagePullPolicy: Always
-        command: [ "/platform-operator"]
-
+    app: kubeplus
+  ports:
+  - protocol: TCP
+    port: 90
+    targetPort: 8090
+---
+#apiVersion: apps/v1beta1
+#kind: Deployment
+#metadata:
+#  name: helmer
+#spec:
+#  replicas: 1 
+#  selector:
+#    matchLabels:
+#      app: helmer
+#  template:
+#    metadata:
+#      labels:
+#        app: helmer
+#    spec:
+#      containers:
+#      - name: helm-pod
+#        image: gcr.io/disco-horizon-103614/helm-pod:latest
+#        imagePullPolicy: Always
+#        command: ["/root/helm-pod"]
+#        volumeMounts:
+#        - mountPath: /chart
+#          name: chart-volume
+#      volumes:
+#      - name: chart-volume
+#        emptyDir: {}
+#---
+#apiVersion: v1
+#kind: Pod
+#metadata:
+#  name: cmdrunner
+#  labels:
+#    name: cmdrunner
+#spec:
+#  containers:
+#    - image: gcr.io/disco-horizon-103614/tester-pod:latest
+#      name: cmdrunner
+#      imagePullPolicy: Always
+#      command: [ "/bin/bash", "-c", "--" ]
+#      args: [ "while true; do sleep 30; done;" ]
+#---
+#apiVersion: v1
+#kind: Pod
+#metadata:
+#  name: tester
+#  labels:
+#    name: tester
+#spec:
+#  containers:
+#    - image: gcr.io/disco-horizon-103614/tester-pod:latest
+#      name: tester
+#      imagePullPolicy: Always
+#      command: [ "/bin/bash", "-c", "--" ]
+#      args: [ "while true; do sleep 30; done;" ]

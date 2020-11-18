@@ -1,0 +1,19 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: platform-as-code.crd-binding
+  labels:
+    app: crd-hook
+webhooks:
+  - name: platform-as-code.crd-binding.v1
+    clientConfig:
+      service:
+        name: crd-hook-service
+        namespace: default
+        path: "/mutate"
+      caBundle: ${CA_BUNDLE}
+    rules:
+      - operations: [ "CREATE" ]
+        apiGroups: ["platformstack.kubeplus", "apps", "extensions", ""]
+        apiVersions: ["v1alpha1", "v1", "v1beta1"]
+        resources: ["platformstacks", "deployments", "statefulsets", "replicasets", "daemonsets", "replicationcontrollers", "pods"]
