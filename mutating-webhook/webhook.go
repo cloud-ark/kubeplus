@@ -20,6 +20,10 @@ import (
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/kubernetes"
+
+	platformworkflowclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
+	platformworkflowv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/workflowcontroller/v1alpha1"
+
 )
 
 var (
@@ -37,6 +41,8 @@ var (
 	kubeclientset *kubernetes.Clientset
 
 	helper chan string
+
+	customAPIPlatformWorkflowMap map[string]string
 )
 
 type WebhookServer struct {
@@ -76,6 +82,8 @@ func init() {
 	cfg, _ := rest.InClusterConfig()
 	kubeclientset, _ = kubernetes.NewForConfig(cfg)
 
+	customAPIPlatformWorkflowMap = make(map[string]string,0)
+
 	//TODO: Helper that tracks resource creation and puts labels/annotations
 	//once they are available.
 	//helper = make(chan string)
@@ -104,6 +112,12 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	fmt.Println("=== User ===")
 	fmt.Println(req.UserInfo.Username)
 	fmt.Println("=== User ===")
+
+	if req.Kind.Kind == "PlatformWorkflow" {
+		trackCustomAPIs(ar)
+	}
+
+	handleCustomAPIs(ar)
 
 	// TODO: Check if dependent resources have been created or not
 	// checkDependency(ar)
@@ -136,6 +150,96 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	}
 }
 
+func trackCustomAPIs(ar *v1beta1.AdmissionReview) {
+	req := ar.Request
+	body := req.Object.Raw
+
+	var platformWorkflow platformworkflowv1alpha1.PlatformWorkflow
+	err := json.Unmarshal(body, &platformWorkflow)
+	if err != nil {
+	    fmt.Println(err)	
+	}
+
+	platformWorkflowName, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("PlatformWorkflow:%s\n", platformWorkflowName)
+    customAPIs := platformWorkflow.Spec.CustomAPI
+    for _, customAPI := range customAPIs {
+    	kind := customAPI.Kind
+    	group := customAPI.Group
+    	version := customAPI.Version
+    	plural := customAPI.Plural
+    	chartURL := customAPI.ChartURL
+ 		fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s\n", kind, group, version, plural, chartURL)
+ 		customAPI := group + "/" + version + "/" + kind
+ 		customAPIPlatformWorkflowMap[customAPI] = platformWorkflowName
+    }
+}
+
+func handleCustomAPIs(ar *v1beta1.AdmissionReview) {
+	fmt.Printf("Inside handleCustomAPIs...")
+	req := ar.Request
+	body := req.Object.Raw
+	kind, err := jsonparser.GetUnsafeString(body, "kind")
+	if err != nil {
+		fmt.Errorf("Error:%s\n", err)
+	}
+	apiVersion, err := jsonparser.GetUnsafeString(body, "apiVersion")
+	if err != nil {
+		fmt.Errorf("Error:%s\n", err)
+	}
+	namespace := "default"
+	ns, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "namespace")
+	if ns != "" {
+		namespace = ns
+	}
+	fmt.Printf("Namespace:%s\n", namespace)
+	crname, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
+	fmt.Printf("CR Name:%s\n", crname)
+
+	overridesBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "spec")
+	overrides := string(overridesBytes)
+	fmt.Printf("Overrides:%s\n", overrides)
+
+	customAPI := apiVersion + "/" + kind
+	fmt.Printf("CustomAPI:%s\n", customAPI)
+	platformWorkflowName := customAPIPlatformWorkflowMap[customAPI]
+	if platformWorkflowName != "" {
+		fmt.Printf("PlatformWorkflow:%s\n", platformWorkflowName)
+
+		config, err := rest.InClusterConfig()
+	//	config, err := clientcmd.BuildConfigFromFlags("", "")
+		if err != nil {
+			panic(err.Error())
+		}
+
+		var sampleclientset platformworkflowclientset.Interface
+		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
+
+		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().PlatformWorkflows(namespace).Get(platformWorkflowName, metav1.GetOptions{})
+		fmt.Printf("PlatformWorkflow:%v\n", platformWorkflow1)
+		if err != nil {
+			fmt.Errorf("Error:%s\n", err)
+		}
+
+	    customAPIs := platformWorkflow1.Spec.CustomAPI
+    	for _, customAPI := range customAPIs {
+    		kind := customAPI.Kind
+    		group := customAPI.Group
+    		version := customAPI.Version
+    		plural := customAPI.Plural
+    		chartURL := customAPI.ChartURL
+    		chartName := customAPI.ChartName
+ 			fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s, ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
+ 			QueryDeployEndpoint(platformWorkflowName, crname, namespace, overrides)
+    	}
+	}
+}
+
+/*
 func checkDependency(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 
 	req := ar.Request
@@ -143,7 +247,9 @@ func checkDependency(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	name := req.Name
 	namespace := req.Namespace
 
-	dependencyCreated, dependentElements := CheckDependency(kind, name, namespace, req.Object.Raw)
+	//dependencyCreated, dependentElements := CheckDependency(kind, name, namespace, req.Object.Raw)
+    dependencyCreated := false
+	dependentElements := make([]string,0)
 	fmt.Printf("DependencyCreated:%v, dependencyElements:%v\n", dependencyCreated, dependentElements)
 
 	if !dependencyCreated {
@@ -164,6 +270,7 @@ func checkDependency(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	}
 	return nil
 }
+*/
 
 func getAccountIdentityAnnotationPatch(ar *v1beta1.AdmissionReview) patchOperation {
 
@@ -270,6 +377,7 @@ func getSpecResolvedPatch(ar *v1beta1.AdmissionReview) ([]patchOperation, *v1bet
 	return patchOperations, nil
 }
 
+/*
 func (whsvr *WebhookServer) mutate_prev(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	// Work-in-Progress: Below code is currently Work-in-progress hence
 	// returning above.
@@ -308,9 +416,11 @@ func (whsvr *WebhookServer) mutate_prev(ar *v1beta1.AdmissionReview) *v1beta1.Ad
 	fmt.Printf("Kind:%s, Name:%s, Namespace:%s\n", kind, name, namespace)
  
 	if kind == "PlatformStack" {
-		UpdatePlatformStacks(name, namespace, req.Object.Raw)
+		//UpdatePlatformStacks(name, namespace, req.Object.Raw)
 	} else {
-		dependencyCreated, dependentElements := CheckDependency(kind, name, namespace, req.Object.Raw)
+		//dependencyCreated, dependentElements := CheckDependency(kind, name, namespace, req.Object.Raw)
+		dependencyCreated := false
+		dependentElements := make([]string,0)
 		fmt.Printf("DependencyCreated:%v, dependencyElements:%v\n", dependencyCreated, dependentElements)
 
 		if !dependencyCreated {
@@ -472,6 +582,7 @@ func updateConfigMap(user string) {
 		}
 	}
 }
+*/
 
 func searchAnnotation(entries []Entry, instanceName, namespace, key string) (string, error) {
 	for i := 0; i < len(entries); i++ {

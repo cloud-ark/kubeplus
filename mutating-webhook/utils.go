@@ -32,8 +32,8 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
-	platformstackclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
-	platformstackv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/platformstackcontroller/v1alpha1"
+	//platformstackclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
+	//platformstackv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/platformstackcontroller/v1alpha1"
 
 )
 
@@ -128,6 +128,7 @@ func getResourceLabels(req []byte) map[string]string {
 	}
 }
 
+/*
 func CheckDependency(kind, name, namespace string, req []byte) (bool, []StackElementData) {
 	dependencySatisfied := true
 	dependentStackElementList := make([]StackElementData, 0)
@@ -232,6 +233,7 @@ func CheckDependency(kind, name, namespace string, req []byte) (bool, []StackEle
 	fmt.Printf("dependencySatisfied:%v, dependentStackElementList:%s\n", dependencySatisfied, dependentStackElementList)
 	return dependencySatisfied, dependentStackElementList
 }
+*/
 
 func checkIfResourceCreated(kind, name, namespace string) bool {
 	resourceCreated := true
@@ -250,6 +252,7 @@ func checkIfResourceCreated(kind, name, namespace string) bool {
 	return resourceCreated
 }
 
+/*
 func UpdatePlatformStacks(name, namespace string, req []byte) {
 	fmt.Printf(" ABC Name:%s, Namespace:%s\n", name, namespace)
 	var platformStack1 platformstackv1alpha1.PlatformStack
@@ -268,7 +271,9 @@ func UpdatePlatformStacks(name, namespace string, req []byte) {
 		platformStackMap[mapKey] = platformStackObj
 	}
 }
+*/
 
+/*
 func CheckAndHandlePlatformStackResource1(name, namespace string) {
 
 	fmt.Printf("Name:%s, Namespace:%s\n", name, namespace)
@@ -317,6 +322,7 @@ func CheckAndHandlePlatformStackResource1(name, namespace string) {
 
 	//fmt.Printf("PlatformStackMap:%v\n", platformStackMap)
 }
+*/
 
 //    You have two options to Update() this Deployment:
 //
@@ -980,10 +986,22 @@ func addAnnotation(labelkey, labelvalue, kind, resource, namespace string) {
 	}
 }
 
+func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides string) []byte {
+	args := fmt.Sprintf("platformworkflow=%s&customresource=%s&namespace=%s&overrides=%s", platformworkflow, customresource, namespace, overrides)
+	fmt.Printf("Inside QueryDeployEndpoint...\n")
+	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	fmt.Printf("After getServiceEndpoint...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/apis/platform-as-code/deploy?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
 func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
 	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, crdKindName, namespace)
 	fmt.Printf("Inside QueryCompositionEndpoint...\n")
-	serviceHost, servicePort := getServiceEndpoint()
+	serviceHost, servicePort := getServiceEndpoint("discovery-service")
 	fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/platform-as-code/v1/composition?%s", serviceHost, servicePort, args)
@@ -992,14 +1010,14 @@ func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
 	return body
 }
 
-func getServiceEndpoint() (string, string) {
+func getServiceEndpoint(servicename string) (string, string) {
 	fmt.Printf("..Inside getServiceEndpoint...\n")
 	namespace := "default" // Use the namespace in which kubeplus is deployed.
-	discoveryService := "discovery-service"
+	//discoveryService := "discovery-service"
 	cfg, _ := rest.InClusterConfig()
 	kubeClient, _ := kubernetes.NewForConfig(cfg)
 	serviceClient := kubeClient.CoreV1().Services(namespace)
-	discoveryServiceObj, _ := serviceClient.Get(discoveryService, metav1.GetOptions{})
+	discoveryServiceObj, _ := serviceClient.Get(servicename, metav1.GetOptions{})
 	host := discoveryServiceObj.Spec.ClusterIP
 	port := discoveryServiceObj.Spec.Ports[0].Port
 	stringPort := strconv.Itoa(int(port))
@@ -1007,6 +1025,7 @@ func getServiceEndpoint() (string, string) {
 	return host, stringPort
 }
 
+// Rename this function to a more generic name since we use it to trigger Custom Resource deployment as well.
 func queryKubeDiscoveryService(url1 string) []byte {
 	fmt.Printf("..inside queryKubeDiscoveryService")
 	u, err := url.Parse(url1)

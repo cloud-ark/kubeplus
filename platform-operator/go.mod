@@ -1,18 +1,47 @@
 module github.com/cloud-ark/kubeplus/platform-operator
 
-go 1.12
+go 1.14
 
 require (
+	github.com/PuerkitoBio/purell v1.1.0
+	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
+	github.com/davecgh/go-spew v1.1.1
+	github.com/emicklei/go-restful v2.8.0+incompatible
+	github.com/ghodss/yaml v1.0.0
+	github.com/go-openapi/jsonpointer v0.0.0-20180322222829-3a0015ad55fa
+	github.com/go-openapi/jsonreference v0.0.0-20180322222742-3fb327e6747d
+	github.com/go-openapi/spec v0.0.0-20180801175345-384415f06ee2
+	github.com/go-openapi/swag v0.0.0-20180715190254-becd2f08beaf
+	github.com/gogo/protobuf v1.1.1
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/imdario/mergo v0.3.7 // indirect
-	github.com/lib/pq v1.2.0
-	github.com/spf13/pflag v1.0.3
-	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
-	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
-	k8s.io/api v0.0.0-20190809220925-3ab596449d6f
+	github.com/golang/groupcache v0.0.0-20180513044358-24b0969c4cb7
+	github.com/golang/protobuf v1.2.0
+	github.com/google/btree v1.0.0
+	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
+	github.com/googleapis/gnostic v0.2.0
+	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7
+	github.com/hashicorp/golang-lru v0.0.0-20180201235237-0fb14efe8c47
+	github.com/imdario/mergo v0.3.6
+	github.com/json-iterator/go v1.1.5
+	github.com/lib/pq v1.0.0
+	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
+	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742
+	github.com/petar/GoLLRB v0.0.0-20130427215148-53be0d36a84c
+	github.com/peterbourgon/diskv v2.0.1+incompatible
+	github.com/spf13/pflag v1.0.2
+	golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac
+	golang.org/x/net v0.0.0-20180826012351-8a410e7b638d
+	golang.org/x/sys v0.0.0-20180824143301-4910a1d54f87
+	golang.org/x/text v0.3.0
+	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2
+	golang.org/x/tools v0.0.0-20180826000951-f6ba57429505
+	gopkg.in/inf.v0 v0.9.1
+	gopkg.in/yaml.v2 v2.2.1
+	k8s.io/api v0.0.0-20180824172530-dd5c735cbff9
 	k8s.io/apiextensions-apiserver v0.0.0-20190810101755-ebc439d6a67b
-	k8s.io/apimachinery v0.0.0-20190809020650-423f5d784010
-	k8s.io/client-go v0.0.0-20190809221226-62f300f03a5f
-	k8s.io/code-generator v0.0.0-20190808180452-d0071a119380
-	k8s.io/gengo v0.0.0-20190128074634-0689ccc1d7d6
+	k8s.io/apimachinery v0.0.0-20180821005732-488889b0007f
+	k8s.io/client-go v8.0.0+incompatible
+	k8s.io/gengo v0.0.0-20180813235010-4242d8e6c5db
+	k8s.io/kube-openapi v0.0.0-20180731170545-e3762e86a74c
 )

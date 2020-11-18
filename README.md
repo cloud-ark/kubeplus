@@ -149,9 +149,9 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
 - KubePlus kubectl commands:
 
 ```
-   $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins-latest.tar.gz
-   $ gunzip kubeplus-kubectl-plugins-latest.tar.gz
-   $ tar -xvf kubeplus-kubectl-plugins-latest.tar
+   $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
+   $ gunzip kubeplus-kubectl-plugins.tar.gz
+   $ tar -xvf kubeplus-kubectl-plugins.tar
    $ export KUBEPLUS_HOME=`pwd`
    $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
    $ kubectl kubeplus commands

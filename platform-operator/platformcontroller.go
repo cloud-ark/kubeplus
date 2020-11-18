@@ -8,6 +8,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+    apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 
 	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +28,10 @@ import (
 	platformstackscheme "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned/scheme"
 	informers "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/informers/externalversions"
 	listers "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/listers/workflowcontroller/v1alpha1"
+
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+
+	"k8s.io/client-go/rest"
 )
 
 const controllerAgentName = "platformstack-controller"
@@ -334,13 +339,72 @@ func (c *Controller) syncHandler(key string) error {
 			}
 		}
 	}
-
-
 	for key, value := range labelSelector {
 		fmt.Printf("Key:%s, Value:%s\n", key, value)
 	}
 
+	customAPIs := foo.Spec.CustomAPI
+	fmt.Printf("New APIs:%s\n", customAPIs)
+	for _, customAPI := range customAPIs {
+		kind := customAPI.Kind
+		group := customAPI.Group
+		version := customAPI.Version
+		plural := customAPI.Plural
+		fmt.Printf("Kind:%s, Version:%s Group:%s, Plural:%s\n", kind, version, group, plural)
+		// Check if CRD is present or not. Create it only if it is not present.
+		createCRD(kind, version, group, plural)
+	}
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
+	return nil
+}
+
+func createCRD(kind, version, group, plural string) error {
+	fmt.Printf("Inside createCRD\n")
+	cfg, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	crdClient, _ := apiextensionsclientset.NewForConfig(cfg)
+
+	crd := &apiextensionsv1beta1.CustomResourceDefinition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: plural + "." + group,
+		},
+		Spec: apiextensionsv1beta1.CustomResourceDefinitionSpec{
+			Group: group,
+			Version: version,
+			Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
+				Plural: plural,
+				Kind: kind,
+			},
+		},
+	}
+
+	_, err1 := crdClient.CustomResourceDefinitions().Create(crd)
+	if err1 != nil {
+		panic(err1.Error())
+	}
+
+	crdList, err := crdClient.CustomResourceDefinitions().List(metav1.ListOptions{})
+	if err != nil {
+		fmt.Errorf("Error:%s\n", err)
+		return err
+	}
+	for _, crd := range crdList.Items {
+		crdName := crd.ObjectMeta.Name
+		crdObj, err := crdClient.CustomResourceDefinitions().Get(crdName, metav1.GetOptions{})
+		if err != nil {
+			fmt.Errorf("Error:%s\n", err)
+			return err
+		}
+		group := crdObj.Spec.Group
+		version := crdObj.Spec.Version
+		endpoint := "apis/" + group + "/" + version
+		kind := crdObj.Spec.Names.Kind
+		plural := crdObj.Spec.Names.Plural
+		fmt.Printf("Kind:%s, Group:%s, Version:%s, Endpoint:%s, Plural:%s\n",kind, group, version, endpoint, plural)
+	}
 	return nil
 }
 

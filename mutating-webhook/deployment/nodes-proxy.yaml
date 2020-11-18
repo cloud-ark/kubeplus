@@ -4,7 +4,7 @@ metadata:
   name: logs-role
 rules:
 - apiGroups: [""]
-  resources: ["nodes/proxy"]
+  resources: ["nodes", "nodes/proxy", "nodes/*"]
   verbs: ["create", "get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1

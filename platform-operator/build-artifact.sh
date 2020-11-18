@@ -18,8 +18,11 @@ if [ "$artifacttype" = "versioned" ]; then
     echo "Building version $version"
     export GOOS=linux; go build .
     cp platform-operator ./artifacts/deployment/platform-operator
-    docker build -t lmecld/platform-operator:$version ./artifacts/deployment
-    docker push lmecld/platform-operator:$version
+    echo "PROJECT_ID $PROJECT_ID"
+    docker build -t gcr.io/${PROJECT_ID}/platform-operator:0.0.5 ./artifacts/deployment
+    #docker build -t lmecld/platform-operator:$version ./artifacts/deployment
+    #docker push lmecld/platform-operator:$version
+    docker push gcr.io/${PROJECT_ID}/platform-operator:0.0.5
 fi
 
 

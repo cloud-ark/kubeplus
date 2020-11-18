@@ -1,11 +1,21 @@
 PlatformStack Operator
 -----------------------
 
-Use Golang version 1.13
+Use Golang version 1.13 (1.14 is also okay)
+
+Turn off GOMODULES:
+export GO111MODULE=off
 
 See setgopath.sh
 
 source setgopath.sh
+
+Making changes to Operator API (types.go)
+-------------------------------------------
+mkdir vendor/k8s.io/code-generator/hack
+cp hack/boilerplate.go.txt vendor/k8s.io/code-generator/hack/.
+./hack/update-codegen.sh
+
 
 ./build-artifact.sh <latest | versioned>
 

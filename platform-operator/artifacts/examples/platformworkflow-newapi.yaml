@@ -1,0 +1,13 @@
+apiVersion: workflows.kubeplus/v1alpha1
+kind: PlatformWorkflow
+metadata:
+  name: mysqlcluster
+spec:
+  customAPI:
+    - kind: MysqlClusterStack
+      group: platformapi.kubeplus
+      version: v1alpha1
+      plural: mysqlclusterstacks
+      chartURL: https://github.com/cloud-ark/operatorcharts/blob/master/mysqlcluster-0.1.0.tgz?raw=true
+      chartName: mysqlcluster
+
