@@ -32,7 +32,7 @@ class CRMetrics(object):
 
 	def _get_composition(self, custom_resource, custom_res_instance, namespace):
 		platf = platform.system()
-		kubeplus_home = os.getenv('KUBEPLUS_HOME')
+		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
 		cmd = ''
 		if platf == "Darwin":
 			cmd = kubeplus_home + '/plugins/kubediscovery-macos composition ' + custom_resource + ' ' + custom_res_instance + ' ' + namespace
@@ -376,7 +376,7 @@ class CRMetrics(object):
 	def _get_pods_for_cr_connections(self, cr, cr_instance, namespace):
 		pod_list = []
 		platf = platform.system()
-		kubeplus_home = os.getenv('KUBEPLUS_HOME')
+		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
 		cmd = ''
 		if platf == "Darwin":
 			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o flat'
@@ -399,7 +399,7 @@ class CRMetrics(object):
 	def _get_pods_for_service(self, service_name, namespace):
 		pod_list = []
 		platf = platform.system()
-		kubeplus_home = os.getenv('KUBEPLUS_HOME')
+		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
 		cmd = ''
 		if platf == "Darwin":
 			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Service ' + service_name + ' ' + namespace + ' -o json'
@@ -587,7 +587,7 @@ class CRMetrics(object):
 	def _get_pods_from_connections_pod(self, pod_name, namespace):
 		pod_list = []
 		platf = platform.system()
-		kubeplus_home = os.getenv('KUBEPLUS_HOME')
+		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
 		cmd = ''
 		if platf == "Darwin":
 			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Pod ' + ' ' + pod_name + ' ' + namespace + ' -o json'
