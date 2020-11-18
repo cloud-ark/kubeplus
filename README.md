@@ -168,11 +168,16 @@ KubePlus is developed as a part of CloudARK's Platform-as-Code practice. Kuberne
 
 Platform-as-Code practice consists of:
 - Operator Maturity Model:  Operator readiness guidelines for multi-tenant and multi-Operator environment
-- KubePlus: Generic tooling to simplify inventory and charge-back for application stacks created using Operators.
+- KubePlus kubectl plugins: Generic tooling to simplify inventory and charge-back for application stacks created using Operators.
+- KubePlus PlatformWorkflow Operator: Publish and monitor Platform Workflows
 
 ## Operator Maturity Model
 
 As DevOps team build their custom PaaSes using community or in house developed Operators, they need a set of guidelines for Operator development or evaluation. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-tenant and multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators today for curating community Operators towards building their custom PaaSes.
+
+## PlatformWorkflow Operator
+
+Platform Workflow Operator enables publishing new Services in a cluster. Cluster Admins use this Operator to govern their cluster use by defining and registering opinionated Services with appropriate guard rails. The new Services are registered as new Custom Resources. Application development teams consume the Services by creating instances of these Custom Resources. [Try an example](https://github.com/cloud-ark/kubeplus/tree/master/examples/platform-workflow). 
 
 
 ## Contact
