@@ -534,7 +534,7 @@ class CRMetrics(object):
 
 		# TODO: Include all the kinds that do not create a Pod.
 		skipKinds = ['ConfigMap', 'CustomResourceDefinition', 'ClusterRole', 'ClusterRoleBinding',
-					 'Service', 'ServiceAccount', 'Role', 'RoleBinding']
+					 'Service', 'ServiceAccount', 'Role', 'RoleBinding', 'Secret']
 		pod_list_to_return = []
 		kind = ''
 		instance = ''
