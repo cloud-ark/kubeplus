@@ -1,40 +1,24 @@
-# k8s-mutating-webhook
-
-## Status
-In progress
+# KubePlus Mutating webhook
 
 ## Description
-Works kind of like helm, except at runtime it modifies and replaces Fn::ImportValue stuff from annotations of other Custom resource objects.
-This is similar to AWS CloudFormation, and is aiming to give operators better interopability.
+KubePlus mutating webhook performs following functions:
+- track user/account who is creating Kubernetes resources (the identity of the creator is added as an annotation on the resource spec)
+- create instances of custom services registered as Custom Resources in a cluster
+- resolve binding functions (ImportValue, AddLabel, AddAnnotations)
 
 
-## Steps
+## Development steps
 
-1. Use go 1.12
-   - GOROOT=/../../go1.12.6/go/
+1. Setup:
+   - Use go 1.13
+    - source setgopath.sh
 
 2. Build:
-   make docker
+   - Update Docker registry coordinates in Makefile (docker and docker1 rules)
+   - make docker
 
-3. Deploy CRD Web hook
+3. Deploy:
    - make deploy
 
-Development:
-
-1. Generate certs
-    `make gen-certs`
-2. Deploy Mutating Webhook Using Docker
-    `dep ensure`
-    Set environment variables
-    ${PROJECT_ID} -> gcr project id
-    ${IMAGE_NAME} -> crd-hook
-    `make docker`
-    `make deploy`
-3. Install Operators
-    `make install-operators`
-4. Deploy application
-    `make cluster`
-    `make moodle`
-5. Clean up
-delete webhook: `make delete`
-delete instances: `make delall`
+4. Delete:
+  - make delete
