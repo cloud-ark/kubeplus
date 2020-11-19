@@ -1,37 +1,46 @@
-PlatformStack Operator
------------------------
+# PlatformWorkflow Operator
 
-Use Golang version 1.13 (1.14 is also okay)
+## Description
 
-Turn off GOMODULES:
-export GO111MODULE=off
+Platform Workflow Operator enables publishing new Services in a cluster. Cluster Admins use this Operator to govern their cluster use by defining and registering opinionated Services with appropriate guard rails. The new Services are registered
+as new Custom Resources. Application development teams consume the Services by creating instances of these Custom Resources.
 
-See setgopath.sh
+## Development steps
 
-source setgopath.sh
+1. Setup:
+   Use Golang version 1.13 (1.14 is also okay)
 
-Making changes to Operator API (types.go)
--------------------------------------------
-mkdir vendor/k8s.io/code-generator/hack
-cp hack/boilerplate.go.txt vendor/k8s.io/code-generator/hack/.
-./hack/update-codegen.sh
+   Turn off GOMODULES:
+   export GO111MODULE=off
 
+   See setgopath.sh
+   source setgopath.sh
 
-./build-artifact.sh <latest | versioned>
+   export GOPATH=<Path to your Go src directory>
 
-Update versions.txt before creating new versioned artifact.
+2. Modify:
+   - Making changes to Operator API (types.go)
+   - mkdir vendor/k8s.io/code-generator/hack
+   - cp hack/boilerplate.go.txt vendor/k8s.io/code-generator/hack/.
+   - ./hack/update-codegen.sh
 
-Follow semver for tagging Docker images
+3. Build:
+   Update versions.txt before creating new versioned artifact.
 
-Update artifacts/deployment/deployment.yaml 
+  ./build-artifact.sh <latest | versioned>
 
-**DO NOT** create vendor directory running: go mod vendor
+   Follow semver for tagging Docker images
 
-Vendoring seems to over-ride module versions defined in go.mod and
-brings in newer versions. This breaks the build.
-For building the code we need precisely those versions of the modules
-defined in go.mod.
+   Update artifacts/deployment/deployment.yaml 
 
-The modules will be downloaded in following location:
-$GOPATH/mod/
+   **DO NOT** create vendor directory running: go mod vendor
+
+   Vendoring seems to over-ride module versions defined in go.mod and
+   brings in newer versions. This breaks the build.
+   For building the code we need precisely those versions of the modules
+   defined in go.mod.
+
+   The modules will be downloaded in following location:
+   $GOPATH/mod/
+
 
