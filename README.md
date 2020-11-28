@@ -49,11 +49,11 @@ KubePlus leverages knowledge of relationships between Kubernetes built-in resour
 
 **1. kubectl composition**
 
-- ``kubectl composition``: Provides information about sub resources created for a Kubernetes resource instance (custom or built-in).
+- ``kubectl composition``: Provides information about sub resources created for a Kubernetes resource instance (custom or built-in). Essentially, 'kubectl composition' shows ownerReference based relationships.
 
 **2. kubectl connections**
 
-- ``kubectl connections``: Provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via labels / annotations / spec properties / owner references.
+- ``kubectl connections``: Provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via labels, annotations, spec properties and owner references.
 
 **3. kubectl metrics**
 
@@ -98,6 +98,8 @@ This identifies the set of resources that will be created by the Operator as par
 </p>
 
 Once these annotations are added to the respective CRDs by the cluster administrator, above resource topology can be discovered by DevOps teams using ``kubectl connections`` plugin as follows:
+
+Note use the kind name as registered with the cluster (e.g.: Deployment or Service and not deployment or service)
 
 ``` 
 $ kubectl connections Service wordpress namespace1
