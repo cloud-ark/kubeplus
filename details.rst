@@ -44,7 +44,7 @@ KubePlus provides discovery commands, binding functions, and an orchestration me
 
 KubePlus Components
 ----------------------
-KubePlus tooling is made up of - CRD Annotations, client-side kubectl plugins, and server-side components (binding functions and PlatformWorkflow CRD).
+KubePlus tooling is made up of - CRD Annotations, client-side kubectl plugins, and server-side components (binding functions and PlatformWorkflow Operator).
 
 
 CRD annotations
@@ -207,7 +207,8 @@ Formal grammar of ``ImportValue``, ``AddLabel``, ``AddAnnotation`` functions is 
 
 PlatformWorkflow Operator
 --------------------------
-Creating workflows requires treating the set of resources representing the workflow as a unit. For this purpose, KubePlus provides a Custom Resource of its own - PlatformWorkflow. This Custom Resource enables DevOps/Platform engineers to define all the resources in a workflow as a unit along with the inter-dependencies between them. The dependency information is used for ensuring robustness and security of the workflows which includes, preventing out-of-order creation of resources and ensuring that resources that are still in use cannot be deleted.
+Creating workflows requires treating the set of resources representing the workflow as a unit. For this purpose, KubePlus provides a Custom Resource of its own - ResourceComposition. This Custom Resource enables DevOps/Platform engineers to 
+register new services in a cluster as new custom APIs.
 
 PlatformWorkflow Operator does not actually deploy any resources defined in a workflow. Resource creation is done by DevOps/Platform engineers as usual using 'kubectl'/'helm'.
 

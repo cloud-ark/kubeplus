@@ -17,4 +17,4 @@ In our experience the information that is needed for correctly using Custom Reso
 KubePlus resource CRD annotations and kubectl plugins provide a way for
 Operator developers to expose additional information that cannot be accommodated through Custom Resource Spec properties alone.
 
-For orchestration, there exists Application CRD in the community. Conceptually, KubePlus's PlatformWorkflow CRD is similar to it, in that both provide a way to define a stack of resources. Our goal with PlatformWorkflow CRD is to use it for orchestration functions such as ordering, label propagation, etc. Application CRD's focus is mainly on visualization of an application stack. For visualization we provide client-side kubectl plugins.
+For orchestration, there exists Application CRD in the community. Conceptually, KubePlus's PlatformWorkflow Operator is similar to it, in that both provide a way to define a stack of resources. Our goal with PlatformWorkflow Operator is to use it for resource composition, policy enforcement, monitoring. Application CRD's focus is mainly on visualization of an application stack. For visualization we provide client-side kubectl plugins.
