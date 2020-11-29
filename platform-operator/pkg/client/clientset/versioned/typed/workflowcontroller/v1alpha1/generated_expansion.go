@@ -18,4 +18,6 @@ limitations under the License.
 
 package v1alpha1
 
-type PlatformWorkflowExpansion interface{}
+type ResourceCompositionExpansion interface{}
+
+type ResourcePolicyExpansion interface{}

@@ -18,10 +18,18 @@ limitations under the License.
 
 package v1alpha1
 
-// PlatformWorkflowListerExpansion allows custom methods to be added to
-// PlatformWorkflowLister.
-type PlatformWorkflowListerExpansion interface{}
+// ResourceCompositionListerExpansion allows custom methods to be added to
+// ResourceCompositionLister.
+type ResourceCompositionListerExpansion interface{}
 
-// PlatformWorkflowNamespaceListerExpansion allows custom methods to be added to
-// PlatformWorkflowNamespaceLister.
-type PlatformWorkflowNamespaceListerExpansion interface{}
+// ResourceCompositionNamespaceListerExpansion allows custom methods to be added to
+// ResourceCompositionNamespaceLister.
+type ResourceCompositionNamespaceListerExpansion interface{}
+
+// ResourcePolicyListerExpansion allows custom methods to be added to
+// ResourcePolicyLister.
+type ResourcePolicyListerExpansion interface{}
+
+// ResourcePolicyNamespaceListerExpansion allows custom methods to be added to
+// ResourcePolicyNamespaceLister.
+type ResourcePolicyNamespaceListerExpansion interface{}

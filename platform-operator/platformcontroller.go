@@ -60,7 +60,7 @@ type Controller struct {
 
 	deploymentsLister appslisters.DeploymentLister
 	deploymentsSynced cache.InformerSynced
-	platformStacksLister        listers.PlatformWorkflowLister
+	platformStacksLister        listers.ResourceCompositionLister
 	platformStacksSynced        cache.InformerSynced
 
 	// workqueue is a rate limited work queue. This is used to queue work to be
@@ -84,7 +84,7 @@ func NewPlatformController(
 	// obtain references to shared index informers for the Deployment and PlatformStack
 	// types.
 	deploymentInformer := kubeInformerFactory.Apps().V1().Deployments()
-	platformStackInformer := platformstackInformerFactory.Workflows().V1alpha1().PlatformWorkflows()
+	platformStackInformer := platformstackInformerFactory.Workflows().V1alpha1().ResourceCompositions()
 
 	// Create event broadcaster
 	// Add platformstack-controller types to the default Kubernetes Scheme so Events can be
@@ -112,8 +112,8 @@ func NewPlatformController(
 	platformStackInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueFoo,
 		UpdateFunc: func(old, new interface{}) {
-			newDepl := new.(*platformworkflowv1alpha1.PlatformWorkflow)
-			oldDepl := old.(*platformworkflowv1alpha1.PlatformWorkflow)
+			newDepl := new.(*platformworkflowv1alpha1.ResourceComposition)
+			oldDepl := old.(*platformworkflowv1alpha1.ResourceComposition)
 			//fmt.Println("New Version:%s", newDepl.ResourceVersion)
 			//fmt.Println("Old Version:%s", oldDepl.ResourceVersion)
 			if newDepl.ResourceVersion == oldDepl.ResourceVersion {
@@ -268,7 +268,7 @@ func (c *Controller) handleObject(obj interface{}) {
 			return
 		}
 
-		foo, err := c.platformStacksLister.PlatformWorkflows(object.GetNamespace()).Get(ownerRef.Name)
+		foo, err := c.platformStacksLister.ResourceCompositions(object.GetNamespace()).Get(ownerRef.Name)
 		if err != nil {
 			glog.V(4).Infof("ignoring orphaned object '%s' of foo '%s'", object.GetSelfLink(), ownerRef.Name)
 			return
@@ -302,7 +302,7 @@ func (c *Controller) syncHandler(key string) error {
 	}
 
 	// Get the Foo resource with this namespace/name
-	foo, err := c.platformStacksLister.PlatformWorkflows(namespace).Get(name)
+	foo, err := c.platformStacksLister.ResourceCompositions(namespace).Get(name)
 	if err != nil {
 		// The Foo resource may no longer exist, in which case we stop
 		// processing.
@@ -313,7 +313,7 @@ func (c *Controller) syncHandler(key string) error {
 		return err
 	}
 
-	labelSelector := foo.Spec.LabelSelector
+	/*labelSelector := foo.Spec.LabelSelector
 
 	fmt.Printf("LabelSelector:%v\n", labelSelector)
 
@@ -341,19 +341,30 @@ func (c *Controller) syncHandler(key string) error {
 	}
 	for key, value := range labelSelector {
 		fmt.Printf("Key:%s, Value:%s\n", key, value)
-	}
+	}*/
 
-	customAPIs := foo.Spec.CustomAPI
-	fmt.Printf("New APIs:%s\n", customAPIs)
-	for _, customAPI := range customAPIs {
-		kind := customAPI.Kind
-		group := customAPI.Group
-		version := customAPI.Version
-		plural := customAPI.Plural
-		fmt.Printf("Kind:%s, Version:%s Group:%s, Plural:%s\n", kind, version, group, plural)
+	//customAPIs := foo.Spec.NewResource.Resource.Kind
+	//fmt.Printf("New APIs:%s\n", customAPIs)
+	//for _, customAPI := range customAPIs {
+	fmt.Printf("ABC\n")
+	fmt.Printf("%v\n", foo.Spec)
+	newRes := foo.Spec.NewResource
+	fmt.Printf("DEF\n")
+	fmt.Printf("%v\n", newRes)
+	res := newRes.Resource
+	fmt.Printf("GHI\n")
+	fmt.Printf("%v\n", res)
+	kind := foo.Spec.NewResource.Resource.Kind
+	group := foo.Spec.NewResource.Resource.Group
+	version := foo.Spec.NewResource.Resource.Version
+	plural := foo.Spec.NewResource.Resource.Plural
+	chartURL := foo.Spec.NewResource.ChartURL
+	chartName := foo.Spec.NewResource.ChartName
+	fmt.Printf("Kind:%s, Version:%s Group:%s, Plural:%s\n", kind, version, group, plural)
+	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
 		// Check if CRD is present or not. Create it only if it is not present.
-		createCRD(kind, version, group, plural)
-	}
+	createCRD(kind, version, group, plural)
+	//}
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
 }

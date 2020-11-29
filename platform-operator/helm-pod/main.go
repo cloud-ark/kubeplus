@@ -119,11 +119,39 @@ func getMetrics(request *restful.Request, response *restful.Response) {
 	ok, helmreleaseMetrics := executeExecCall(cmdRunnerPod, namespace, metricsCmd)
 	if ok {
 		fmt.Printf("%v\n", helmreleaseMetrics)
+		// WIP - convert metrics from helmrelease to custom resource
+		//prometheusMetrics := getPrometheusMetrics(kind, customresource, namespace, helmreleaseMetrics)
 		response.Write([]byte(helmreleaseMetrics))
 	} else {
 		response.Write([]byte{})
 	}
 }
+
+/*
+func getPrometheusMetrics(kind, customresource, namespace, helmreleaseMetrics string) string {
+	var metrics_helm_release map[string]interface{}
+	err := json.Unmarshal([]byte(helmreleaseMetrics), &metrics_helm_release)
+	if err != nil {
+    	panic(err)
+	}
+
+	cpu = metrics_helm_release["cpu"]
+	memory = metrics_helm_release["memory"]
+	storage = metrics_helm_release["storage"]
+	num_of_pods = metrics_helm_release["num_of_pods"]
+	num_of_containers = metrics_helm_release["num_of_containers"]
+
+	millis := time.Now()
+    cpuMetrics = "cpu{kind="+kind+",customresoure="+customresource+",namespace="+namespace+"} " + str(cpu) + " "  + str(millis)
+    memoryMetrics = "memory{kind="+kind+",customresoure="+customresource+",namespace="+namespace+"} " + str(memory) + " " + str(millis)
+    storageMetrics = "storage{kind="+kind+",customresoure="+customresource+",namespace="+namespace+"} " + str(storage) + " " + str(millis)
+
+	//numOfPods = 'pods{helmrelease="'+release_name+'"} ' + str(num_of_pods) + ' ' + str(millis)
+	//numOfContainers = 'containers{helmrelease="'+release_name+'"} ' + str(num_of_containers) + ' ' + str(millis)
+	metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers
+	return metricsToReturn
+}
+*/
 
 func getReleaseName(kind, customresource, namespace string) string {
 	helmrelease := ""
@@ -173,7 +201,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	namespace := request.QueryParameter("namespace")
 	overrides := request.QueryParameter("overrides")
 	fmt.Printf("Custom Resource:%s\n", customresource)
-	fmt.Printf("PlatformWorkflow:%s\n", platformWorkflowName)
+	fmt.Printf("Resource Composition:%s\n", platformWorkflowName)
 	fmt.Printf("Namespace:%s\n", namespace)
 	fmt.Printf("Overrides:%s\n", overrides)
 
@@ -186,18 +214,18 @@ func deployChart(request *restful.Request, response *restful.Response) {
 		var sampleclientset platformworkflowclientset.Interface
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
-		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().PlatformWorkflows(namespace).Get(platformWorkflowName, metav1.GetOptions{})
+		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Get(platformWorkflowName, metav1.GetOptions{})
 		fmt.Printf("PlatformWorkflow:%v\n", platformWorkflow1)
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
 		}
 
-	    customAPIs := platformWorkflow1.Spec.CustomAPI
-    	for _, customAPI := range customAPIs {
-    		kind := customAPI.Kind
-    		group := customAPI.Group
-    		version := customAPI.Version
-    		plural := customAPI.Plural
+	    customAPI := platformWorkflow1.Spec.NewResource
+    	//for _, customAPI := range customAPIs {
+    		kind := customAPI.Resource.Kind
+    		group := customAPI.Resource.Group
+    		version := customAPI.Resource.Version
+    		plural := customAPI.Resource.Plural
     		chartURL := customAPI.ChartURL
     		chartName := customAPI.ChartName
  			fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s\n ChartName:%s", kind, group, version, plural, chartURL, chartName)
@@ -272,7 +300,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 				}
 	 			}
 	    	}
- 		}
+ 		//}
 	}
 }
 
