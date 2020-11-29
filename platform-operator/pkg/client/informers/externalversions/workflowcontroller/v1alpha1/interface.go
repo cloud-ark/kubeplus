@@ -24,8 +24,10 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
-	// PlatformWorkflows returns a PlatformWorkflowInformer.
-	PlatformWorkflows() PlatformWorkflowInformer
+	// ResourceCompositions returns a ResourceCompositionInformer.
+	ResourceCompositions() ResourceCompositionInformer
+	// ResourcePolicies returns a ResourcePolicyInformer.
+	ResourcePolicies() ResourcePolicyInformer
 }
 
 type version struct {
@@ -39,7 +41,12 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// PlatformWorkflows returns a PlatformWorkflowInformer.
-func (v *version) PlatformWorkflows() PlatformWorkflowInformer {
-	return &platformWorkflowInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+// ResourceCompositions returns a ResourceCompositionInformer.
+func (v *version) ResourceCompositions() ResourceCompositionInformer {
+	return &resourceCompositionInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// ResourcePolicies returns a ResourcePolicyInformer.
+func (v *version) ResourcePolicies() ResourcePolicyInformer {
+	return &resourcePolicyInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

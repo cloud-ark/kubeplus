@@ -28,8 +28,12 @@ type FakeWorkflowsV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeWorkflowsV1alpha1) PlatformWorkflows(namespace string) v1alpha1.PlatformWorkflowInterface {
-	return &FakePlatformWorkflows{c, namespace}
+func (c *FakeWorkflowsV1alpha1) ResourceCompositions(namespace string) v1alpha1.ResourceCompositionInterface {
+	return &FakeResourceCompositions{c, namespace}
+}
+
+func (c *FakeWorkflowsV1alpha1) ResourcePolicies(namespace string) v1alpha1.ResourcePolicyInterface {
+	return &FakeResourcePolicies{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate

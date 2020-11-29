@@ -1,0 +1,6 @@
+apiVersion: workflows.kubeplus/v1alpha1
+kind: ResourcePolicy 
+metadata:
+  name: mysqlcluster-policy
+spec:
+  customResourceKind: MysqlCluster

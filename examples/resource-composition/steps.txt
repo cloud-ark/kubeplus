@@ -1,0 +1,31 @@
+Compose Custom Platform Workflows:
+-----------------------------------
+
+Compose/Create new Resource (done by DevOps team):
+-------------------------------------------------
+1. more newresource.yaml
+2. kubectl get crds | grep "mysqlservices.platformapi.kubeplus"
+3. kubectl create -f newresource.yaml
+4. kubectl get crds | grep "mysqlservices.platformapi.kubeplus"
+
+
+Instantiate Platform API (done by Application team):
+----------------------------------------------------
+1. more mystack1.yaml
+2. kubectl create -f mystack1.yaml
+3. kubectl get pods
+4. helm list
+5. MASTER_IP=Get IP Address of the cluster API server
+6. NODEPORT=`kubectl get svc | grep kubeplus | awk '{print $5}' | cut -d ':' -f 2 | cut -d '/' -f 1`
+7. curl -kv "http://$MASTER_IP:$NODEPORT/apis/platform-as-code/metrics?kind=MysqlService&customresource=appdb&namespace=default"
+8. kubectl create -f mystack2.yaml
+9. kubectl get pods
+10. helm list
+
+Demo Clean up:
+--------------
+1. kubectl delete -f mystack1.yaml
+2. kubectl delete -f mystack2.yaml
+3. helm list | grep mysqlcluster-0.1.0 | awk '{print $1}' | xargs helm delete
+4. kubectl delete crds mysqlservices.platformapi.kubeplus
+5. kubectl delete -f newresource.yaml

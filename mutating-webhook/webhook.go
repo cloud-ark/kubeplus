@@ -113,11 +113,15 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	fmt.Println(req.UserInfo.Username)
 	fmt.Println("=== User ===")
 
-	if req.Kind.Kind == "PlatformWorkflow" {
+	if req.Kind.Kind == "ResourceComposition" {
 		trackCustomAPIs(ar)
 	}
 
 	handleCustomAPIs(ar)
+
+	if req.Kind.Kind == "Pod" {
+		applyPolicies(ar)
+	}
 
 	// TODO: Check if dependent resources have been created or not
 	// checkDependency(ar)
@@ -150,11 +154,23 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	}
 }
 
+func applyPolicies(ar *v1beta1.AdmissionReview) {
+	req := ar.Request
+	//body := req.Object.Raw
+
+	podName, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("Pod Name:%s\n", podName)
+}
+
 func trackCustomAPIs(ar *v1beta1.AdmissionReview) {
 	req := ar.Request
 	body := req.Object.Raw
 
-	var platformWorkflow platformworkflowv1alpha1.PlatformWorkflow
+	var platformWorkflow platformworkflowv1alpha1.ResourceComposition
 	err := json.Unmarshal(body, &platformWorkflow)
 	if err != nil {
 	    fmt.Println(err)	
@@ -165,18 +181,24 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("PlatformWorkflow:%s\n", platformWorkflowName)
-    customAPIs := platformWorkflow.Spec.CustomAPI
-    for _, customAPI := range customAPIs {
-    	kind := customAPI.Kind
-    	group := customAPI.Group
-    	version := customAPI.Version
-    	plural := customAPI.Plural
-    	chartURL := customAPI.ChartURL
- 		fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s\n", kind, group, version, plural, chartURL)
- 		customAPI := group + "/" + version + "/" + kind
- 		customAPIPlatformWorkflowMap[customAPI] = platformWorkflowName
-    }
+	fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
+    /*customAPIs := platformWorkflow.Spec.CustomAPI
+    //for _, customAPI := range customAPIs {
+    kind := customAPI.Kind
+    group := customAPI.Group
+    version := customAPI.Version
+    plural := customAPI.Plural
+    chartURL := customAPI.ChartURL*/
+	kind := platformWorkflow.Spec.NewResource.Resource.Kind
+	group := platformWorkflow.Spec.NewResource.Resource.Group
+	version := platformWorkflow.Spec.NewResource.Resource.Version
+	plural := platformWorkflow.Spec.NewResource.Resource.Plural
+	chartURL := platformWorkflow.Spec.NewResource.ChartURL
+	chartName := platformWorkflow.Spec.NewResource.ChartName
+ 	fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
+ 	customAPI := group + "/" + version + "/" + kind
+ 	customAPIPlatformWorkflowMap[customAPI] = platformWorkflowName
+    //}
 }
 
 func handleCustomAPIs(ar *v1beta1.AdmissionReview) {
@@ -208,7 +230,7 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) {
 	fmt.Printf("CustomAPI:%s\n", customAPI)
 	platformWorkflowName := customAPIPlatformWorkflowMap[customAPI]
 	if platformWorkflowName != "" {
-		fmt.Printf("PlatformWorkflow:%s\n", platformWorkflowName)
+		fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
 
 		config, err := rest.InClusterConfig()
 	//	config, err := clientcmd.BuildConfigFromFlags("", "")
@@ -219,23 +241,30 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) {
 		var sampleclientset platformworkflowclientset.Interface
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
-		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().PlatformWorkflows(namespace).Get(platformWorkflowName, metav1.GetOptions{})
-		fmt.Printf("PlatformWorkflow:%v\n", platformWorkflow1)
+		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Get(platformWorkflowName, metav1.GetOptions{})
+		fmt.Printf("ResourceComposition:%v\n", platformWorkflow1)
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
 		}
 
-	    customAPIs := platformWorkflow1.Spec.CustomAPI
-    	for _, customAPI := range customAPIs {
-    		kind := customAPI.Kind
+	    /*customAPIs := platformWorkflow1.Spec.CustomAPI
+    	//for _, customAPI := range customAPIs {
+		    kind := customAPI.Kind
     		group := customAPI.Group
     		version := customAPI.Version
     		plural := customAPI.Plural
     		chartURL := customAPI.ChartURL
     		chartName := customAPI.ChartName
- 			fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s, ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
- 			QueryDeployEndpoint(platformWorkflowName, crname, namespace, overrides)
-    	}
+    	//}*/
+
+		kind := platformWorkflow1.Spec.NewResource.Resource.Kind
+		group := platformWorkflow1.Spec.NewResource.Resource.Group
+		version := platformWorkflow1.Spec.NewResource.Resource.Version
+		plural := platformWorkflow1.Spec.NewResource.Resource.Plural
+		chartURL := platformWorkflow1.Spec.NewResource.ChartURL
+		chartName := platformWorkflow1.Spec.NewResource.ChartName
+ 		fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s, ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
+ 		QueryDeployEndpoint(platformWorkflowName, crname, namespace, overrides)
 	}
 }
 

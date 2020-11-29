@@ -16,8 +16,8 @@ if [ "$artifacttype" = "versioned" ]; then
     version=`tail -1 versions.txt`
     echo "Building version $version"
     export GOOS=linux; go build .
-    docker build -t gcr.io/disco-horizon-103614/helm-pod:version .
-    docker push gcr.io/disco-horizon-103614/helm-pod:version
+    docker build -t gcr.io/disco-horizon-103614/helm-pod:$version .
+    docker push gcr.io/disco-horizon-103614/helm-pod:$version
 fi
 
 

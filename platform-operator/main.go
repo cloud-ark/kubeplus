@@ -51,40 +51,24 @@ func main() {
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 	platformInformerFactory := informers.NewSharedInformerFactory(platformOperatorClient, time.Second*30)
 	platformController := NewPlatformController(kubeClient, platformOperatorClient, kubeInformerFactory, platformInformerFactory)
+	resourcePolicyController := NewResourcePolicyController(kubeClient, platformOperatorClient, kubeInformerFactory, platformInformerFactory)
 
 	var wg sync.WaitGroup
+	wg.Add(2)
 
-	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		platformController.Run(1, ctx.Done())
 	}()
 
-/*
-	crdClient := apiextensionsclientset.NewForConfigOrDie(cfg)
-	crdInformerFactory := apiextensionsinformers.NewSharedInformerFactory(crdClient, time.Second*30)
-
-	crdController := NewCRDController(cfg,
-		kubeClient,
-		crdInformerFactory.Apiextensions().V1beta1().CustomResourceDefinitions().Lister(),
-		crdInformerFactory)
-
-	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		crdController.Run(1, ctx.Done())
+		resourcePolicyController.Run(1, ctx.Done())
 	}()
-*/
 
 	go kubeInformerFactory.Start(ctx.Done())
 	go platformInformerFactory.Start(ctx.Done())
 
 	<-stopCh
 	cancel()
-	/*
-	if err = platformController.Run(1, stopCh); err != nil {
-		glog.Fatalf("Error running controller: %s", err.Error())
-	}
-	*/
 }
-

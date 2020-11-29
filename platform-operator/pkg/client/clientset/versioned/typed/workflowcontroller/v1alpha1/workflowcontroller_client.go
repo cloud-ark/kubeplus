@@ -27,7 +27,8 @@ import (
 
 type WorkflowsV1alpha1Interface interface {
 	RESTClient() rest.Interface
-	PlatformWorkflowsGetter
+	ResourceCompositionsGetter
+	ResourcePoliciesGetter
 }
 
 // WorkflowsV1alpha1Client is used to interact with features provided by the workflows.kubeplus group.
@@ -35,8 +36,12 @@ type WorkflowsV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *WorkflowsV1alpha1Client) PlatformWorkflows(namespace string) PlatformWorkflowInterface {
-	return newPlatformWorkflows(c, namespace)
+func (c *WorkflowsV1alpha1Client) ResourceCompositions(namespace string) ResourceCompositionInterface {
+	return newResourceCompositions(c, namespace)
+}
+
+func (c *WorkflowsV1alpha1Client) ResourcePolicies(namespace string) ResourcePolicyInterface {
+	return newResourcePolicies(c, namespace)
 }
 
 // NewForConfig creates a new WorkflowsV1alpha1Client for the given config.
