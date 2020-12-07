@@ -3,7 +3,7 @@
 Enterprises are building Kubernetes platforms by extending Kubernetes APIs (Resources) with Custom Resources and Custom Controllers. 
 
 <p align="center">
-<img src="./docs/cluster-with-customresources.png" width="400" height="250" class="center">
+<img src="./docs/cluster-with-customresources.png" width="500" height="250" class="center">
 </p>
 
 Platform teams are faced with following challenges while managing such environments: 
@@ -21,13 +21,13 @@ KubePlus is Custom Resource Manager that enables:
 - Composing new Custom Resources to add new services to a cluster
 
 <p align="center">
-<img src="./docs/kubeplus-components-resourcecrds.png" width="400" height="300" class="center">
+<img src="./docs/kubeplus-components-resourcecrds.png" width="450" height="300" class="center">
 </p>
 
 ## KubePlus Components
 
 <p align="center">
-<img src="./docs/kubeplus-serverside-clientside.png" width="400" height="200" class="center">
+<img src="./docs/kubeplus-serverside-clientside.png" width="450" height="200" class="center">
 </p>
 
 ### In-cluster components
