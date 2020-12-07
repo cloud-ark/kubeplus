@@ -1,0 +1,23 @@
+KUBEPLUS_HOME=<Directory where you cloned kubeplus>
+
+1. Install MysqlCluster Operator
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-4.tgz?raw=true. 
+2. Install MysqlCluster Instance
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysqlcluster-0.1.0.tgz?raw=true
+3. Check resource requests and limits for Pod created as child of MysqlCluster Custom Resource Instance
+   - kubectl get pods cluster1-mysql-0 -o json | jq -r '.spec.containers[0].resources'
+4. Delete MysqlCluster Instance release
+   - helm list | grep mysqlcluster | awk '{print $1}' | xargs helm delete
+
+5. Install KubePlus
+   - cd $KUBEPLUS_HOME/deploy
+   - ./deploy-kubeplus.sh
+6. kubectl create -f resourcepolicy.yaml
+7. Install MysqlCluster Instance again:
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysqlcluster-0.1.0.tgz?raw=true
+8. Check resource requests and limits for Pod created as child of MysqlCluster Custom Resource Instance
+   - kubectl get pods cluster1-mysql-0 -o json | jq -r '.spec.containers[0].resources'
+
+Cleanup:
+- kubectl delete -f resourcepolicy.yaml
+- helm list | grep mysqlcluster | awk '{print $1}' | xargs helm delete

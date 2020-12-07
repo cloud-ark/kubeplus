@@ -5,6 +5,14 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	"k8s.io/client-go/rest"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
+    //"k8s.io/client-go/restmapper"
+	restmapper "k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type labelfunction func() string
@@ -157,6 +165,58 @@ func init() {
 	KindPluralMap[CONFIG_MAP] = "configmaps"
 	kindVersionMap[CONFIG_MAP] = "api/v1"
 	kindGroupMap[CONFIG_MAP] = ""
+
+	go trackKindAPIDetails()
+}
+
+func trackKindAPIDetails() {
+	cfg, _ := rest.InClusterConfig()
+	for {
+		crdClient, err1 := apiextensionsclientset.NewForConfig(cfg)
+		if err1 != nil {
+			// Should we bail out here or just continue??
+			fmt.Printf("Cannot discover Custom Resource connections. But can do rest..")
+			//return err
+		}
+		crdList, err := crdClient.CustomResourceDefinitions().List(
+																   metav1.ListOptions{})
+		if err != nil {
+			fmt.Errorf("Error:%s\n", err)
+			//return err
+		}
+		for _, crd := range crdList.Items {
+			crdName := crd.ObjectMeta.Name
+			//fmt.Printf("CRD NAME:%s\n", crdName)
+			crdObj, err := crdClient.CustomResourceDefinitions().Get(
+													     			 crdName, 
+																	 metav1.GetOptions{})
+			if err != nil {
+				fmt.Errorf("Error:%s\n", err)
+				fmt.Printf("Cannot discover Custom Resource connections. But can do rest..")
+				//panic(err)
+				//return err
+			}
+			//fmt.Printf("InputKind:%s, thisKind:%s\n", inputKind, crdObj.Spec.Names.Kind)
+			/*if inputKind != "" {
+				if inputKind == crdObj.Spec.Names.Kind {
+					parseCRDAnnotions(crdObj)
+					break
+				}
+			} else {
+				parseCRDAnnotions(crdObj)
+			}*/
+
+			group := crdObj.Spec.Group
+			version := crdObj.Spec.Version
+			endpoint := "apis/" + group + "/" + version
+			kind := crdObj.Spec.Names.Kind
+			plural := crdObj.Spec.Names.Plural
+			KindPluralMap[kind] = plural
+			kindVersionMap[kind] = endpoint
+			kindGroupMap[kind] = group
+		}
+		time.Sleep(1)	
+	}
 }
 
 func getKindAPIDetails(kind string) (string, string, string, string) {
@@ -170,6 +230,44 @@ func getKindAPIDetails(kind string) (string, string, string, string) {
 	return kindplural, kindResourceApiVersion, kindAPI, kindResourceGroup
 }
 
+//https://ymmt2005.hatenablog.com/entry/2020/04/14/An_example_of_using_dynamic_client_of_k8s.io/client-go#Mapping-between-GVK-and-GVR
+func findGVR(gvk *schema.GroupVersionKind, namespace string) (dynamic.ResourceInterface, error) {
+
+    // Obtain REST interface for the GVR
+    var dr dynamic.ResourceInterface
+
+    fmt.Printf("Group kind:%s\n", gvk.GroupKind())
+    fmt.Printf("Group version:%s\n", gvk.Version)
+    l := make([]schema.GroupVersion,0)
+    l = append(l, gvk.GroupVersion())
+    defaultRestMapper := restmapper.NewDefaultRESTMapper(l)
+	 mapping, err := defaultRestMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+    if err != nil {
+        return dr, err
+    }
+
+    dyn, _ := getDynamicClient1()
+
+    if mapping.Scope.Name() == restmapper.RESTScopeNameNamespace {
+        // namespaced resources should specify the namespace
+        dr = dyn.Resource(mapping.Resource).Namespace(namespace)
+    } else {
+        // for cluster-wide resources
+        dr = dyn.Resource(mapping.Resource)
+    }
+    return dr, nil
+}
+
+func getDynamicClient1() (dynamic.Interface, error) {
+	if dynamicClient == nil {
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			panic(err.Error())
+		}
+		dynamicClient, err = dynamic.NewForConfig(config)
+	}
+	return dynamicClient, err
+}
 
 func (s *StringStack) Len() int {
 	s.Mutex.Lock()

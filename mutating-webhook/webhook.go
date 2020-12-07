@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	//"context"
 
 	"github.com/buger/jsonparser"
 
@@ -17,13 +18,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/kubernetes/pkg/apis/core/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/kubernetes"
 
 	platformworkflowclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
 	platformworkflowv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/workflowcontroller/v1alpha1"
-
 )
 
 var (
@@ -43,11 +44,24 @@ var (
 	helper chan string
 
 	customAPIPlatformWorkflowMap map[string]string
+	resourcePolicyMap map[string]interface{}
+
+	//dynamicClient dynamic.Interface
 )
 
 type WebhookServer struct {
 	server *http.Server
 	// client *kubernetes.ClientSet
+}
+
+type PodResourceRequests struct {
+	cpu string
+	memory string
+}
+
+type PodResourceLimits struct {
+	cpu string
+	memory string
 }
 
 var annotations StoredAnnotations = StoredAnnotations{}
@@ -83,6 +97,7 @@ func init() {
 	kubeclientset, _ = kubernetes.NewForConfig(cfg)
 
 	customAPIPlatformWorkflowMap = make(map[string]string,0)
+	resourcePolicyMap = make(map[string]interface{}, 0)
 
 	//TODO: Helper that tracks resource creation and puts labels/annotations
 	//once they are available.
@@ -113,6 +128,13 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	fmt.Println(req.UserInfo.Username)
 	fmt.Println("=== User ===")
 
+	var patchOperations []patchOperation
+	patchOperations = make([]patchOperation, 0)
+
+	if req.Kind.Kind == "ResourcePolicy" {
+		saveResourcePolicy(ar)
+	}
+
 	if req.Kind.Kind == "ResourceComposition" {
 		trackCustomAPIs(ar)
 	}
@@ -120,14 +142,17 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	handleCustomAPIs(ar)
 
 	if req.Kind.Kind == "Pod" {
-		applyPolicies(ar)
+		customAPI := shouldApplyPolicies(ar)
+		if customAPI != "" {
+			podResourcePatches := applyPolicies(ar, customAPI)
+			for _, podPatch := range podResourcePatches {
+				patchOperations = append(patchOperations, podPatch)
+			}
+		}
 	}
 
 	// TODO: Check if dependent resources have been created or not
 	// checkDependency(ar)
-
-	var patchOperations []patchOperation
-	patchOperations = make([]patchOperation, 0)
 
 	specResolvedPatches, errResponse := getSpecResolvedPatch(ar)
 	if errResponse != nil {
@@ -154,9 +179,164 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	}
 }
 
-func applyPolicies(ar *v1beta1.AdmissionReview) {
+func saveResourcePolicy(ar *v1beta1.AdmissionReview) {
 	req := ar.Request
-	//body := req.Object.Raw
+	body := req.Object.Raw
+
+	resPolicyName, err := jsonparser.GetUnsafeString(body, "metadata", "name")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("Resource Policy Name:%s\n", resPolicyName)
+
+	var resourcePolicy platformworkflowv1alpha1.ResourcePolicy
+	err = json.Unmarshal(body, &resourcePolicy)
+	if err != nil {
+	    fmt.Println(err)	
+	}
+
+	kind := resourcePolicy.Spec.Resource.Kind
+	group := resourcePolicy.Spec.Resource.Group
+	version := resourcePolicy.Spec.Resource.Version
+	fmt.Printf("Kind:%s, Group:%s, Version:%s\n", kind, group, version)
+
+	podPolicy := resourcePolicy.Spec.Policy
+	fmt.Printf("Pod Policy:%v\n", podPolicy)
+
+ 	customAPI := group + "/" + version + "/" + kind
+ 	resourcePolicyMap[customAPI] = podPolicy
+ 	fmt.Printf("Resource Policy Map:%v\n", resourcePolicyMap)
+}
+
+func shouldApplyPolicies(ar *v1beta1.AdmissionReview) string {
+	fmt.Printf("Inside shouldApplyPolicies")
+
+	req := ar.Request
+	body := req.Object.Raw
+
+	//fmt.Printf("Body:%v\n", body)
+	namespace := req.Namespace
+	fmt.Println("Namespace:%s\n",namespace)
+
+	namespace1, _, _, err := jsonparser.Get(body, "metadata", "namespace")
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("Namespace1:%s\n", namespace1)
+	}
+
+	ownerKind, _, _, err1 := jsonparser.Get(body, "metadata", "ownerReferences", "[0]", "kind")
+	if err1 != nil {
+		fmt.Printf("Error:%v\n", err1)
+	} else {
+		fmt.Printf("ownerKind:%v\n", string(ownerKind))
+	}
+
+	ownerName, _, _, err1 := jsonparser.Get(body, "metadata", "ownerReferences", "[0]", "name")
+	if err1 != nil {
+		fmt.Printf("Error:%v\n", err1)
+	} else {
+		fmt.Printf("ownerName:%v\n", string(ownerName))
+	}
+
+	ownerAPIVersion, _, _, err1 := jsonparser.Get(body, "metadata", "ownerReferences", "[0]", "apiVersion")
+	if err1 != nil {
+		fmt.Printf("Error:%v\n", err1)
+	} else {
+		fmt.Printf("ownerAPIVersion:%v\n", string(ownerAPIVersion))
+	}
+
+	ownerKindS := string(ownerKind)
+	ownerNameS := string(ownerName)
+	ownerAPIVersionS := string(ownerAPIVersion)
+
+	rootKind, rootName, rootAPIVersion := findRoot(namespace, ownerKindS, ownerNameS, ownerAPIVersionS)
+	fmt.Printf("Root Kind:%s\n", rootKind)
+	fmt.Printf("Root Name:%s\n", rootName)
+	fmt.Printf("Root API Version:%s\n", rootAPIVersion)
+
+	// Check if the rootKind, rootName, rootAPIVersion is registered to be applied policies on.
+ 	customAPI := rootAPIVersion + "/" + rootKind
+ 	fmt.Printf("Custom API:%s\n", customAPI)
+ 	if podPolicy, ok := resourcePolicyMap[customAPI]; ok {
+	 	fmt.Printf("Resource Policy:%v\n", podPolicy)
+	 	return customAPI
+ 	}
+	return ""
+}
+
+func findRoot(namespace, kind, name, apiVersion string) (string, string, string) {
+	rootKind := ""
+	rootName := ""
+	rootAPIVersion := ""
+
+	time.Sleep(10)
+
+	parts := strings.Split(apiVersion, "/")
+	group := parts[0]
+	version := parts[1]
+	fmt.Printf("Group:%s\n", group)
+	fmt.Printf("Version:%s\n", version)
+	fmt.Printf("ResName:%s\n", name)
+	fmt.Printf("Namespace:%s\n", namespace)
+
+	ownerResKindPlural, _, ownerResApiVersion, ownerResGroup := getKindAPIDetails(kind)
+
+	fmt.Printf("ownerResKindPlural:%s\n", ownerResKindPlural)
+	fmt.Printf("ownerResApiVersion:%s\n", ownerResApiVersion)
+	fmt.Printf("ownerResGroup:%s\n", ownerResGroup)
+
+	ownerRes := schema.GroupVersionResource{Group: ownerResGroup,
+									 		Version: ownerResApiVersion,
+									   		Resource: ownerResKindPlural}
+
+/*	TODO: Map GroupVersionKind to GroupVersionResource
+	ownergvk := schema.GroupVersionKind{Group: group,
+									 	Version: version,
+									   	Kind: kind}
+	ownerRes, err := findGVR(&ownergvk, namespace)
+	if err != nil {
+		fmt.Printf("Error:%v\n", err)
+		return rootKind, rootName, rootAPIVersion
+
+	}
+*/
+	fmt.Printf("OwnerRes:%v\n", ownerRes)
+	dynamicClient, err1 := getDynamicClient1()
+	if err1 != nil {
+		fmt.Printf("Error 1:%v\n", err1)
+	    fmt.Println(err1)
+		return rootKind, rootName, rootAPIVersion
+	}
+	instanceObj, err2 := dynamicClient.Resource(ownerRes).Namespace(namespace).Get(
+																				   name,
+																	   		 	   metav1.GetOptions{})
+	if err2 != nil {
+		fmt.Printf("Error 2:%v\n", err2)
+	    fmt.Println(err2)
+		return rootKind, rootName, rootAPIVersion
+	}
+
+	ownerReference := instanceObj.GetOwnerReferences()
+	if len(ownerReference) == 0 {
+		// Reached the root
+		fmt.Printf("Root kind:%s\n", kind)
+		fmt.Printf("Root name:%s\n", name)
+		fmt.Printf("Root APIVersion:%s\n", apiVersion)
+		return kind, name, apiVersion
+	} else {
+		owner := ownerReference[0]
+		ownerKind := owner.Kind
+		ownerName := owner.Name
+		ownerAPIVersion := owner.APIVersion
+		rootKind, rootName, rootAPIVersion := findRoot(namespace, ownerKind, ownerName, ownerAPIVersion)
+		return rootKind, rootName, rootAPIVersion
+	}
+}
+
+func applyPolicies(ar *v1beta1.AdmissionReview, customAPI string) []patchOperation {
+	req := ar.Request
+	body := req.Object.Raw
 
 	podName, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
 	if err != nil {
@@ -164,6 +344,107 @@ func applyPolicies(ar *v1beta1.AdmissionReview) {
 	}
 
 	fmt.Printf("Pod Name:%s\n", podName)
+
+	// TODO: Defaulting to the first container. Take input for additional containers
+	res, dataType, _, err1 := jsonparser.Get(body, "spec", "containers", "[0]", "resources")
+	if err1 != nil {
+		fmt.Printf("Error:%v\n", err1)
+	} else {
+		fmt.Printf("Resources:%v\n", string(res))
+	}
+
+	var operation string
+	fmt.Printf("DataType:%s\n", dataType)
+	/*if dataType.String() == "notexist" {
+		operation = "add"
+	} else {
+		operation = "add"
+	}*/
+	operation = "add"
+
+	podPolicy := resourcePolicyMap[customAPI]
+	fmt.Printf("PodPolicy:%v\n", podPolicy)
+
+	xType := fmt.Sprintf("%T", podPolicy)
+	fmt.Printf("Pod Policy type:%s\n", xType) // "[]int"
+
+	podPolicy1 := podPolicy.(platformworkflowv1alpha1.Pol)
+
+	cpuRequest := podPolicy1.PolicyResources.Requests.CPU
+	memRequest := podPolicy1.PolicyResources.Requests.Memory
+	cpuLimit := podPolicy1.PolicyResources.Limits.CPU
+	memLimit := podPolicy1.PolicyResources.Limits.Memory
+
+/*
+	platformworkflowv1alpha1.Pol 
+
+	policyResField := podPolicy.(map[string]interface{})
+	resField := policyResField["resources"]
+	resMap := resField.(map[string]interface{})
+	limitsRef := resMap["limits"]
+	requestsRef := resMap["requests"]
+	limitsMap := limitsRef.(map[string]string)
+	requestsMap := requestsRef.(map[string]string)
+
+	cpuRequest := requestsMap["cpu"] //"200m"
+	memRequest := requestsMap["memory"] //"2Gi"
+	cpuLimit := limitsMap["cpu"] //"400m"
+	memLimit := limitsMap["memory"] //"4Gi"
+*/
+
+	fmt.Printf("CPU Request:%s\n", cpuRequest)
+	fmt.Printf("Mem Request:%s\n", memRequest)
+	fmt.Printf("CPU Limit:%s\n", cpuLimit)
+	fmt.Printf("Mem Limit:%s\n", memLimit)
+
+	/*podResRequest := PodResourceRequests{
+		cpu: cpuRequest,
+		memory: memRequest,
+	}*/
+
+	/*podResLimits := PodResourceLimits{
+		cpu: cpuLimit,
+		memory: memLimit,
+	}*/
+
+	podResRequest := make(map[string]string,0)
+	podResRequest["cpu"] = cpuRequest
+	podResRequest["memory"] = memRequest
+
+	podResLimits := make(map[string]string,0)
+	podResLimits["cpu"] = cpuLimit
+	podResLimits["memory"] = memLimit
+
+	patch1 := patchOperation{
+		Op:    operation,
+		Path:  "/spec/containers/0/resources/requests",
+		Value: podResRequest,
+	}
+
+	patch2 := patchOperation{
+		Op:    operation,
+		Path:  "/spec/containers/0/resources/limits",
+		Value: podResLimits,
+	}
+
+	/*patch3 := patchOperation{
+		Op:    operation,
+		Path:  "/spec/containers/0/resources/limits/cpu",
+		Value: "limits: cpu " + cpuLimit,
+	}
+
+	patch4 := patchOperation{
+		Op:    operation,
+		Path:  "/spec/containers/0/resources/limits/memory",
+		Value: memLimit,
+	}*/
+
+	patchOperations := make([]patchOperation, 0)
+	patchOperations = append(patchOperations, patch1)
+	patchOperations = append(patchOperations, patch2)
+	/*patchOperations = append(patchOperations, patch3)
+	patchOperations = append(patchOperations, patch4)*/
+	return patchOperations
 }
 
 func trackCustomAPIs(ar *v1beta1.AdmissionReview) {

@@ -26,6 +26,8 @@ import (
 type Interface interface {
 	// ResourceCompositions returns a ResourceCompositionInformer.
 	ResourceCompositions() ResourceCompositionInformer
+	// ResourceEvents returns a ResourceEventInformer.
+	ResourceEvents() ResourceEventInformer
 	// ResourcePolicies returns a ResourcePolicyInformer.
 	ResourcePolicies() ResourcePolicyInformer
 }
@@ -44,6 +46,11 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // ResourceCompositions returns a ResourceCompositionInformer.
 func (v *version) ResourceCompositions() ResourceCompositionInformer {
 	return &resourceCompositionInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// ResourceEvents returns a ResourceEventInformer.
+func (v *version) ResourceEvents() ResourceEventInformer {
+	return &resourceEventInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // ResourcePolicies returns a ResourcePolicyInformer.
