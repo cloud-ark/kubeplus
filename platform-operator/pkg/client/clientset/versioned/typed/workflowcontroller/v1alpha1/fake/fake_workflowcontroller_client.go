@@ -32,6 +32,10 @@ func (c *FakeWorkflowsV1alpha1) ResourceCompositions(namespace string) v1alpha1.
 	return &FakeResourceCompositions{c, namespace}
 }
 
+func (c *FakeWorkflowsV1alpha1) ResourceEvents(namespace string) v1alpha1.ResourceEventInterface {
+	return &FakeResourceEvents{c, namespace}
+}
+
 func (c *FakeWorkflowsV1alpha1) ResourcePolicies(namespace string) v1alpha1.ResourcePolicyInterface {
 	return &FakeResourcePolicies{c, namespace}
 }

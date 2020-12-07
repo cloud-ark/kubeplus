@@ -20,4 +20,6 @@ package v1alpha1
 
 type ResourceCompositionExpansion interface{}
 
+type ResourceEventExpansion interface{}
+
 type ResourcePolicyExpansion interface{}

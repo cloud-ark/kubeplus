@@ -28,6 +28,7 @@ import (
 type WorkflowsV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	ResourceCompositionsGetter
+	ResourceEventsGetter
 	ResourcePoliciesGetter
 }
 
@@ -38,6 +39,10 @@ type WorkflowsV1alpha1Client struct {
 
 func (c *WorkflowsV1alpha1Client) ResourceCompositions(namespace string) ResourceCompositionInterface {
 	return newResourceCompositions(c, namespace)
+}
+
+func (c *WorkflowsV1alpha1Client) ResourceEvents(namespace string) ResourceEventInterface {
+	return newResourceEvents(c, namespace)
 }
 
 func (c *WorkflowsV1alpha1Client) ResourcePolicies(namespace string) ResourcePolicyInterface {

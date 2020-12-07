@@ -55,6 +55,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	// Group=workflows.kubeplus, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("resourcecompositions"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Workflows().V1alpha1().ResourceCompositions().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("resourceevents"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Workflows().V1alpha1().ResourceEvents().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("resourcepolicies"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Workflows().V1alpha1().ResourcePolicies().Informer()}, nil
 

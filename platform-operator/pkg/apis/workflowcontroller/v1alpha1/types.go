@@ -65,7 +65,7 @@ type Res struct {
 	// Group of the Custom API
 	Group string `json:"group"`
 	// Plural name for the Custom API
-	Plural string `json:"plural"`
+	Plural string `json:"plural,omitempty"`
 }
 
 type Values struct {
@@ -110,6 +110,26 @@ type ResourcePolicyStatus struct {
 
 type ResourcePolicySpec struct {
 	Resource Res `json:"resource"`
+	Policy Pol `json:"policy"`
+}
+
+type Pol struct {
+	PolicyResources PolicyResources `json:"podresources"`
+}
+
+type PolicyResources struct {
+	Limits Limits `json:"limits"`
+	Requests Requests `json:"requests"`
+}
+
+type Limits struct {
+	CPU             string   `json:"cpu"`
+	Memory             string   `json:"memory"`
+}
+
+type Requests struct {
+	CPU             string   `json:"cpu"`
+	Memory             string   `json:"memory"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -119,5 +139,41 @@ type ResourcePolicyList struct {
 	metav1.ListMeta `json:"metadata"`
 
 	Items []ResourcePolicy `json:"items"`
+}
+
+
+// +genclient
+// +genclient:noStatus
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:openapi-gen=true
+// ResourceEvent is specification for a ResourceEvent resource
+type ResourceEvent struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   ResourceEventSpec   `json:"spec"`
+	Status ResourceEventStatus `json:"status"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// ResourceEventList is a list of ResourceEvent resources
+type ResourceEventList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []ResourceEvent `json:"items"`
+}
+
+type ResourceEventStatus struct {
+	Status             string   `json:"status"`
+}
+
+type ResourceEventSpec struct {
+	Resource Res `json:"resource"`
+	Condition Cond `json:"condition"`
+}
+
+type Cond struct {
+	Condition string `json:"condition"`
 }
 
