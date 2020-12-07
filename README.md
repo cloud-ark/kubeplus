@@ -1,13 +1,13 @@
 ## KubePlus - Kubernetes Custom Resource Manager
 
-Enterprises are building Kubernetes platforms by extending Kubernetes APIs (Resources). 
+Enterprises are building Kubernetes platforms by extending Kubernetes APIs (Resources) with Custom Resources and Custom Controllers. 
 
 <p align="center">
-<img src="./docs/cluster-with-customresources.png" width="350" height="200" class="center">
+<img src="./docs/cluster-with-customresources.png" width="450" height="300" class="center">
 </p>
 
 Platform teams are faced with following challenges while managing such environments: 
-- Control: Establish guardrails around Custom API usage
+- Control: Establish guardrails around Custom Resource usage
 - Visibility: Inventory of resource relationships to visualize application stacks
 - Monitoring: Application stack level monitoring and charge-back
 
@@ -15,13 +15,13 @@ Platform teams are faced with following challenges while managing such environme
 
 KubePlus is Custom Resource Manager that enables:
 - Discovering runtime relationships between Kubernetes resources (Custom and built-in)
-- Setting and enforcing policies for Custom Resource configurations
-- Monitoring Custom Resource usage and exposing it as Prometheus metrics
-- Receiving notifications for interesting events related to Custom Resources
+- Setting and enforcing policies for Custom Resource usage and configurations
+- Monitoring Custom Resource usage and exposing that as Prometheus metrics
+- Receiving notifications for interesting events involving Custom Resources
 - Composing new Custom Resources to add new services to a cluster
 
 <p align="center">
-<img src="./docs/kubeplus-components-resourcecrds.png" width="350" height="200" class="center">
+<img src="./docs/kubeplus-components-resourcecrds.png" width="450" height="300" class="center">
 </p>
 
 ## KubePlus Components
@@ -32,11 +32,37 @@ KubePlus is Custom Resource Manager that enables:
 
 ### In-cluster components
 
-KubePlus comes with 4 CRDs to take respective inputs from the users to take specified actions on the Custom Resources. Behind the scene it uses a mutating webhook and a custom controller to perform these actions. 
+KubePlus comes with 4 CRDs to take inputs from the users to take specified actions on the Custom Resources. Behind the scene it uses a mutating webhook and a custom controller to perform these actions. 
 
 ### Client-side components
 
-KubePlus Kubectl plugins enable Custom Resource users to discover, monitor and troubleshoot Custom Resources and their dependencies. They do not require our in-cluster components to work. 
+KubePlus kubectl plugins enable users to discover, monitor and troubleshoot Custom Resources and their relationships. The plugins run entirely client-side and do not require the in-cluster component. Here is the list of KubePlus kubectl plugins. 
+
+
+**1. kubectl composition**
+
+- ``kubectl composition``: Provides information about sub resources created for a Kubernetes resource instance (custom or built-in). Essentially, 'kubectl composition' shows ownerReference based relationships.
+
+**2. kubectl connections**
+
+- ``kubectl connections``: Provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via labels, annotations, spec properties and owner references.
+
+**3. kubectl metrics**
+
+- ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and total Memory consumption).
+- ``kubectl metrics service``: Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
+- ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs cluster-side component.
+- ``kubectl metrics helmrelease``: Provides CPU/Memory metrics for all the Pods that are part of a Helm release.
+
+**4. kubectl grouplogs**
+
+- ``kubectl grouplogs cr``: Provides logs for all the containers of a Custom Resource instance.
+- ``kubectl grouplogs service``: Provides logs for all the containers of all the Pods that are related to a Service object.
+- ``kubectl grouplogs helmrelease`` (upcoming): Provides logs for all the containers of all the Pods that are part of a Helm release.
+
+**5. kubectl man**
+
+- ``kubectl man <Custom Resource> ``: Provides information about how to use a Custom Resource.
 
 
 ## Core of KubePlus - Resource Relationship graphs
@@ -70,35 +96,6 @@ resource/specproperty-relationship
 Kubernetes Operator developers or cluster administrators can add these annotations to the CRDs. [Here](https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md) are some sample CRD annotations for community Operators that can be used to unlock KubePlus tooling for them.
 
 KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies. KubePlus offers a variety of kubectl plugins that internally leverage this topology information.
-
-
-## Kubectl plugins
-
-
-**1. kubectl composition**
-
-- ``kubectl composition``: Provides information about sub resources created for a Kubernetes resource instance (custom or built-in). Essentially, 'kubectl composition' shows ownerReference based relationships.
-
-**2. kubectl connections**
-
-- ``kubectl connections``: Provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via labels, annotations, spec properties and owner references.
-
-**3. kubectl metrics**
-
-- ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and total Memory consumption).
-- ``kubectl metrics service``: Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
-- ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs cluster-side component.
-- ``kubectl metrics helmrelease``: Provides CPU/Memory metrics for all the Pods that are part of a Helm release.
-
-**4. kubectl grouplogs**
-
-- ``kubectl grouplogs cr``: Provides logs for all the containers of a Custom Resource instance.
-- ``kubectl grouplogs service``: Provides logs for all the containers of all the Pods that are related to a Service object.
-- ``kubectl grouplogs helmrelease`` (upcoming): Provides logs for all the containers of all the Pods that are part of a Helm release.
-
-**5. kubectl man**
-
-- ``kubectl man <Custom Resource> ``: Provides information about how to use a Custom Resource.
 
 
 ## Example
@@ -194,12 +191,12 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
 
 ## Platform as Code
 
-KubePlus is developed as a part of CloudARK's Platform-as-Code practice. Kubernetes Operators enable extending Kubernetes for application specific workflows. They add Custom Resources and offer foundation for creating application stacks as Code declaratively. Our Platform-as-Code practice offers tools and techniques enabling DevOps teams to build custom PaaSes using Kubernetes Operators.
+KubePlus is developed as a part of CloudARK's [Platform-as-Code practice](https://cloudark.io/platform-as-code). Kubernetes Operators enable extending Kubernetes for application specific workflows. They add Custom Resources and offer foundation for creating application stacks as Code declaratively. Our Platform-as-Code practice offers tools and techniques enabling DevOps teams to build custom PaaSes using Kubernetes Operators.
 
 Platform-as-Code practice consists of:
 - Operator Maturity Model:  Operator readiness guidelines for multi-tenant and multi-Operator environment
 - KubePlus kubectl plugins: Generic tooling to simplify inventory and charge-back for application stacks created using Operators.
-- KubePlus PlatformWorkflow Operator: Publish and monitor Platform Workflows
+- KubePlus PlatformWorkflow Operator: Publish and monitor new services in a cluster
 
 ## Operator Maturity Model
 
