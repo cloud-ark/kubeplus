@@ -1,19 +1,47 @@
-## KubePlus - Discovery and monitoring of Custom Resources and their dependencies
+## KubePlus - Kubernetes Custom Resource Manager
 
-DevOps teams are using Kubernetes Operators to build custom PaaSes. Kubernetes Operators add Custom Resources to the Kubernetes Resource set. Inventory and chargeback for such a custom PaaS is a challenge today as there is no easy way to discover set of Kubernetes Resources belonging to an application stack. KubePlus addresses this issue by offering generic tooling for discovery and monitoring of Custom Resources and their dependencies.
+Enterprises are building Kubernetes platforms by extending Kubernetes APIs (Resources). 
+
+<p align="center">
+<img src="./docs/cluster-with-customresources.png" width="350" height="200" class="center">
+</p>
+
+Platform teams are faced with following challenges while managing such environments: 
+- Control: Establish guardrails around Custom API usage
+- Visibility: Inventory of resource relationships to visualize application stacks
+- Monitoring: Application stack level monitoring and charge-back
 
 ## What is KubePlus?
 
-KubePlus is a generic tool that enables inventory and chargeback for Kubernetes clusters extended with Operators. It uses a unique method of relationship tags defined on Kubernetes Operator packages (CRDs) to track Kubernetes Custom Resources and their relationships. The tags unlock KubePlus's ability to provide accurate discovery and monitoring for entire Resource set available on the cluster through a set of kubectl plugins.
+KubePlus is Custom Resource Manager that enables:
+- Discovering runtime relationships between Kubernetes resources (Custom and built-in)
+- Setting and enforcing policies for Custom Resource configurations
+- Monitoring Custom Resource usage and exposing it as Prometheus metrics
+- Receiving notifications for interesting events related to Custom Resources
+- Composing new Custom Resources to add new services to a cluster
 
 <p align="center">
-<img src="./docs/KubePlus-new.png" width="450" height="300" class="center">
+<img src="./docs/kubeplus-components-resourcecrds.png" width="350" height="200" class="center">
 </p>
+
+## KubePlus Components
+
+<p align="center">
+<img src="./docs/kubeplus-serverside-clientside.png" width="350" height="200" class="center">
+</p>
+
+### In-cluster components
+
+KubePlus comes with 4 CRDs to take respective inputs from the users to take specified actions on the Custom Resources. Behind the scene it uses a mutating webhook and a custom controller to perform these actions. 
+
+### Client-side components
+
+KubePlus Kubectl plugins enable Custom Resource users to discover, monitor and troubleshoot Custom Resources and their dependencies. They do not require our in-cluster components to work. 
 
 
 ## Core of KubePlus - Resource Relationship graphs
 
-Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resources become first class components of that cluster alongside the built-in resources (e.g. Pod, Service). Platform stacks are realized by establishing relationships between these Kubernetes Resources (built-in or Custom) available on the cluster. These relationships are primarily of four types.
+Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resources become first class components of that cluster alongside the built-in resources (e.g. Pod, Service). Application stacks are realized by establishing relationships between these Kubernetes Resources (built-in or Custom) available on the cluster. These relationships are primarily of four types.
  
 (1) Owner references – A resource internally creates additional resources (e.g. MysqlCluster when instantiated, creates Pods and  Services). These sub-resources are related to the parent resource through Owner reference relationship.
 
@@ -177,9 +205,11 @@ Platform-as-Code practice consists of:
 
 As DevOps team build their custom PaaSes using community or in house developed Operators, they need a set of guidelines for Operator development or evaluation. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-tenant and multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators today for curating community Operators towards building their custom PaaSes.
 
-## PlatformWorkflow Operator
+## ResourceComposition, ResourcePolicy
 
-Platform Workflow Operator enables publishing new Services in a cluster. Cluster Admins use this Operator to govern their cluster use by defining and registering opinionated Services with appropriate guard rails. The new Services are registered as new Custom Resources. Application development teams consume the Services by creating instances of these Custom Resources. [Try an example](https://github.com/cloud-ark/kubeplus/tree/master/examples/platform-workflow). 
+KubePlus enables publishing new Services in a cluster. Cluster Admins use KubePlus to govern their cluster usage by defining and registering opinionated Services with appropriate guard rails. The new Services are registered as new Custom Resources. Application development teams consume the Services by creating instances of these Custom Resources. Cluster Admins can also define and enforce policies on Custom Resources. Checkout ResourceComposition and ResourcePolicy examples:
+- [Resource Composition](https://github.com/cloud-ark/kubeplus/tree/master/examples/resource-composition)
+- [Resource Policy](https://github.com/cloud-ark/kubeplus/tree/master/examples/resource-policy)
 
 
 ## Contact
