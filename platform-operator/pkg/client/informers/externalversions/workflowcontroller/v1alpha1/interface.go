@@ -28,6 +28,8 @@ type Interface interface {
 	ResourceCompositions() ResourceCompositionInformer
 	// ResourceEvents returns a ResourceEventInformer.
 	ResourceEvents() ResourceEventInformer
+	// ResourceMonitors returns a ResourceMonitorInformer.
+	ResourceMonitors() ResourceMonitorInformer
 	// ResourcePolicies returns a ResourcePolicyInformer.
 	ResourcePolicies() ResourcePolicyInformer
 }
@@ -51,6 +53,11 @@ func (v *version) ResourceCompositions() ResourceCompositionInformer {
 // ResourceEvents returns a ResourceEventInformer.
 func (v *version) ResourceEvents() ResourceEventInformer {
 	return &resourceEventInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// ResourceMonitors returns a ResourceMonitorInformer.
+func (v *version) ResourceMonitors() ResourceMonitorInformer {
+	return &resourceMonitorInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // ResourcePolicies returns a ResourcePolicyInformer.

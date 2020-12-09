@@ -34,6 +34,14 @@ type ResourceEventListerExpansion interface{}
 // ResourceEventNamespaceLister.
 type ResourceEventNamespaceListerExpansion interface{}
 
+// ResourceMonitorListerExpansion allows custom methods to be added to
+// ResourceMonitorLister.
+type ResourceMonitorListerExpansion interface{}
+
+// ResourceMonitorNamespaceListerExpansion allows custom methods to be added to
+// ResourceMonitorNamespaceLister.
+type ResourceMonitorNamespaceListerExpansion interface{}
+
 // ResourcePolicyListerExpansion allows custom methods to be added to
 // ResourcePolicyLister.
 type ResourcePolicyListerExpansion interface{}

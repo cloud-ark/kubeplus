@@ -1,6 +1,30 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
+  name: resourceevents.workflows.kubeplus
+spec:
+  group: workflows.kubeplus
+  version: v1alpha1
+  names:
+    kind: ResourceEvent
+    plural: resourceevents
+  scope: Namespaced
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: resourcemonitors.workflows.kubeplus
+spec:
+  group: workflows.kubeplus
+  version: v1alpha1
+  names:
+    kind: ResourceMonitor
+    plural: resourcemonitors
+  scope: Namespaced
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
   name: resourcecompositions.workflows.kubeplus
 spec:
   group: workflows.kubeplus
@@ -52,13 +76,13 @@ spec:
     imagePullPolicy: Always 
   - name: platform-operator
     #image: lmecld/platform-operator:0.0.4-alpha2
-    image: gcr.io/disco-horizon-103614/platform-operator:0.0.7
+    image: gcr.io/disco-horizon-103614/platform-operator:0.0.8
     #image: lmecld/platform-operator:0.0.5
     imagePullPolicy: Always
     command: [ "/platform-operator"]
   - name: helmer
     #image: gcr.io/disco-horizon-103614/helm-pod:latest
-    image: gcr.io/disco-horizon-103614/helm-pod:0.0.1
+    image: gcr.io/disco-horizon-103614/helm-pod:0.0.2
     #image: lmecld/helm-pod:latest
     imagePullPolicy: Always
     command: ["/root/helm-pod"]

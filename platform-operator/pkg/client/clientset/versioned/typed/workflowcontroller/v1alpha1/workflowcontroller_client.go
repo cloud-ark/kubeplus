@@ -29,6 +29,7 @@ type WorkflowsV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	ResourceCompositionsGetter
 	ResourceEventsGetter
+	ResourceMonitorsGetter
 	ResourcePoliciesGetter
 }
 
@@ -43,6 +44,10 @@ func (c *WorkflowsV1alpha1Client) ResourceCompositions(namespace string) Resourc
 
 func (c *WorkflowsV1alpha1Client) ResourceEvents(namespace string) ResourceEventInterface {
 	return newResourceEvents(c, namespace)
+}
+
+func (c *WorkflowsV1alpha1Client) ResourceMonitors(namespace string) ResourceMonitorInterface {
+	return newResourceMonitors(c, namespace)
 }
 
 func (c *WorkflowsV1alpha1Client) ResourcePolicies(namespace string) ResourcePolicyInterface {

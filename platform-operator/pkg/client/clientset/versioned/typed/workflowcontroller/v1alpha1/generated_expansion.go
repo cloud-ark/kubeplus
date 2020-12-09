@@ -22,4 +22,6 @@ type ResourceCompositionExpansion interface{}
 
 type ResourceEventExpansion interface{}
 
+type ResourceMonitorExpansion interface{}
+
 type ResourcePolicyExpansion interface{}
