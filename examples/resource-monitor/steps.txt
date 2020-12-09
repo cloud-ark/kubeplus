@@ -1,0 +1,4 @@
+1. kubectl create -f resourcemonitor.yaml
+2. NODEPORT=`kubectl get svc | grep kubeplus | awk '{print $5}' | cut -d ':' -f 2 | cut -d '/' -f 1`
+3. MASTER_IP=<IP address of k8s master>
+4. curl -kv "http://$MASTER_IP:$NODEPORT/apis/kubeplus/metrics?kind=MysqlCluster&instance=appdb&namespace=default"

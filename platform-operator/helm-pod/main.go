@@ -79,7 +79,7 @@ func main() {
 func register() {
 	ws := new(restful.WebService)
 	ws.
-		Path("/apis/platform-as-code").
+		Path("/apis/kubeplus").
 		Consumes(restful.MIME_XML, restful.MIME_JSON).
 		Produces(restful.MIME_JSON, restful.MIME_XML)
 
@@ -98,12 +98,35 @@ func register() {
 
 func getMetrics(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Inside getMetrics...\n")
-	customresource := request.QueryParameter("customresource")
+	customresource := request.QueryParameter("instance")
 	kind := request.QueryParameter("kind")
 	namespace := request.QueryParameter("namespace")
 	fmt.Printf("Custom Resource:%s\n", customresource)
 	fmt.Printf("Kind:%s\n", kind)
 	fmt.Printf("Namespace:%s\n", namespace)
+
+	config, _ := rest.InClusterConfig()
+	var sampleclientset platformworkflowclientset.Interface
+	sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
+
+	resourceMonitors, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).List(metav1.ListOptions{})
+	for _, resMonitor := range resourceMonitors.Items {
+		fmt.Printf("ResourceMonitor:%v\n", resMonitor)
+		if err != nil {
+			fmt.Errorf("Error:%s\n", err)
+		}
+		kind := resMonitor.Spec.Resource.Kind
+		group := resMonitor.Spec.Resource.Group
+		version := resMonitor.Spec.Resource.Version
+		plural := resMonitor.Spec.Resource.Plural
+		relationshipToMonitor := resMonitor.Spec.MonitorRelationships
+		fmt.Printf("Kind:%s\n", kind)
+		fmt.Printf("Group:%s\n", group)    		
+		fmt.Printf("Version:%s\n", version)
+		fmt.Printf("Plural:%s\n", plural)
+		fmt.Printf("RelationshipToMonitor:%s\n", relationshipToMonitor)
+	}
+
 	helmrelease := getReleaseName(kind, customresource, namespace)
 	fmt.Printf("Helm release3:%s\n", helmrelease)
 

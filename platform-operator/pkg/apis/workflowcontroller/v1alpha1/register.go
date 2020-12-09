@@ -30,9 +30,12 @@ var (
 func addKnownTypes(scheme *runtime.Scheme) error {
      scheme.AddKnownTypes(SchemeGroupVersion,
 	&ResourceComposition{},
-		&ResourceCompositionList{},
+	&ResourceCompositionList{},
         &ResourcePolicy{},
-		)
-		metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
-		return nil
+        &ResourcePolicyList{},
+        &ResourceMonitor{},
+        &ResourceMonitorList{},
+	)
+	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
+	return nil
 }

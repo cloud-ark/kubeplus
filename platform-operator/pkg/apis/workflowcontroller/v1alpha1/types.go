@@ -141,6 +141,42 @@ type ResourcePolicyList struct {
 	Items []ResourcePolicy `json:"items"`
 }
 
+// +genclient
+// +genclient:noStatus
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:openapi-gen=true
+// ResourceMonitor is specification for a ResourceMonitor resource
+type ResourceMonitor struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   ResourceMonitorSpec   `json:"spec"`
+	Status ResourceMonitorStatus `json:"status"`
+}
+
+type ResourceMonitorStatus struct {
+	Status             string   `json:"status"`
+}
+
+type ResourceMonitorSpec struct {
+	Resource Res `json:"resource"`
+	//MonitoringPolicy Mon `json:"monitoringpolicy"`
+	MonitorRelationships string `json:"monitorRelationships"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// ResourceMonitorList is a list of ResourceMonitor resources
+type ResourceMonitorList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []ResourceMonitor `json:"items"`
+}
+
+type Mon struct {
+	TrackRelationships string `json:"trackRelationships"`
+}
+
 
 // +genclient
 // +genclient:noStatus
