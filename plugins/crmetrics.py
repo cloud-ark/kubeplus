@@ -373,15 +373,15 @@ class CRMetrics(object):
 
 		return total_cpu, total_mem, total_count
 
-	def _get_pods_for_cr_connections(self, cr, cr_instance, namespace):
+	def _get_pods_for_cr_connections(self, cr, cr_instance, namespace, conn_op_format="flat"):
 		pod_list = []
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
 		cmd = ''
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o flat'
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o flat'
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format
 
 		if cmd:
 			output = ''
@@ -393,7 +393,14 @@ class CRMetrics(object):
 			except Exception as e:
 				print(e)
 
-			pod_list = self._parse_pods_from_connections_op(output)
+			if conn_op_format == "flat:":
+				pod_list = self._parse_pods_from_connections_op(output)
+			if conn_op_format == "json":
+				try:
+					json_output = json.loads(output)
+					pod_list = utils.get_pods(json_output)
+				except Exception as e:
+					print(e)
 		return pod_list
 
 	def _get_pods_for_service(self, service_name, namespace):
@@ -721,17 +728,21 @@ class CRMetrics(object):
 		print("    Total Storage(bytes): (Upcoming)")
 
 
-	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace, opformat):
+	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace, follow_connections, opformat):
 		accountidentity = self._get_identity(custom_resource, custom_res_instance, namespace)
 		accountidentity = ''
-		composition = self._get_composition(custom_resource, custom_res_instance, namespace)
-		num_of_resources = self._parse_number_of_resources(composition)
+		if follow_connections == "false":
+			composition = self._get_composition(custom_resource, custom_res_instance, namespace)
+			num_of_resources = self._parse_number_of_resources(composition)
+			pod_list = self._parse_number_of_pods(composition)
+		if follow_connections == "true":
+			num_of_resources = "-"
+			conn_op_format = "json"
+			pod_list = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace, conn_op_format)
 
-		pod_list = self._parse_number_of_pods(composition)
 		#print(pod_list)
 		#cpu, memory = self._get_cpu_memory_usage(pod_list)
-
-		#pod_list_conn = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace)
+		
 		num_of_containers_conn = self._parse_number_of_containers(pod_list)
 		total_storage_conn = self._parse_persistentvolumeclaims(pod_list, namespace)
 		num_of_hosts_conn = self._parse_number_of_hosts(pod_list)
@@ -756,7 +767,17 @@ class CRMetrics(object):
 			op['storage'] = str(total_storage) + "Gi"
 			json_op = json.dumps(op)
 			print(json_op)
-		else:
+		elif opformat == 'prometheus':
+			millis = int(round(time.time() * 1000))
+			metricsToReturn = ''
+			cpuMetrics = 'cpu{custom_resource="'+custom_res_instance+'"} ' + str(cpu) + ' ' + str(millis)
+			memoryMetrics = 'memory{custom_resource="'+custom_res_instance+'"} ' + str(memory) + ' ' + str(millis)
+			storageMetrics = 'storage{custom_resource="'+custom_res_instance+'"} ' + str(total_storage) + ' ' + str(millis)
+			numOfPods = 'pods{custom_resource="'+custom_res_instance+'"} ' + str(num_of_pods) + ' ' + str(millis)
+			numOfContainers = 'containers{custom_resource="'+custom_res_instance+'"} ' + str(num_of_containers) + ' ' + str(millis)
+			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers
+			print(metricsToReturn)
+		elif opformat == 'pretty':
 			#print("---------------------------------------------------------- ")
 			#print(" Creator Account Identity: " + accountidentity)
 			#print("---------------------------------------------------------- ")
@@ -771,6 +792,8 @@ class CRMetrics(object):
 			print("    Total MEMORY(bytes): " + str(memory) + "Mi")
 			print("    Total Storage(bytes): " + str(total_storage) + "Gi")
 			print("---------------------------------------------------------- ")
+		else:
+			print("Unknown output format specified. Accepted values: pretty, json, prometheus")
 
 	def get_metrics_service(self, service_name, namespace):
 		print("---------------------------------------------------------- ")
@@ -873,7 +896,8 @@ if __name__ == '__main__':
 		custom_resource_instance = sys.argv[3]
 		namespace = sys.argv[4]
 		outputformat = sys.argv[5]
-		crMetrics.get_metrics_cr(custom_resource, custom_resource_instance, namespace, outputformat)
+		follow_connections = sys.argv[6]
+		crMetrics.get_metrics_cr(custom_resource, custom_resource_instance, namespace, follow_connections, outputformat)
 	
 	if res_type == "account":
 		creator_account = sys.argv[2]
@@ -891,10 +915,13 @@ if __name__ == '__main__':
 		release_name = sys.argv[2]
 		op_format = sys.argv[3]
 		metrics_helm_release = crMetrics.get_metrics_helmrelease(release_name)
-		if op_format == "flat":
+		if op_format == "pretty":
 			crMetrics.print_metrics_helmrelease(metrics_helm_release)
 		elif op_format == "prometheus":
 			prom_metrics = crMetrics.prometheus_metrics_helmrelease(release_name, metrics_helm_release)
 			print(prom_metrics)
+		elif op_format == "json":
+			metrics_helm_release_json = json.dumps(metrics_helm_release)
+			print(metrics_helm_release_json)
 		else:
-			print("Unrecognized output format. Supported formats - flat/prometheus")
+			print("Unrecognized output format. Supported formats - pretty/json/prometheus")

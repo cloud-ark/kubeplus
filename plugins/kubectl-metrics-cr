@@ -1,19 +1,32 @@
 #!/bin/bash
 
 if (( $# < 3 )); then
-    echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> [-o json]"
+    echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
     exit 0
 fi
 
 customres=$1
 instance=$2
 namespace="$3"
+output=$5
 
-output="pretty"
-if [ $# == 5 ]; then
-   output=$5
+if [[ $output != "pretty" && $output != "json" && $output != "prometheus" ]]; then
+	echo "Unknown output format specified $output. Accepted values: pretty, json, prometheus"
+	exit 0
+fi
+
+#output="pretty"
+follow_connections=false
+connection_flag=$6
+if [ $# == 6 ]; then
+	if [[ $connection_flag == "--follow-connections" ]]; then
+		follow_connections=true
+	else
+		echo "Unknown flag specified $connection_flag. Accepted value: --follow-connections" 
+		exit 0
+	fi
 fi
 
 #echo $output
 
-python /$KUBEPLUS_HOME/plugins/crmetrics.py "cr" $customres $instance $namespace $output
+python /$KUBEPLUS_HOME/plugins/crmetrics.py "cr" $customres $instance $namespace $output $follow_connections
