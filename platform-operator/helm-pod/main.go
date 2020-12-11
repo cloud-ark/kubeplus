@@ -98,6 +98,10 @@ func register() {
 
 func getMetrics(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Inside getMetrics...\n")
+
+	metricsToReturn := ""
+ 	cmdRunnerPod := CMD_RUNNER_POD
+
 	customresource := request.QueryParameter("instance")
 	kind := request.QueryParameter("kind")
 	namespace := request.QueryParameter("namespace")
@@ -105,49 +109,62 @@ func getMetrics(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Kind:%s\n", kind)
 	fmt.Printf("Namespace:%s\n", namespace)
 
-	config, _ := rest.InClusterConfig()
-	var sampleclientset platformworkflowclientset.Interface
-	sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
-
-	resourceMonitors, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).List(metav1.ListOptions{})
-	for _, resMonitor := range resourceMonitors.Items {
-		fmt.Printf("ResourceMonitor:%v\n", resMonitor)
-		if err != nil {
-			fmt.Errorf("Error:%s\n", err)
-		}
-		kind := resMonitor.Spec.Resource.Kind
-		group := resMonitor.Spec.Resource.Group
-		version := resMonitor.Spec.Resource.Version
-		plural := resMonitor.Spec.Resource.Plural
-		relationshipToMonitor := resMonitor.Spec.MonitorRelationships
-		fmt.Printf("Kind:%s\n", kind)
-		fmt.Printf("Group:%s\n", group)    		
-		fmt.Printf("Version:%s\n", version)
-		fmt.Printf("Plural:%s\n", plural)
-		fmt.Printf("RelationshipToMonitor:%s\n", relationshipToMonitor)
-	}
-
 	helmrelease := getReleaseName(kind, customresource, namespace)
 	fmt.Printf("Helm release3:%s\n", helmrelease)
+	if helmrelease != "" {
+		metricsCmd := "./root/kubectl metrics helmrelease " + helmrelease + " -o prometheus " 
+		fmt.Printf("metrics cmd:%s\n", metricsCmd)
+		_, metricsToReturn = executeExecCall(cmdRunnerPod, namespace, metricsCmd)
+	} else {
+		config, _ := rest.InClusterConfig()
+		var sampleclientset platformworkflowclientset.Interface
+		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
- 	cmdRunnerPod := CMD_RUNNER_POD
+		resourceMonitors, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).List(metav1.ListOptions{})
+		followConnections := ""
+		for _, resMonitor := range resourceMonitors.Items {
+			fmt.Printf("ResourceMonitor:%v\n", resMonitor)
+			if err != nil {
+				fmt.Errorf("Error:%s\n", err)
+			}
+			reskind := resMonitor.Spec.Resource.Kind
+			resgroup := resMonitor.Spec.Resource.Group
+			resversion := resMonitor.Spec.Resource.Version
+			resplural := resMonitor.Spec.Resource.Plural
+			relationshipToMonitor := resMonitor.Spec.MonitorRelationships
+			fmt.Printf("Kind:%s\n", reskind)
+			fmt.Printf("Group:%s\n", resgroup)    		
+			fmt.Printf("Version:%s\n", resversion)
+			fmt.Printf("Plural:%s\n", resplural)
+			fmt.Printf("RelationshipToMonitor:%s\n", relationshipToMonitor)
 
+			if relationshipToMonitor != "all" && relationshipToMonitor != "owner" {
+				metricsToReturn = "Value " + relationshipToMonitor + " not supported. Valid values: all, owner"
+				break
+			}
+			if reskind == kind {
+				if relationshipToMonitor == "all" {
+					followConnections = " --follow-connections"
+				}
+			}
+		}
+		metricsCmd := "./root/kubectl metrics cr " + kind + " " + customresource + " " + namespace + " -o prometheus " + followConnections
+		fmt.Printf("metrics cmd:%s\n", metricsCmd)
+		_, metricsToReturn = executeExecCall(cmdRunnerPod, namespace, metricsCmd)
+	}
  	/*cpPluginsCmd := "cp /plugins/* bin/"
 	fmt.Printf("cp plugins cmd:%s\n", cpPluginsCmd)
 	executeExecCall(cmdRunnerPod, namespace, cpPluginsCmd)
 	*/
-
-	metricsCmd := "./root/kubectl metrics helmrelease " + helmrelease + " -o prometheus " 
-	fmt.Printf("metrics cmd:%s\n", metricsCmd)
-	ok, helmreleaseMetrics := executeExecCall(cmdRunnerPod, namespace, metricsCmd)
-	if ok {
+	/*if ok {
 		fmt.Printf("%v\n", helmreleaseMetrics)
 		// WIP - convert metrics from helmrelease to custom resource
 		//prometheusMetrics := getPrometheusMetrics(kind, customresource, namespace, helmreleaseMetrics)
 		response.Write([]byte(helmreleaseMetrics))
 	} else {
 		response.Write([]byte{})
-	}
+	}*/
+	response.Write([]byte(metricsToReturn))
 }
 
 /*
