@@ -1,0 +1,12 @@
+1. Install Redis Operator
+   - Follow steps from https://github.com/RedisLabs/redis-enterprise-k8s-docs
+
+2. Create RedisEnterpriseCluster Custom Resource
+   - Follow step from https://github.com/RedisLabs/redis-enterprise-k8s-docs
+
+3. Annotate CRD
+   - kubectl annotate crd redisenterpriseclusters.app.redislabs.com resource/composition="StatefulSet, Service, PodDisruptionBudget"
+
+4. Check connections
+   - kubectl connections RedisEnterpriseCluster redis-enterprise demo
+
