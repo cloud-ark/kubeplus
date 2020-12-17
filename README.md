@@ -119,7 +119,7 @@ resource/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudg
 This identifies the set of resources that will be created by the Operator as part of instantiating the MysqlCluster Custom Resource instance. 
 
 <p align="center">
-<img src="./docs/clusterissuer-mysqlcluster.png" width="800" height="300" class="center">
+<img src="./examples/wordpress-mysqlcluster/mysqlcluster.png" width="800" height="300" class="center">
 </p>
 
 Once these annotations are added to the respective CRDs by the cluster administrator, above resource topology can be discovered by DevOps teams using ``kubectl connections`` plugin as follows:
