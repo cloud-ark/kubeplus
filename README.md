@@ -116,16 +116,22 @@ CRD annotation on the MysqlCluster Custom Resource:
 resource/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
 ```
 
-This identifies the set of resources that will be created by the Operator as part of instantiating the MysqlCluster Custom Resource instance. 
-
-<p align="center">
-<img src="./examples/wordpress-mysqlcluster/mysqlcluster.png" width="800" height="300" class="center">
-</p>
-
-Once these annotations are added to the respective CRDs by the cluster administrator, above resource topology can be discovered by DevOps teams using ``kubectl connections`` plugin as follows:
+This identifies the set of resources that will be created by the Operator as part of instantiating the MysqlCluster Custom Resource instance. Once these annotations are added to the respective CRDs by the cluster administrator, above resource topology can be discovered by DevOps teams using ``kubectl connections`` plugin as follows:
 
 Note use the kind name as registered with the cluster (e.g.: Deployment or Service and not deployment or service)
 
+Here is the output of running connections on MysqlCluster Custom Resource instance:
+
+```
+$ kubectl connections MysqlCluster cluster1 namespace1 -o png
+```
+
+<p align="center">
+<img src="./examples/wordpress-mysqlcluster/mysqlcluster.png" width="1000" height="500" class="center">
+</p>
+
+
+<!---
 ``` 
 $ kubectl connections Service wordpress namespace1
 
@@ -149,6 +155,7 @@ Level:0 Service/wordpress
 Level:1 Ingress/wordpress-ingress [related to Service/wordpress by:specproperty]
 Level:2 ClusterIssuer/wordpress-stack [related to Ingress/wordpress-ingress by:annotation]
 ```
+--->
 
 The resource consumption of this resource topology can be obtained using ``kubectl metrics`` plugin as follows:
 

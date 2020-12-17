@@ -53,6 +53,7 @@ Steps:
 
 11) Find Metrics of MysqlCluster instance
     - kubectl metrics cr MysqlCluster cluster1 namespace1
+    - kubectl get pods -n namespace1
 
 12) Find logs of all the Pods that are downstream of the wordpress service
     - kubectl grouplogs service wordpress namespace1

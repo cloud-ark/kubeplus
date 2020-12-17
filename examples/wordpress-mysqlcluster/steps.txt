@@ -62,6 +62,13 @@ Steps:
     - kubectl connections Service wordpress namespace1
     - kubectl connections <Pod-name> namespace1
 
+11) Cleanup
+     - kubectl delete -f wordpress-pod.yaml
+     - kubectl delete -f wordpress-service.yaml
+     - kubectl delete -f wordpress-ingress.yaml
+     - kubectl delete -f clusterissuer.yaml
+     - kubectl delete -f cluster1-secret.yaml
+     - kubectl delete -f cluster1.yaml
 
 
 
