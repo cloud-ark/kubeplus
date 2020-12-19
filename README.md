@@ -67,29 +67,30 @@ These can be used independently.
 
 KubePlus kubectl plugins enable users to discover, monitor and troubleshoot Custom Resources and their relationships. The plugins run entirely client-side and do not require the in-cluster component. Here is the list of KubePlus kubectl plugins. 
 
-
+<!---
 **1. kubectl composition**
 
 - ``kubectl composition``: Provides information about sub resources created for a Kubernetes resource instance (custom or built-in). Essentially, 'kubectl composition' shows ownerReference based relationships.
+-->
 
-**2. kubectl connections**
+**1. kubectl connections**
 
-- ``kubectl connections``: Provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via labels, annotations, spec properties and owner references.
+- ``kubectl connections``: Provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties.
 
-**3. kubectl metrics**
+**2. kubectl metrics**
 
 - ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and total Memory consumption).
 - ``kubectl metrics service``: Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
 - ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs cluster-side component.
 - ``kubectl metrics helmrelease``: Provides CPU/Memory metrics for all the Pods that are part of a Helm release.
 
-**4. kubectl grouplogs**
+**3. kubectl grouplogs**
 
 - ``kubectl grouplogs cr``: Provides logs for all the containers of a Custom Resource instance.
 - ``kubectl grouplogs service``: Provides logs for all the containers of all the Pods that are related to a Service object.
 - ``kubectl grouplogs helmrelease`` (upcoming): Provides logs for all the containers of all the Pods that are part of a Helm release.
 
-**5. kubectl man**
+**4. kubectl man**
 
 - ``kubectl man <Custom Resource> ``: Provides information about how to use a Custom Resource.
 
@@ -121,7 +122,8 @@ resource/label-relationship
 resource/specproperty-relationship
 ```
 
-Kubernetes Operator developers or cluster administrators can add these annotations to the CRDs. [Here](https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md) are some sample CRD annotations for community Operators that can be used to unlock KubePlus tooling for them.
+Kubernetes Operator developers or cluster administrators can add these annotations to the CRDs. [Here](https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md) are some sample CRD annotations for community Operators that can be used to unlock KubePlus tooling for them. The `composition` annotation is optional. If it is not specified, KubePlus uses following Kinds as default when discovering the owner relationship for that Custom Resource instances (`Deployment, StatefulSet, DaemonSet, ReplicationController, Service, Secret, PodDisruptionBudget, ServiceAccount, PersistentVolumeClaim`).
+
 
 KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies.
 
@@ -144,7 +146,9 @@ CRD annotation on the MysqlCluster Custom Resource:
 resource/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
 ```
 
-This identifies the set of resources that will be created by the Operator as part of instantiating the MysqlCluster Custom Resource instance. Once these annotations are added to the respective CRDs by the cluster administrator, the resource topology can be discovered by DevOps teams using ``kubectl connections`` plugin (output above)
+This identifies the set of resources that will be created by the Operator as part of instantiating the MysqlCluster Custom Resource instance.
+
+Once these annotations are added to the respective CRDs by the cluster administrator, the resource topology can be discovered by DevOps teams using ``kubectl connections`` plugin (output above)
 
 Note: When using KubePlus connections plugins, use the kind name as registered with the cluster (e.g.: Deployment) and not their short form (e.g.: deployment) or plural (e.g.: deployments).
 

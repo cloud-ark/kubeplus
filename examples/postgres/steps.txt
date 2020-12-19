@@ -42,7 +42,7 @@ Steps:
 11) Find information about Postgres Custom Kind registered by Postgres Operator
     - kubectl describe customresourcedefinition postgreses.postgrescontroller.kubeplus
     - kubectl man Postgres
-    - kubectl composition Postgres postgres1 default | python -mjson.tool
+    - kubectl connections Postgres postgres1 default -o json | python -mjson.tool
 
 12) Deploy Postgres1 instance
     - kubectl create -f postgres1.yaml
@@ -56,8 +56,8 @@ Steps:
         - username: defined in postgres1.yaml
         - db-name: defined in postgres1.yaml
         - password: when prompted, enter password specified in postgres1.yaml
-    - Get composition tree of Postgres1
-      - kubectl composition Postgres postgres1 default | python -mjson.tool
+    - Get connections of Postgres1
+      - kubectl connections Postgres postgres1 default -o json | python -mjson.tool
 
 13) Test Life-cycle actions (execute and verify)
     - kubectl apply -f add-user.yaml

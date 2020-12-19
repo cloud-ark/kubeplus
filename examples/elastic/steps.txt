@@ -52,7 +52,7 @@ Steps:
 
 11) Check dynamic information such as the native Kubernetes resources that are created by the Operator
     for managing Elasticsearch custom resource instance
-    - kubectl composition Elasticsearch quickstart
+    - kubectl connections Elasticsearch quickstart
 
 
 

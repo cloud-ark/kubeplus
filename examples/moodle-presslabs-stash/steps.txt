@@ -123,7 +123,7 @@ Create Moodle instance and take its backups
          Update moodle1-gke.yaml to include 'domainName' attribute, e.g.: 'domainName: www.moodle1.net'.
 
      - Find the name of the MysqlCluster 'master' Service corresponding to the cluster1 MysqlCluster.
-       - kubectl composition MysqlCluster cluster1 namespace1
+       - kubectl connections  MysqlCluster cluster1 namespace1
 
      - Add that name in moodle1.yaml / moodle1-gke.yaml in Spec.mySQLServiceName field
 
@@ -185,8 +185,8 @@ Create Moodle instance and take its backups
    - Use the 'man' endpoint for Moodle Kind to find the Volume mount path that the Moodle Operator uses for the Moodle data volume.
     - kubectl man Moodle
 
-   - Use the 'composition' endpoint for moodle1 instance to find the name of the Deployment object that is created as part of creating moodle1 Custom Resource instance.
-    - kubectl composition Moodle moodle1 namespace1
+   - Use 'connection' for moodle1 instance to find the name of the Deployment object that is created as part of creating moodle1 Custom Resource instance.
+    - kubectl connection Moodle moodle1 namespace1
 
 3) Add a label to the Moodle deployment
     - kubectl label -n namespace1 deployments moodle1 app=moodle-deploy
