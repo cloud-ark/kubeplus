@@ -83,7 +83,7 @@ Steps:
          Update moodle1-gke.yaml to include 'domainName' attribute, e.g.: 'domainName: www.moodle1.net'.
 
      - Find the name of the MysqlCluster 'master' Service corresponding to the cluster1 MysqlCluster.
-       - kubectl composition MysqlCluster cluster1 namespace1
+       - kubectl connection MysqlCluster cluster1 namespace1
 
      - Add that name in moodle1.yaml / moodle1-gke.yaml in Spec.mySQLServiceName field
 
@@ -128,8 +128,8 @@ Steps:
           - Navigate to -> Administration -> Plugins -> Plugins Overview
           - You should see 'profilecohort' plugin in the 'Additional plugins' list
 
-11) Check the composition of Moodle instance
-    - kubectl composition Moodle moodle1 namespace1
+11) Check the connection of Moodle instance
+    - kubectl connection Moodle moodle1 namespace1
 
 12) Deploy Moodle2 instance in namespace2
     - cd ../namespace2

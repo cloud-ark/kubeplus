@@ -47,7 +47,7 @@ Steps:
    - Once MysqlCluster pods are ready, deploy Wordpress
 
      - Find the name of the MysqlCluster 'master' Service corresponding to the cluster1 MysqlCluster.
-       - kubectl composition MysqlCluster cluster1 namespace1 | python -m json.tool
+       - kubectl connections MysqlCluster cluster1 namespace1 -o json | python -m json.tool
 
      - Add that in wordpress-pod.yaml environment variable WORDPRESS_DB_HOST
      - Base64 decode the value of cluster1-secret and add that value to WORDPRESS_DB_PASSWORD environment variable 
