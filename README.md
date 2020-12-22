@@ -150,9 +150,6 @@ This identifies the set of resources that will be created by the Operator as par
 
 Once these annotations are added to the respective CRDs by the cluster administrator, the resource topology can be discovered by DevOps teams using ``kubectl connections`` plugin (output above)
 
-Note: When using KubePlus connections plugins, use the kind name as registered with the cluster (e.g.: Deployment) and not their short form (e.g.: deployment) or plural (e.g.: deployments).
-
-
 <!---
 ``` 
 $ kubectl connections Service wordpress namespace1
