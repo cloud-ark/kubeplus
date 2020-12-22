@@ -218,6 +218,7 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
 
   - Check out [examples](./examples/).
 
+
 ## Platform-as-Code
 
 KubePlus is developed as a part of CloudARK's [Platform-as-Code practice](https://cloudark.io/platform-as-code). Kubernetes Operators enable extending Kubernetes for application specific workflows. They add Custom Resources and offer foundation for creating application stacks as Code declaratively. Our Platform-as-Code practice offers tools and techniques enabling DevOps teams to build custom PaaSes using Kubernetes Operators.
@@ -225,6 +226,15 @@ KubePlus is developed as a part of CloudARK's [Platform-as-Code practice](https:
 ## Operator Maturity Model
 
 As DevOps team build their custom PaaSes using community or in house developed Operators, they need a set of guidelines for Operator development and evaluation. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-tenant and multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators today for curating community Operators towards building their custom PaaSes.
+
+
+## Presentations/Talks
+
+1. [KubePlus presentation at Kubernetes community meeting](https://youtu.be/ZckVULU9sYc)
+
+2. [Operators and Helm: It takes two to Tango, Helm Summit 2019](https://youtu.be/F_Dgz1V5Q2g)
+
+3. [Being a good citizen of the Multi-Operator world, Kubecon NA 2020](https://www.youtube.com/watch?v=NEGs0GMJbCw&t=2s)
 
 
 ## Contact
