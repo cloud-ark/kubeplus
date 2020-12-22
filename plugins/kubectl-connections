@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 #echo "kubectl connections cr"
 #echo "kubectl connections service"
@@ -14,6 +14,29 @@ instance=$2
 namespace=$3
 output="flat"
 kubeconfig=""
+
+canonicalKind=`kubectl api-resources | grep -w $kind | awk '{print $4}'`
+
+if [[ $canonicalKind == 'true' ]]; then
+  canonicalKind=`kubectl api-resources | grep -w $kind | awk '{print $5}'`
+fi
+
+count=0
+for k in $canonicalKind
+do 
+  count=$(( count + 1 ))
+done
+
+if [[ $count == 0 ]]; then
+  echo "Unknown resource $kind."
+  exit 0
+fi
+
+if [[ $count > 1 ]]; then
+  echo "Ambiguous resource $kind. Found"
+  echo $canonicalKind
+  exit 0
+fi
 
 # Both specified --kubeconfig and -o 
 if [ $# = 6 ]; then
@@ -40,11 +63,11 @@ fi
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     if [[ "$output" == "png" ]]; then
-      /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $kind $instance $namespace -o json $kubeconfig > "$KUBEPLUS_HOME/plugins/connections-op.json"
+      /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace -o json $kubeconfig > "$KUBEPLUS_HOME/plugins/connections-op.json"
       docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/disco-horizon-103614/grapher:latest connections-op.json /root/
       echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
     else
-      /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $kind $instance $namespace -o $output $kubeconfig
+      /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace -o $output $kubeconfig
     fi
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     if [[ "$output" == "png" ]]; then
