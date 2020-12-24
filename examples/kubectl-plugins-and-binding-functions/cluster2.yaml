@@ -1,7 +1,0 @@
-apiVersion: mysql.presslabs.org/v1alpha1
-kind: MysqlCluster
-metadata:
-  name: cluster2
-spec:
-  replicas: 1
-  secretName: cluster-secret
