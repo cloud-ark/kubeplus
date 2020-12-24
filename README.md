@@ -34,7 +34,7 @@ Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resourc
 Here is an example application stack for Wordpress (all resources not shown).
 
 <p align="center">
-<img src="./docs/resource-relationship-1.png" width="700" height="300" class="center">
+<img src="./docs/clusterissuer-mysqlcluster.png" width="700" height="300" class="center">
 </p>
 
 KubePlus is able to construct Kubernetes Resource relationship graphs for such stacks at runtime. Here is the output of using KubePlus connections plugin to discover the complete topology for above stack:
