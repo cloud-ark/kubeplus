@@ -11,8 +11,6 @@ Platform teams are faced with following challenges while managing such environme
 - Monitoring: Application stack level monitoring and chargeback
 - Control: Establish guardrails around Custom Resource usage
 
-## What is KubePlus?
-
 KubePlus is a Kubernetes Custom Resource Manager that enables:
 - Discovering runtime relationships between Kubernetes resources (Custom and built-in)
 - Monitoring Custom Resource usage and exposing that as Prometheus metrics
@@ -34,7 +32,7 @@ Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resourc
 Here is an example application stack for Wordpress (all resources not shown).
 
 <p align="center">
-<img src="./docs/clusterissuer-mysqlcluster.png" width="700" height="300" class="center">
+<img src="./docs/clusterissuer-mysqlcluster.png" width="800" height="300" class="center">
 </p>
 
 KubePlus is able to construct Kubernetes Resource relationship graphs for such stacks at runtime. Here is the output of using KubePlus connections plugin to discover the complete topology for above stack:
@@ -54,7 +52,7 @@ KubePlus consists of client-side kubectl plugins and in-cluster components.
 These can be used independently.
 
 <p align="center">
-<img src="./docs/kubeplus-components-resourcecrds.png" width="450" height="300" class="center">
+<img src="./docs/kubeplus-components-resourcecrds.png" width="450" height="400" class="center">
 </p>
 
 <!---
