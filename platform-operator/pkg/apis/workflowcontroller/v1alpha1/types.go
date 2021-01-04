@@ -27,6 +27,7 @@ type ResourceCompositionSpec struct {
 	//StackElements []StackElements `json:"stackElements"`
 	// Name of CRD to register
 	NewResource NewResource `json:"newResource"`
+	ResPolicy ResourcePolicy `json:"respolicy""`
 }
 
 type StackElements struct {

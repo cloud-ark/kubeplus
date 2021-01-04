@@ -10,6 +10,7 @@ import (
 	//"context"
 
 	"github.com/buger/jsonparser"
+	guuid "github.com/google/uuid"
 
 	"k8s.io/api/admission/v1beta1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
@@ -19,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/kubernetes/pkg/apis/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	//"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/kubernetes"
@@ -44,6 +46,9 @@ var (
 	helper chan string
 
 	customAPIPlatformWorkflowMap map[string]string
+	customKindPluralMap map[string]string
+	customAPIInstanceUIDMap map[string]string
+	kindPluralMap map[string]string
 	resourcePolicyMap map[string]interface{}
 
 	//dynamicClient dynamic.Interface
@@ -97,6 +102,9 @@ func init() {
 	kubeclientset, _ = kubernetes.NewForConfig(cfg)
 
 	customAPIPlatformWorkflowMap = make(map[string]string,0)
+	customAPIInstanceUIDMap = make(map[string]string,0)
+	customKindPluralMap = make(map[string]string,0)
+	kindPluralMap = make(map[string]string,0)
 	resourcePolicyMap = make(map[string]interface{}, 0)
 
 	//TODO: Helper that tracks resource creation and puts labels/annotations
@@ -139,7 +147,22 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		trackCustomAPIs(ar)
 	}
 
-	handleCustomAPIs(ar)
+	var pacAnnotationMap map[string]string
+	if req.Kind.Kind == "CustomResourceDefinition" {
+		pacAnnotationMap = getPaCAnnotation(ar)
+		//patchOperations = append(patchOperations, crdPatch)
+	}
+
+	accountIdentityAnnotationMap := getAccountIdentityAnnotation(ar)
+	allAnnotations := mergeMaps(pacAnnotationMap, accountIdentityAnnotationMap)
+	annotationPatch := getAnnotationPatch(allAnnotations)
+
+	patchOperations = append(patchOperations, annotationPatch)
+
+	errResponse := handleCustomAPIs(ar)
+	if errResponse != nil {
+		return errResponse
+	}
 
 	if req.Kind.Kind == "Pod" {
 		customAPI := shouldApplyPolicies(ar)
@@ -154,16 +177,22 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	// TODO: Check if dependent resources have been created or not
 	// checkDependency(ar)
 
+	/*
 	specResolvedPatches, errResponse := getSpecResolvedPatch(ar)
 	if errResponse != nil {
 		return errResponse
 	}
 	for _, specResolvedPatch := range specResolvedPatches {
 		patchOperations = append(patchOperations, specResolvedPatch)
-	}
+	}*/
 
-	annotationPatch := getAccountIdentityAnnotationPatch(ar)
-	patchOperations = append(patchOperations, annotationPatch)
+	//setOwnerReference(ar)
+
+	/*ownerReferencePatch := getOwnerReferencePatch(ar)
+	if ownerReferencePatch != nil {
+		ownerRefOp := ownerReferencePatch.(patchOperation)
+		patchOperations = append(patchOperations, ownerRefOp)
+	}*/
 
 	fmt.Printf("PatchOperations:%v\n", patchOperations)
 	patchBytes, _ := json.Marshal(patchOperations)
@@ -320,10 +349,34 @@ func findRoot(namespace, kind, name, apiVersion string) (string, string, string)
 	ownerReference := instanceObj.GetOwnerReferences()
 	if len(ownerReference) == 0 {
 		// Reached the root
-		fmt.Printf("Root kind:%s\n", kind)
-		fmt.Printf("Root name:%s\n", name)
-		fmt.Printf("Root APIVersion:%s\n", apiVersion)
-		return kind, name, apiVersion
+		// Jump of from the Helm annotation; should be of type <plural>-<name>
+
+		fmt.Printf("Intermediate Root kind:%s\n", kind)
+		fmt.Printf("Intermediate Root name:%s\n", name)
+		fmt.Printf("Intermediate Root APIVersion:%s\n", apiVersion)
+
+		annotations := instanceObj.GetAnnotations()
+		releaseName := annotations["meta.helm.sh/release-name"]
+		parts := strings.Split(releaseName, "-")
+		okindLowerCase := parts[0]
+		oinstance := parts[1]
+		fmt.Printf("KindPluralMap2:%v\n", kindPluralMap)
+		oplural := kindPluralMap[okindLowerCase]
+		fmt.Printf("OPlural:%s OInstance:%s\n", oplural, oinstance)
+		customAPI := ""
+		for k, v := range customKindPluralMap {
+			if v == oplural {
+				customAPI = k
+				break
+			}
+		}
+		fmt.Printf("CustomAPI:%s\n", customAPI)
+		capiParts := strings.Split(customAPI, "/")
+		capiGroup := capiParts[0]
+		capiVersion := capiParts[1]
+		capiKind := capiParts[2]
+		fmt.Printf("capiGroup:%s capiVersion:%s capiKind:%s\n", capiGroup, capiVersion, capiKind)
+		return capiKind, oinstance, capiGroup + "/" + capiVersion
 	} else {
 		owner := ownerReference[0]
 		ownerKind := owner.Kind
@@ -457,9 +510,15 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) {
 	    fmt.Println(err)	
 	}
 
-	platformWorkflowName, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
+	platformWorkflowName, err := jsonparser.GetUnsafeString(body, "metadata", "name")
 	if err != nil {
 		fmt.Println(err)
+	}
+
+	namespace1, _, _, err := jsonparser.Get(body, "metadata", "namespace")
+	namespace := string(namespace1)
+	if namespace == "" {
+		namespace = "default"
 	}
 
 	fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
@@ -479,13 +538,79 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) {
  	fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
  	customAPI := group + "/" + version + "/" + kind
  	customAPIPlatformWorkflowMap[customAPI] = platformWorkflowName
-    //}
+ 	customKindPluralMap[customAPI] = plural
+
+ 	//go addPaCAnnotation(platformWorkflowName, namespace, kind, plural, group)
 }
 
-func handleCustomAPIs(ar *v1beta1.AdmissionReview) {
+
+func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
+	req := ar.Request
+	body := req.Object.Raw
+	crdkind, err := jsonparser.GetUnsafeString(body, "spec", "names", "kind")
+	crdplural, err := jsonparser.GetUnsafeString(body, "spec", "names", "plural")
+	crdversion, err := jsonparser.GetUnsafeString(body, "spec", "version")
+	crdgroup, err := jsonparser.GetUnsafeString(body, "spec", "group")
+	fmt.Printf("CRDKind:%s, CRDPlural:%s, CRDVersion:%s\n", crdkind, crdplural, crdversion)
+	customAPI := crdgroup + "/" + crdversion + "/" + crdkind
+	platformWorkflowName, ok := customAPIPlatformWorkflowMap[customAPI]
+	chartKinds := ""
+	if ok {
+
+	for {
+			namespace := "default"
+ 			chartKindsB := DryRunChart(platformWorkflowName, namespace)
+ 			chartKinds = string(chartKindsB)
+ 			fmt.Printf("Chart Kinds:%v\n", chartKinds)
+ 			if chartKinds == "" {
+ 				time.Sleep(2 * time.Second)
+ 			} else {
+ 				break
+ 			}
+ 		}
+ 	}
+
+ 	fmt.Printf("Annotating %s\n", chartKinds)
+ 	chartKinds = strings.Replace(chartKinds, "-", ";", 1)
+  	fmt.Printf("Annotating %s\n", chartKinds)
+  	//AnnotateCRD(kind, plural, group, chartKinds)
+
+	// Add crd annotation
+	annotations1 := make(map[string]string, 0)
+	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
+	if err != nil {
+		fmt.Printf("Error in parsing existing annotations")
+	} else {
+		json.Unmarshal(allAnnotations, &annotations1)
+		fmt.Printf("All Annotations:%v\n", annotations1)
+	}
+	annotateRel := "resource/annotation-relationship"
+	lowercaseKind := strings.ToLower(crdkind)
+	kindPluralMap[lowercaseKind] = crdplural
+	fmt.Printf("KindPluralMap1:%v\n", kindPluralMap)
+ 	annotationValue := lowercaseKind + "-INSTANCE.metadata.name"
+ 	fmt.Printf("Annotation value:%s\n", annotationValue)
+
+	annotateVal := "on:" + chartKinds + ", key:meta.helm.sh/release-name, value:" + annotationValue
+
+	annotations1[annotateRel] = annotateVal
+	fmt.Printf("All Annotations:%v\n", annotations1)
+
+	return annotations1
+
+	/*patch := patchOperation{
+		Op:    "add",
+		Path:  "/metadata/annotations",
+		Value: annotations1,
+	}
+	return patch*/
+}
+
+func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	fmt.Printf("Inside handleCustomAPIs...")
 	req := ar.Request
 	body := req.Object.Raw
+	//fmt.Printf("%v\n", req)
 	kind, err := jsonparser.GetUnsafeString(body, "kind")
 	if err != nil {
 		fmt.Errorf("Error:%s\n", err)
@@ -503,12 +628,33 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) {
 	crname, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
 	fmt.Printf("CR Name:%s\n", crname)
 
+	//cruid, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "uid")
+	// We have to generate a uid as when the request is received there is no uid yet.
+	// When the object is persisted Kubernetes will overwrite the uid with a new value - that is okay.
+	id := guuid.New()
+	cruid := id.String()
+	fmt.Printf("CR Uid:%s\n", cruid)
+
 	overridesBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "spec")
 	overrides := string(overridesBytes)
-	fmt.Printf("Overrides:%s\n", overrides)
+	//fmt.Printf("Overrides:%s\n", overrides)
 
 	customAPI := apiVersion + "/" + kind
 	fmt.Printf("CustomAPI:%s\n", customAPI)
+
+	// Save name:uid mapping
+	customAPIInstance := customAPI + "/" + namespace + "/" + crname
+	//_, ok := customAPIInstanceUIDMap[customAPIInstance]
+	/*if ok {
+		message := fmt.Sprintf("A resource with fully qualified name %s already exists.", customAPIInstance)
+		return &v1beta1.AdmissionResponse{
+				Result: &metav1.Status{
+				Message: message,
+			},
+		}
+	} else {*/
+	customAPIInstanceUIDMap[customAPIInstance] = cruid
+
 	platformWorkflowName := customAPIPlatformWorkflowMap[customAPI]
 	if platformWorkflowName != "" {
 		fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
@@ -547,6 +693,7 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) {
  		fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s, ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
  		QueryDeployEndpoint(platformWorkflowName, crname, namespace, overrides)
 	}
+	return nil
 }
 
 /*
@@ -582,7 +729,171 @@ func checkDependency(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 }
 */
 
-func getAccountIdentityAnnotationPatch(ar *v1beta1.AdmissionReview) patchOperation {
+func setOwnerReference(ar *v1beta1.AdmissionReview) {
+	req := ar.Request
+	body := req.Object.Raw
+	ckind, err := jsonparser.GetUnsafeString(body, "kind")
+	if err != nil {
+		fmt.Errorf("Error:%s\n", err)
+	}
+	capiVersion, err := jsonparser.GetUnsafeString(body, "apiVersion")
+	if err != nil {
+		fmt.Errorf("Error:%s\n", err)
+	}
+	prts := strings.Split(capiVersion, "/")
+	cgroup := ""
+	cversion := prts[0]
+	if len(prts) == 2 {
+		cgroup = prts[0]
+		cversion = prts[1]
+	} 
+
+	cname, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
+	fmt.Printf("CR Name:%s\n", cname)
+	cplural := string(GetPlural(ckind, cgroup))
+	fmt.Printf("Child Plural:%s\n",cplural)
+
+	annotations1 := make(map[string]string, 0)
+	allAnnotations, _, _, _ := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
+	json.Unmarshal(allAnnotations, &annotations1)
+	helmReleaseName := ""
+	helmReleaseNamespace := ""
+	for key, value := range annotations1 {
+		if key == "meta.helm.sh/release-name" {
+			helmReleaseName = string(value)
+		}
+		if key == "meta.helm.sh/release-namespace" {
+			helmReleaseNamespace = string(value)
+		}
+	}
+
+	if helmReleaseName != "" && helmReleaseNamespace != "" {
+	for registeredCustomResourceInstance, _ := range customAPIInstanceUIDMap {
+		//uid := customAPIInstanceUIDMap[registeredCustomResourceInstance]
+		parts := strings.Split(registeredCustomResourceInstance, "/")
+		//fmt.Printf("Parts:%v\n", parts)
+		if len(parts) >= 5 {
+		apiVersion := parts[0] + "/" + parts[1]
+		ogroup := parts[0]
+		oversion := parts[1]
+		okind := parts[2]
+		namespace := parts[3]
+		oinstance := parts[4]
+
+		for customAPI, _ := range customAPIPlatformWorkflowMap {
+			parts1 := strings.Split(customAPI, "/")
+			customAPIKind := parts1[2]
+			//fmt.Printf("Custom API Kind:%s\n", customAPIKind)
+
+			if helmReleaseNamespace == namespace && helmReleaseName == oinstance && okind == customAPIKind {
+					fmt.Printf("CR API Version:%s", apiVersion)
+					fmt.Printf("CR API kind:%s", okind)
+					fmt.Printf("CR API Namespace:%s", namespace)
+					fmt.Printf("CR API Name:%s", oinstance)
+
+					oplural := string(GetPlural(okind, ogroup))
+					fmt.Printf("OwnerPlural:%s\n",oplural)
+
+					//if uid != "" && apiVersion != "" && kind != "" && name != "" {
+					fmt.Printf("Setting owner reference...")
+
+		 			go updateOwnerReference(cgroup, cversion, cplural, cname, ogroup, oversion, okind, oplural, oinstance, namespace)
+					}
+				}
+			}
+		}
+	}
+}
+
+func getOwnerReferencePatch(ar *v1beta1.AdmissionReview) {
+	 				/*
+					ownerRef := make(map[string]string,0)
+					ownerRef["apiVersion"] = apiVersion
+					ownerRef["kind"] = kind
+					ownerRef["name"] = name
+					//ownerRef["uid"] = uid
+					ownerRefList := make([]map[string]string,0)
+					ownerRefList = append(ownerRefList, ownerRef)
+
+						patch := patchOperation{
+						Op:    "replace",
+						Path:  "/metadata/ownerReferences",
+						Value: ownerRefList,
+					}
+					fmt.Printf("Patch Op:%v\n", patch)
+					return patch
+					*/
+				//}
+
+}
+
+func updateOwnerReference(cgroup, cversion, cplural, cinstance, ogroup, oversion, okind, oplural, oinstance, namespace string) {
+
+	fmt.Printf("Inside updateOwnerReference")
+	cres := schema.GroupVersionResource{Group: cgroup,
+									   Version: cversion,
+									   Resource: cplural}
+	fmt.Printf("CRes:%v\n", cres)
+
+	ores := schema.GroupVersionResource{Group: ogroup,
+									   Version: oversion,
+									   Resource: oplural}
+	fmt.Printf("ORes:%v\n", ores)
+
+	dynamicClient, err1 := getDynamicClient1()
+	if err1 != nil {
+		fmt.Printf("Error in getting dynamic client:%v\n", err1)
+		return
+	}
+
+	for {
+		cobj, err1 := dynamicClient.Resource(cres).Namespace(namespace).Get(cinstance, metav1.GetOptions{})
+		oobj, err2 := dynamicClient.Resource(ores).Namespace(namespace).Get(oinstance, metav1.GetOptions{})
+
+		if err1 == nil && err2 == nil {
+			oapiVersion := oobj.GetAPIVersion()
+			ouid := oobj.GetUID()
+			ref := metav1.OwnerReference{
+				APIVersion: oapiVersion,
+				Kind: okind,
+				Name: oinstance, 
+				UID: ouid,
+			}
+			refList := make([]metav1.OwnerReference, 0)
+			refList = append(refList, ref)
+			cobj.SetOwnerReferences(refList)
+			dynamicClient.Resource(cres).Namespace(namespace).Update(cobj, metav1.UpdateOptions{})
+			// break out of the for loop
+			break 
+		} else {
+			time.Sleep(2 * time.Second)
+		}
+	}
+	fmt.Printf("Done updating ownerReference of the CR kind:%s instance:%s\n", cplural, cinstance)
+}
+
+func mergeMaps(map1, map2 map[string]string) map[string]string {
+	retmap := make(map[string]string,0)
+	for k, v := range map1 {
+		retmap[k] = v
+	}
+	for k, v := range map2 {
+		retmap[k] = v
+	}
+	return retmap
+}
+
+func getAnnotationPatch(allAnnotations map[string]string) patchOperation {
+	patch := patchOperation{
+		Op:    "add",
+		Path:  "/metadata/annotations",
+		Value: allAnnotations,
+	}
+	return patch
+}
+
+
+func getAccountIdentityAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 
 	req := ar.Request
 
@@ -613,14 +924,7 @@ func getAccountIdentityAnnotationPatch(ar *v1beta1.AdmissionReview) patchOperati
 	//userIdentityJSON, _ := json.Marshal(userIdentity)
 	//allAnnotations = append(allAnnotations, userIdentityJSON)
 	//fmt.Printf("All Annotations:%s", fmt.Sprintf("%v", annotations1))
-	
-	patch := patchOperation{
-		Op:    "replace",
-		Path:  "/metadata/annotations",
-		Value: annotations1,
-	}
-
-	return patch
+	return annotations1
 }
 
 func getSpecResolvedPatch(ar *v1beta1.AdmissionReview) ([]patchOperation, *v1beta1.AdmissionResponse) {

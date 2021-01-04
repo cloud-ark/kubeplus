@@ -364,9 +364,70 @@ func (c *Controller) syncHandler(key string) error {
 	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
 		// Check if CRD is present or not. Create it only if it is not present.
 	createCRD(kind, version, group, plural)
+
+ 	resPolicySpec := foo.Spec.ResPolicy
+ 	fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
+
+	// Instantiate ResourcePolicy object
+	createResourcePolicy(resPolicySpec, namespace)
+
 	//}
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
+}
+
+func createResourcePolicy(resPolicySpec interface{}, namespace string) {
+	
+	resPolicyObject := resPolicySpec.(platformworkflowv1alpha1.ResourcePolicy)
+	//resPolicySpecMap := resPolicySpec.(map[string]interface{})
+
+	// Using Typed client
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	var sampleclientset clientset.Interface
+	sampleclientset = clientset.NewForConfigOrDie(config)
+
+	resPolicy, err := sampleclientset.WorkflowsV1alpha1().ResourcePolicies(namespace).Create(&resPolicyObject)
+	fmt.Printf("ResourcePolicy:%v\n", resPolicy)
+	if err != nil {
+		fmt.Errorf("Error:%s\n", err)
+	}
+
+	/*
+	// Using dynamic client
+	resourcePolicyGroup := "workflows.kubeplus"
+	resourcePolicyVersion := "v1alpha1"
+	resourcePolicyAPIVersion := resourcePolicyGroup + "/" + resourcePolicyVersion
+	resourcePolicyPlural := "resourcepolicies"
+	resPolicyRes := schema.GroupVersionResource{Group: resourcePolicyGroup,
+		                                        Version: resourcePolicyAPIVersion,
+		                                        Resource: resourcePolicyPlural}
+	fmt.Printf("ResPolicyRes:%v\n", resPolicyRes)
+	dynamicClient, err1 := getDynamicClient1()
+	if err1 != nil {
+		fmt.Printf("Error 1:%v\n", err1)
+		fmt.Println(err1)
+	}
+
+	unstructuredResPolicy, err2 := runtime.DefaultUnstructuredConverter.ToUnstructured(resPolicyObject)
+	if err2 != nil {
+		fmt.Printf("Error 1:%v\n", err1)
+		fmt.Println(err1)
+	}
+	fmt.Printf("UnstructuredResPolicy:%v\n", unstructuredResPolicy)
+	policyData := unstructured.Unstructured{Object: unstructuredResPolicy}
+	instanceObj, err2 := dynamicClient.Resource(resPolicyRes).Namespace(namespace).Create(
+		&policyData,
+		metav1.CreateOptions{})
+	if err2 != nil {
+		fmt.Printf("Error2:%v\n",err2)
+	} else {
+		fmt.Printf("PolicyObj:%v\n", instanceObj)
+	}
+	*/
 }
 
 func createCRD(kind, version, group, plural string) error {
