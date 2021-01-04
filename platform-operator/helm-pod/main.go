@@ -90,10 +90,98 @@ func register() {
 	ws.Route(ws.GET("/metrics").To(getMetrics).
 		Doc("Get Metrics"))
 
+	ws.Route(ws.GET("/getPlural").To(getPlural).
+		Doc("Get Plural"))
+
+	ws.Route(ws.GET("/annotatecrd").To(annotateCRD).
+		Doc("Annotate CRD"))
+
 	restful.Add(ws)
 	http.ListenAndServe(":8090", nil)
 	fmt.Printf("Listening on port 8090...")
 	fmt.Printf("Done installing helmer paths...")
+}
+
+func annotateCRD(request *restful.Request, response *restful.Response) {
+	fmt.Printf("Inside annotateCRD...\n")
+	kind := request.QueryParameter("kind")
+	group := request.QueryParameter("group")
+	plural := request.QueryParameter("plural")
+	chartkinds := request.QueryParameter("chartkinds")	
+	fmt.Printf("Kind:%s\n", kind)
+	fmt.Printf("Group:%s\n", group)
+	fmt.Printf("Plural:%s\n", plural)
+	fmt.Printf("Chart Kinds:%s\n", chartkinds)
+	chartkinds = strings.Replace(chartkinds, "-", ";", 1)
+
+ 	cmdRunnerPod := CMD_RUNNER_POD
+
+ 	namespace := "default"
+
+	//kubectl annotate crd mysqlservices.platformapi.kubeplus resource/annotation-relationship="on:MysqlCluster; Secret, key:meta.helm.sh/release-name, value:INSTANCE.metadata.name"
+
+ 	fqcrd := plural + "." + group
+ 	fmt.Printf("FQCRD:%s\n", fqcrd)
+ 	lowercaseKind := strings.ToLower(kind)
+ 	annotationValue := lowercaseKind + "-INSTANCE.metadata.name"
+ 	fmt.Printf("Annotation value:%s\n", annotationValue)
+ 	annotationString := " resource/annotation-relationship=\"" + "on:" + chartkinds + ", key:meta.helm.sh/release-name, value:" + annotationValue + "\""
+ 	fmt.Printf("Annotation String:%s\n", annotationString)
+	cmd := "./root/kubectl annotate crd " + fqcrd + annotationString
+	fmt.Printf("API resources cmd:%s\n", cmd)
+	var ok bool
+	var output string 
+	for {
+		ok, output = executeExecCall(cmdRunnerPod, namespace, cmd)
+		fmt.Printf("CRD annotate o/p:%v\n", output)
+		if !ok {
+			time.Sleep(1 * time.Second)
+		} else {
+			break
+		}
+	}
+}
+
+func getPlural(request *restful.Request, response *restful.Response) {
+	fmt.Printf("Inside getPlural...\n")
+
+	kind := request.QueryParameter("kind")
+	group := request.QueryParameter("group")
+	fmt.Printf("Kind:%s\n", kind)
+	fmt.Printf("Group:%s\n", group)
+
+ 	cmdRunnerPod := CMD_RUNNER_POD
+
+ 	namespace := "default"
+
+	cmd := "./root/kubectl api-resources " //| grep " + kind + " | grep " + group + " | awk '{print $1}' " 
+	fmt.Printf("API resources cmd:%s\n", cmd)
+	_, output := executeExecCall(cmdRunnerPod, namespace, cmd)
+
+	pluralToReturn := ""
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		parts := strings.Split(line, " ")
+		nonEmptySlice := make([]string,0)
+		for _, p := range parts {
+			if p != "" && p != " " {
+				nonEmptySlice = append(nonEmptySlice, p)
+			}
+		}
+		if len(nonEmptySlice) > 0 {
+			existingKind := nonEmptySlice[len(nonEmptySlice)-1]
+			existingKind = strings.TrimSuffix(existingKind, "\n")
+			fmt.Printf("ExistingKind:%s\n", existingKind)
+			if kind == existingKind {
+				pluralToReturn = nonEmptySlice[0]
+				break
+			}
+		}
+	}
+
+	fmt.Printf("Plural to return:%s\n", string(pluralToReturn))
+
+	response.Write([]byte(pluralToReturn))
 }
 
 func getMetrics(request *restful.Request, response *restful.Response) {
@@ -240,10 +328,15 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	customresource := request.QueryParameter("customresource")
 	namespace := request.QueryParameter("namespace")
 	overrides := request.QueryParameter("overrides")
+	dryrun := request.QueryParameter("dryrun")
+	fmt.Printf("PlatformWorkflowName:%s\n", platformWorkflowName)
 	fmt.Printf("Custom Resource:%s\n", customresource)
 	fmt.Printf("Resource Composition:%s\n", platformWorkflowName)
 	fmt.Printf("Namespace:%s\n", namespace)
 	fmt.Printf("Overrides:%s\n", overrides)
+	fmt.Printf("Dryrun:%s\n", dryrun)
+
+	kinds := make([]string, 0)
 
 	if platformWorkflowName != "" {
 		config, err := rest.InClusterConfig()
@@ -318,22 +411,42 @@ func deployChart(request *restful.Request, response *restful.Response) {
 
 	 			// 6. Install the Chart
 	 			fmt.Printf("ChartName to install:%s\n", chartName)
-	 			helmInstallCmd := "./root/helm install -f " + "/chart/overrides.yaml " + " ./" + chartName 
+	 			lowercaseKind := strings.ToLower(kind)
+	 			releaseName := lowercaseKind + "-" + customresource
+	 			fmt.Printf("Release name:%s\n", releaseName)
+	 			helmInstallCmd := "./root/helm install " + releaseName + " ./" + chartName  + " -f /chart/overrides.yaml "
+	 			if dryrun != "" {
+		 			helmInstallCmd = "./root/helm install " + releaseName + " ./" + chartName  + " -f /chart/overrides.yaml " + " --dry-run"			
+	 			}
 	  			fmt.Printf("helm install cmd:%s\n", helmInstallCmd)
 	 			ok, helmReleaseOP := executeExecCall(cmdRunnerPod, namespace, helmInstallCmd)
 	 			if ok {
 	 				lines := strings.Split(helmReleaseOP, "\n")
 	 				for _, line := range lines {
-	 					present := strings.Contains(line, "NAME:")
-	 					if present {
-	 						parts := strings.Split(line, ":")
-	 						for _, part := range parts {
-	 							if part != "" && part != " " && part != "NAME" {
-			 						releaseName := part
-			 						fmt.Printf("ReleaseName:%s\n", releaseName)
-	 								releaseName = strings.TrimSpace(releaseName)
-	 								fmt.Printf("RN:%s\n", releaseName)
-	 								go updateStatus(kind, group, version, plural, customresource, namespace, releaseName)
+	 					if dryrun == "" {
+		 					present := strings.Contains(line, "NAME:")
+		 					if present {
+	 							parts := strings.Split(line, ":")
+	 							for _, part := range parts {
+		 							if part != "" && part != " " && part != "NAME" {
+				 						releaseName := part
+				 						fmt.Printf("ReleaseName:%s\n", releaseName)
+		 								releaseName = strings.TrimSpace(releaseName)
+		 								fmt.Printf("RN:%s\n", releaseName)
+		 								go updateStatus(kind, group, version, plural, customresource, namespace, releaseName)
+		 							}
+	 							}
+	 						}
+	 					} else {
+	 						present := strings.Contains(line, "kind:")
+	 						if present {
+	 							parts := strings.Split(line, ":")
+	 							if len(parts) >= 2 {
+	 								kindName := parts[1]
+	 								kindName = strings.TrimSpace(kindName)
+	 								kindName = strings.TrimSuffix(kindName, "\n")
+	 								fmt.Printf("Found Kind:%s\n", kindName)
+	 								kinds = append(kinds, kindName)
 	 							}
 	 						}
 	 					}
@@ -341,6 +454,12 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 			}
 	    	}
  		//}
+	}
+	if dryrun != "" {
+		fmt.Printf("Kinds:%v\n", kinds)
+		kindsString := strings.Join(kinds, "-")
+		fmt.Printf("KindString:%s\n", kindsString)
+		response.Write([]byte(kindsString))
 	}
 }
 

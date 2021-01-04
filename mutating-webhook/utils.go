@@ -986,13 +986,49 @@ func addAnnotation(labelkey, labelvalue, kind, resource, namespace string) {
 	}
 }
 
+func GetPlural(kind, group string) []byte {
+	args := fmt.Sprintf("kind=%s&group=%s", kind, group)
+	fmt.Printf("Inside GetPlural...\n")
+	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	fmt.Printf("After getServiceEndpoint...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/getPlural?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
 func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides string) []byte {
 	args := fmt.Sprintf("platformworkflow=%s&customresource=%s&namespace=%s&overrides=%s", platformworkflow, customresource, namespace, overrides)
 	fmt.Printf("Inside QueryDeployEndpoint...\n")
 	serviceHost, servicePort := getServiceEndpoint("kubeplus")
 	fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
-	url1 = fmt.Sprintf("http://%s:%s/apis/platform-as-code/deploy?%s", serviceHost, servicePort, args)
+	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deploy?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
+func DryRunChart(platformworkflow, namespace string) []byte {
+	args := fmt.Sprintf("platformworkflow=%s&namespace=%s&dryrun=true", platformworkflow, namespace)
+	fmt.Printf("Inside DryRunChart...\n")
+	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	fmt.Printf("After getServiceEndpoint...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deploy?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
+func AnnotateCRD(kind, plural, group, chartkinds string) []byte {
+	args := fmt.Sprintf("kind=%s&plural=%s&group=%s&chartkinds=%s", kind, plural, group, chartkinds)
+	fmt.Printf("Inside AnnotateCRD...\n")
+	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	fmt.Printf("After getServiceEndpoint...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/annotatecrd?%s", serviceHost, servicePort, args)
 	fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body
