@@ -1,198 +1,75 @@
-## KubePlus - Kubernetes Custom Resource Manager
+## KubePlus - CRD for CRDs to design Kubernetes platform services
 
-Enterprises are building Kubernetes platforms by extending Kubernetes APIs (Resources) with Custom Resources and Custom Controllers. 
+Kubernetes platform engineering teams perform variety of tasks to enable product teams. These tasks include: 
+
+- Building deployment workflows offering defaults and abstracting away details
+- Attaching logging and monitoring to the application environments
+- Controlling quality of service by offering appropriate volumes or backup policies 
+-Leveraging policies to ensure appropriate CPU/Memory/Node allocation to Pods
 
 <p align="center">
-<img src="./docs/cluster-with-customresources.png" width="650" height="250" class="center">
+<img src="./docs/platform-team-challenge.png" width="650" height="250" class="center">
 </p>
 
-Platform teams are faced with following challenges while managing such environments: 
-- Visibility: Inventory of resource relationships to visualize application stacks
-- Monitoring: Application stack level monitoring and chargeback
-- Control: Establish guardrails around Custom Resource usage
-
-KubePlus is a Kubernetes Custom Resource Manager that enables:
-- Discovering runtime relationships between Kubernetes resources (Custom and built-in)
-- Monitoring Custom Resource usage and exposing that as Prometheus metrics
-- Setting and enforcing policies for Custom Resource usage
-- Receiving notifications for interesting events involving Custom Resources
-- Composing new Custom Resources to add new services to a cluster
+The key challenge that platform teams face is to offer their services in self-service manner and avoid dreaded exchange of YAMLs between platform and product teams.  To address this challenge, KubePlus offers an open-source framework to create platform services in self-service manner as Kubernetes APIs. It enables platform engineering teams to: 
+- Build self-service APIs to embed platform workflows 
+- Establish fine-grained control with platform workflow specific policies
+- Track CPU/Memory metrics for platform workflows
 
 
-## Core of KubePlus - Resource Relationship graphs
+## KubePlus components
 
-Operators add Custom Resources (e.g. Mysqlcluster) to the cluster. These resources become first class components of that cluster alongside built-in resources (e.g. Pod, Service, etc.). Application stacks are realized by establishing relationships between the Kubernetes Resources (built-in or Custom) available on the cluster. These relationships are primarily of four types.
- 
-(1) Owner references – A resource internally creates additional resources (e.g. MysqlCluster when instantiated, creates Pods and  Services). These sub-resources are related to the parent resource through Owner reference relationship.
+KubePlus has two components: 
 
-(2) Labels and (3) Annotations – Labels or Annotations are key/value pairs that are attached to Kubernetes resources. Resource A can depend on a specific label or an annotation to be given on Resource B to take some action.
+### CRD for CRDs to design your platform services from Helm charts
 
-(4) Spec Properties – Resource A’s Spec property may depend on a value coming from Resource B.
-
-Here is an example application stack for Wordpress (all resources not shown).
+KubePlus offers a CRD named ResourceComposition to 
+- Compose new CRDs (Custom Resource Definition) to publish platform services from Helm charts
+- Define policies (e.g. Node selection, CPU/Memory limits, etc.) for managing resources of the platform services
+- Get aggregated CPU/Memory/Storage Prometheus metrics for the platform services
+Here is the high-level structure of ResourceComposition CRD: 
 
 <p align="center">
-<img src="./docs/clusterissuer-mysqlcluster.png" width="800" height="300" class="center">
+<img src="./docs/crd-for-crds.png" width="650" height="250" class="center">
 </p>
 
-KubePlus is able to construct Kubernetes Resource relationship graphs for such stacks at runtime. Here is the output of using KubePlus connections plugin to discover the complete topology for above stack:
-
-```
-$ kubectl connections MysqlCluster cluster1 namespace1 -o png
-```
+To understand this further let us see how a platform team can build a MySQL service for their product team/s to consume. The cluster has base Kubernetes and MySQL Operator installed. 
 
 <p align="center">
-<img src="./examples/wordpress-mysqlcluster/mysqlcluster.png" width="900" height="400" class="center">
+<img src="./docs/mysql-as-a-service.png" width="650" height="250" class="center">
 </p>
 
 
-## KubePlus Components
+The platform workflow requirements are: 
+- Create a PersistentVolume of required type for MySQL instance. 
+- Create Secret objects for MySQL instance and AWS backup.
+- Create MySQL instance with backup target as AWS S3 bucket.  
+- Setup a policy in such a way that Pods created under this service will have specified Resource Request and Limits.  
+- Get aggregated CPU/Memory metrics for the overall workflow.
 
-KubePlus consists of client-side kubectl plugins and in-cluster components.
-These can be used independently.
+Here is a new platform service named MysqlService as Kubernetes API. 
 
 <p align="center">
-<img src="./docs/kubeplus-components-resourcecrds.png" width="450" height="400" class="center">
+<img src="./docs/mysql-as-a-service-crd.png" width="650" height="250" class="center">
 </p>
 
-<!---
+A new CRD named MysqlService has been created here using ResourceComposition. You feed a platform workflow Helm chart that created required underlying resources, and additionally provide policy and monitoring inputs for the workflow. The Spec Properties of MysqlService come from values.yaml of the Helm chart. 
+Product teams can use this service to get MySQL database for their application and all the required setups will be performed transparently by this service.
+
+
+### Kubectl plugins to visualize platform workflows
+
+KubePlus kubectl plugins enable users to discover, monitor and troubleshoot resource relationships in a platform workflow. The plugins run entirely client-side and do not require the in-cluster component. The primary plugin of this functionality is: 
+```kubectl connections```: Provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties.
+Here is the resource relationship graph for MysqlSevice created above using 
+```kubectl connections MysqlService mysql1'```.
+
 <p align="center">
-<img src="./docs/kubeplus-serverside-clientside.png" width="450" height="200" class="center">
+<img src="./docs/mysqlservice-connections.png" width="650" height="250" class="center">
 </p>
---->
- 
-### Client-side components
 
-KubePlus kubectl plugins enable users to discover, monitor and troubleshoot Custom Resources and their relationships. The plugins run entirely client-side and do not require the in-cluster component. Here is the list of KubePlus kubectl plugins. 
-
-<!---
-**1. kubectl composition**
-
-- ``kubectl composition``: Provides information about sub resources created for a Kubernetes resource instance (custom or built-in). Essentially, 'kubectl composition' shows ownerReference based relationships.
--->
-
-**1. kubectl connections**
-
-- ``kubectl connections``: Provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties.
-
-**2. kubectl metrics**
-
-- ``kubectl metrics cr``: Provides metrics for a Custom Resource instance (count of sub-resources, pods, containers, nodes, total CPU and total Memory consumption).
-- ``kubectl metrics service``: Provides CPU/Memory metrics for all the Pods that are descendants of a Service instance. 
-- ``kubectl metrics account``: Provides metrics for an account identity - user / service account. (counts of custom resources, built-in workload objects, pods, total CPU and Memory). Needs cluster-side component.
-- ``kubectl metrics helmrelease``: Provides CPU/Memory metrics for all the Pods that are part of a Helm release.
-
-**3. kubectl grouplogs**
-
-- ``kubectl grouplogs cr``: Provides logs for all the containers of a Custom Resource instance.
-- ``kubectl grouplogs service``: Provides logs for all the containers of all the Pods that are related to a Service object.
-- ``kubectl grouplogs helmrelease`` (upcoming): Provides logs for all the containers of all the Pods that are part of a Helm release.
-
-**4. kubectl man**
-
-- ``kubectl man <Custom Resource> ``: Provides information about how to use a Custom Resource.
-
-
-### In-cluster components
-
-In-cluster components enable custom resource policy enforcement, custom resource event tracking, and composing and publishing new custom resources. Towards this, KubePlus comes with 4 CRDs to take inputs from the users to take specified actions on the Custom Resources - ResourcePolicy, ResourceMonitor, ResourceComposition, ResourceEvent
-
-<!---
-**ResourceComposition, ResourcePolicy**
-
-KubePlus enables publishing new Services in a cluster. Cluster Admins use KubePlus to govern their cluster usage by defining and registering opinionated Services with appropriate guard rails. The new Services are registered as new Custom Resources. Application development teams consume the Services by creating instances of these Custom Resources. Cluster Admins can also define and enforce policies on Custom Resources. --->
-
-Checkout following examples:
-- [ResourcePolicy](https://github.com/cloud-ark/kubeplus/tree/master/examples/resource-policy)
-- [ResourceMonitor](https://github.com/cloud-ark/kubeplus/tree/master/examples/resource-policy)
-- [ResourceComposition](https://github.com/cloud-ark/kubeplus/tree/master/examples/resource-composition)
-
-
-## CRD annotations
-
-In order to capture the Operator developer's assumptions about Custom Resources supported by the Operator, KubePlus offers following CRD annotations:
-
-```
-resource/usage
-resource/composition
-resource/annotation-relationship
-resource/label-relationship
-resource/specproperty-relationship
-```
-
-Kubernetes Operator developers or cluster administrators can add these annotations to the CRDs. [Here](https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md) are some sample CRD annotations for community Operators that can be used to unlock KubePlus tooling for them. The `composition` annotation is optional. If it is not specified, KubePlus uses following Kinds as default when discovering the owner relationship for that Custom Resource instances (`Deployment, StatefulSet, DaemonSet, ReplicationController, Service, Secret, PodDisruptionBudget, ServiceAccount, PersistentVolumeClaim`).
-
-
-KubePlus leverages knowledge of relationships between Kubernetes built-in resources and combines that with the CRD annotations mentioned above and builds runtime Kubernetes resource topologies.
-
-
-## Example
-
-In this example we have two Custom Resources - ClusterIssuer and MysqlCluster. Their CRDs are annotated with following CRD annotations. 
-
-CRD annotation on the ClusterIssuer Custom Resource:
-
-```
-resource/annotation-relationship: on:Ingress, key:cert-manager.io/cluster-issuer, value:INSTANCE.metadata.name
-```
-
-This defines that CertManager looks for cert-manager.io/cluster-issuer annotation on Ingress resources. The value of this annotation is the name of the ClusterIssuer instance.
-
-CRD annotation on the MysqlCluster Custom Resource:
-
-```
-resource/composition: StatefulSet, Service, ConfigMap, Secret, PodDisruptionBudget
-```
-
-This identifies the set of resources that will be created by the Operator as part of instantiating the MysqlCluster Custom Resource instance.
-
-Once these annotations are added to the respective CRDs by the cluster administrator, the resource topology can be discovered by DevOps teams using ``kubectl connections`` plugin (output above)
-
-<!---
-``` 
-$ kubectl connections Service wordpress namespace1
-
-::Final connections graph::
------- Branch 1 ------
-Level:0 Service/wordpress
-Level:1 Pod/wordpress-pod [related to Service/wordpress by:label]
-Level:2 Service/cluster1-mysql-master [related to Pod/wordpress-pod by:envvariable]
-Level:3 Pod/cluster1-mysql-0 [related to Service/cluster1-mysql-master by:label]
-Level:4 Service/cluster1-mysql-nodes [related to Pod/cluster1-mysql-0 by:envvariable]
-Level:4 Service/cluster1-mysql [related to Pod/cluster1-mysql-0 by:label]
-Level:4 Service/cluster1-mysql-nodes [related to Pod/cluster1-mysql-0 by:label]
-Level:5 MysqlCluster/cluster1 [related to Service/cluster1-mysql-nodes by:owner reference]
-Level:6 Service/cluster1-mysql [related to MysqlCluster/cluster1 by:owner reference]
-Level:6 Service/cluster1-mysql-master [related to MysqlCluster/cluster1 by:owner reference]
-Level:6 ConfigMap/cluster1-mysql [related to MysqlCluster/cluster1 by:owner reference]
-Level:6 StatefulSet/cluster1-mysql [related to MysqlCluster/cluster1 by:owner reference]
-Level:7 Pod/cluster1-mysql-0 [related to StatefulSet/cluster1-mysql by:owner reference]
------- Branch 2 ------
-Level:0 Service/wordpress
-Level:1 Ingress/wordpress-ingress [related to Service/wordpress by:specproperty]
-Level:2 ClusterIssuer/wordpress-stack [related to Ingress/wordpress-ingress by:annotation]
-```
---->
-
-The resource consumption of above resource topology can be obtained using ``kubectl metrics`` plugin as follows:
-
-```
-$ kubectl metrics service wordpress namespace1
----------------------------------------------------------- 
-Kubernetes Resources consumed:
-    Number of Pods: 2
-    Number of Containers: 7
-    Number of Nodes: 1
-Underlying Physical Resoures consumed:
-    Total CPU(cores): 25m
-    Total MEMORY(bytes): 307Mi
-    Total Storage(bytes): 21Gi
----------------------------------------------------------- 
-```
-
-[Try above example](https://github.com/cloud-ark/kubeplus/blob/master/examples/wordpress-mysqlcluster/steps.txt) in your cluster.
-
-Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationship-graphs-for-application-level-insights-70139e19fb0) to understand more about why tracking resource relationships is useful in Kubernetes.
+We have additional plugins such as ```kubectl metrics``` and ```kubectl grouplogs``` such use resource relationship graphs behind the scene and aggregate metrics or logs for the platform workflow. 
+You can also directly get CPU/Memory/Storage metrics in Prometheus format if you setup ```ResourceMonitor``` while creating your new CRD. 
 
 
 ## Try it:
@@ -216,20 +93,21 @@ Read [this article](https://medium.com/@cloudark/kubernetes-resource-relationshi
 
 ## Platform-as-Code
 
-KubePlus is developed as a part of CloudARK's [Platform-as-Code practice](https://cloudark.io/platform-as-code). Kubernetes Operators enable extending Kubernetes for application specific workflows. They add Custom Resources and offer foundation for creating application stacks as Code declaratively. Our Platform-as-Code practice offers tools and techniques enabling DevOps teams to build custom PaaSes using Kubernetes Operators.
+KubePlus has been developed as a part of our Platform-as-Code practice. Learn more about Platform-as-Code [here](https://cloudark.io/platform-as-code).
+
 
 ## Operator Maturity Model
 
-As DevOps team build their custom PaaSes using community or in house developed Operators, they need a set of guidelines for Operator development and evaluation. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-tenant and multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators today for curating community Operators towards building their custom PaaSes.
+As enterprise team build their custom PaaSes using community or in house developed Operators, they need a set of guidelines for Operator development and evaluation. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-tenant and multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators today for curating community Operators towards building their custom PaaSes.
 
 
 ## Presentations/Talks
 
-1. [KubePlus presentation at Kubernetes community meeting](https://youtu.be/ZckVULU9sYc)
+1. [Being a good citizen of the Multi-Operator world, Kubecon NA 2020](https://www.youtube.com/watch?v=NEGs0GMJbCw&t=2s)
 
 2. [Operators and Helm: It takes two to Tango, Helm Summit 2019](https://youtu.be/F_Dgz1V5Q2g)
 
-3. [Being a good citizen of the Multi-Operator world, Kubecon NA 2020](https://www.youtube.com/watch?v=NEGs0GMJbCw&t=2s)
+3. [KubePlus presentation at Kubernetes community meeting](https://youtu.be/ZckVULU9sYc)
 
 
 ## Contact
