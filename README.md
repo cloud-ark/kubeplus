@@ -5,10 +5,10 @@ Kubernetes platform engineering teams perform variety of tasks to enable product
 - Building deployment workflows offering defaults and abstracting away details
 - Attaching logging and monitoring to the application environments
 - Controlling quality of service by offering appropriate volumes or backup policies 
--Leveraging policies to ensure appropriate CPU/Memory/Node allocation to Pods
+- Leveraging policies to ensure appropriate CPU/Memory/Node allocation to Pods
 
 <p align="center">
-<img src="./docs/platform-team-challenge.png" width="650" height="250" class="center">
+<img src="./docs/platform-team-challenge.png" width="500" height="250" class="center">
 </p>
 
 The key challenge that platform teams face is to offer their services in self-service manner and avoid dreaded exchange of YAMLs between platform and product teams.  To address this challenge, KubePlus offers an open-source framework to create platform services in self-service manner as Kubernetes APIs. It enables platform engineering teams to: 
@@ -21,7 +21,7 @@ The key challenge that platform teams face is to offer their services in self-se
 
 KubePlus has two components: 
 
-### CRD for CRDs to design your platform services from Helm charts
+### 1. CRD for CRDs to design your platform services from Helm charts
 
 KubePlus offers a CRD named ResourceComposition to 
 - Compose new CRDs (Custom Resource Definition) to publish platform services from Helm charts
@@ -33,10 +33,10 @@ Here is the high-level structure of ResourceComposition CRD:
 <img src="./docs/crd-for-crds.png" width="650" height="250" class="center">
 </p>
 
-To understand this further let us see how a platform team can build a MySQL service for their product team/s to consume. The cluster has base Kubernetes and MySQL Operator installed. 
+To understand this further let us see how a platform team can build a MySQL service for their product team/s to consume. The base Kubernetes cluster has MySQL Operator on it (either installed by the Platform team or bundled by the Kubernetes provider).
 
 <p align="center">
-<img src="./docs/mysql-as-a-service.png" width="650" height="250" class="center">
+<img src="./docs/mysql-as-a-service.png" width="500" height="250" class="center">
 </p>
 
 
@@ -53,7 +53,7 @@ Here is a new platform service named MysqlService as Kubernetes API.
 <img src="./docs/mysql-as-a-service-crd.png" width="650" height="250" class="center">
 </p>
 
-A new CRD named MysqlService has been created here using ResourceComposition. You feed a platform workflow Helm chart that created required underlying resources, and additionally provide policy and monitoring inputs for the workflow. The Spec Properties of MysqlService come from values.yaml of the Helm chart. 
+A new CRD named MysqlService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources, and additionally provide policy and monitoring inputs for the workflow. The Spec Properties of MysqlService come from values.yaml of the Helm chart. 
 Product teams can use this service to get MySQL database for their application and all the required setups will be performed transparently by this service.
 
 
@@ -65,10 +65,10 @@ Here is the resource relationship graph for MysqlSevice created above using
 ```kubectl connections MysqlService mysql1'```.
 
 <p align="center">
-<img src="./docs/mysqlservice-connections.png" width="650" height="250" class="center">
+<img src="./docs/mysqlservice-connections.png" width="750" height="300" class="center">
 </p>
 
-We have additional plugins such as ```kubectl metrics``` and ```kubectl grouplogs``` such use resource relationship graphs behind the scene and aggregate metrics or logs for the platform workflow. 
+We have additional plugins such as ```kubectl metrics``` and ```kubectl grouplogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the platform workflow.
 You can also directly get CPU/Memory/Storage metrics in Prometheus format if you setup ```ResourceMonitor``` while creating your new CRD. 
 
 
@@ -93,7 +93,7 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
 
 ## Platform-as-Code
 
-KubePlus has been developed as a part of our Platform-as-Code practice. Learn more about Platform-as-Code [here](https://cloudark.io/platform-as-code).
+KubePlus has been developed as part of our Platform-as-Code practice. Learn more about Platform-as-Code [here](https://cloudark.io/platform-as-code).
 
 
 ## Operator Maturity Model
