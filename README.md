@@ -36,7 +36,7 @@ Here is the high-level structure of ResourceComposition CRD:
 To understand this further let us see how a platform team can build a MySQL service for their product team/s to consume. The base Kubernetes cluster has MySQL Operator on it (either installed by the Platform team or bundled by the Kubernetes provider).
 
 <p align="center">
-<img src="./docs/mysql-as-a-service.png" width="500" height="250" class="center">
+<img src="./docs/mysql-as-a-service.png" width="400" height="200" class="center">
 </p>
 
 
@@ -57,10 +57,11 @@ A new CRD named MysqlService has been created here using ResourceComposition. Yo
 Product teams can use this service to get MySQL database for their application and all the required setups will be performed transparently by this service.
 
 
-### Kubectl plugins to visualize platform workflows
+### 2. Kubectl plugins to visualize platform workflows
 
 KubePlus kubectl plugins enable users to discover, monitor and troubleshoot resource relationships in a platform workflow. The plugins run entirely client-side and do not require the in-cluster component. The primary plugin of this functionality is: 
-```kubectl connections```: Provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties.
+```kubectl connections```: Provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus is able to runtime construct Kubernetes Resource relationship graphs. This enables KubePlus to build resource topologies and offer fine grained visibility and control over the platform service.
+
 Here is the resource relationship graph for MysqlSevice created above using 
 ```kubectl connections MysqlService mysql1'```.
 
