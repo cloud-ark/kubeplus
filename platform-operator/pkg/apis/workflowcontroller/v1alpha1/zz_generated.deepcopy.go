@@ -238,6 +238,7 @@ func (in *ResourceCompositionSpec) DeepCopyInto(out *ResourceCompositionSpec) {
 	*out = *in
 	out.NewResource = in.NewResource
 	in.ResPolicy.DeepCopyInto(&out.ResPolicy)
+	in.ResMonitor.DeepCopyInto(&out.ResMonitor)
 	return
 }
 

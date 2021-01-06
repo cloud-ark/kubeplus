@@ -124,13 +124,12 @@ func NewPlatformController(
 				controller.enqueueFoo(new)
 			}
 		},
-		/*
 		DeleteFunc: func(obj interface{}) {
 		        _, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			if err == nil {
 			   controller.deleteFoo(obj)
 			}
-		},*/
+		},
 	})
 	return controller
 }
@@ -288,6 +287,40 @@ func (c *Controller) deleteFoo(obj interface{}) {
 	if _, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
 	   panic(err)
 	}
+
+	foo := obj.(*platformworkflowv1alpha1.ResourceComposition)
+
+	fmt.Printf("JKL\n")
+	fmt.Printf("%v\n", foo.Spec)
+	newRes := foo.Spec.NewResource
+	fmt.Printf("newRes:%v\n", newRes)
+
+	res := newRes.Resource
+	fmt.Printf("GHI - delete\n")
+	fmt.Printf("%v\n", res)
+	kind := foo.Spec.NewResource.Resource.Kind
+	group := foo.Spec.NewResource.Resource.Group
+	version := foo.Spec.NewResource.Resource.Version
+	plural := foo.Spec.NewResource.Resource.Plural
+	chartURL := foo.Spec.NewResource.ChartURL
+	chartName := foo.Spec.NewResource.ChartName
+	fmt.Printf("Kind:%s, Version:%s Group:%s, Plural:%s\n", kind, version, group, plural)
+	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
+
+	action := "delete"
+	handleCRD(kind, version, group, plural, action)
+
+ 	resPolicySpec := foo.Spec.ResPolicy
+ 	//fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
+
+	deleteResourcePolicy(resPolicySpec)
+
+ 	resMonitorSpec := foo.Spec.ResMonitor
+ 	//fmt.Printf("ResMonitorSpec:%v\n",resMonitorSpec)
+
+	deleteResourceMonitor(resMonitorSpec)
+
+	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 }
 
 // syncHandler compares the actual state with the desired, and attempts to
@@ -362,8 +395,9 @@ func (c *Controller) syncHandler(key string) error {
 	chartName := foo.Spec.NewResource.ChartName
 	fmt.Printf("Kind:%s, Version:%s Group:%s, Plural:%s\n", kind, version, group, plural)
 	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
-		// Check if CRD is present or not. Create it only if it is not present.
-	createCRD(kind, version, group, plural)
+	// Check if CRD is present or not. Create it only if it is not present.
+	action := "create"
+	handleCRD(kind, version, group, plural, action)
 
  	resPolicySpec := foo.Spec.ResPolicy
  	fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
@@ -371,13 +405,75 @@ func (c *Controller) syncHandler(key string) error {
 	// Instantiate ResourcePolicy object
 	createResourcePolicy(resPolicySpec, namespace)
 
+ 	resMonitorSpec := foo.Spec.ResMonitor
+ 	fmt.Printf("ResMonitorSpec:%v\n",resMonitorSpec)
+
+	// Instantiate ResourceMonitor object
+	createResourceMonitor(resMonitorSpec, namespace)
+
 	//}
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
 }
 
+func createResourceMonitor(resMonitorSpec interface{}, namespace string) {
+	fmt.Println("Inside createResourceMonitor")
+	resMonitorObject := resMonitorSpec.(platformworkflowv1alpha1.ResourceMonitor)
+	//resPolicySpecMap := resPolicySpec.(map[string]interface{})
+
+	// Using Typed client
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	var sampleclientset clientset.Interface
+	sampleclientset = clientset.NewForConfigOrDie(config)
+
+	resMonitor, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).Create(&resMonitorObject)
+	fmt.Printf("ResourceMonitor:%v\n", resMonitor)
+	if err != nil {
+		fmt.Errorf("Error:%s\n", err)
+	}
+}
+
+func deleteResourceMonitor(resMonitorSpec interface{}) {	
+	fmt.Println("Inside deleteResourceMonitor")
+	resMonitorObject := resMonitorSpec.(platformworkflowv1alpha1.ResourceMonitor)
+	inputResMonitorName := resMonitorObject.ObjectMeta.Name
+	namespace := resMonitorObject.ObjectMeta.Namespace
+	if namespace == "" {
+		namespace = "default"
+	}
+	fmt.Printf("ResMonitor:%s, Namespace:%s\n",inputResMonitorName,namespace)
+
+	// Using Typed client
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	var sampleclientset clientset.Interface
+	sampleclientset = clientset.NewForConfigOrDie(config)
+
+	resMonList, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		fmt.Errorf("Error:%s\n", err)
+	}
+	for _, resMon := range resMonList.Items {
+		resMonName := resMon.ObjectMeta.Name
+		if resMonName == inputResMonitorName {
+			fmt.Printf("Deleting ResMonitor %s\n", resMonName)
+			err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).Delete(resMonName, &metav1.DeleteOptions{})
+			if err != nil {
+				fmt.Errorf("Error:%s\n", err)
+			}
+		}
+	}
+}
+
 func createResourcePolicy(resPolicySpec interface{}, namespace string) {
-	
+	fmt.Println("Inside createResourcePolicy")
 	resPolicyObject := resPolicySpec.(platformworkflowv1alpha1.ResourcePolicy)
 	//resPolicySpecMap := resPolicySpec.(map[string]interface{})
 
@@ -430,8 +526,43 @@ func createResourcePolicy(resPolicySpec interface{}, namespace string) {
 	*/
 }
 
-func createCRD(kind, version, group, plural string) error {
-	fmt.Printf("Inside createCRD\n")
+func deleteResourcePolicy(resPolicySpec interface{}) {	
+	fmt.Println("Inside deleteResourcePolicy.")
+	resPolicyObject := resPolicySpec.(platformworkflowv1alpha1.ResourcePolicy)
+	inputResPolicyName := resPolicyObject.ObjectMeta.Name
+	namespace := resPolicyObject.ObjectMeta.Namespace
+	if namespace == "" {
+		namespace = "default"
+	}
+	fmt.Printf("ResPolicy:%s, Namespace:%s\n",inputResPolicyName,namespace)
+
+	// Using Typed client
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	var sampleclientset clientset.Interface
+	sampleclientset = clientset.NewForConfigOrDie(config)
+
+	resPolicyList, err := sampleclientset.WorkflowsV1alpha1().ResourcePolicies(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		fmt.Errorf("Error:%s\n", err)
+	}
+	for _, resPolicy := range resPolicyList.Items {
+		resPolicyName := resPolicy.ObjectMeta.Name
+		if inputResPolicyName == resPolicyName {
+			fmt.Printf("Deleting ResPolicy object %s\n", resPolicyName)
+			err := sampleclientset.WorkflowsV1alpha1().ResourcePolicies(namespace).Delete(resPolicyName, &metav1.DeleteOptions{})
+			if err != nil {
+				fmt.Errorf("Error:%s\n", err)
+			}
+		}
+	}
+}
+
+func handleCRD(kind, version, group, plural, action string) error {
+	fmt.Printf("Inside handleCRD %s\n", action)
 	cfg, err := rest.InClusterConfig()
 	if err != nil {
 		panic(err.Error())
@@ -453,29 +584,51 @@ func createCRD(kind, version, group, plural string) error {
 		},
 	}
 
-	_, err1 := crdClient.CustomResourceDefinitions().Create(crd)
-	if err1 != nil {
-		panic(err1.Error())
-	}
-
+	crdPresent := false
 	crdList, err := crdClient.CustomResourceDefinitions().List(metav1.ListOptions{})
 	if err != nil {
 		fmt.Errorf("Error:%s\n", err)
 		return err
 	}
+	crdToHandle := ""
 	for _, crd := range crdList.Items {
-		crdName := crd.ObjectMeta.Name
-		crdObj, err := crdClient.CustomResourceDefinitions().Get(crdName, metav1.GetOptions{})
+		crdToHandle = crd.ObjectMeta.Name
+		crdObj, err := crdClient.CustomResourceDefinitions().Get(crdToHandle, metav1.GetOptions{})
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
 			return err
 		}
-		group := crdObj.Spec.Group
-		version := crdObj.Spec.Version
-		endpoint := "apis/" + group + "/" + version
-		kind := crdObj.Spec.Names.Kind
-		plural := crdObj.Spec.Names.Plural
-		fmt.Printf("Kind:%s, Group:%s, Version:%s, Endpoint:%s, Plural:%s\n",kind, group, version, endpoint, plural)
+		group1 := crdObj.Spec.Group
+		version1 := crdObj.Spec.Version
+		//endpoint := "apis/" + group + "/" + version
+		kind1 := crdObj.Spec.Names.Kind
+		plural1 := crdObj.Spec.Names.Plural
+		//fmt.Printf("Kind:%s, Group:%s, Version:%s, Endpoint:%s, Plural:%s\n",kind1, group1, version1, endpoint, plural1)
+
+		if group == group1 && kind == kind1 && version == version1 && plural == plural1 {
+			crdPresent = true
+			break
+		}
+	}
+
+	if !crdPresent {
+		if action == "create" {
+			_, err1 := crdClient.CustomResourceDefinitions().Create(crd)
+			if err1 != nil {
+				panic(err1.Error())
+			}
+		}
+	} else {
+		fmt.Printf("CRD Group:%s Version:%s Kind:%s Plural:%s found.\n", group, version, kind, plural)
+		if action == "delete" {
+			err := crdClient.CustomResourceDefinitions().Delete(crdToHandle, &metav1.DeleteOptions{})
+			if err != nil {
+				fmt.Errorf("Error:%s\n", err)
+				return err
+			} else {
+				fmt.Printf("CRD deleted successfully.\n")
+			}
+		}
 	}
 	return nil
 }

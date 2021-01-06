@@ -1,8 +1,8 @@
 apiVersion: platformapi.kubeplus/v1alpha1
 kind: MysqlService
 metadata:
-  name: stack2 
+  name: service2 
 spec:
-  name: stack2
+  name: service2
   replicas: 1 
 
