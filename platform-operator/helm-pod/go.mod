@@ -1,7 +1,8 @@
 require (
 	github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23
 	github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20201027010238-8e4740bdc7ad
-	github.com/emicklei/go-restful v2.8.0+incompatible
+	github.com/emicklei/go-restful v2.9.5+incompatible
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	k8s.io/api v0.19.4
 	k8s.io/apiextensions-apiserver v0.18.1
 	k8s.io/apimachinery v0.19.4

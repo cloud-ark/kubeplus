@@ -21,6 +21,8 @@ import (
 	//restclient "k8s.io/client-go/rest"
 	//"k8s.io/kubectl/pkg/util/templates"
 	//"k8s.io/kubernetes/pkg/kubectl/cmd/exec"
+
+	//"github.com/golang/glog"
 	
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -96,10 +98,83 @@ func register() {
 	ws.Route(ws.GET("/annotatecrd").To(annotateCRD).
 		Doc("Annotate CRD"))
 
+	ws.Route(ws.GET("/deletecrdinstances").To(deleteCRDInstances).
+		Doc("Delete CRD Instances"))
+
 	restful.Add(ws)
 	http.ListenAndServe(":8090", nil)
 	fmt.Printf("Listening on port 8090...")
 	fmt.Printf("Done installing helmer paths...")
+}
+
+func deleteCRDInstances(request *restful.Request, response *restful.Response) {
+
+	fmt.Printf("Inside deleteCRDInstances...\n")
+	kind := request.QueryParameter("kind")
+	group := request.QueryParameter("group")
+	version := request.QueryParameter("version")
+	plural := request.QueryParameter("plural")
+	namespace := request.QueryParameter("namespace")
+	fmt.Printf("Kind:%s\n", kind)
+	fmt.Printf("Group:%s\n", group)
+	fmt.Printf("Version:%s\n", version)
+	fmt.Printf("Plural:%s\n", plural)
+	fmt.Printf("Namespace:%s\n", namespace)
+
+	apiVersion := group + "/" + version
+
+	fmt.Printf("APIVersion:%s\n", apiVersion)
+	
+	ownerRes := schema.GroupVersionResource{Group: group,
+									 		Version: version,
+									   		Resource: plural}
+	fmt.Printf("OwnerRes:%v\n", ownerRes)
+
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+	dynamicClient, _ := dynamic.NewForConfig(config)
+
+	crdObjList, err := dynamicClient.Resource(ownerRes).Namespace(namespace).List(metav1.ListOptions{})
+	if err != nil {
+		fmt.Printf("Error:%v\n...checking in non-namespace", err)
+		crdObjList, err = dynamicClient.Resource(ownerRes).List(metav1.ListOptions{})
+		if err != nil {
+			fmt.Printf("Error:%v\n", err)
+		}
+	}
+	fmt.Printf("CRDObjList:%v\n", crdObjList)
+
+	for _, instanceObj := range crdObjList.Items {
+		objData := instanceObj.UnstructuredContent()
+		//mapval, ok1 := lhsContent.(map[string]interface{})
+		//if ok1 {
+		objName := instanceObj.GetName()
+		fmt.Printf("Instance Name:%s\n", objName)
+		fmt.Printf("objData:%v\n", objData)
+		status := objData["status"]
+		fmt.Printf("Status:%v\n", status)
+		helmrelease := getHelmReleaseName(status)
+		fmt.Printf("Helm release:%s\n", helmrelease)
+		ok := deleteHelmRelease(helmrelease)
+		if ok {
+			fmt.Printf("Helm release deleted..deleting the object %s\n", objName)
+			dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(objName, &metav1.DeleteOptions{})
+		}
+	}
+	fmt.Println("Done deleting CRD Instances..")
+}
+
+func deleteHelmRelease(helmrelease string) bool {
+	fmt.Printf("Helm release:%s\n", helmrelease)
+	cmd := "./root/helm delete " + helmrelease
+	fmt.Printf("Helm delete cmd:%s\n", cmd)
+	var output string 
+	namespace := "default" // NAMEspace for the CMD_RUNNER_POD
+	ok, output := executeExecCall(CMD_RUNNER_POD, namespace, cmd)
+	fmt.Printf("Helm delete o/p:%v\n", output)
+	return ok
 }
 
 func annotateCRD(request *restful.Request, response *restful.Response) {
@@ -302,16 +377,23 @@ func getReleaseName(kind, customresource, namespace string) string {
 		fmt.Printf("objData:%v\n", objData)
 		status := objData["status"]
 		fmt.Printf("Status:%v\n", status)
-		for key, element := range status.(map[string]interface{}) {
-			fmt.Printf("Key:%s\n",key)
-			key = strings.TrimSpace(key)
-			if key == "helmrelease" {
-				helmrelease = element.(string)
-				fmt.Printf("Helm release1:%s\n", helmrelease)
-				break
-			}
-		}
+		helmrelease = getHelmReleaseName(status)
 		fmt.Printf("Helm release2:%s\n", helmrelease)
+	}
+	return helmrelease
+}
+
+func getHelmReleaseName(object interface{}) string {
+	helmrelease := ""
+	status := object.(map[string]interface{})
+	for key, element := range status {
+		fmt.Printf("Key:%s\n",key)
+		key = strings.TrimSpace(key)
+		if key == "helmrelease" {
+			helmrelease = element.(string)
+			fmt.Printf("Helm release1:%s\n", helmrelease)
+			break
+		}
 	}
 	return helmrelease
 }

@@ -3,15 +3,23 @@ package main
 import (
 	"fmt"
 	"time"
+	"io/ioutil"
+	"log"
+	"strconv"
 
 	_ "github.com/lib/pq"
+	"net/http"
+	"net/url"
+	//"context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
     apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	//"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
+	//"k8s.io/client-go/dynamic"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -295,6 +303,10 @@ func (c *Controller) deleteFoo(obj interface{}) {
 	newRes := foo.Spec.NewResource
 	fmt.Printf("newRes:%v\n", newRes)
 
+	namespace := foo.ObjectMeta.Namespace
+	if namespace == "" {
+		namespace = "default"
+	}
 	res := newRes.Resource
 	fmt.Printf("GHI - delete\n")
 	fmt.Printf("%v\n", res)
@@ -308,7 +320,7 @@ func (c *Controller) deleteFoo(obj interface{}) {
 	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
 
 	action := "delete"
-	handleCRD(kind, version, group, plural, action)
+	handleCRD(kind, version, group, plural, action, namespace)
 
  	resPolicySpec := foo.Spec.ResPolicy
  	//fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
@@ -397,7 +409,7 @@ func (c *Controller) syncHandler(key string) error {
 	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
 	// Check if CRD is present or not. Create it only if it is not present.
 	action := "create"
-	handleCRD(kind, version, group, plural, action)
+	handleCRD(kind, version, group, plural, action, namespace)
 
  	resPolicySpec := foo.Spec.ResPolicy
  	fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
@@ -561,7 +573,7 @@ func deleteResourcePolicy(resPolicySpec interface{}) {
 	}
 }
 
-func handleCRD(kind, version, group, plural, action string) error {
+func handleCRD(kind, version, group, plural, action, namespace string) error {
 	fmt.Printf("Inside handleCRD %s\n", action)
 	cfg, err := rest.InClusterConfig()
 	if err != nil {
@@ -621,6 +633,7 @@ func handleCRD(kind, version, group, plural, action string) error {
 	} else {
 		fmt.Printf("CRD Group:%s Version:%s Kind:%s Plural:%s found.\n", group, version, kind, plural)
 		if action == "delete" {
+			deleteCRDInstances(kind, group, version, plural, namespace)
 			err := crdClient.CustomResourceDefinitions().Delete(crdToHandle, &metav1.DeleteOptions{})
 			if err != nil {
 				fmt.Errorf("Error:%s\n", err)
@@ -631,6 +644,87 @@ func handleCRD(kind, version, group, plural, action string) error {
 		}
 	}
 	return nil
+}
+
+func deleteCRDObects(crdToHandle, kind, version, group, plural, namespace string) {
+	fmt.Println("Inside deleteCRDObjects...")
+	/*
+	apiVersion := group + "/" + version
+	
+	ownerRes := schema.GroupVersionResource{Group: group,
+									 		Version: apiVersion,
+									   		Resource: plural}
+	fmt.Printf("OwnerRes:%v\n", ownerRes)
+
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+	dynamicClient, _ := dynamic.NewForConfig(config)
+
+	crdObjList, _ := dynamicClient.Resource(ownerRes).Namespace(namespace).List(context.TODO(), metav1.ListOptions{})
+
+	for _, instanceObj := range crdObjList.Items {
+		lhsContent := instanceObj.UnstructuredContent()
+		//mapval, ok1 := lhsContent.(map[string]interface{})
+		//if ok1 {
+			fmt.Printf("%v\n", lhsContent)
+		//}
+	}*/
+}
+
+func deleteCRDInstances(kind, group, version, plural, namespace string) []byte {
+	fmt.Printf("Inside deleteCRDInstances...\n")
+	args := fmt.Sprintf("kind=%s&group=%s&version=%s&plural=%s&namespace=%s", kind, group, version, plural, namespace)
+	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	fmt.Printf("After getServiceEndpoint...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deletecrdinstances?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
+func getServiceEndpoint(servicename string) (string, string) {
+	fmt.Printf("..Inside getServiceEndpoint...\n")
+	namespace := "default" // Use the namespace in which kubeplus is deployed.
+	//discoveryService := "discovery-service"
+	cfg, _ := rest.InClusterConfig()
+	kubeClient, _ := kubernetes.NewForConfig(cfg)
+	serviceClient := kubeClient.CoreV1().Services(namespace)
+	discoveryServiceObj, _ := serviceClient.Get(servicename, metav1.GetOptions{})
+	host := discoveryServiceObj.Spec.ClusterIP
+	port := discoveryServiceObj.Spec.Ports[0].Port
+	stringPort := strconv.Itoa(int(port))
+    fmt.Printf("Host:%s, Port:%s\n", host, stringPort)
+	return host, stringPort
+}
+
+func queryKubeDiscoveryService(url1 string) []byte {
+	fmt.Printf("..inside queryKubeDiscoveryService")
+	u, err := url.Parse(url1)
+	if err != nil {
+		panic(err)
+	}
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("sending request failed: %s", err.Error())
+		fmt.Println(err)
+	}
+	defer resp.Body.Close()
+	resp_body, _ := ioutil.ReadAll(resp.Body)
+
+	//fmt.Println(resp.Status)
+	//fmt.Println(string(resp_body))
+	//fmt.Println("Exiting QueryCompositionEndpoint")
+	return resp_body
 }
 
 func int32Ptr(i int32) *int32 { return &i }
