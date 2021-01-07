@@ -539,10 +539,55 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) {
  	customAPI := group + "/" + version + "/" + kind
  	customAPIPlatformWorkflowMap[customAPI] = platformWorkflowName
  	customKindPluralMap[customAPI] = plural
-
  	//go addPaCAnnotation(platformWorkflowName, namespace, kind, plural, group)
 }
 
+func registerManPage(kind, platformworkflow, namespace string) string {
+	lowercaseKind := strings.ToLower(kind)
+
+    valuesYamlbytes := GetValuesYaml(platformworkflow, namespace)
+    valuesYaml := string(valuesYamlbytes)
+    fmt.Printf("Values YAML:%s\n",valuesYaml)
+
+	configMapName := lowercaseKind + "-usage"
+
+	cfg, err := rest.InClusterConfig()
+	if err != nil {
+		fmt.Printf("Error:%s\n", err.Error())
+		return ""
+	}
+
+	kubeClient, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		fmt.Printf("Error:%s\n", err.Error())
+		return ""
+	}
+
+    var yamlDataMap map[string]string
+    yamlDataMap = make(map[string]string,0)
+    yamlDataMap["spec"] = valuesYaml
+
+	configMap := &corev1.ConfigMap{
+		 ObjectMeta: metav1.ObjectMeta{
+        	Name:      configMapName,
+        	Namespace: namespace,
+    	},
+		Data: yamlDataMap,
+	}
+
+	configMap1, err1 := kubeClient.CoreV1().ConfigMaps(namespace).Create(configMap)
+
+	if err1 != nil {
+		fmt.Printf("Error:%s\n", err1.Error())
+		return ""
+	} else {
+		fmt.Printf("Config Map created:%v\n",configMap1)
+	}
+
+	usageAnnotationValue := configMapName + ".spec"
+	fmt.Printf("Usage Annotation:%s\n", usageAnnotationValue)
+	return usageAnnotationValue
+}
 
 func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 	req := ar.Request
@@ -594,6 +639,16 @@ func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 	annotateVal := "on:" + chartKinds + ", key:meta.helm.sh/release-name, value:" + annotationValue
 
 	annotations1[annotateRel] = annotateVal
+
+ 	namespace := "default"
+ 	manpageConfigMapName := registerManPage(crdkind, platformWorkflowName, namespace)
+ 	fmt.Printf("### ManPage ConfigMap Name:%s ####\n", manpageConfigMapName)
+
+    manPageAnnotation := "resource/usage"
+    manPageAnnotationValue := manpageConfigMapName
+
+    annotations1[manPageAnnotation] = manPageAnnotationValue
+
 	fmt.Printf("All Annotations:%v\n", annotations1)
 
 	return annotations1

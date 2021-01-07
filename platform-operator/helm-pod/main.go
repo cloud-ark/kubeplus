@@ -101,10 +101,63 @@ func register() {
 	ws.Route(ws.GET("/deletecrdinstances").To(deleteCRDInstances).
 		Doc("Delete CRD Instances"))
 
+	ws.Route(ws.GET("/getchartvalues").To(getChartValues).
+		Doc("Get Chart Values"))
+
 	restful.Add(ws)
 	http.ListenAndServe(":8090", nil)
 	fmt.Printf("Listening on port 8090...")
 	fmt.Printf("Done installing helmer paths...")
+}
+
+func getChartValues(request *restful.Request, response *restful.Response) {
+
+    platformWorkflowName := request.QueryParameter("platformworkflow")
+	namespace := request.QueryParameter("namespace")
+	fmt.Printf("PlatformWorkflowName:%s\n", platformWorkflowName)
+	fmt.Printf("Namespace:%s\n", namespace)
+
+ 	var valuesToReturn string
+
+	if platformWorkflowName != "" {
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			panic(err.Error())
+		}
+
+		var sampleclientset platformworkflowclientset.Interface
+		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
+
+		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Get(platformWorkflowName, metav1.GetOptions{})
+		fmt.Printf("PlatformWorkflow:%v\n", platformWorkflow1)
+		if err != nil {
+			fmt.Errorf("Error:%s\n", err)
+		}
+
+	    customAPI := platformWorkflow1.Spec.NewResource
+    	//for _, customAPI := range customAPIs {
+    		kind := customAPI.Resource.Kind
+    		group := customAPI.Resource.Group
+    		version := customAPI.Resource.Version
+    		plural := customAPI.Resource.Plural
+    		chartURL := customAPI.ChartURL
+    		chartName := customAPI.ChartName
+ 			fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
+
+ 			cmdRunnerPod := CMD_RUNNER_POD
+ 			if chartURL != "" {
+ 				// 1. Download the chart
+ 				downloadChart(chartURL, cmdRunnerPod, namespace)
+ 				chartValuesPath := "/" + chartName + "/values.yaml"
+ 				fmt.Printf("Chart Values Path:%s\n",chartValuesPath)
+ 				readCmd := "more " + chartValuesPath
+ 				fmt.Printf("More cmd:%s\n", readCmd)
+ 				_, valuesToReturn = executeExecCall(cmdRunnerPod, namespace, readCmd)
+ 				fmt.Printf("valuesToReturn:%v\n",valuesToReturn)
+			}
+		}
+
+	response.Write([]byte(valuesToReturn))
 }
 
 func deleteCRDInstances(request *restful.Request, response *restful.Response) {
@@ -163,6 +216,12 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 			dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(objName, &metav1.DeleteOptions{})
 		}
 	}
+	lowercaseKind := strings.ToLower(kind)
+	configMapName := lowercaseKind + "-usage"
+	// Delete the usage configmap
+	fmt.Printf("Deleting the usage configmap:%s\n", configMapName)
+	kubeClient.CoreV1().ConfigMaps(namespace).Delete(configMapName, &metav1.DeleteOptions{})
+
 	fmt.Println("Done deleting CRD Instances..")
 }
 
@@ -455,33 +514,8 @@ func deployChart(request *restful.Request, response *restful.Response) {
 
  			cmdRunnerPod := CMD_RUNNER_POD
  			if chartURL != "" {
-	 			// 1. Extract Chart Name
-	 			lastIndexOfSlash := strings.LastIndex(chartURL, "/")
-	 			chartName1 := chartURL[lastIndexOfSlash+1:]
-	 			fmt.Printf("ChartName1:%s\n", chartName1)
-	 			parts := strings.Split(chartName1, "?")
-	 			chartName2 := parts[0]
-	 			fmt.Printf("ChartName2:%s\n", chartName2)
-
-	 			lsCmd := "ls -l "
-
-	 			// 2. Download the Chart
-	 			wgetCmd := "wget " + chartURL
-	 			fmt.Printf("wget cmd:%s\n", wgetCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, wgetCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
-
-	 			// 3. Rename the Chart to a friendlier name
-	 			mvCmd := "mv /" + chartName1 + " /" + chartName2
-	 			fmt.Printf("mv cmd:%s\n", mvCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, mvCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
-
-	 			// 4. Untar the Chart file
-	 			untarCmd := "tar -xvzf " + chartName2
-	  			fmt.Printf("untar cmd:%s\n", untarCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, untarCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
+ 				// 1. Download the chart
+ 				downloadChart(chartURL, cmdRunnerPod, namespace)
 
 	 			// 5. Create overrides.yaml
 	 			//overrides := getOverrides(kind, group, version, plural, customresource, namespace)
@@ -543,6 +577,37 @@ func deployChart(request *restful.Request, response *restful.Response) {
 		fmt.Printf("KindString:%s\n", kindsString)
 		response.Write([]byte(kindsString))
 	}
+}
+
+func downloadChart(chartURL, cmdRunnerPod, namespace string) string {
+	 			// 1. Extract Chart Name
+	 			lastIndexOfSlash := strings.LastIndex(chartURL, "/")
+	 			chartName1 := chartURL[lastIndexOfSlash+1:]
+	 			fmt.Printf("ChartName1:%s\n", chartName1)
+	 			parts := strings.Split(chartName1, "?")
+	 			chartName2 := parts[0]
+	 			fmt.Printf("ChartName2:%s\n", chartName2)
+
+	 			lsCmd := "ls -l "
+
+	 			// 2. Download the Chart
+	 			wgetCmd := "wget " + chartURL
+	 			fmt.Printf("wget cmd:%s\n", wgetCmd)
+	 			executeExecCall(cmdRunnerPod, namespace, wgetCmd)
+	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
+
+	 			// 3. Rename the Chart to a friendlier name
+	 			mvCmd := "mv /" + chartName1 + " /" + chartName2
+	 			fmt.Printf("mv cmd:%s\n", mvCmd)
+	 			executeExecCall(cmdRunnerPod, namespace, mvCmd)
+	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
+
+	 			// 4. Untar the Chart file
+	 			untarCmd := "tar -xvzf " + chartName2
+	  			fmt.Printf("untar cmd:%s\n", untarCmd)
+	 			executeExecCall(cmdRunnerPod, namespace, untarCmd)
+	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
+	 			return chartName2
 }
 
 func updateStatus(kind, group, version, plural, instance, namespace, releaseName string) {

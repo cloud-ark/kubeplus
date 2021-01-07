@@ -1046,6 +1046,18 @@ func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
 	return body
 }
 
+func GetValuesYaml(platformworkflow, namespace string) []byte {
+	args := fmt.Sprintf("platformworkflow=%s&namespace=%s", platformworkflow, namespace)
+	fmt.Printf("Inside GetValuesYaml...\n")
+	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	fmt.Printf("After getServiceEndpoint...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/getchartvalues?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
 func getServiceEndpoint(servicename string) (string, string) {
 	fmt.Printf("..Inside getServiceEndpoint...\n")
 	namespace := "default" // Use the namespace in which kubeplus is deployed.
