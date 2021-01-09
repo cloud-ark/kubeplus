@@ -616,7 +616,22 @@ func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
  	}
 
  	fmt.Printf("Annotating %s\n", chartKinds)
- 	chartKinds = strings.Replace(chartKinds, "-", ";", 1)
+ 	parts := strings.Split(chartKinds, "-")
+ 	uniqueKinds := make([]string,0)
+ 	for _, p := range parts {
+ 		found := false
+ 		for _, u := range uniqueKinds {
+ 			if p == u {
+ 				found = true
+ 			}
+ 		}
+ 		if !found {
+ 			uniqueKinds = append(uniqueKinds, p)
+ 		}
+ 	}
+ 	//chartKinds = strings.ReplaceAll(chartKinds, "-", ";")
+ 	fmt.Printf("Unique kinds:%v\n", uniqueKinds)
+ 	chartKinds = strings.Join(uniqueKinds, ";")
   	fmt.Printf("Annotating %s\n", chartKinds)
   	//AnnotateCRD(kind, plural, group, chartKinds)
 

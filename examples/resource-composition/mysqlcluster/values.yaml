@@ -1,7 +1,3 @@
-# Default values for mysqlcluster.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
-name: cluster1
-replicas: 1
+# Default value for namespace. 
+namespace: default
 

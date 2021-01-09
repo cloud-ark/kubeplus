@@ -1,10 +1,16 @@
 apiVersion: mysql.presslabs.org/v1alpha1
 kind: MysqlCluster
 metadata:
-  name: {{ .Values.name }}
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace }}
 spec:
-  replicas: {{ .Values.replicas }} 
-  secretName: {{ .Values.name }}-secret
+  replicas: 2 
+  secretName: {{ .Release.Name }}-secret
+  #backupSchedule: "1 * * * *"
+  #backupURL: s3://cloudark-moodle/mysql-backups
+  #backupSecretName: backups-aws-secret
+  #backupScheduleJobsHistoryLimit: 2
+
   # mysqlVersion: 5.7
   # initBucketURI: gs://bucket_name/backup.xtrabackup.gz
   # initBucketSecretName:
@@ -42,11 +48,11 @@ spec:
   #     type:
 
   #   # https://godoc.org/k8s.io/api/core/v1#PersistentVolumeClaimSpec
-  #   persistentVolumeClaim:
-  #     accessModes: [ "ReadWriteOnce" ]
-  #     resources:
-  #       requests:
-  #         storage: 1Gi
+  persistentVolumeClaim:
+    accessModes: [ "ReadWriteOnce" ]
+    resources:
+      requests:
+        storage: 1Gi
 
   ## Specify service objectives
   ## If thoses SLO are not fulfilled by cluster node then that node is
