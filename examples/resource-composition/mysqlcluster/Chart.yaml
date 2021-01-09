@@ -2,4 +2,4 @@ apiVersion: v2
 appVersion: "1.0"
 description: A Helm chart for Kubernetes
 name: mysqlcluster
-version: 0.2.0
+version: 0.2.2

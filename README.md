@@ -75,7 +75,8 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
 
 ## Try it:
 
-- KubePlus kubectl commands:
+- Getting started:
+  - Try ```kubectl connections``` plugin. It can be used with any Kubernetes Kind.
 
 ```
    $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
@@ -86,10 +87,16 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
    $ kubectl kubeplus commands
 ```
 
-- To obtain metrics, enable Kubernetes Metrics API Server on your cluster.
-  - Hosted Kubernetes solutions like GKE has this already installed.
+- CRD for CRDs:
+  - Try [this](./examples/resource-composition/steps.txt) example.
 
-  - Check out [examples](./examples/).
+- Resource relationship graphs for Public Managed Kubernetes:
+  - Check out resource relationship graphs for some public managed Kubernetes providers [here](./examples/graphs). 
+
+- Examples of Operators, Custom Resource stacks, etc.:
+  - Check out [examples](./examples/) 
+
+Note: To obtain metrics, enable Kubernetes Metrics API Server on your cluster. Hosted Kubernetes solutions like GKE has this already installed.
 
 
 ## Platform-as-Code

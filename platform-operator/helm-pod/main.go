@@ -596,13 +596,19 @@ func downloadChart(chartURL, cmdRunnerPod, namespace string) string {
 	 			executeExecCall(cmdRunnerPod, namespace, wgetCmd)
 	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
 
-	 			// 3. Rename the Chart to a friendlier name
+                // 3. Remove previous instance of chart
+                rmCmd := "rm -rf /" + chartName2
+	 			fmt.Printf("rm cmd:%s\n", rmCmd)
+	 			executeExecCall(cmdRunnerPod, namespace, rmCmd)
+	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
+
+	 			// 4. Rename the Chart to a friendlier name
 	 			mvCmd := "mv /" + chartName1 + " /" + chartName2
 	 			fmt.Printf("mv cmd:%s\n", mvCmd)
 	 			executeExecCall(cmdRunnerPod, namespace, mvCmd)
 	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
 
-	 			// 4. Untar the Chart file
+	 			// 5. Untar the Chart file
 	 			untarCmd := "tar -xvzf " + chartName2
 	  			fmt.Printf("untar cmd:%s\n", untarCmd)
 	 			executeExecCall(cmdRunnerPod, namespace, untarCmd)

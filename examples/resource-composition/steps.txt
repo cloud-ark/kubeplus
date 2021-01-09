@@ -1,31 +1,73 @@
-Compose Custom Platform Workflows:
------------------------------------
+Compose Platform Workflows as Kubernetes APIs
+----------------------------------------------
 
-Compose/Create new Resource (done by DevOps team):
--------------------------------------------------
-1. more newresource.yaml
-2. kubectl get crds | grep "mysqlservices.platformapi.kubeplus"
-3. kubectl create -f newresource.yaml
-4. kubectl get crds | grep "mysqlservices.platformapi.kubeplus"
+Setup:
+------
+- git clone https://github.com/cloud-ark/kubeplus
+- Install KubePlus client-side kubectl plugins
+  - export KUBEPLUS_HOME=`pwd`
+  - export PATH=$KUBEPLUS_HOME/plugins/:$PATH
+- Install KubePlus server-side component
+  - cd deploy/
+  - ./deploy-kubeplus.sh
+
+- Create a GKE cluster
+- Create a GCE Persistent Disk named my-data-disk
+  - Note: create the disk in the same zone as your cluster
+  - gcloud compute disks create --size=10GB --zone=us-central1-b my-data-disk
+- Install Docker on your machine
+- Install MysqlCluster Operator on the cluster
+  - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-5.tgz?raw=true
+
+Create a Kubernetes API to encapsulate Platform workflow (done by Platform Engineering team):
+------------------------------------------------------------------------------------
+1. more mysqlserviceapi.yaml
+   -> Check new resource definition
+   -> Check ResourcePolicy definition
+   -> Check ResourceMonitor definition
+2. Verify that the API does not exist
+   - kubectl get crds | grep "mysqlservices.platformapi.kubeplus"
+3. Create the API
+   - kubectl create -f mysqlserviceapi.yaml
+4. Verify that the API has been created
+  - kubectl get crds | grep "mysqlservices.platformapi.kubeplus"
 
 
-Instantiate Platform API (done by Application team):
-----------------------------------------------------
-1. more mystack1.yaml
-2. kubectl create -f mystack1.yaml
-3. kubectl get pods
-4. helm list
-5. MASTER_IP=Get IP Address of the cluster API server
-6. NODEPORT=`kubectl get svc | grep kubeplus | awk '{print $5}' | cut -d ':' -f 2 | cut -d '/' -f 1`
-7. curl -kv "http://$MASTER_IP:$NODEPORT/apis/kubeplus/metrics?kind=MysqlService&instance=appdb&namespace=default"
-8. kubectl create -f mystack2.yaml
-9. kubectl get pods
-10. helm list
+Instantiate Platform workflow using the new API (done by Product team):
+------------------------------------------------------------------------
+1. Check man page for MysqlService
+   - kubectl man MysqlService
+
+2. Create MysqlService instance:
+   - more myservice1.yaml
+   - kubectl create -f myservice1.yaml
+   - Check mysqlservice instance has been created
+     - kubectl get mysqlservices
+   - Check Mysql Pods are created
+     - kubectl get pods (Wait till both Pods are running - )
+       - Pod names:
+         - service1-mysql-0
+         - service1-mysql-1
+       - Ignore the Pods that are named 'auto-backup'. MysqlService is configured
+         to periodically backup the data to S3 storage.
+
+5. Check connectivity graph:
+   - kubectl connections MysqlService service1 default -o png --ignore=ServiceAccount:default
+
+6. Verify Policy application:
+   - kubectl get pods service1-mysql-0 -o json | jq -r '.spec.containers[0].resources'
+   - kubectl get pods service1-mysql-0 -o json | jq -r '.spec.containers[0].resources'
+
+7. Get Metrics:
+   - MASTER_IP=Get IP Address of the cluster API server
+     - export MASTER_IP=34.121.16.241
+   - NODEPORT=`kubectl get svc | grep kubeplus | awk '{print $5}' | cut -d ':' -f 2 | cut -d '/' -f 1`
+   - curl -kv "http://$MASTER_IP:$NODEPORT/apis/kubeplus/metrics?kind=MysqlService&instance=service1&namespace=default"
+
 
 Demo Clean up:
 --------------
-1. kubectl delete -f mystack1.yaml
-2. kubectl delete -f mystack2.yaml
-3. helm list | grep mysqlcluster-0.1.0 | awk '{print $1}' | xargs helm delete
-4. kubectl delete crds mysqlservices.platformapi.kubeplus
-5. kubectl delete -f newresource.yaml
+1. kubectl delete -f mysqlserviceapi.yaml
+2. Verify:
+   - kubectl get crds | grep "mysqlservices.platformapi.kubeplus" (Should return empty)
+   - kubectl get pods (Mysql Pods should have been deleted)

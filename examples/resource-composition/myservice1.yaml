@@ -1,0 +1,7 @@
+apiVersion: platformapi.kubeplus/v1alpha1
+kind: MysqlService 
+metadata:
+  name: service1 
+spec:
+  namespace: default
+
