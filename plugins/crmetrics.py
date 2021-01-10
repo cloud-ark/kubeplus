@@ -379,9 +379,9 @@ class CRMetrics(object):
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
 		cmd = ''
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format + ' --ignore=ServiceAccount:default'
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format + ' --ignore=ServiceAccount:default'
 
 		if cmd:
 			output = ''

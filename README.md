@@ -36,7 +36,7 @@ Here is the high-level structure of ResourceComposition CRD:
 To understand this further let us see how a platform team can build a MySQL service for their product team/s to consume. The base Kubernetes cluster has MySQL Operator on it (either installed by the Platform team or bundled by the Kubernetes provider).
 
 <p align="center">
-<img src="./docs/mysql-as-a-service.png" width="400" height="200" class="center">
+<img src="./docs/mysql-as-a-service.png" width="400" height="250" class="center">
 </p>
 
 

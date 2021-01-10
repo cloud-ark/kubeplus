@@ -3,6 +3,5 @@ kind: MysqlService
 metadata:
   name: service2 
 spec:
-  name: service2
-  replicas: 1 
+  namespace: default 
 
