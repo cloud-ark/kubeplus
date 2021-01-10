@@ -331,13 +331,13 @@ func getMetrics(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Kind:%s\n", kind)
 	fmt.Printf("Namespace:%s\n", namespace)
 
-	helmrelease := getReleaseName(kind, customresource, namespace)
+	/*helmrelease := getReleaseName(kind, customresource, namespace)
 	fmt.Printf("Helm release3:%s\n", helmrelease)
 	if helmrelease != "" {
 		metricsCmd := "./root/kubectl metrics helmrelease " + helmrelease + " -o prometheus " 
 		fmt.Printf("metrics cmd:%s\n", metricsCmd)
 		_, metricsToReturn = executeExecCall(cmdRunnerPod, namespace, metricsCmd)
-	} else {
+	} else {*/
 		config, _ := rest.InClusterConfig()
 		var sampleclientset platformworkflowclientset.Interface
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
@@ -373,7 +373,7 @@ func getMetrics(request *restful.Request, response *restful.Response) {
 		metricsCmd := "./root/kubectl metrics cr " + kind + " " + customresource + " " + namespace + " -o prometheus " + followConnections
 		fmt.Printf("metrics cmd:%s\n", metricsCmd)
 		_, metricsToReturn = executeExecCall(cmdRunnerPod, namespace, metricsCmd)
-	}
+	//}
  	/*cpPluginsCmd := "cp /plugins/* bin/"
 	fmt.Printf("cp plugins cmd:%s\n", cpPluginsCmd)
 	executeExecCall(cmdRunnerPod, namespace, cpPluginsCmd)

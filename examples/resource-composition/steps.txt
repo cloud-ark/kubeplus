@@ -48,8 +48,6 @@ Instantiate Platform workflow using the new API (done by Product team):
        - Pod names:
          - service1-mysql-0
          - service1-mysql-1
-       - Ignore the Pods that are named 'auto-backup'. MysqlService is configured
-         to periodically backup the data to S3 storage.
 
 5. Check connectivity graph:
    - kubectl connections MysqlService service1 default -o png --ignore=ServiceAccount:default

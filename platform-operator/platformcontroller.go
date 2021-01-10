@@ -10,16 +10,14 @@ import (
 	_ "github.com/lib/pq"
 	"net/http"
 	"net/url"
-	//"context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
     apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	//"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
-	//"k8s.io/client-go/dynamic"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -358,39 +356,6 @@ func (c *Controller) syncHandler(key string) error {
 		return err
 	}
 
-	/*labelSelector := foo.Spec.LabelSelector
-
-	fmt.Printf("LabelSelector:%v\n", labelSelector)
-
-	stackElements := foo.Spec.StackElements
-
-	fmt.Printf("Label:%s\n", foo.Spec.LabelSelector)
-	fmt.Printf("StackElements:%s\n", foo.Spec.StackElements)
-
-	fmt.Printf("LabelSelector:%s\n", labelSelector)
-	for _, stackElement := range stackElements {
-		kind := stackElement.Kind
-		instance := stackElement.Name
-		namespace := "default"
-		if stackElement.Namespace != "" {
-			namespace = stackElement.Namespace
-		}
-
-		fmt.Printf("Kind:%s, Instance:%s, Namespace:%s\n", kind, instance, namespace)
-		dependsOn := stackElement.DependsOn
-		if dependsOn != nil {
-			for _, dependentInstance := range dependsOn {
-				fmt.Printf("    DependsOn:%s\n", dependentInstance)
-			}
-		}
-	}
-	for key, value := range labelSelector {
-		fmt.Printf("Key:%s, Value:%s\n", key, value)
-	}*/
-
-	//customAPIs := foo.Spec.NewResource.Resource.Kind
-	//fmt.Printf("New APIs:%s\n", customAPIs)
-	//for _, customAPI := range customAPIs {
 	fmt.Printf("ABC\n")
 	fmt.Printf("%v\n", foo.Spec)
 	newRes := foo.Spec.NewResource
@@ -423,7 +388,6 @@ func (c *Controller) syncHandler(key string) error {
 	// Instantiate ResourceMonitor object
 	createResourceMonitor(resMonitorSpec, namespace)
 
-	//}
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 	return nil
 }
@@ -503,39 +467,6 @@ func createResourcePolicy(resPolicySpec interface{}, namespace string) {
 	if err != nil {
 		fmt.Errorf("Error:%s\n", err)
 	}
-
-	/*
-	// Using dynamic client
-	resourcePolicyGroup := "workflows.kubeplus"
-	resourcePolicyVersion := "v1alpha1"
-	resourcePolicyAPIVersion := resourcePolicyGroup + "/" + resourcePolicyVersion
-	resourcePolicyPlural := "resourcepolicies"
-	resPolicyRes := schema.GroupVersionResource{Group: resourcePolicyGroup,
-		                                        Version: resourcePolicyAPIVersion,
-		                                        Resource: resourcePolicyPlural}
-	fmt.Printf("ResPolicyRes:%v\n", resPolicyRes)
-	dynamicClient, err1 := getDynamicClient1()
-	if err1 != nil {
-		fmt.Printf("Error 1:%v\n", err1)
-		fmt.Println(err1)
-	}
-
-	unstructuredResPolicy, err2 := runtime.DefaultUnstructuredConverter.ToUnstructured(resPolicyObject)
-	if err2 != nil {
-		fmt.Printf("Error 1:%v\n", err1)
-		fmt.Println(err1)
-	}
-	fmt.Printf("UnstructuredResPolicy:%v\n", unstructuredResPolicy)
-	policyData := unstructured.Unstructured{Object: unstructuredResPolicy}
-	instanceObj, err2 := dynamicClient.Resource(resPolicyRes).Namespace(namespace).Create(
-		&policyData,
-		metav1.CreateOptions{})
-	if err2 != nil {
-		fmt.Printf("Error2:%v\n",err2)
-	} else {
-		fmt.Printf("PolicyObj:%v\n", instanceObj)
-	}
-	*/
 }
 
 func deleteResourcePolicy(resPolicySpec interface{}) {	
@@ -644,33 +575,6 @@ func handleCRD(kind, version, group, plural, action, namespace string) error {
 		}
 	}
 	return nil
-}
-
-func deleteCRDObects(crdToHandle, kind, version, group, plural, namespace string) {
-	fmt.Println("Inside deleteCRDObjects...")
-	/*
-	apiVersion := group + "/" + version
-	
-	ownerRes := schema.GroupVersionResource{Group: group,
-									 		Version: apiVersion,
-									   		Resource: plural}
-	fmt.Printf("OwnerRes:%v\n", ownerRes)
-
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		panic(err.Error())
-	}
-	dynamicClient, _ := dynamic.NewForConfig(config)
-
-	crdObjList, _ := dynamicClient.Resource(ownerRes).Namespace(namespace).List(context.TODO(), metav1.ListOptions{})
-
-	for _, instanceObj := range crdObjList.Items {
-		lhsContent := instanceObj.UnstructuredContent()
-		//mapval, ok1 := lhsContent.(map[string]interface{})
-		//if ok1 {
-			fmt.Printf("%v\n", lhsContent)
-		//}
-	}*/
 }
 
 func deleteCRDInstances(kind, group, version, plural, namespace string) []byte {

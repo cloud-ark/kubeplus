@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	//"context"
 
 	"github.com/buger/jsonparser"
 	guuid "github.com/google/uuid"
@@ -20,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/kubernetes/pkg/apis/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	//"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/kubernetes"
@@ -51,12 +49,10 @@ var (
 	kindPluralMap map[string]string
 	resourcePolicyMap map[string]interface{}
 
-	//dynamicClient dynamic.Interface
 )
 
 type WebhookServer struct {
 	server *http.Server
-	// client *kubernetes.ClientSet
 }
 
 type PodResourceRequests struct {
@@ -106,20 +102,6 @@ func init() {
 	customKindPluralMap = make(map[string]string,0)
 	kindPluralMap = make(map[string]string,0)
 	resourcePolicyMap = make(map[string]interface{}, 0)
-
-	//TODO: Helper that tracks resource creation and puts labels/annotations
-	//once they are available.
-	//helper = make(chan string)
-	//go helperHandler()
-}
-
-func helperHandler() {
-	for {
-		val := <- helper
-		fmt.Printf("..helperHandler value:%s\n", val)
-
-		time.Sleep(10*time.Second)
-	}
 }
 
 // main mutation process
@@ -150,7 +132,6 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	var pacAnnotationMap map[string]string
 	if req.Kind.Kind == "CustomResourceDefinition" {
 		pacAnnotationMap = getPaCAnnotation(ar)
-		//patchOperations = append(patchOperations, crdPatch)
 	}
 
 	accountIdentityAnnotationMap := getAccountIdentityAnnotation(ar)
@@ -173,26 +154,6 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			}
 		}
 	}
-
-	// TODO: Check if dependent resources have been created or not
-	// checkDependency(ar)
-
-	/*
-	specResolvedPatches, errResponse := getSpecResolvedPatch(ar)
-	if errResponse != nil {
-		return errResponse
-	}
-	for _, specResolvedPatch := range specResolvedPatches {
-		patchOperations = append(patchOperations, specResolvedPatch)
-	}*/
-
-	//setOwnerReference(ar)
-
-	/*ownerReferencePatch := getOwnerReferencePatch(ar)
-	if ownerReferencePatch != nil {
-		ownerRefOp := ownerReferencePatch.(patchOperation)
-		patchOperations = append(patchOperations, ownerRefOp)
-	}*/
 
 	fmt.Printf("PatchOperations:%v\n", patchOperations)
 	patchBytes, _ := json.Marshal(patchOperations)
@@ -319,17 +280,6 @@ func findRoot(namespace, kind, name, apiVersion string) (string, string, string)
 									 		Version: ownerResApiVersion,
 									   		Resource: ownerResKindPlural}
 
-/*	TODO: Map GroupVersionKind to GroupVersionResource
-	ownergvk := schema.GroupVersionKind{Group: group,
-									 	Version: version,
-									   	Kind: kind}
-	ownerRes, err := findGVR(&ownergvk, namespace)
-	if err != nil {
-		fmt.Printf("Error:%v\n", err)
-		return rootKind, rootName, rootAPIVersion
-
-	}
-*/
 	fmt.Printf("OwnerRes:%v\n", ownerRes)
 	dynamicClient, err1 := getDynamicClient1()
 	if err1 != nil {
@@ -408,11 +358,6 @@ func applyPolicies(ar *v1beta1.AdmissionReview, customAPI string) []patchOperati
 
 	var operation string
 	fmt.Printf("DataType:%s\n", dataType)
-	/*if dataType.String() == "notexist" {
-		operation = "add"
-	} else {
-		operation = "add"
-	}*/
 	operation = "add"
 
 	podPolicy := resourcePolicyMap[customAPI]
@@ -428,37 +373,10 @@ func applyPolicies(ar *v1beta1.AdmissionReview, customAPI string) []patchOperati
 	cpuLimit := podPolicy1.PolicyResources.Limits.CPU
 	memLimit := podPolicy1.PolicyResources.Limits.Memory
 
-/*
-	platformworkflowv1alpha1.Pol 
-
-	policyResField := podPolicy.(map[string]interface{})
-	resField := policyResField["resources"]
-	resMap := resField.(map[string]interface{})
-	limitsRef := resMap["limits"]
-	requestsRef := resMap["requests"]
-	limitsMap := limitsRef.(map[string]string)
-	requestsMap := requestsRef.(map[string]string)
-
-	cpuRequest := requestsMap["cpu"] //"200m"
-	memRequest := requestsMap["memory"] //"2Gi"
-	cpuLimit := limitsMap["cpu"] //"400m"
-	memLimit := limitsMap["memory"] //"4Gi"
-*/
-
 	fmt.Printf("CPU Request:%s\n", cpuRequest)
 	fmt.Printf("Mem Request:%s\n", memRequest)
 	fmt.Printf("CPU Limit:%s\n", cpuLimit)
 	fmt.Printf("Mem Limit:%s\n", memLimit)
-
-	/*podResRequest := PodResourceRequests{
-		cpu: cpuRequest,
-		memory: memRequest,
-	}*/
-
-	/*podResLimits := PodResourceLimits{
-		cpu: cpuLimit,
-		memory: memLimit,
-	}*/
 
 	podResRequest := make(map[string]string,0)
 	podResRequest["cpu"] = cpuRequest
@@ -480,23 +398,10 @@ func applyPolicies(ar *v1beta1.AdmissionReview, customAPI string) []patchOperati
 		Value: podResLimits,
 	}
 
-	/*patch3 := patchOperation{
-		Op:    operation,
-		Path:  "/spec/containers/0/resources/limits/cpu",
-		Value: "limits: cpu " + cpuLimit,
-	}
-
-	patch4 := patchOperation{
-		Op:    operation,
-		Path:  "/spec/containers/0/resources/limits/memory",
-		Value: memLimit,
-	}*/
-
 	patchOperations := make([]patchOperation, 0)
 	patchOperations = append(patchOperations, patch1)
 	patchOperations = append(patchOperations, patch2)
-	/*patchOperations = append(patchOperations, patch3)
-	patchOperations = append(patchOperations, patch4)*/
+
 	return patchOperations
 }
 
@@ -522,13 +427,6 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) {
 	}
 
 	fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
-    /*customAPIs := platformWorkflow.Spec.CustomAPI
-    //for _, customAPI := range customAPIs {
-    kind := customAPI.Kind
-    group := customAPI.Group
-    version := customAPI.Version
-    plural := customAPI.Plural
-    chartURL := customAPI.ChartURL*/
 	kind := platformWorkflow.Spec.NewResource.Resource.Kind
 	group := platformWorkflow.Spec.NewResource.Resource.Group
 	version := platformWorkflow.Spec.NewResource.Resource.Version
@@ -539,7 +437,6 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) {
  	customAPI := group + "/" + version + "/" + kind
  	customAPIPlatformWorkflowMap[customAPI] = platformWorkflowName
  	customKindPluralMap[customAPI] = plural
- 	//go addPaCAnnotation(platformWorkflowName, namespace, kind, plural, group)
 }
 
 func registerManPage(kind, platformworkflow, namespace string) string {
@@ -629,11 +526,10 @@ func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
  			uniqueKinds = append(uniqueKinds, p)
  		}
  	}
- 	//chartKinds = strings.ReplaceAll(chartKinds, "-", ";")
+
  	fmt.Printf("Unique kinds:%v\n", uniqueKinds)
  	chartKinds = strings.Join(uniqueKinds, ";")
   	fmt.Printf("Annotating %s\n", chartKinds)
-  	//AnnotateCRD(kind, plural, group, chartKinds)
 
 	// Add crd annotation
 	annotations1 := make(map[string]string, 0)
@@ -667,13 +563,6 @@ func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 	fmt.Printf("All Annotations:%v\n", annotations1)
 
 	return annotations1
-
-	/*patch := patchOperation{
-		Op:    "add",
-		Path:  "/metadata/annotations",
-		Value: annotations1,
-	}
-	return patch*/
 }
 
 func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
@@ -714,15 +603,7 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 
 	// Save name:uid mapping
 	customAPIInstance := customAPI + "/" + namespace + "/" + crname
-	//_, ok := customAPIInstanceUIDMap[customAPIInstance]
-	/*if ok {
-		message := fmt.Sprintf("A resource with fully qualified name %s already exists.", customAPIInstance)
-		return &v1beta1.AdmissionResponse{
-				Result: &metav1.Status{
-				Message: message,
-			},
-		}
-	} else {*/
+
 	customAPIInstanceUIDMap[customAPIInstance] = cruid
 
 	platformWorkflowName := customAPIPlatformWorkflowMap[customAPI]
@@ -730,7 +611,6 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 		fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
 
 		config, err := rest.InClusterConfig()
-	//	config, err := clientcmd.BuildConfigFromFlags("", "")
 		if err != nil {
 			panic(err.Error())
 		}
@@ -744,16 +624,6 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 			fmt.Errorf("Error:%s\n", err)
 		}
 
-	    /*customAPIs := platformWorkflow1.Spec.CustomAPI
-    	//for _, customAPI := range customAPIs {
-		    kind := customAPI.Kind
-    		group := customAPI.Group
-    		version := customAPI.Version
-    		plural := customAPI.Plural
-    		chartURL := customAPI.ChartURL
-    		chartName := customAPI.ChartName
-    	//}*/
-
 		kind := platformWorkflow1.Spec.NewResource.Resource.Kind
 		group := platformWorkflow1.Spec.NewResource.Resource.Group
 		version := platformWorkflow1.Spec.NewResource.Resource.Version
@@ -766,39 +636,10 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	return nil
 }
 
-/*
-func checkDependency(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
-
-	req := ar.Request
-	kind := req.Kind.Kind
-	name := req.Name
-	namespace := req.Namespace
-
-	//dependencyCreated, dependentElements := CheckDependency(kind, name, namespace, req.Object.Raw)
-    dependencyCreated := false
-	dependentElements := make([]string,0)
-	fmt.Printf("DependencyCreated:%v, dependencyElements:%v\n", dependencyCreated, dependentElements)
-
-	if !dependencyCreated {
-		errorMessage := "Dependent Resources not created:\n"
-		for _, elem := range dependentElements {
-			depName := elem.Name
-			depNamespace := elem.Namespace
-			depKind := elem.Kind
-			msg := fmt.Sprintf("   %s %s %s\n", depKind, depName, depNamespace)
-			errorMessage = errorMessage + msg
-		}
-		fmt.Printf("Error:%s\n", errorMessage)
-		return &v1beta1.AdmissionResponse{
-			Result: &metav1.Status{
-				Message: errorMessage,
-				},
-			}
-	}
-	return nil
-}
-*/
-
+// Sets Owner Reference on an object after it has been created. 
+// We initially started with this approach but are not using it anymore as the ResourceComposition instance is not technically
+// owner of instances of the Custom API. Instead, we are using PaC annotation relationship
+// to track this relation. The specific annotation that we look for is the Helm release name annotation.
 func setOwnerReference(ar *v1beta1.AdmissionReview) {
 	req := ar.Request
 	body := req.Object.Raw
@@ -875,28 +716,6 @@ func setOwnerReference(ar *v1beta1.AdmissionReview) {
 	}
 }
 
-func getOwnerReferencePatch(ar *v1beta1.AdmissionReview) {
-	 				/*
-					ownerRef := make(map[string]string,0)
-					ownerRef["apiVersion"] = apiVersion
-					ownerRef["kind"] = kind
-					ownerRef["name"] = name
-					//ownerRef["uid"] = uid
-					ownerRefList := make([]map[string]string,0)
-					ownerRefList = append(ownerRefList, ownerRef)
-
-						patch := patchOperation{
-						Op:    "replace",
-						Path:  "/metadata/ownerReferences",
-						Value: ownerRefList,
-					}
-					fmt.Printf("Patch Op:%v\n", patch)
-					return patch
-					*/
-				//}
-
-}
-
 func updateOwnerReference(cgroup, cversion, cplural, cinstance, ogroup, oversion, okind, oplural, oinstance, namespace string) {
 
 	fmt.Printf("Inside updateOwnerReference")
@@ -962,7 +781,6 @@ func getAnnotationPatch(allAnnotations map[string]string) patchOperation {
 	return patch
 }
 
-
 func getAccountIdentityAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 
 	req := ar.Request
@@ -987,16 +805,12 @@ func getAccountIdentityAnnotation(ar *v1beta1.AdmissionReview) map[string]string
 	delete(annotations1, accountidentity)
 	annotations1[accountidentity] = req.UserInfo.Username
 	fmt.Printf("All Annotations:%v\n", annotations1)
-
-	//updateConfigMap(req.UserInfo.Username)
-	//userIdentity := map[string]string{"useridentity": req.UserInfo.Username}
-	//annotations1 = append(annotations1, userIdentity)
-	//userIdentityJSON, _ := json.Marshal(userIdentity)
-	//allAnnotations = append(allAnnotations, userIdentityJSON)
-	//fmt.Printf("All Annotations:%s", fmt.Sprintf("%v", annotations1))
 	return annotations1
 }
 
+// This method resolves binding functions - ImportValue, AddLabel, AddAnnotations in the Spec.
+// Currently handling such Spec is turned off (there is no reference to this method in the main flow.)
+// Leaving this method around for reference.
 func getSpecResolvedPatch(ar *v1beta1.AdmissionReview) ([]patchOperation, *v1beta1.AdmissionResponse) {
 	fmt.Printf("Inside getSpecResolvedPatch...\n")
 	var patchOperations []patchOperation
@@ -1060,213 +874,6 @@ func getSpecResolvedPatch(ar *v1beta1.AdmissionReview) ([]patchOperation, *v1bet
 	}
 	return patchOperations, nil
 }
-
-/*
-func (whsvr *WebhookServer) mutate_prev(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
-	// Work-in-Progress: Below code is currently Work-in-progress hence
-	// returning above.
-
-	req := ar.Request
-
-	var entry Entry
-	var kind string
-	name, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
-	if err != nil {
-		fmt.Printf("Error in parsing metadata.name. Key does not exist.")
-		return &v1beta1.AdmissionResponse{
-			Result: &metav1.Status{
-				Message: err.Error(),
-			},
-		}
-	}
-	namespace, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "namespace")
-	if err != nil {
-		fmt.Printf("Error in parsing metadata.namespace. Key does not exist.")
-		return &v1beta1.AdmissionResponse{
-			Result: &metav1.Status{
-				Message: err.Error(),
-			},
-		}
-	}
-	kind, err = jsonparser.GetUnsafeString(req.Object.Raw, "kind")
-	if err != nil {
-		fmt.Printf("Error in parsing kind. Key does not exist.")
-		return &v1beta1.AdmissionResponse{
-			Result: &metav1.Status{
-				Message: err.Error(),
-			},
-		}
-	}
-	fmt.Printf("Kind:%s, Name:%s, Namespace:%s\n", kind, name, namespace)
- 
-	if kind == "PlatformStack" {
-		//UpdatePlatformStacks(name, namespace, req.Object.Raw)
-	} else {
-		//dependencyCreated, dependentElements := CheckDependency(kind, name, namespace, req.Object.Raw)
-		dependencyCreated := false
-		dependentElements := make([]string,0)
-		fmt.Printf("DependencyCreated:%v, dependencyElements:%v\n", dependencyCreated, dependentElements)
-
-		if !dependencyCreated {
-			errorMessage := "Dependent Resources not created:\n"
-			for _, elem := range dependentElements {
-				depName := elem.Name
-				depNamespace := elem.Namespace
-				depKind := elem.Kind
-				msg := fmt.Sprintf("   %s %s %s\n", depKind, depName, depNamespace)
-				errorMessage = errorMessage + msg
-			}
-			fmt.Printf("Error:%s\n", errorMessage)
-			return &v1beta1.AdmissionResponse{
-				Result: &metav1.Status{
-					Message: errorMessage,
-				},
-			}
-		}
-	}
-
-	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
-
-	fmt.Println("--- Annotation Values: ---")
-	jsonparser.ObjectEach(allAnnotations, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-
-		val := strings.TrimSpace(string(value))
-		fmt.Printf("--- value: %s\n", val)
-		hasLabelFunc := strings.Contains(val, "Fn::AddLabel")
-
-		if hasLabelFunc {
-			_, err := AddResourceLabel(val)
-			if err != nil {
-				fmt.Printf("Could not add Label: %s", val)
-			}
-		}
-		return nil
-	})
-
-	var patchOperations []patchOperation
-	patchOperations = make([]patchOperation, 0)
-
-	//fmt.Println("----- Stored data: -----")
-	//fmt.Printf("Data: %v\n", annotations.KindToEntry)
-	fmt.Printf("Api Request!: %s\n", string(req.Object.Raw))
-
-	forResolve := ParseRequest(req.Object.Raw)
-
-	fmt.Printf("Objects To Resolve: %v\n", forResolve)
-	for i := 0; i < len(forResolve); i++ {
-		var resolveObj ResolveData
-		resolveObj = forResolve[i]
-
-		// Skip processing if resolveObj is for metadata.annotations.
-		// This is because we would have already processed that.
-		partOfMetaData := strings.Contains(resolveObj.JSONTreePath, "/metadata/annotations")
-		if partOfMetaData {
-			continue
-		}
-
-		if resolveObj.FunctionType == ImportValue {
-
-			importString := resolveObj.ImportString
-			fmt.Printf("Import String: %s\n", importString)
-
-			value, err := ResolveImportString(importString)
-			fmt.Printf("ImportString:%s, Resolved ImportString value:%s", importString, value)
-			if err != nil {
-				// Because we could not resolve one of the Fn::<path>
-				// we want to roll back our data structure by deleting the entry
-				// we just added. The store and resolve should be an atomic
-				// operation
-				deleted := annotations.Delete(entry, kind)
-				fmt.Printf("The data was deleted : %t", deleted)
-				//fmt.Println(annotations)
-				return &v1beta1.AdmissionResponse{
-					Result: &metav1.Status{
-						Message: err.Error(),
-					},
-				}
-			}
-			patch := patchOperation{
-				Op:    "replace",
-				Path:  resolveObj.JSONTreePath,
-				Value: value,
-			}
-			patchOperations = append(patchOperations, patch)
-		} else if resolveObj.FunctionType == AddLabel {
-
-			patch := patchOperation{
-				Op:    "replace",
-				Path:  resolveObj.JSONTreePath,
-				Value: resolveObj.Value,
-			}
-			patchOperations = append(patchOperations, patch)
-		}
-
-	}
-	fmt.Printf("PatchOperations:%v\n", patchOperations)
-	patchBytes, _ := json.Marshal(patchOperations)
-	// marshal the struct into bytes to pass into AdmissionResponse
-	return &v1beta1.AdmissionResponse{
-		Allowed: true,
-		Patch:   patchBytes,
-		PatchType: func() *v1beta1.PatchType {
-			pt := v1beta1.PatchTypeJSONPatch
-			return &pt
-		}(),
-	}
-}
-
-func updateConfigMap(user string) {
-
-	configMap, err1 := kubeclientset.CoreV1().ConfigMaps(webhook_namespace).Get(accountidentities, metav1.GetOptions{})
-	if err1 != nil {
-		fmt.Printf("ConfigMap Get Error:%s\n", err1.Error())
-		userList := make([]string, 1)
-		userList = append(userList, user)
-		userListString := strings.Join(userList, ", ")
-		configMap = &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: accountidentities,
-			},
-			Data: map[string]string{
-				accountidentities: userListString,
-			},
-		}
-		_, err2 := kubeclientset.CoreV1().ConfigMaps(webhook_namespace).Create(configMap)
-		if err2 != nil {
-			fmt.Printf("ConfigMap create Error:%s\n", err2.Error())
-			return
-		}
-	} else {
-		existingIdentitiesMap := configMap.Data
-		userListString := existingIdentitiesMap[accountidentities]
-		userList := strings.Split(userListString, ", ")
-		present := false
-		for _, u := range userList {
-			if u == user {
-				present = true
-			}
-		}
-		if !present {
-			userList = append(userList, user)
-		}
-		userListString = strings.Join(userList, ", ")
-
-		configMap = &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: accountidentities,
-			},
-			Data: map[string]string{
-				accountidentities: userListString,
-			},
-		}
-		_, err3 := kubeclientset.CoreV1().ConfigMaps(webhook_namespace).Update(configMap)
-		if err3 != nil {
-			fmt.Printf("ConfigMap update Error:%s\n", err3.Error())
-			return
-		}
-	}
-}
-*/
 
 func searchAnnotation(entries []Entry, instanceName, namespace, key string) (string, error) {
 	for i := 0; i < len(entries); i++ {

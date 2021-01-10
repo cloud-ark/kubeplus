@@ -18,10 +18,6 @@ import (
 	"github.com/cloud-ark/kubeplus/platform-operator/pkg/signals"
 
 	"k8s.io/client-go/rest"
-
-	//apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset" //typed/apiextensions/v1beta1"
-	//apiextensionsinformers "k8s.io/apiextensions-apiserver/pkg/client/informers/externalversions"
-
 )
 
 func main() {
