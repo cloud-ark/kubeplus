@@ -487,78 +487,79 @@ func registerManPage(kind, platformworkflow, namespace string) string {
 }
 
 func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
+	// Add crd annotation
+	annotations1 := make(map[string]string, 0)
+
 	req := ar.Request
 	body := req.Object.Raw
-	crdkind, err := jsonparser.GetUnsafeString(body, "spec", "names", "kind")
-	crdplural, err := jsonparser.GetUnsafeString(body, "spec", "names", "plural")
-	crdversion, err := jsonparser.GetUnsafeString(body, "spec", "version")
-	crdgroup, err := jsonparser.GetUnsafeString(body, "spec", "group")
+	crdkind, _ := jsonparser.GetUnsafeString(body, "spec", "names", "kind")
+	crdplural, _ := jsonparser.GetUnsafeString(body, "spec", "names", "plural")
+	crdversion, _ := jsonparser.GetUnsafeString(body, "spec", "version")
+	crdgroup, _ := jsonparser.GetUnsafeString(body, "spec", "group")
 	fmt.Printf("CRDKind:%s, CRDPlural:%s, CRDVersion:%s\n", crdkind, crdplural, crdversion)
 	customAPI := crdgroup + "/" + crdversion + "/" + crdkind
 	platformWorkflowName, ok := customAPIPlatformWorkflowMap[customAPI]
 	chartKinds := ""
 	if ok {
 
-	for {
-			namespace := "default"
- 			chartKindsB := DryRunChart(platformWorkflowName, namespace)
- 			chartKinds = string(chartKindsB)
- 			fmt.Printf("Chart Kinds:%v\n", chartKinds)
- 			if chartKinds == "" {
- 				time.Sleep(2 * time.Second)
- 			} else {
- 				break
- 			}
- 		}
+		for {
+				namespace := "default"
+	 			chartKindsB := DryRunChart(platformWorkflowName, namespace)
+	 			chartKinds = string(chartKindsB)
+	 			fmt.Printf("Chart Kinds:%v\n", chartKinds)
+	 			if chartKinds == "" {
+	 				time.Sleep(2 * time.Second)
+	 			} else {
+	 				break
+	 			}
+	 		}
+
+	 	fmt.Printf("Annotating %s\n", chartKinds)
+	 	parts := strings.Split(chartKinds, "-")
+	 	uniqueKinds := make([]string,0)
+	 	for _, p := range parts {
+	 		found := false
+	 		for _, u := range uniqueKinds {
+	 			if p == u {
+	 				found = true
+	 			}
+	 		}
+	 		if !found {
+	 			uniqueKinds = append(uniqueKinds, p)
+	 		}
+	 	}
+
+	 	fmt.Printf("Unique kinds:%v\n", uniqueKinds)
+	 	chartKinds = strings.Join(uniqueKinds, ";")
+	  	fmt.Printf("Annotating %s\n", chartKinds)
+
+		allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
+		if err != nil {
+			fmt.Printf("Error in parsing existing annotations")
+		} else {
+			json.Unmarshal(allAnnotations, &annotations1)
+			fmt.Printf("All Annotations:%v\n", annotations1)
+		}
+		annotateRel := "resource/annotation-relationship"
+		lowercaseKind := strings.ToLower(crdkind)
+		kindPluralMap[lowercaseKind] = crdplural
+		fmt.Printf("KindPluralMap1:%v\n", kindPluralMap)
+	 	annotationValue := lowercaseKind + "-INSTANCE.metadata.name"
+	 	fmt.Printf("Annotation value:%s\n", annotationValue)
+
+		annotateVal := "on:" + chartKinds + ", key:meta.helm.sh/release-name, value:" + annotationValue
+
+		annotations1[annotateRel] = annotateVal
+
+	 	namespace := "default"
+	 	manpageConfigMapName := registerManPage(crdkind, platformWorkflowName, namespace)
+	 	fmt.Printf("### ManPage ConfigMap Name:%s ####\n", manpageConfigMapName)
+
+	    manPageAnnotation := "resource/usage"
+	    manPageAnnotationValue := manpageConfigMapName
+
+	    annotations1[manPageAnnotation] = manPageAnnotationValue
  	}
-
- 	fmt.Printf("Annotating %s\n", chartKinds)
- 	parts := strings.Split(chartKinds, "-")
- 	uniqueKinds := make([]string,0)
- 	for _, p := range parts {
- 		found := false
- 		for _, u := range uniqueKinds {
- 			if p == u {
- 				found = true
- 			}
- 		}
- 		if !found {
- 			uniqueKinds = append(uniqueKinds, p)
- 		}
- 	}
-
- 	fmt.Printf("Unique kinds:%v\n", uniqueKinds)
- 	chartKinds = strings.Join(uniqueKinds, ";")
-  	fmt.Printf("Annotating %s\n", chartKinds)
-
-	// Add crd annotation
-	annotations1 := make(map[string]string, 0)
-	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
-	if err != nil {
-		fmt.Printf("Error in parsing existing annotations")
-	} else {
-		json.Unmarshal(allAnnotations, &annotations1)
-		fmt.Printf("All Annotations:%v\n", annotations1)
-	}
-	annotateRel := "resource/annotation-relationship"
-	lowercaseKind := strings.ToLower(crdkind)
-	kindPluralMap[lowercaseKind] = crdplural
-	fmt.Printf("KindPluralMap1:%v\n", kindPluralMap)
- 	annotationValue := lowercaseKind + "-INSTANCE.metadata.name"
- 	fmt.Printf("Annotation value:%s\n", annotationValue)
-
-	annotateVal := "on:" + chartKinds + ", key:meta.helm.sh/release-name, value:" + annotationValue
-
-	annotations1[annotateRel] = annotateVal
-
- 	namespace := "default"
- 	manpageConfigMapName := registerManPage(crdkind, platformWorkflowName, namespace)
- 	fmt.Printf("### ManPage ConfigMap Name:%s ####\n", manpageConfigMapName)
-
-    manPageAnnotation := "resource/usage"
-    manPageAnnotationValue := manpageConfigMapName
-
-    annotations1[manPageAnnotation] = manPageAnnotationValue
 
 	fmt.Printf("All Annotations:%v\n", annotations1)
 
