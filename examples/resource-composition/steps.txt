@@ -16,8 +16,9 @@ Setup:
   - Note: create the disk in the same zone as your cluster
   - gcloud compute disks create --size=10GB --zone=us-central1-b my-data-disk
 - Install Docker on your machine
+- Install Helmv3
 - Install MysqlCluster Operator on the cluster
-  - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-5.tgz?raw=true
+  - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-6.tgz?raw=true
 
 Create a Kubernetes API to encapsulate Platform workflow (done by Platform Engineering team):
 ------------------------------------------------------------------------------------
@@ -46,15 +47,15 @@ Instantiate Platform workflow using the new API (done by Product team):
    - Check Mysql Pods are created
      - kubectl get pods (Wait till both Pods are running - )
        - Pod names:
-         - service1-mysql-0
-         - service1-mysql-1
+         - mysqlservice-service1-mysql-0
+         - mysqlservice-service1-mysql-1
 
 5. Check connectivity graph:
    - kubectl connections MysqlService service1 default -o png --ignore=ServiceAccount:default
 
 6. Verify Policy application:
-   - kubectl get pods service1-mysql-0 -o json | jq -r '.spec.containers[0].resources'
-   - kubectl get pods service1-mysql-0 -o json | jq -r '.spec.containers[0].resources'
+   - kubectl get pods mysqlservice-service1-mysql-0 -o json | jq -r '.spec.containers[0].resources'
+   - kubectl get pods mysqlservice-service1-mysql-0 -o json | jq -r '.spec.containers[0].resources'
 
 7. Get Metrics:
    - MASTER_IP=Get IP Address of the cluster API server
