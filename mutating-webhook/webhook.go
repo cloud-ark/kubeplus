@@ -444,6 +444,9 @@ func registerManPage(kind, platformworkflow, namespace string) string {
 
     valuesYamlbytes := GetValuesYaml(platformworkflow, namespace)
     valuesYaml := string(valuesYamlbytes)
+    introString := "Here is the values.yaml for the underlying Helm chart representing this resource.\n"
+    introString = introString + "The attributes in values.yaml become the Spec properties of the resource.\n\n"
+    valuesYaml = introString + valuesYaml
     fmt.Printf("Values YAML:%s\n",valuesYaml)
 
 	configMapName := lowercaseKind + "-usage"
