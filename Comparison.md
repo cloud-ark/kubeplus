@@ -2,19 +2,12 @@
 Comparison
 ===========
 
-KubePlus belongs to the class of tools that enable [declarative application management](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/declarative-application-management.md
-) in Kubernetes. As compared to other tools, distinguishing features of KubePlus are - 
-focus on Custom Resource stacks, seamless integration of static and runtime information in realizing such stacks and no new CLI.
+KubePlus is targetted towards Platform Engineering teams. Broadly it provides four capabilities:
+1. Create Kubernetes Custom Resources from Helm charts
+2. Define and enforce mutation policies on Custom Resource Pods
+3. Visualize Kubernetes resource relationships
+4. Monitor Custom Resources
 
-Problem domain of declarative resource stack creation is not new. In the traditional cloud world, this problem has been solved by Infrastructure-as-Code tools like AWS CloudFormation and Terraform. The main assumption that these tools work with is that the underlying cloud resource APIs are statically known and are not going to change.
-With Kubernetes that is not the case. The available resource APIs in a cluster
-depends on the Operators/CRDs that are installed in that cluster.
-KubePlus solves the declarative platform stack creation problem for this 
-dynamic world of Kubernetes CRDs/Operators.
-
-For discovery, Kubernetes itself supports 'kubectl explain' on Custom Resources.
-In our experience the information that is needed for correctly using Custom Resources alongside other resources goes beyond the Spec properties that 'kubectl explain' exposes. 
-KubePlus resource CRD annotations and kubectl plugins provide a way for
-Operator developers to expose additional information that cannot be accommodated through Custom Resource Spec properties alone.
-
-For orchestration, there exists Application CRD in the community. Conceptually, KubePlus's PlatformWorkflow Operator is similar to it, in that both provide a way to define a stack of resources. Our goal with PlatformWorkflow Operator is to use it for resource composition, policy enforcement, monitoring. Application CRD's focus is mainly on visualization of an application stack. For visualization we provide client-side kubectl plugins.
+For creating new CRDs from Helm charts there exists [helm-operator](https://docs.okd.io/latest/operators/operator_sdk/osdk-helm.html).
+In their approach a new Operator is created from scratch per Helm chart. As compared to that, our approach consists of a single ResourceComposition Operator that enables creating new CRDs from any Helm chart. Advantage of our approach is that Platform Engineering teams do not have to create a new Operator for every chart. 
+For policy enforcement there exist [OPA](https://www.openpolicyagent.org/) and [Kyverno](https://kyverno.io/). Distinguishing feature of KubePlus is our focus on Pod spec mutations for Pods belonging to Custom Resource instances. For visualization there exist [kubectl-tree](https://github.com/ahmetb/kubectl-tree) and various Kubernetes dashboards. These tools primarily show owner reference based relationships and are limited to Kubernetes's built-in resources. KubePlus is able to track all four kinds of relationships that can exist between Kubernetes resources (owner, label, annotation, spec properties). Moreover, KubePlus supports both Kubernetes built-in resources and Custom Resources equally. KubePlus builds resource relationship graphs tracking resources and their relationships. Apart from visualizing relationships between resources, these graphs are useful towards usage monitoring of application stacks consisting of ensemble of Kubernetes resources (built-in and Custom).

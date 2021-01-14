@@ -25,7 +25,7 @@ The main benefit of using KubePlus to DevOps/Platform engineers are:
 - easily discover static and runtime information about Custom Resources available in their cluster.
 - aggregate Custom and built-in resources to build secure and robust platform workflows.
 
-KubePlus provides discovery commands, binding functions, and an orchestration mechanism to enable DevOps/Platform engineers to define Kubernetes-native platform workflows using Kubernetes Custom and built-in resources.
+.. KubePlus provides discovery commands, binding functions, and an orchestration mechanism to enable DevOps/Platform engineers to define Kubernetes-native platform workflows using Kubernetes Custom and built-in resources.
 
 .. You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
 
@@ -44,7 +44,7 @@ KubePlus provides discovery commands, binding functions, and an orchestration me
 
 KubePlus Components
 ----------------------
-KubePlus tooling is made up of - CRD Annotations, client-side kubectl plugins, and server-side components (binding functions and PlatformWorkflow Operator).
+KubePlus tooling is made up of - CRD Annotations, client-side kubectl plugins, and server-side components.
 
 
 CRD annotations
@@ -134,7 +134,6 @@ KubePlus offers following kubectl plugins towards discovery and use of Custom Re
 .. code-block:: bash
 
    $ kubectl man cr
-   $ kubectl composition
    $ kubectl connections
    $ kubectl metrics cr
    $ kubectl metrics service
@@ -152,65 +151,45 @@ In order to use these plugins you need to add KubePlus folder to your PATH varia
    $ export PATH=$PATH:`pwd`/plugins
 
 
-Cluster-side add-on 
----------------------
+CRD for CRDs to design your platform services from Helm charts:
+----------------------------------------------------------------
 
-Binding Functions
-------------------
+KubePlus offers a CRD named ResourceComposition to 
+- Compose new CRDs (Custom Resource Definition) to publish platform services from Helm charts
+- Define policies (e.g. Node selection, CPU/Memory limits, etc.) for managing resources of the platform services
+- Get aggregated CPU/Memory/Storage Prometheus metrics for the platform services
+Here is the high-level structure of ResourceComposition CRD: 
 
-Custom Resource relationships can be categorized into two categories. Explicit relationships based on labels/annotations/spec-properties are static and can be hard-coded into Helm charts / YAML files before the deployment. Implicit relationships can not be hard coded pre-deployment and need to be resolved run-time. Example of implicit relationship can be – Restic Custom Resource depends on label on Moodle Custom Resources Deployment sub-resource which gets created only after Moodle resource is created. KubePlus offers additional functions that can be used directly in the YAML definitions to define such implicit dependencies. 
-
-.. code-block:: bash
-
-   1. Fn::ImportValue(<Parameter>)
-
-This function should be used for defining Custom Resource Spec property values that need to be resolved using runtime information. The function resolves specified parameter at runtime using information about various resources running in a cluster and imports that value into the Spec where the function is defined.
-
-Here is how the ``Fn::ImportValue()`` function can be used in a Custom Resource YAML definition.
-
-.. image:: ./docs/mysql-cluster1.png
-   :scale: 10%
-   :align: left
-
-.. image:: ./docs/moodle1.png
-   :scale: 10%
-   :align: right
-
-In the above example the name of the ``Service`` object which is child of ``cluster1`` Custom Resource instance and whose name contains the string ``master`` is discovered at runtime and that value is injected as the value of ``mySQLServiceName`` attribute in the ``moodle1`` Custom Resource Spec.
-
-.. code-block:: bash
-
-   2. Fn::AddLabel(label, <Resource>)
-
-This function adds the specified label to the specified resource/sub-resource by resolving the resource name using runtime information in a cluster.
+.. image:: ./docs/crd-for-crds.png
+   :height: 250px
+   :width: 650px
+   :align: center
 
 
-.. code-block:: bash
+To understand this further let us see how a platform team can build a MySQL service for their product team/s to consume. The base Kubernetes cluster has MySQL Operator on it (either installed by the Platform team or bundled by the Kubernetes provider).
 
-   3. Fn::AddAnnotation(annotation, <Resource>)
-
-This function adds the specified annotation to the specified resource/sub-resource by resolving the resource name using runtime information in a cluster.
-
-
-The ``AddLabel`` and ``AddAnnotation`` functions should be defined as annotations on those Custom Resources that
-need appropriate labels and/or annotations on other resources in a cluster for their operation.
-`Here`_ is an example of using the ``AddLabel`` function with the ``Moodle`` Custom Resource.
-
-.. _Here: https://github.com/cloud-ark/kubeplus/blob/master/examples/kubectl-plugins-and-binding-functions/moodle1.yaml#L6
-
-This example shows adding a label on the Service created by the Mysql Operator to which the Moodle Custom Resource is binding.
-
-Formal grammar of ``ImportValue``, ``AddLabel``, ``AddAnnotation`` functions is available in the `functions doc`_.
-
-.. _functions doc: https://github.com/cloud-ark/kubeplus/blob/master/docs/kubeplus-functions.txt
+.. image:: ./docs/mysql-as-a-service.png
+   :height: 250px
+   :width: 400px
+   :align: center
 
 
-PlatformWorkflow Operator
---------------------------
-Creating workflows requires treating the set of resources representing the workflow as a unit. For this purpose, KubePlus provides a Custom Resource of its own - ResourceComposition. This Custom Resource enables DevOps/Platform engineers to 
-register new services in a cluster as new custom APIs.
+The platform workflow requirements are: 
+- Create a PersistentVolume of required type for MySQL instance. 
+- Create Secret objects for MySQL instance and AWS backup.
+- Create MySQL instance with backup target as AWS S3 bucket.  
+- Setup a policy in such a way that Pods created under this service will have specified Resource Request and Limits.  
+- Get aggregated CPU/Memory metrics for the overall workflow.
 
-PlatformWorkflow Operator does not actually deploy any resources defined in a workflow. Resource creation is done by DevOps/Platform engineers as usual using 'kubectl'/'helm'.
+Here is a new platform service named MysqlService as Kubernetes API. 
+
+.. image:: ./docs/mysql-as-a-service-crd.png
+   :height: 250px
+   :width: 650px
+   :align: center
+
+A new CRD named MysqlService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources, and additionally provide policy and monitoring inputs for the workflow. The Spec Properties of MysqlService come from values.yaml of the Helm chart. 
+Product teams can use this service to get MySQL database for their application and all the required setups will be performed transparently by this service.
 
 
 Getting started
@@ -232,16 +211,10 @@ Install KubePlus:
    $ cd scripts
    $ ./deploy-kubeplus.sh
 
-Platform-as-Code examples:
+- CRD for CRDs:
+  - Try `this`_
 
-1. `Manual discovery and binding`_
-
-.. _Manual discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/moodle-with-presslabs/steps.txt
-
-
-2. `Automatic discovery and binding`_
-
-.. _Automatic discovery and binding: https://github.com/cloud-ark/kubeplus/blob/master/examples/kubectl-plugins-and-binding-functions/steps.txt
+.. _this: ./examples/resource-composition/steps.txt) example.
 
 
 Comparison
