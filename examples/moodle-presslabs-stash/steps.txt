@@ -15,55 +15,40 @@ Backups are stored in S3.
 
 Follow these steps to test this example:
 
-0) Install aws-cli, enter your access-keys
+Setup:
+-----
+
+1) Install aws-cli, enter your access-keys
     - curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
     - unzip awscli-bundle.zip
     - sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
     - aws configure
 
-1) Make an s3 bucket. Chose a unique name for the bucket. In this example we have
+2) Make an s3 bucket. Chose a unique name for the bucket. In this example we have
    chosen the bucket name as 'stash-testing34'
     - aws s3 mb s3://stash-testing34
    You will need to use this bucket name in following files:
    - moodle-backup/cluster1.yaml, moodle-backup/restic-moodle.yaml
    - moodle-recovery/cluster2-recovered.yaml
 
-2) Download Minikube (latest), download Helm (latest)
-   Or create a Kubernetes cluster from a Managed Service Provider such as GKE.
+3) Create a Kubernetes cluster from a Managed Service Provider such as GKE.
    - GKE cluster size: 4vCPUs and 15.00 GB memory minimum
 
-3) Start Minikube
-    - minikube start --memory 4096 --cpus=2
+4) Install Helm v3
 
-4) Go to KubePlus location
-    - cd kubeplus
-
-5) Deploy KubePlus
-    - kubectl apply -f deploy/
-
-6) Verify KubePlus is running (3/3)
-    - kubectl get pods
+5) Install KubePlus 
 
 
-Start helm and install operators
----------------------------------
+Install operators
+------------------
 
-1) Setup
-    - kubectl create -f scripts/helm-rbac-config.yaml
-    - helm init --service-account tiller
+1) Install presslabs-mysql-operator, moodle operator and stash operator
 
-2) Wait till Tiller Pod is running
-    - kubectl get pods -n kube-system
-
-3) Install presslabs-mysql-operator, moodle operator and stash operator
-helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-3.tgz?raw=true
-helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.4.tgz?raw=true
-- Minikube
-  - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.4.tgz?raw=true
-- GKE
-  - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.4.9.tgz?raw=true
-  - Install Nginx Ingress Controller
-    - helm install stable/nginx-ingress --name nginx
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-6.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/moodle-operator-chart-0.5.1.tgz?raw=true
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/stash-operator-chart-0.8.6.tgz?raw=true
+   - Install Nginx Ingress Controller
+     - helm install stable/nginx-ingress --name nginx
 
 
 Create Moodle instance and take its backups
@@ -115,9 +100,6 @@ Create Moodle instance and take its backups
        The value of mysqlUserPassword should be name of the MysqlCluster's root user password with the key of the data appended to it. 
        All these values are already populated in moodle1.yaml. If you change the names of MysqlCluster resource or the corresponding Secret object for the username, then make sure to update moodle1.yaml.
 
-     - Minikube:
-       - Nothing special to do
-
      - GKE:
        - Register a DomainName with some DNS provider like AWS Route53.
          Update moodle1-gke.yaml to include 'domainName' attribute, e.g.: 'domainName: www.moodle1.net'.
@@ -137,11 +119,6 @@ Create Moodle instance and take its backups
        - kubectl get pods -n namespace1
 
    - Login to Moodle Instance
-        - Minikube
-          - Update /etc/hosts with <minikube ip or cluster node ip> moodle1. Example:
-            - 192.168.99.100 moodle1
-            - You can find minikube ip using: "minikube ip" command
-
         - GKE
           - Get the IP address of the Nginx Ingress controller and add it to the DNS as a 'A record' set
             - kubectl get svc
