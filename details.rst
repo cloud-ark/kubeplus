@@ -214,29 +214,11 @@ Install KubePlus:
 - CRD for CRDs:
   - Try `this`_
 
-.. _this: ./examples/resource-composition/steps.txt) example.
+.. _this: ./examples/resource-composition/steps.txt
 
 
-Comparison
------------
-
-Check comparison of KubePlus with other `community tools`_.
-
-.. _community tools: https://github.com/cloud-ark/kubeplus/blob/master/Comparison.md
-
-
-
-Bug reports
-------------
-
-Follow `contributing guidelines`_ to submit bug reports.
-
-.. _contributing guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md
-
-
-
-KubePlus in Action
--------------------
+KubePlus in Action (old version)
+---------------------------------
 
 1. Kubernetes Community Meeting notes_
 
@@ -251,6 +233,38 @@ KubePlus in Action
 .. _demo: https://www.youtube.com/watch?v=taOrKGkZpEc&feature=youtu.be
 
 
+Comparison
+-----------
+
+Comparison of KubePlus with other `community tools`_.
+
+.. _community tools: https://github.com/cloud-ark/kubeplus/blob/master/Comparison.md
+
+
+
+Operator Maturity Model
+-------------------------
+
+Checkout `Operator Maturity Model Guidelines`_.
+
+.. _Operator Maturity Model Guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
+
+
+CRD Annotations for Community Operators
+----------------------------------------
+
+Checkout `CRD Annotations`_.
+
+.. _CRD Annotations: https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md
+
+
+Operator Analyis
+-----------------
+
+Checkout analysis of `community Operators`_.
+
+.. _community Operators: https://github.com/cloud-ark/kubeplus/tree/master/operator-analysis
+
 
 Operator FAQ
 -------------
@@ -259,6 +273,13 @@ New to Operators? Checkout `Operator FAQ`_.
 
 .. _Operator FAQ: https://github.com/cloud-ark/kubeplus/blob/master/Operator-FAQ.md
 
+
+Bug reports
+------------
+
+Follow `contributing guidelines`_ to submit bug reports.
+
+.. _contributing guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md
 
 
 
