@@ -94,7 +94,9 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
   - Check out resource relationship graphs for some public managed Kubernetes providers [here](./examples/graphs). 
 
 - Examples of Operators, Custom Resource stacks, etc.:
-  - Check out [examples](./examples/) 
+  - Check out [examples](./examples/)
+
+- Check [here](./details.rst) for additional details.
 
 Note: To obtain metrics, enable Kubernetes Metrics API Server on your cluster. Hosted Kubernetes solutions like GKE has this already installed.
 
