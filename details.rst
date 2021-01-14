@@ -16,8 +16,8 @@ Details
 Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus tooling simplifies creation of Kubernertes-native platform workflows leveraging Custom Resources available through the various Operators.
 
 .. image:: ./docs/Kubernetes-native-stack-with-KubePlus.jpg
-   :height: 200px
-   :width: 200px
+   :height: 100px
+   :width: 100px
    :align: center
 
 The main benefit of using KubePlus to DevOps/Platform engineers are:
@@ -161,16 +161,16 @@ KubePlus offers a CRD named ResourceComposition to
 Here is the high-level structure of ResourceComposition CRD: 
 
 .. image:: ./docs/crd-for-crds.png
-   :height: 250px
-   :width: 650px
+   :height: 150px
+   :width: 450px
    :align: center
 
 
 To understand this further let us see how a platform team can build a MySQL service for their product team/s to consume. The base Kubernetes cluster has MySQL Operator on it (either installed by the Platform team or bundled by the Kubernetes provider).
 
 .. image:: ./docs/mysql-as-a-service.png
-   :height: 250px
-   :width: 400px
+   :height: 150px
+   :width: 300px
    :align: center
 
 
@@ -184,8 +184,8 @@ The platform workflow requirements are:
 Here is a new platform service named MysqlService as Kubernetes API. 
 
 .. image:: ./docs/mysql-as-a-service-crd.png
-   :height: 250px
-   :width: 650px
+   :height: 150px
+   :width: 450px
    :align: center
 
 A new CRD named MysqlService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources, and additionally provide policy and monitoring inputs for the workflow. The Spec Properties of MysqlService come from values.yaml of the Helm chart. 
