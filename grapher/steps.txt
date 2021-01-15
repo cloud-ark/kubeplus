@@ -1,0 +1,2 @@
+docker build -t gcr.io/disco-horizon-103614/grapher:latest .
+docker run -v /Users/devdatta/go/src/github.com/cloud-ark/kubeplus/grapher:/root gcr.io/disco-horizon-103614/grapher:latest abc.json /root/
