@@ -18,6 +18,7 @@ Setup:
 - Configure your kubectl to connect to the GKE cluster
   - gcloud container clusters get-credentials <cluster-name> --zone <zone-name>
 - Register two Domain names on AWS Route53
+- Use Helm v2 for this example.
 
 Steps:
 ------

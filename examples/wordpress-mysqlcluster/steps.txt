@@ -11,30 +11,17 @@ Steps:
   - GKE
      - Create a GKE cluster with 4vCPUs and 15.00 GB memory minimum
 
-2) Setup Helm
-   - kubectl create -f scripts/helm-rbac-config.yaml
-   - helm init --service-account tiller
-
-3) Wait till Tiller Pod is running
-   - kubectl get pods -n kube-system
-
-4) Once Helm Pod is ready, deploy MySQL Operator and apply Cert-Manager CRDs
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-4.tgz?raw=true
+2) Once Helm Pod is ready, deploy MySQL Operator and apply Cert-Manager CRDs
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-6.tgz?raw=true
    - kubectl create -f cert-manager-crds-release0.8.yaml
 
-5) Wait till MysqlCluster Operator Pod is ready
+3) Wait till MysqlCluster Operator Pod is ready
    - kubectl get pods
-
-6) Find available Custom Resources
-   - kubectl get customresourcedefinitions
-
-7) Find the Custom Resource Kind names
-   - kubectl describe customresourcedefinitions mysqlclusters.mysql.presslabs.org
   
-8) Find more information like how-to use, Spec properties, etc. for each Kind
+4) Find more information like how-to use, Spec properties, etc. for each Kind
    - kubectl man MysqlCluster
 
-9) Deploy Wordpress in namespace1
+5) Deploy Wordpress in namespace1
    - kubectl create ns namespace1
    
    - Create MysqlCluster Custom Resource instance
@@ -57,12 +44,12 @@ Steps:
      - kubectl create -f wordpress-ingress.yaml
      - kubectl create -f clusterissuer.yaml
 
-10) Check the connections
+6) Check the connections
     - kubectl connections MysqlCluster cluster1 namespace1
     - kubectl connections Service wordpress namespace1
     - kubectl connections <Pod-name> namespace1
 
-11) Cleanup
+7) Cleanup
      - kubectl delete -f wordpress-pod.yaml
      - kubectl delete -f wordpress-service.yaml
      - kubectl delete -f wordpress-ingress.yaml

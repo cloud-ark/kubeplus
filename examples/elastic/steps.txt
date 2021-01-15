@@ -10,7 +10,7 @@ various Custom Resource managed by the Operator.
 
 Setup:
 -------
-- Download Minikube (v0.34.0), download Helm (v2.11.0)
+- Download Minikube (v0.34.0), download Helm (v3)
 
 
 Steps:
@@ -19,49 +19,29 @@ Steps:
 1) Create Kubernetes Cluster
    - minikube start --memory 4096
 
-2) Install KubePlus
-   - git clone https://github.com/cloud-ark/kubeplus.git
-   - cd kubeplus
-   - kubectl apply -f deploy
+2) Install KubePlus kubectl plugins
+   - check README.md at https://github.com/cloud-ark/kubeplus.git
 
-3) Setup Helm
-   - kubectl create -f scripts/helm-rbac-config.yaml
-   - helm init --service-account tiller
+3) Deploy Elastic Operator
+   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/elastic-operator-chart-0.8.2.tgz?raw=true
 
-4) Wait till Tiller Pod is running
-   - kubectl get pods -n kube-system
-
-5) Once Tiller Pod is ready, deploy Elastic Operator
-   - helm install https://github.com/cloud-ark/operatorcharts/blob/master/elastic-operator-chart-0.8.1.tgz?raw=true
-
-6) Wait till the Operator Pod is ready
+4) Wait till the Operator Pod is ready
    - kubectl get ns
    - kubectl get pods -n elastic-ns
 
-7) Find available Custom Resources
-   - kubectl get customresourcedefinitions
-
-8) Find the Custom Resource Kind name for Elasticsearch CRD
-   - kubectl describe customresourcedefinitions elasticsearches.elasticsearch.k8s.elastic.co
-
-9) Check static information such as how-to use guide for the Elasticsearch Kind
+5) Check static information such as how-to use guide for the Elasticsearch Kind
    - kubectl man Elasticsearch
 
-10) Deploy Elasticsearch instance
+6) Deploy Elasticsearch instance
     - kubectl create -f es.yaml
 
-11) Check dynamic information such as the native Kubernetes resources that are created by the Operator
+7) Check dynamic information such as the native Kubernetes resources that are created by the Operator
     for managing Elasticsearch custom resource instance
     - kubectl connections Elasticsearch quickstart
-
 
 
 Troubleshooting
 ----------------
 
-1) Get KubePlus logs
-   - kubectl get pods
-   - kubectl logs <kubeplus-pod-name> -c kube-discovery-apiserver
-
-2) Check Helm Deployments
+1) Check Helm Deployments
    - helm list

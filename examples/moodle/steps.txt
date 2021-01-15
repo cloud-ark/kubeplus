@@ -13,7 +13,7 @@ an example of how to specify installation of additional plugins on an existing M
 
 Setup:
 -------
-- Download Minikube (v0.30.0), download Helm (v2.11.0)
+- Download Minikube (v0.30.0), download Helm (v3)
 
 Steps:
 -------
@@ -26,38 +26,25 @@ Steps:
 
 2) git clone https://github.com/cloud-ark/kubeplus.git
 
-3) cd kubeplus
+3) cd kubeplus/deploy
 
-4) Setup Helm Service Account
-   - kubectl create -f helm.yaml
+4) ./deploy-kubeplus.sh
 
-5) Setup Helm
-   - helm init --service-account helm
-
-6) Wait till Tiller Pod is running
-   - kubectl get pods -n kube-system
-
-7) Once Helm Pod is ready, deploy Kubeplus
-   - kubectl apply -f deploy/
-
-8) Wait till kubeplus is ready (4/4 Ready containers)
+5) Wait till kubeplus is ready (5/5 Ready containers)
    - kubectl get pods
 
-9) cd examples/moodle
+6) cd examples/moodle
 
-10) Deploy Moodle Operator
+7) Deploy Moodle Operator
    - kubectl create -f moodle-operator.yaml
 
-11) Wait till Moodle Operator pod is ready
+8) Wait till Moodle Operator pod is ready
    - kubectl get pods
 
-12) Find information about Moodle Custom Kind registered by Moodle Operator
-    - kubectl get operators
-    - kubectl describe operators moodle-operator
-    - kubectl describe customresourcedefinition moodles.moodlecontroller.kubeplus
+9) Find information about Moodle Custom Kind registered by Moodle Operator
     - kubectl man Moodle
 
-13) Deploy Moodle1 instance
+10) Deploy Moodle1 instance
     - First deploy MySQL as database for the Moodle instance
       - kubectl create -f moodle1-mysql.yaml
       - kubectl get pods (Wait will mysql pod is ready)
@@ -90,7 +77,7 @@ Steps:
     - Find connections tree of Moodle1 instance
       - kubectl connections Moodle moodle1 default -o json | python -m json.tool
 
-14) Update Moodle Deployment to install new Plugin
+11) Update Moodle Deployment to install new Plugin
     - We will install 'wiris' plugin on 'moodle1' Moodle instance
     - kubectl apply -f update-moodle1.yaml
 
@@ -103,7 +90,7 @@ Steps:
       - Navigate to -> Administration -> Plugins -> Plugins Overview
       - You should see 'profilecohort' and 'wiris' plugins in the 'Additional plugins' list
 
-15) Deploy Moodle2 instance
+12) Deploy Moodle2 instance
     - kubectl create -f moodle2-mysql.yaml
     - kubectl get pods (Wait will MySQL Pod is ready)
     - kubectl create -f moodle2.yaml
@@ -121,7 +108,7 @@ Steps:
           - Login using 'admin' as username and retrieve password from moodle2 secret as described 
             in step 12.
 
-16) Cleanup
+13) Cleanup
     - kubectl delete -f moodle1.yaml
     - kubectl delete -f moodle1-mysql.yaml
     - kubectl delete -f moodle2.yaml
@@ -132,10 +119,5 @@ Steps:
 Troubleshooting
 ----------------
 
-1) Get KubePlus logs
-   - kubectl get pod <kubeplus-pod> -c operator-manager
-   - kubectl get pod <kubeplus-pod> -c operator-deployer
-   - kubectl get pod <kubeplus-pod> -c kube-discovery-apiserver
-
-2) Check Helm Deployments
+1) Check Helm Deployments
    - helm list

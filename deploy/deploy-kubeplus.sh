@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Create Tiller service account
-kubectl create -f helm-rbac-config.yaml
+#kubectl create -f helm-rbac-config.yaml
 
 # Start Tiller
-helm init --service-account tiller
+#helm init --service-account tiller
 
 # Deploy KubePlus API Server - Planning to remove KubePlus API Server
 # kubectl apply -f ../deploy/
