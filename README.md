@@ -1,4 +1,4 @@
-## KubePlus - CRD for CRDs to design Kubernetes platform services
+## KubePlus - CRD for CRDs to design Kubernetes platform services from Helm charts
 
 Kubernetes platform engineering teams perform variety of tasks to enable product teams. These tasks include: 
 
