@@ -1,0 +1,77 @@
+Compose Platform Workflows as Kubernetes APIs
+----------------------------------------------
+
+Setup:
+------
+- git clone https://github.com/cloud-ark/kubeplus
+- Install KubePlus client-side kubectl plugins
+  - export KUBEPLUS_HOME=`pwd`
+  - export PATH=$KUBEPLUS_HOME/plugins/:$PATH
+- Install KubePlus server-side component
+  - cd deploy/
+  - ./deploy-kubeplus.sh
+
+- Create a GKE cluster
+- Create a GCE Persistent Disk named my-data-disk
+  - Note: create the disk in the same zone as your cluster
+  - gcloud compute disks create --size=10GB --zone=us-central1-b my-data-disk
+- Install Docker on your machine
+- Install Helmv3
+- Install MysqlCluster Operator on the cluster
+  - helm install mysqloperator https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-6.tgz?raw=true
+
+Create a Kubernetes API to encapsulate Platform workflow (done by Platform Engineering team):
+------------------------------------------------------------------------------------
+1. more mysqlservicetenant.yaml 
+   -> Check new resource definition
+   -> Check ResourcePolicy definition
+   -> Check ResourceMonitor definition
+2. Verify that the API does not exist
+   - kubectl get crds | grep "mysqlservicetenants.platformapi.kubeplus"
+3. Create the API
+   - kubectl create -f mysqlservicetenant.yaml
+4. Verify that the API has been created
+  - kubectl get crds | grep "mysqlservicetenants.platformapi.kubeplus"
+
+
+Instantiate Platform workflow using the new API (done by Product team):
+------------------------------------------------------------------------
+1. Check man page for MysqlService
+   - kubectl man MysqlServiceTenant
+
+2. Create Tenant 1: 
+   - more tenant1.yaml
+   - Add the name of the worker Node on which you want to deploy MysqlCluster instance
+     in tenant1.yaml
+   - kubectl create -f tenant1.yaml
+   - Check mysqlservicetenant instance has been created
+     - kubectl get mysqlservicetenants
+   - Check Mysql Pods are created
+     - kubectl get pods -n ns1 (Wait till both Pods are running - ns1 is the name of the Namespace defined in tenant1.yaml))
+       - Pod names:
+         - mysqlservicetenant-tenant1-mysql-0
+         - mysqlservicetenant-tenant1-mysql-1
+
+5. Check connectivity graph:
+   - kubectl connections Pod mysqlservicetenant-tenant1-mysql-0 ns1 -o png --ignore=ServiceAccount:default
+   - kubectl connections Pod mysqlservicetenant-tenant1-mysql-1 ns1 -o png --ignore=ServiceAccount:default
+
+6. Verify Policy application:
+   - kubectl get pods mysqlservicetenant-tenant1-mysql-0 -n ns1 -o json | jq -r '.spec.containers[0].resources'
+   - kubectl get pods mysqlservicetenant-tenant1-mysql-1 -n ns1 -o json | jq -r '.spec.containers[0].resources'
+
+7. Get Metrics:
+   - kubectl get mysqlclusters -n ns1
+   - kubectl metrics cr MysqlCluster mysqlservicetenant-tenant1 ns1 -o prometheus
+   - MASTER_IP=Get IP Address of the cluster API server
+     - export MASTER_IP=34.121.16.241 (this is just an example)
+   - NODEPORT=`kubectl get svc | grep kubeplus | awk '{print $5}' | cut -d ':' -f 2 | cut -d '/' -f 1`
+   - curl -kv "http://$MASTER_IP:$NODEPORT/apis/kubeplus/metrics?kind=MysqlCluster&instance=mysqlservicetenant-tenant1&namespace=ns1"
+
+
+Demo Clean up:
+--------------
+1. kubectl delete -f mysqlservicetenant.yaml
+2. Verify:
+   - kubectl get crds | grep "mysqlservicetenants.platformapi.kubeplus" (Should return empty)
+   - kubectl get pods -n ns1 (Mysql Pods should have been deleted)

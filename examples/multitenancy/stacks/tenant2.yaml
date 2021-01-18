@@ -1,0 +1,8 @@
+apiVersion: platformapi.kubeplus/v1alpha1
+kind: MysqlServiceTenant
+metadata:
+  name: tenant2 
+spec:
+  namespace: ns2 
+  nodeName: gke-cluster-2-default-pool-b3a56a0d-3dxx
+
