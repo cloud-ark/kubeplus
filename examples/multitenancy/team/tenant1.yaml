@@ -1,0 +1,9 @@
+apiVersion: platformapi.kubeplus/v1alpha1
+kind: Tenant 
+metadata:
+  name: tenant1
+spec:
+  Namespace: ns1
+  SA: sa1
+  cpurequests: 100m
+  memoryrequests: 2Gi

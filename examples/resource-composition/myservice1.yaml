@@ -4,4 +4,6 @@ metadata:
   name: service1 
 spec:
   namespace: default
+  # Change this value to appropriately for your setup
+  nodeName: gke-cluster-2-default-pool-b3a56a0d-3dxx
 

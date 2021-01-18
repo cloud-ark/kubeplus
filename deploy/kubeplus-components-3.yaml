@@ -56,7 +56,7 @@ spec:
   containers:
   - name: crd-hook
     #image: lmecld/pac-mutating-admission-webhook:develop
-    image: gcr.io/disco-horizon-103614/pac-mutating-admission-webhook:0.5.5
+    image: gcr.io/disco-horizon-103614/pac-mutating-admission-webhook:0.5.6
     imagePullPolicy: Always
     args:
       - -tlsCertFile=/etc/webhook/certs/cert.pem
@@ -154,7 +154,6 @@ rules:
   verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-# This role binding allows "jane" to read pods in the "default" namespace.
 kind: ClusterRoleBinding
 metadata:
   name: webhook-reader-binding

@@ -48,21 +48,14 @@ var (
 	customAPIInstanceUIDMap map[string]string
 	kindPluralMap map[string]string
 	resourcePolicyMap map[string]interface{}
+	resourceNameObjMap map[string]interface{}
+	namespaceHelmAnnotationMap map[string]string
+	kindReqMap map[string]interface{}
 
 )
 
 type WebhookServer struct {
 	server *http.Server
-}
-
-type PodResourceRequests struct {
-	cpu string
-	memory string
-}
-
-type PodResourceLimits struct {
-	cpu string
-	memory string
 }
 
 var annotations StoredAnnotations = StoredAnnotations{}
@@ -102,6 +95,8 @@ func init() {
 	customKindPluralMap = make(map[string]string,0)
 	kindPluralMap = make(map[string]string,0)
 	resourcePolicyMap = make(map[string]interface{}, 0)
+	resourceNameObjMap = make(map[string]interface{}, 0)
+	namespaceHelmAnnotationMap = make(map[string]string, 0)
 }
 
 // main mutation process
@@ -117,6 +112,8 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	fmt.Println("=== User ===")
 	fmt.Println(req.UserInfo.Username)
 	fmt.Println("=== User ===")
+
+	saveResource(ar)
 
 	var patchOperations []patchOperation
 	patchOperations = make([]patchOperation, 0)
@@ -146,12 +143,27 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 	}
 
 	if req.Kind.Kind == "Pod" {
-		customAPI := shouldApplyPolicies(ar)
+		customAPI, rootKind, rootName, rootNamespace := checkServiceLevelPolicyApplicability(ar)
+		var podResourcePatches []patchOperation
 		if customAPI != "" {
-			podResourcePatches := applyPolicies(ar, customAPI)
-			for _, podPatch := range podResourcePatches {
-				patchOperations = append(patchOperations, podPatch)
-			}
+			podResourcePatches = applyPolicies(ar, customAPI, rootKind, rootName, rootNamespace)
+		} else {
+			// Check if Namespace-level policy is applicable.
+			podResourcePatches = checkAndApplyNSPolicies(ar)
+		}
+
+		for _, podPatch := range podResourcePatches {
+			patchOperations = append(patchOperations, podPatch)
+		}
+	}
+
+	if req.Kind.Kind == "Namespace" {
+		fmt.Printf("Recording Namespace...\n")
+		releaseName := getReleaseName(ar)
+		fmt.Printf("DEF Release name:%s\n", releaseName)
+		if releaseName != "" {
+			_, nsName, _ := getObjectDetails(ar)
+			namespaceHelmAnnotationMap[nsName] = releaseName
 		}
 	}
 
@@ -167,6 +179,104 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			return &pt
 		}(),
 	}
+}
+
+func checkAndApplyNSPolicies(ar *v1beta1.AdmissionReview) []patchOperation {
+
+	req := ar.Request
+
+	// Get Pod's Namespace; Check if Namespace has Helm release annotation; 
+	// Check if there is a Policy to be applied for that kind.
+	// Assumption: A Given Kind name can exist in only one API group.
+
+	// TODO:
+	// Look up apiVersion + "/" + kind from arSaved
+	// Use above to find out resourcePolicy from resourcePolicyMap
+	// For applying polices - the spec comes from resourcePolicy, the values 
+	// come from arSaved.
+
+	podNamespace := req.Namespace
+	fmt.Printf("Pod Namespace:%s\n", podNamespace)
+	releaseName := namespaceHelmAnnotationMap[podNamespace]
+	fmt.Printf("Release Name:%s\n", releaseName)
+
+	customAPI := ""
+	serviceKind := ""
+	serviceInstance := ""
+	var podPolicy interface{}
+
+	if releaseName != "" {
+		parts := strings.Split(releaseName, "-")
+		if len(parts) > 0 {
+			serviceKind = parts[0]
+			serviceInstance = parts[1]
+			for key, value := range resourcePolicyMap {
+				parts1 := strings.Split(key, "/")
+				if len(parts1) == 3 {
+					targetKind := parts1[2]
+					fmt.Printf("TargetKind:%s\n", targetKind)
+					if targetKind == serviceKind {
+						customAPI = key
+						podPolicy = value
+						fmt.Printf("Custom API for Policy application:%s\n", customAPI)
+					}
+				}
+			}
+		}
+	}
+
+	patchOperations := make([]patchOperation, 0)
+
+	// Check if this is Namespace-scoped policy
+	podPolicy1 := podPolicy.(platformworkflowv1alpha1.Pol)
+	scope := podPolicy1.PolicyResources.Scope
+	fmt.Printf("Scope:%s\n",scope)
+	if scope == "Namespace" {
+		resKindAndName := serviceKind + "-" + serviceInstance
+		resAR := resourceNameObjMap[resKindAndName].(*v1beta1.AdmissionReview)
+		req := resAR.Request
+		body := resAR.Request.Object.Raw
+
+		serviceKindCanonical := req.Kind.Kind
+		serviceKindNamespace, _ := jsonparser.GetUnsafeString(body, "metadata", "namespace")
+		if serviceKindNamespace == "" {
+			serviceKindNamespace = "default"
+		}
+		fmt.Printf("serviceKindCanonical:%s ServiceInstance:%s ServiceNamespace:%s\n", serviceKindCanonical, serviceInstance, serviceKindNamespace)
+		patchOperations = applyPolicies(ar, customAPI, serviceKindCanonical, serviceInstance, serviceKindNamespace)
+	}
+
+	return patchOperations
+}
+
+func getReleaseName(ar *v1beta1.AdmissionReview) string {
+	req := ar.Request
+	annotations1 := make(map[string]string, 0)
+	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
+
+	if err != nil {
+		fmt.Printf("Error in parsing existing annotations")
+	} else {
+		json.Unmarshal(allAnnotations, &annotations1)
+		fmt.Printf("All Annotations:%v\n", annotations1)
+	}
+
+	for key, value := range annotations1 {
+		if key == "meta.helm.sh/release-name" {
+			releaseName := value
+			fmt.Printf("ABC --- Release name:%s\n", releaseName)
+			return releaseName
+		}
+	}
+	return ""
+}
+
+func saveResource(ar *v1beta1.AdmissionReview) {
+	kind, resName, _ := getObjectDetails(ar)
+	//key := kind + "/" + namespace + "/" + resName
+	key := kind + "-" + resName
+	fmt.Printf("Res Key:%s\n", key)
+	resourceNameObjMap[key] = ar
 }
 
 func saveResourcePolicy(ar *v1beta1.AdmissionReview) {
@@ -186,6 +296,7 @@ func saveResourcePolicy(ar *v1beta1.AdmissionReview) {
 	}
 
 	kind := resourcePolicy.Spec.Resource.Kind
+	lowercaseKind := strings.ToLower(kind)
 	group := resourcePolicy.Spec.Resource.Group
 	version := resourcePolicy.Spec.Resource.Version
 	fmt.Printf("Kind:%s, Group:%s, Version:%s\n", kind, group, version)
@@ -193,13 +304,13 @@ func saveResourcePolicy(ar *v1beta1.AdmissionReview) {
 	podPolicy := resourcePolicy.Spec.Policy
 	fmt.Printf("Pod Policy:%v\n", podPolicy)
 
- 	customAPI := group + "/" + version + "/" + kind
+ 	customAPI := group + "/" + version + "/" + lowercaseKind
  	resourcePolicyMap[customAPI] = podPolicy
  	fmt.Printf("Resource Policy Map:%v\n", resourcePolicyMap)
 }
 
-func shouldApplyPolicies(ar *v1beta1.AdmissionReview) string {
-	fmt.Printf("Inside shouldApplyPolicies")
+func checkServiceLevelPolicyApplicability(ar *v1beta1.AdmissionReview) (string, string, string, string) {
+	fmt.Printf("Inside checkServiceLevelPolicyApplicability")
 
 	req := ar.Request
 	body := req.Object.Raw
@@ -208,6 +319,7 @@ func shouldApplyPolicies(ar *v1beta1.AdmissionReview) string {
 	namespace := req.Namespace
 	fmt.Println("Namespace:%s\n",namespace)
 
+	// TODO: looks like we can just keep one - namespace or namespace1
 	namespace1, _, _, err := jsonparser.Get(body, "metadata", "namespace")
 	if err != nil {
 		fmt.Println(err)
@@ -244,15 +356,16 @@ func shouldApplyPolicies(ar *v1beta1.AdmissionReview) string {
 	fmt.Printf("Root Kind:%s\n", rootKind)
 	fmt.Printf("Root Name:%s\n", rootName)
 	fmt.Printf("Root API Version:%s\n", rootAPIVersion)
+	lowercaseKind := strings.ToLower(rootKind)
 
 	// Check if the rootKind, rootName, rootAPIVersion is registered to be applied policies on.
- 	customAPI := rootAPIVersion + "/" + rootKind
+ 	customAPI := rootAPIVersion + "/" + lowercaseKind
  	fmt.Printf("Custom API:%s\n", customAPI)
  	if podPolicy, ok := resourcePolicyMap[customAPI]; ok {
 	 	fmt.Printf("Resource Policy:%v\n", podPolicy)
-	 	return customAPI
+	 	return customAPI, rootKind, rootName, string(namespace1)
  	}
-	return ""
+	return "", "", "", ""
 }
 
 func findRoot(namespace, kind, name, apiVersion string) (string, string, string) {
@@ -263,8 +376,14 @@ func findRoot(namespace, kind, name, apiVersion string) (string, string, string)
 	time.Sleep(10)
 
 	parts := strings.Split(apiVersion, "/")
-	group := parts[0]
-	version := parts[1]
+	group := ""
+	version := ""
+	if len(parts) == 2 {
+		group = parts[0]
+		version = parts[1]
+	} else {
+		version = parts[0]
+	}
 	fmt.Printf("Group:%s\n", group)
 	fmt.Printf("Version:%s\n", version)
 	fmt.Printf("ResName:%s\n", name)
@@ -308,25 +427,29 @@ func findRoot(namespace, kind, name, apiVersion string) (string, string, string)
 		annotations := instanceObj.GetAnnotations()
 		releaseName := annotations["meta.helm.sh/release-name"]
 		parts := strings.Split(releaseName, "-")
-		okindLowerCase := parts[0]
-		oinstance := parts[1]
-		fmt.Printf("KindPluralMap2:%v\n", kindPluralMap)
-		oplural := kindPluralMap[okindLowerCase]
-		fmt.Printf("OPlural:%s OInstance:%s\n", oplural, oinstance)
-		customAPI := ""
-		for k, v := range customKindPluralMap {
-			if v == oplural {
-				customAPI = k
-				break
+		if len(parts) == 2 {
+			okindLowerCase := parts[0]
+			oinstance := parts[1]
+			fmt.Printf("KindPluralMap2:%v\n", kindPluralMap)
+			oplural := kindPluralMap[okindLowerCase]
+			fmt.Printf("OPlural:%s OInstance:%s\n", oplural, oinstance)
+			customAPI := ""
+			for k, v := range customKindPluralMap {
+				if v == oplural {
+					customAPI = k
+					break
+				}
 			}
+			fmt.Printf("CustomAPI:%s\n", customAPI)
+			capiParts := strings.Split(customAPI, "/")
+			capiGroup := capiParts[0]
+			capiVersion := capiParts[1]
+			capiKind := capiParts[2]
+			fmt.Printf("capiGroup:%s capiVersion:%s capiKind:%s\n", capiGroup, capiVersion, capiKind)
+			return capiKind, oinstance, capiGroup + "/" + capiVersion
+		} else {
+			return "","",""
 		}
-		fmt.Printf("CustomAPI:%s\n", customAPI)
-		capiParts := strings.Split(customAPI, "/")
-		capiGroup := capiParts[0]
-		capiVersion := capiParts[1]
-		capiKind := capiParts[2]
-		fmt.Printf("capiGroup:%s capiVersion:%s capiKind:%s\n", capiGroup, capiVersion, capiKind)
-		return capiKind, oinstance, capiGroup + "/" + capiVersion
 	} else {
 		owner := ownerReference[0]
 		ownerKind := owner.Kind
@@ -337,7 +460,7 @@ func findRoot(namespace, kind, name, apiVersion string) (string, string, string)
 	}
 }
 
-func applyPolicies(ar *v1beta1.AdmissionReview, customAPI string) []patchOperation {
+func applyPolicies(ar *v1beta1.AdmissionReview, customAPI, rootKind, rootName, rootNamespace string) []patchOperation {
 	req := ar.Request
 	body := req.Object.Raw
 
@@ -366,43 +489,124 @@ func applyPolicies(ar *v1beta1.AdmissionReview, customAPI string) []patchOperati
 	xType := fmt.Sprintf("%T", podPolicy)
 	fmt.Printf("Pod Policy type:%s\n", xType) // "[]int"
 
+	patchOperations := make([]patchOperation, 0)
+
 	podPolicy1 := podPolicy.(platformworkflowv1alpha1.Pol)
 
+	// 1. Requests
 	cpuRequest := podPolicy1.PolicyResources.Requests.CPU
 	memRequest := podPolicy1.PolicyResources.Requests.Memory
+	if cpuRequest != "" && memRequest != "" {
+		fmt.Printf("CPU Request:%s\n", cpuRequest)
+		if strings.Contains(cpuRequest, "values") {
+			cpuRequest = getFieldValueFromInstance(cpuRequest,rootKind, rootName)
+		}
+		fmt.Printf("CPU Request1:%s\n", cpuRequest)
+
+		fmt.Printf("Mem Request:%s\n", memRequest)
+		if strings.Contains(memRequest, "values") {
+			memRequest = getFieldValueFromInstance(memRequest,rootKind, rootName)
+		}
+		fmt.Printf("Mem Request1:%s\n", memRequest)
+
+		podResRequest := make(map[string]string,0)
+		podResRequest["cpu"] = cpuRequest
+		podResRequest["memory"] = memRequest
+
+		patch1 := patchOperation{
+			Op:    operation,
+			Path:  "/spec/containers/0/resources/requests",
+			Value: podResRequest,
+		}
+		patchOperations = append(patchOperations, patch1)
+	}
+
+	// 2. Limits
 	cpuLimit := podPolicy1.PolicyResources.Limits.CPU
 	memLimit := podPolicy1.PolicyResources.Limits.Memory
+	if cpuLimit != "" && memLimit != "" {
+		fmt.Printf("CPU Limit:%s\n", cpuLimit)
+		fmt.Printf("Mem Limit:%s\n", memLimit)
 
-	fmt.Printf("CPU Request:%s\n", cpuRequest)
-	fmt.Printf("Mem Request:%s\n", memRequest)
-	fmt.Printf("CPU Limit:%s\n", cpuLimit)
-	fmt.Printf("Mem Limit:%s\n", memLimit)
+		podResLimits := make(map[string]string,0)
+		podResLimits["cpu"] = cpuLimit
+		podResLimits["memory"] = memLimit
 
-	podResRequest := make(map[string]string,0)
-	podResRequest["cpu"] = cpuRequest
-	podResRequest["memory"] = memRequest
-
-	podResLimits := make(map[string]string,0)
-	podResLimits["cpu"] = cpuLimit
-	podResLimits["memory"] = memLimit
-
-	patch1 := patchOperation{
-		Op:    operation,
-		Path:  "/spec/containers/0/resources/requests",
-		Value: podResRequest,
+		patch2 := patchOperation{
+			Op:    operation,
+			Path:  "/spec/containers/0/resources/limits",
+			Value: podResLimits,
+		}
+		patchOperations = append(patchOperations, patch2)
 	}
 
-	patch2 := patchOperation{
-		Op:    operation,
-		Path:  "/spec/containers/0/resources/limits",
-		Value: podResLimits,
-	}
+	// 3. Node Selector
+	nodeSelector := podPolicy1.PolicyResources.NodeSelector
+	if nodeSelector != "" {
+		fmt.Printf("Node Selector:%s\n", nodeSelector)
+		fieldValueS := getFieldValueFromInstance(nodeSelector, rootKind, rootName)
+		if fieldValueS != "" {
+			podNodeSelector := make(map[string]string,0)
+			podNodeSelector["kubernetes.io/hostname"] = fieldValueS
 
-	patchOperations := make([]patchOperation, 0)
-	patchOperations = append(patchOperations, patch1)
-	patchOperations = append(patchOperations, patch2)
+			patch3 := patchOperation{
+				Op:    operation,
+				Path:  "/spec/nodeSelector",
+				Value: podNodeSelector,
+			}
+			patchOperations = append(patchOperations, patch3)
+		}
+	}
 
 	return patchOperations
+}
+
+func getFieldValueFromInstance(fieldName, rootKind, rootName string) string {
+	parts := strings.Split(fieldName, ".")
+	field := parts[1]
+	field = strings.TrimSpace(field)
+	fmt.Printf("Field:%s\n", field)
+
+		//kind, resName, namespace := getObjectDetails(ar)
+	lowercaseRootKind := strings.ToLower(rootKind)
+		//rootkey := lowercaseRootKind + "/" + rootNamespace + "/" + rootName
+	rootkey := lowercaseRootKind + "-" + rootName
+	fmt.Printf("Root Key:%s\n", rootkey)
+	arSaved := resourceNameObjMap[rootkey].(*v1beta1.AdmissionReview)
+	reqObject := arSaved.Request
+	reqspec := reqObject.Object.Raw
+
+	fieldValue, _, _, err2 := jsonparser.Get(reqspec, "spec", field)
+	fieldValueS := string(fieldValue)
+	if err2 != nil {
+		fmt.Printf("Error:%v\n", err2)
+	} else {
+		fmt.Printf("Fields:%v\n", string(fieldValue))
+	}
+	return fieldValueS
+}
+
+func getObjectDetails(ar *v1beta1.AdmissionReview) (string, string, string) {
+
+	req := ar.Request
+	body := req.Object.Raw
+
+	kind := req.Kind.Kind
+	lowercaseKind := strings.ToLower(kind)
+
+	resName, err := jsonparser.GetUnsafeString(body, "metadata", "name")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	namespace, err := jsonparser.GetUnsafeString(body, "metadata", "namespace")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if namespace == "" {
+		namespace = "default"
+	}
+	return lowercaseKind, resName, namespace
 }
 
 func trackCustomAPIs(ar *v1beta1.AdmissionReview) {

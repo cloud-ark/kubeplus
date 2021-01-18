@@ -18,7 +18,7 @@ Setup:
 - Install Docker on your machine
 - Install Helmv3
 - Install MysqlCluster Operator on the cluster
-  - helm install https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-6.tgz?raw=true
+  - helm install mysqloperator https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-6.tgz?raw=true
 
 Create a Kubernetes API to encapsulate Platform workflow (done by Platform Engineering team):
 ------------------------------------------------------------------------------------
@@ -41,11 +41,13 @@ Instantiate Platform workflow using the new API (done by Product team):
 
 2. Create MysqlService instance:
    - more myservice1.yaml
+   - Add the name of the worker Node on which you want to deploy MysqlCluster instance
+     in myservice1.yaml
    - kubectl create -f myservice1.yaml
    - Check mysqlservice instance has been created
      - kubectl get mysqlservices
    - Check Mysql Pods are created
-     - kubectl get pods (Wait till both Pods are running - )
+     - kubectl get pods (Wait till both Pods are running)
        - Pod names:
          - mysqlservice-service1-mysql-0
          - mysqlservice-service1-mysql-1
@@ -55,11 +57,11 @@ Instantiate Platform workflow using the new API (done by Product team):
 
 6. Verify Policy application:
    - kubectl get pods mysqlservice-service1-mysql-0 -o json | jq -r '.spec.containers[0].resources'
-   - kubectl get pods mysqlservice-service1-mysql-0 -o json | jq -r '.spec.containers[0].resources'
+   - kubectl get pods mysqlservice-service1-mysql-1 -o json | jq -r '.spec.containers[0].resources'
 
 7. Get Metrics:
    - MASTER_IP=Get IP Address of the cluster API server
-     - export MASTER_IP=34.121.16.241
+     - export MASTER_IP=34.121.16.241 (this is just an example)
    - NODEPORT=`kubectl get svc | grep kubeplus | awk '{print $5}' | cut -d ':' -f 2 | cut -d '/' -f 1`
    - curl -kv "http://$MASTER_IP:$NODEPORT/apis/kubeplus/metrics?kind=MysqlService&instance=service1&namespace=default"
 
