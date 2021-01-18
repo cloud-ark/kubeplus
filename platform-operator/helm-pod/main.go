@@ -54,6 +54,7 @@ var (
 	kindDetailsMap map[string]kindDetails
 	CMD_RUNNER_POD string
 	CMD_RUNNER_CONTAINER string
+	KUBEPLUS_NAMESPACE string
 )
 
 func init() {
@@ -67,6 +68,7 @@ func init() {
 	kindDetailsMap = make(map[string]kindDetails, 0)
 	CMD_RUNNER_POD = "kubeplus"
 	CMD_RUNNER_CONTAINER = "helmer"
+	KUBEPLUS_NAMESPACE = "default"
 }
 
 func main() {
@@ -342,7 +344,7 @@ func getMetrics(request *restful.Request, response *restful.Response) {
 		var sampleclientset platformworkflowclientset.Interface
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
-		resourceMonitors, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).List(metav1.ListOptions{})
+		resourceMonitors, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(KUBEPLUS_NAMESPACE).List(metav1.ListOptions{})
 		followConnections := ""
 		for _, resMonitor := range resourceMonitors.Items {
 			fmt.Printf("ResourceMonitor:%v\n", resMonitor)
@@ -676,7 +678,7 @@ func executeExecCall(runner, namespace, command string) (bool, string) {
 	req := kubeClient.CoreV1().RESTClient().Post().
 		Resource("pods").
 		Name(runner).
-		Namespace(namespace).
+		Namespace(KUBEPLUS_NAMESPACE).
 		SubResource("exec")
 
 	scheme := runtime.NewScheme()
