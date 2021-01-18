@@ -116,12 +116,15 @@ type ResourcePolicySpec struct {
 }
 
 type Pol struct {
-	PolicyResources PolicyResources `json:"podresources"`
+	PolicyResources PolicyResources `json:"podconfig"`
 }
 
 type PolicyResources struct {
+	Override string `json:"override"`
+	Scope string `json:"scope"`
 	Limits Limits `json:"limits"`
 	Requests Requests `json:"requests"`
+	NodeSelector string `json:"nodeSelector"`
 }
 
 type Limits struct {
@@ -132,6 +135,10 @@ type Limits struct {
 type Requests struct {
 	CPU             string   `json:"cpu"`
 	Memory             string   `json:"memory"`
+}
+
+type NodeSelector struct {
+	NodeName             string   `json:"nodeName"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

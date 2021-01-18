@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.Namespace }}
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: {{ .Values.SA }}
+  namespace: {{ .Values.Namespace }}
+---
+

@@ -1,0 +1,67 @@
+Team-level multi-tenancy:
+-------------------------
+
+Create different Namespaces with different resource requests for CPU and Memory
+for all the Pods created in that Namespace.
+
+Register Tenant CRD (done by Platform Engineering team)
+------------------------------------------------------------------
+- Verify that Tenant CRD does not exist   
+  - kubectl get crds | grep tenants
+- Register the Service
+     - kubectl create -f tenantservice.yaml 
+   - Wait till the Tenant CRD is registered
+     - kubectl get crds | grep tenants
+
+
+Create Tenant 1 (done by Platform Engineering team)
+--------------------------------------------------------
+- more tenant1.yaml
+  - Note down the values specified for cpurequests and memoryrequests fields in the spec.
+- kubectl create -f tenant1.yaml
+- kubectl get tenants
+  -> Verify that tenant1 is created
+- kubectl get ns
+  -> Verify that ns1 Namespace is created
+- kubectl get sa -n ns1
+  -> Verify that sa1 ServiceAccount in Namespace ns1 is created 
+
+Deploy Workload in ns1 (done by Product team)
+---------------------------------------------
+- kubectl create -f ns1pod.yaml
+- kubectl get pods -n ns1 nginxp1 -o json | jq -r '.spec.containers[0].resources'
+   -> Verify cpu limit is set to 200m (same value as specified for cpu.limit field in ResourcePolicy in tenantservice.yaml)
+   -> Verify mem limit is set to 4Gi (same value as specified for mem.limit field in ResourcePolicy in tenantservice.yaml)
+   -> Verify cpu request is set to 100m (same value as specified for cpurequests field in ns1.yaml)
+   -> Verify mem request is set to 2Gi (same value as specified for memoryrequests field in ns1.yaml) 
+
+
+Create Tenant 2 (by Platform Engineering team)
+---------------------------------------------------
+- more tenant2.yaml
+  - Note down the values specified for cpurequests and memoryrequests fields in the spec.
+- kubectl create -f tenant2.yaml
+- kubectl get tenants
+  -> Verify that tenant2 is created
+- kubectl get ns
+  -> Verify that ns2 is created
+- kubectl get sa -n ns2
+  -> Verify that sa2 ServiceAccount in Namespace ns2 is created 
+
+Deploy Workload in ns2 (done by Product team)
+---------------------------------------------
+- kubectl create -f ns2pod.yaml
+- kubectl get pods -n ns2 nginxp1 -o json | jq -r '.spec.containers[0].resources'
+   -> Verify cpu limit is set to 200m (same value as specified for cpu.limit field in ResourcePolicy in tenantservice.yaml)
+   -> Verify mem limit is set to 4Gi (same value as specified for mem.limit field in ResourcePolicy in tenantservice.yaml)
+   -> Verify cpu request is set to 150m (same value as specified for cpurequests field in ns2.yaml)
+   -> Verify mem request is set to 1Gi (same value as specified for memoryrequests field in ns2.yaml) 
+
+
+Cleanup
+--------
+1. kubectl delete -f tenantservice.yaml
+2. Verify that Namespaces ns1 and ns2 have been deleted
+   - kubectl get ns
+3. Verify that Tenant CRD is deleted
+   - kubectl get crds | grep tenants
