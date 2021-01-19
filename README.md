@@ -1,4 +1,4 @@
-## KubePlus - CRD for CRDs to design Kubernetes multitenant environments from Helm charts
+## KubePlus - CRD for CRDs to design Kubernetes multi-tenant services from Helm charts
 
 Kubernetes platform engineering teams prepare their clusters for sharing between multiple users or workloads. KubePlus is a framework to create multitenant environments on a Kubernetes cluster. It involves taking a Helm chart representing an operational workflow and building a Kubernetes API to deliver it as a service, along with attaching required policies and Prometheus monitoring to such a service. The Kubernetes APIs thus created provide platform engineering teams a Kubernetes-native way to create, govern and monitor multitenant environments on their clusters.
 
@@ -65,7 +65,7 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
 ## Try it:
 
 - Getting started:
-  - Try ```kubectl connections``` plugin. It can be used with any Kubernetes resource (buil-in resources like Pod, Deployment, and custom resources).
+  - Try ```kubectl connections``` plugin. It can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).
 
 ```
    $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
@@ -84,7 +84,7 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
   - Multiple [teams](./examples/multitenancy/team/steps.txt) with applications deployed later
 
 - Resource relationship graphs for Public Managed Kubernetes providers:
-  - Check out resource relationship graphs for some public managed Kubernetes providers [here](./examples/graphs). 
+  - Check out resource relationship graphs for some of the public managed Kubernetes providers [here](./examples/graphs). 
 
 - Examples of Operators, Custom Resource stacks, etc.:
   - Check out [examples](./examples/)
