@@ -1,56 +1,54 @@
 =======================
-KubePlus tooling
+KubePlus Components
 =======================
 
-KubePlus tooling simplifies building Kubernetes-native workflow automation using Kubernetes Custom APIs/ Resources by extending the Kubernetes resource graph and maintaining all implicit and explicit relationships of Custom Resources created through labels, annotations, spec properties or sub-resources. This Custom Resource relationship graph is then used for improved visibility, monitoring and debuggability of workflows. KubePlus tooling additionally allows you to define workflow level Kubernetes resource dependencies and allows applying security or robustness policies to all the workflow resources together. 
-
-This tool is being developed as a part of our  `Platform as Code practice`_.
-
-.. _Platform as Code practice: https://cloudark.io/platform-as-code
+KubePlus consists of - CRD for CRDs, CRD annotations, and kubectl plugins.
 
 
---------
-Details
---------
+CRD for CRDs to design your platform services from Helm charts:
+----------------------------------------------------------------
 
-Kubernetes Custom Resources and Custom Controllers, popularly known as `Operators`_, extend Kubernetes to run third-party softwares directly on Kubernetes. Teams adopting Kubernetes assemble required Operators of platform softwares such as databases, security, backup etc. to build the required application platforms. KubePlus tooling simplifies creation of Kubernertes-native platform workflows leveraging Custom Resources available through the various Operators.
+KubePlus offers a CRD named ResourceComposition to 
+- Compose new CRDs (Custom Resource Definition) to publish platform services from Helm charts
+- Define policies (e.g. Node selection, CPU/Memory limits, etc.) for managing resources of the platform services
+- Get aggregated CPU/Memory/Storage Prometheus metrics for the platform services
+Here is the high-level structure of ResourceComposition CRD: 
 
-.. image:: ./docs/Kubernetes-native-stack-with-KubePlus.jpg
-   :height: 100px
-   :width: 100px
+.. image:: ./docs/crd-for-crds.png
+   :height: 150px
+   :width: 450px
    :align: center
 
-The main benefit of using KubePlus to DevOps/Platform engineers are:
 
-- easily discover static and runtime information about Custom Resources available in their cluster.
-- aggregate Custom and built-in resources to build secure and robust platform workflows.
+To understand this further let us see how a platform team can build a MySQL service for their product team/s to consume. The base Kubernetes cluster has MySQL Operator on it (either installed by the Platform team or bundled by the Kubernetes provider).
 
-.. KubePlus provides discovery commands, binding functions, and an orchestration mechanism to enable DevOps/Platform engineers to define Kubernetes-native platform workflows using Kubernetes Custom and built-in resources.
-
-.. You can think of KubePlus API Add-on as a tool that enables AWS CloudFormation/Terraform like experience when working with Kubernetes Custom Resources.
-
-.. _Operators: https://coreos.com/operators/
-
-.. _as Code: https://cloudark.io/platform-as-code
+.. image:: ./docs/mysql-as-a-service.png
+   :height: 150px
+   :width: 300px
+   :align: center
 
 
-.. KubePlus API add-on Components
-.. -------------------------------
-   .. .. image:: ./docs/KubePlus-API-Addon-Components.png
-..   :height: 100px
-..   :width: 200 px
-..   :align: center
+The platform workflow requirements are: 
+- Create a PersistentVolume of required type for MySQL instance. 
+- Create Secret objects for MySQL instance and AWS backup.
+- Setup a policy in such a way that Pods created under this service will have specified Resource Request and Limits.  
+- Get aggregated CPU/Memory metrics for the overall workflow.
 
+Here is a new platform service named MysqlService as Kubernetes API. 
 
-KubePlus Components
-----------------------
-KubePlus tooling is made up of - CRD Annotations, client-side kubectl plugins, and server-side components.
+.. image:: ./docs/mysql-as-a-service-crd.png
+   :height: 150px
+   :width: 450px
+   :align: center
+
+A new CRD named MysqlService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources, and additionally provide policy and monitoring inputs for the workflow. The Spec Properties of MysqlService come from values.yaml of the Helm chart. 
+Product teams can use this service to get MySQL database for their application and all the required setups will be performed transparently by this service.
 
 
 CRD annotations
 -----------------
 
-In order to build and maintain Custom Resource relationship graph, KubePlus expects CRD packages to be updated with annotations described below. 
+In order to build and maintain Custom Resource relationship graphs, KubePlus expects CRD packages to be provided with annotations described below. 
 
 .. code-block:: bash
 
@@ -126,8 +124,8 @@ This annotation-relationship annotation is defined on NetworkAttachmentDefinitio
 Above annotations are defined on the Restic Custom Resource available from the Stash Operator. Restic Custom Resource needs two things as input. First, the mount path of the Volume that needs to be backed up. Second, the Deployment in which the Volume is mounted needs to be given some label and that label needs to be specified in the Restic Custom Resource's selector.
 
 
-Client-side kubectl plugins
-----------------------------
+Kubectl plugins
+----------------
 
 KubePlus offers following kubectl plugins towards discovery and use of Custom Resources and obtaining insights into Kubernetes-native application.
 
@@ -151,70 +149,12 @@ In order to use these plugins you need to add KubePlus folder to your PATH varia
    $ export PATH=$PATH:`pwd`/plugins
 
 
-CRD for CRDs to design your platform services from Helm charts:
-----------------------------------------------------------------
+CRD Annotations for Community Operators
+----------------------------------------
 
-KubePlus offers a CRD named ResourceComposition to 
-- Compose new CRDs (Custom Resource Definition) to publish platform services from Helm charts
-- Define policies (e.g. Node selection, CPU/Memory limits, etc.) for managing resources of the platform services
-- Get aggregated CPU/Memory/Storage Prometheus metrics for the platform services
-Here is the high-level structure of ResourceComposition CRD: 
+Checkout `CRD Annotations`_.
 
-.. image:: ./docs/crd-for-crds.png
-   :height: 150px
-   :width: 450px
-   :align: center
-
-
-To understand this further let us see how a platform team can build a MySQL service for their product team/s to consume. The base Kubernetes cluster has MySQL Operator on it (either installed by the Platform team or bundled by the Kubernetes provider).
-
-.. image:: ./docs/mysql-as-a-service.png
-   :height: 150px
-   :width: 300px
-   :align: center
-
-
-The platform workflow requirements are: 
-- Create a PersistentVolume of required type for MySQL instance. 
-- Create Secret objects for MySQL instance and AWS backup.
-- Create MySQL instance with backup target as AWS S3 bucket.  
-- Setup a policy in such a way that Pods created under this service will have specified Resource Request and Limits.  
-- Get aggregated CPU/Memory metrics for the overall workflow.
-
-Here is a new platform service named MysqlService as Kubernetes API. 
-
-.. image:: ./docs/mysql-as-a-service-crd.png
-   :height: 150px
-   :width: 450px
-   :align: center
-
-A new CRD named MysqlService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources, and additionally provide policy and monitoring inputs for the workflow. The Spec Properties of MysqlService come from values.yaml of the Helm chart. 
-Product teams can use this service to get MySQL database for their application and all the required setups will be performed transparently by this service.
-
-
-Getting started
-----------------
-
-Read our `blog post`_ to understand how Kubernetes Custom Resources affect the notion of 'as-Code' systems.
-
-.. _blog post: https://medium.com/@cloudark/kubernetes-and-the-future-of-as-code-systems-b1b2de312742
-
-
-Install KubePlus:
-
-.. code-block:: bash
-
-   $ git clone https://github.com/cloud-ark/kubeplus.git
-   $ cd kubeplus
-   $ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>
-   $ export PATH=$PATH:`pwd`/plugins
-   $ cd scripts
-   $ ./deploy-kubeplus.sh
-
-- CRD for CRDs:
-  - Try `this`_
-
-.. _this: ./examples/resource-composition/steps.txt
+.. _CRD Annotations: https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md
 
 
 KubePlus in Action (old version)
@@ -241,21 +181,12 @@ Comparison of KubePlus with other `community tools`_.
 .. _community tools: https://github.com/cloud-ark/kubeplus/blob/master/Comparison.md
 
 
-
 Operator Maturity Model
 -------------------------
 
 Checkout `Operator Maturity Model Guidelines`_.
 
 .. _Operator Maturity Model Guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
-
-
-CRD Annotations for Community Operators
-----------------------------------------
-
-Checkout `CRD Annotations`_.
-
-.. _CRD Annotations: https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md
 
 
 Operator Analyis
