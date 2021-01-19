@@ -1,20 +1,10 @@
-## KubePlus - CRD for CRDs to design Kubernetes platform services from Helm charts
+## KubePlus - CRD for CRDs to design Kubernetes multitenant environments from Helm charts
 
-Kubernetes platform engineering teams perform variety of tasks to enable product teams. These tasks include:
-
-- Building deployment workflows offering defaults and abstracting away details
-- Attaching logging and monitoring to the application environments
-- Controlling quality of service by offering appropriate volumes or backup policies 
-- Leveraging policies to ensure appropriate CPU/Memory/Node allocation to Pods
+Kubernetes platform engineering teams prepare their clusters for sharing between multiple users or workloads. KubePlus is a framework to create multitenant environments on a Kubernetes cluster. It involves taking a Helm chart representing an operational workflow and building a Kubernetes API to deliver it as a service, along with attaching required policies and Prometheus monitoring to such a service. The Kubernetes APIs thus created provide platform engineering teams a Kubernetes-native way to create, govern and monitor multitenant environments on their clusters.
 
 <p align="center">
 <img src="./docs/platform-team-challenge.png" width="500" height="250" class="center">
 </p>
-
-The key challenge that platform teams face is to offer their services in self-service manner and avoid dreaded exchange of YAMLs between platform and product teams.  To address this challenge, KubePlus offers an open-source framework to create platform services in self-service manner as Kubernetes APIs. It enables platform engineering teams to: 
-- Build self-service APIs to embed platform workflows 
-- Establish fine-grained control with platform workflow specific policies
-- Track CPU/Memory metrics for platform workflows
 
 
 ## KubePlus components
@@ -43,7 +33,6 @@ To understand this further let us see how a platform team can build a MySQL serv
 The platform workflow requirements are: 
 - Create a PersistentVolume of required type for MySQL instance. 
 - Create Secret objects for MySQL instance and AWS backup.
-- Create MySQL instance with backup target as AWS S3 bucket.  
 - Setup a policy in such a way that Pods created under this service will have specified Resource Request and Limits.  
 - Get aggregated CPU/Memory metrics for the overall workflow.
 
@@ -76,7 +65,7 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
 ## Try it:
 
 - Getting started:
-  - Try ```kubectl connections``` plugin. It can be used with any Kubernetes Kind.
+  - Try ```kubectl connections``` plugin. It can be used with any Kubernetes resource (buil-in resources like Pod, Deployment, and custom resources).
 
 ```
    $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
@@ -88,18 +77,23 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
 ```
 
 - CRD for CRDs:
-  - Try [this](./examples/resource-composition/steps.txt) example.
+  - Above example is [here](./examples/resource-composition/steps.txt).
 
-- Resource relationship graphs for Public Managed Kubernetes:
+- Multitenancy examples:
+  - Multiple [application stacks](./examples/multitenancy/stacks/steps.txt)
+  - Multiple [teams](./examples/multitenancy/team/steps.txt) with applications deployed later
+
+- Resource relationship graphs for Public Managed Kubernetes providers:
   - Check out resource relationship graphs for some public managed Kubernetes providers [here](./examples/graphs). 
 
 - Examples of Operators, Custom Resource stacks, etc.:
   - Check out [examples](./examples/)
 
-- Check [here](./details.rst) for additional details.
-
 Note: To obtain metrics, enable Kubernetes Metrics API Server on your cluster. Hosted Kubernetes solutions like GKE has this already installed.
 
+## More details
+
+Check [this](./details.rst) for additional details of KubePlus architecture, comparison, etc.
 
 ## Platform-as-Code
 
@@ -108,7 +102,7 @@ KubePlus has been developed as part of our Platform-as-Code practice. Learn more
 
 ## Operator Maturity Model
 
-As enterprise team build their custom PaaSes using community or in house developed Operators, they need a set of guidelines for Operator development and evaluation. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-tenant and multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators today for curating community Operators towards building their custom PaaSes.
+As enterprise teams build their custom PaaSes using community or in house developed Operators, they need a set of guidelines for Operator development and evaluation. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-tenant and multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators today for curating community Operators towards building their custom PaaSes.
 
 
 ## Presentations/Talks
