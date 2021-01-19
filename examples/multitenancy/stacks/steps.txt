@@ -46,6 +46,8 @@ Instantiate Platform workflow using the new API (done by Product team):
    - kubectl create -f tenant1.yaml
    - Check mysqlservicetenant instance has been created
      - kubectl get mysqlservicetenants
+   - Verify that Namespace ns1 has been created
+     - kubectl get ns
    - Check Mysql Pods are created
      - kubectl get pods -n ns1 (Wait till both Pods are running - ns1 is the name of the Namespace defined in tenant1.yaml))
        - Pod names:
@@ -63,16 +65,16 @@ Instantiate Platform workflow using the new API (done by Product team):
 
 7. Get Metrics:
    - kubectl get mysqlclusters -n ns1
-   - kubectl metrics cr MysqlCluster mysqlservicetenant-tenant1 ns1 -o prometheus
    - MASTER_IP=Get IP Address of the cluster API server
      - export MASTER_IP=34.121.16.241 (this is just an example)
    - NODEPORT=`kubectl get svc | grep kubeplus | awk '{print $5}' | cut -d ':' -f 2 | cut -d '/' -f 1`
-   - curl -kv "http://$MASTER_IP:$NODEPORT/apis/kubeplus/metrics?kind=MysqlCluster&instance=mysqlservicetenant-tenant1&namespace=ns1"
+   - curl -kv "http://$MASTER_IP:$NODEPORT/apis/kubeplus/metrics?kind=MysqlServiceTenant&instance=tenant1&namespace=default"
 
 
 Demo Clean up:
 --------------
 1. kubectl delete -f mysqlservicetenant.yaml
 2. Verify:
+   - kubectl get ns (ns1 namespace should be deleted)
    - kubectl get crds | grep "mysqlservicetenants.platformapi.kubeplus" (Should return empty)
    - kubectl get pods -n ns1 (Mysql Pods should have been deleted)
