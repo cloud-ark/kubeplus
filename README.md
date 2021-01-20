@@ -1,6 +1,8 @@
-## KubePlus - CRD for CRDs to design Kubernetes multi-tenant services from Helm charts
+## KubePlus - CRD for CRDs to design multi-tenant platform services from Helm charts
 
-Kubernetes platform engineering teams prepare their clusters for sharing between multiple users or workloads. KubePlus is a framework to create multitenant environments on a Kubernetes cluster. It involves taking a Helm chart representing an operational workflow and building a Kubernetes API to deliver it as a service, along with attaching required policies and Prometheus monitoring to such a service. The Kubernetes APIs thus created provide platform engineering teams a Kubernetes-native way to create, govern and monitor multitenant environments on their clusters.
+Kubernetes platform engineering teams prepare their clusters for sharing between multiple users and workloads. This requires them to build platform services with appropriate tenant level isolation and resource consumption tracking. The key challenge in building such services is to enable a self-service experience and avoid the dreaded exchange of YAMLs between platform teams and their cluster users.
+KubePlus solves this problem for Kubernetes platform engineering teams.
+It is a framework to create multi-tenant platform services with the required isolation guarantees and per-tenant consumption metrics tracking. KubePlus achieves this by providing a mechanism that takes Helm charts of operational workflows and builds Kubernetes APIs to deliver them as-a-service, along with attaching required policies and Prometheus monitoring to them. The Kubernetes APIs thus created provide platform engineering teams a Kubernetes-native way to create, govern and monitor multitenant environments on their clusters.
 
 <p align="center">
 <img src="./docs/platform-team-challenge.png" width="500" height="250" class="center">
