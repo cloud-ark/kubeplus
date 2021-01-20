@@ -35,6 +35,7 @@ To understand this further let us see how a platform team can build a MySQL serv
 The platform workflow requirements are: 
 - Create a PersistentVolume of required type for MySQL instance. 
 - Create Secret objects for MySQL instance and AWS backup.
+- Create a MySQL instance with a backup target as AWS S3 bucket.
 - Setup a policy in such a way that Pods created under this service will have specified Resource Request and Limits.  
 - Get aggregated CPU/Memory metrics for the overall workflow.
 
@@ -51,9 +52,9 @@ Product teams can use this service to get MySQL database for their application a
 ### 2. Kubectl plugins to visualize platform workflows
 
 KubePlus kubectl plugins enable users to discover, monitor and troubleshoot resource relationships in a platform workflow. The plugins run entirely client-side and do not require the in-cluster component. The primary plugin of this functionality is: 
-```kubectl connections```: Provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus is able to runtime construct Kubernetes Resource relationship graphs. This enables KubePlus to build resource topologies and offer fine grained visibility and control over the platform service.
+```kubectl connections```. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus is able to runtime construct Kubernetes Resource relationship graphs. This enables KubePlus to build resource topologies and offer fine grained visibility and control over the platform service.
 
-Here is the resource relationship graph for MysqlSevice created above using 
+Here is the resource relationship graph for MysqlSevice created above discovered using the ```kubectl connections``` command. 
 ```kubectl connections MysqlService mysql1'```.
 
 <p align="center">
@@ -67,7 +68,10 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
 ## Try it:
 
 - Getting started:
-  - Try ```kubectl connections``` plugin. It can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).
+
+  - Check out resource relationship graphs for some of the public managed Kubernetes providers [here](./examples/graphs). 
+
+  - Try ```kubectl connections``` plugin in your environment. It can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).
 
 ```
    $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
@@ -79,14 +83,11 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
 ```
 
 - CRD for CRDs:
-  - Above example is [here](./examples/resource-composition/steps.txt).
+  - Example outlined above is [here](./examples/resource-composition/steps.txt).
 
 - Multitenancy examples:
   - Multiple [application stacks](./examples/multitenancy/stacks/steps.txt)
   - Multiple [teams](./examples/multitenancy/team/steps.txt) with applications deployed later
-
-- Resource relationship graphs for Public Managed Kubernetes providers:
-  - Check out resource relationship graphs for some of the public managed Kubernetes providers [here](./examples/graphs). 
 
 - Examples of Operators, Custom Resource stacks, etc.:
   - Check out [examples](./examples/)
