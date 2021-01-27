@@ -69,8 +69,6 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
 
 - Getting started:
 
-  - Check out resource relationship graphs for some of the public managed Kubernetes providers [here](./examples/graphs). 
-
   - Try ```kubectl connections``` plugin in your environment. It can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).
 
 ```
@@ -88,9 +86,6 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
 - Multitenancy examples:
   - Multiple [application stacks](./examples/multitenancy/stacks/steps.txt)
   - Multiple [teams](./examples/multitenancy/team/steps.txt) with applications deployed later
-
-- Examples of Operators, Custom Resource stacks, etc.:
-  - Check out [examples](./examples/)
 
 Note: To obtain metrics, enable Kubernetes Metrics API Server on your cluster. Hosted Kubernetes solutions like GKE has this already installed.
 
