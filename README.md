@@ -82,6 +82,13 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
    $ kubectl kubeplus commands
 ```
 
+- Install KubePlus server-side component for before trying out below examples:
+    ```
+    - git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
+    - cd kubeplus/deploy
+    - ./deploy-kubeplus.sh
+    ```
+
 - CRD for CRDs:
   - Example outlined above is [here](./examples/resource-composition/steps.txt).
 
