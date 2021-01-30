@@ -62,7 +62,9 @@ Here is the resource relationship graph for MysqlSevice created above discovered
 </p>
 
 We have additional plugins such as ```kubectl metrics``` and ```kubectl grouplogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the platform workflow.
-You can also directly get CPU/Memory/Storage metrics in Prometheus format if you setup ```ResourceMonitor``` while creating your new CRD. 
+You can also directly get CPU/Memory/Storage metrics in Prometheus format if you setup ```ResourceMonitor``` while creating your new CRD.
+
+[Here](./kubeplus-kubectl-commands.md) are all the kubeplus kubectl commands.
 
 
 ## Try it:
