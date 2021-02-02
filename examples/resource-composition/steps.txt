@@ -3,14 +3,6 @@ Compose Platform Workflows as Kubernetes APIs
 
 Setup:
 ------
-- git clone https://github.com/cloud-ark/kubeplus
-- Install KubePlus client-side kubectl plugins
-  - export KUBEPLUS_HOME=`pwd`
-  - export PATH=$KUBEPLUS_HOME/plugins/:$PATH
-- Install KubePlus server-side component
-  - cd deploy/
-  - ./deploy-kubeplus.sh
-
 - Create a GKE cluster
 - Create a GCE Persistent Disk named my-data-disk
   - Note: create the disk in the same zone as your cluster
@@ -19,6 +11,15 @@ Setup:
 - Install Helmv3
 - Install MysqlCluster Operator on the cluster
   - helm install mysqloperator https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-6.tgz?raw=true
+
+
+- git clone https://github.com/cloud-ark/kubeplus
+- Install KubePlus client-side kubectl plugins
+  - export KUBEPLUS_HOME=`pwd`
+  - export PATH=$KUBEPLUS_HOME/plugins/:$PATH
+- Install KubePlus server-side component
+  - cd deploy/
+  - ./deploy-kubeplus.sh
 
 Create a Kubernetes API to encapsulate Platform workflow (done by Platform Engineering team):
 ------------------------------------------------------------------------------------
