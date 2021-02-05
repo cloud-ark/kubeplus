@@ -1,0 +1,13 @@
+apiVersion: platformapi.kubeplus/v1alpha1
+kind: MongoDBServiceTenant 
+metadata:
+  name: tenant1 
+spec:
+  namespace: namespace1 
+  # Change this value appropriately for your setup 
+  #default value is 2
+  replica_count: 3
+  db_name: admin
+  user_name: user
+  user_password: 58LObjiMpxcjP1sMDW
+
