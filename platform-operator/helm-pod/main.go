@@ -593,7 +593,7 @@ func downloadChart(chartURL, cmdRunnerPod, namespace string) string {
 	 			lsCmd := "ls -l "
 
 	 			// 2. Download the Chart
-	 			wgetCmd := "wget " + chartURL
+	 			wgetCmd := "wget --no-check-certificate " + chartURL
 	 			fmt.Printf("wget cmd:%s\n", wgetCmd)
 	 			executeExecCall(cmdRunnerPod, namespace, wgetCmd)
 	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
