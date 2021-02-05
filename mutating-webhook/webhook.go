@@ -709,16 +709,14 @@ func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 	chartKinds := ""
 	if ok {
 
-		for {
-				namespace := "default"
-	 			chartKindsB := DryRunChart(platformWorkflowName, namespace)
-	 			chartKinds = string(chartKindsB)
-	 			fmt.Printf("Chart Kinds:%v\n", chartKinds)
-	 			if chartKinds == "" {
-	 				time.Sleep(2 * time.Second)
-	 			} else {
-	 				break
-	 			}
+			namespace := "default"
+	 		chartKindsB := DryRunChart(platformWorkflowName, namespace)
+	 		chartKinds = string(chartKindsB)
+	 		fmt.Printf("Chart Kinds:%v\n", chartKinds)
+
+	 		// If no kinds are found in the dry run then there is nothing to be done.
+	 		if chartKinds == "" {
+	 			return annotations1
 	 		}
 
 	 	fmt.Printf("Annotating %s\n", chartKinds)
@@ -758,7 +756,7 @@ func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 
 		annotations1[annotateRel] = annotateVal
 
-	 	namespace := "default"
+	 	namespace = "default"
 	 	manpageConfigMapName := registerManPage(crdkind, platformWorkflowName, namespace)
 	 	fmt.Printf("### ManPage ConfigMap Name:%s ####\n", manpageConfigMapName)
 
