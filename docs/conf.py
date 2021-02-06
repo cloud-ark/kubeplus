@@ -33,11 +33,11 @@ sys.path.insert(0, os.path.abspath('../'))
 #    "relbarbgcolor": "black"
 #}
 
-#html_theme = "bizstyle"
+html_theme = "bizstyle"
 
 #html_theme = "alabaster"
 
-html_theme = "sphinxdoc"
+#html_theme = "sphinxdoc"
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
