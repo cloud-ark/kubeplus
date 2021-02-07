@@ -14,7 +14,7 @@ KubePlus offers a CRD named ResourceComposition to
 - Get aggregated CPU/Memory/Storage Prometheus metrics for the platform services
 Here is the high-level structure of ResourceComposition CRD: 
 
-.. image:: ./crd-for-crds.png
+.. image:: crd-for-crds.png
    :height: 250px
    :width: 550px
    :align: center
@@ -22,7 +22,7 @@ Here is the high-level structure of ResourceComposition CRD:
 
 To understand this further let us see how a platform team can build a MySQL service for their product team/s to consume. The base Kubernetes cluster has MySQL Operator on it (either installed by the Platform team or bundled by the Kubernetes provider).
 
-.. image:: ./mysql-as-a-service.png
+.. image:: mysql-as-a-service.png
    :height: 250px
    :width: 400px
    :align: center
@@ -36,7 +36,7 @@ The platform workflow requirements are:
 
 Here is a new platform service named MysqlService as Kubernetes API. 
 
-.. image:: ./mysql-as-a-service-crd.png
+.. image:: mysql-as-a-service-crd.png
    :height: 250px
    :width: 550px
    :align: center
