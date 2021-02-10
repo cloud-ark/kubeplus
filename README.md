@@ -96,6 +96,8 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
   - Multiple [application stacks](./examples/multitenancy/stacks/steps.txt)
   - Multiple [teams](./examples/multitenancy/team/steps.txt) with applications deployed later
 
+- KubePlus documentation on [Github Pages](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html)
+
 Note: To obtain metrics, enable Kubernetes Metrics API Server on your cluster. Hosted Kubernetes solutions like GKE has this already installed.
 
 ## More details
