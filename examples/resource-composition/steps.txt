@@ -69,7 +69,11 @@ Instantiate Platform workflow using the new API (done by Product team):
 
 Demo Clean up:
 --------------
-1. kubectl delete -f mysqlserviceapi.yaml
-2. Verify:
-   - kubectl get crds | grep "mysqlservices.platformapi.kubeplus" (Should return empty)
+1. kubectl delete -f myservice1.yaml
+2. Verify
+   - kubectl get mysqlservices
+     - Verify that service1 instances is gone
    - kubectl get pods (Mysql Pods should have been deleted)
+3. kubectl delete -f mysqlserviceapi.yaml
+4. Verify
+   - kubectl get crds | grep "mysqlservices.platformapi.kubeplus" (Should return empty)
