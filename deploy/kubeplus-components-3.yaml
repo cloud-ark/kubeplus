@@ -56,7 +56,7 @@ spec:
   containers:
   - name: crd-hook
     #image: lmecld/pac-mutating-admission-webhook:develop
-    image: gcr.io/disco-horizon-103614/pac-mutating-admission-webhook:0.5.6
+    image: gcr.io/disco-horizon-103614/pac-mutating-admission-webhook:0.5.7
     imagePullPolicy: Always
     args:
       - -tlsCertFile=/etc/webhook/certs/cert.pem
@@ -82,7 +82,7 @@ spec:
     command: [ "/platform-operator"]
   - name: helmer
     #image: gcr.io/disco-horizon-103614/helm-pod:latest
-    image: gcr.io/disco-horizon-103614/helm-pod:0.0.4
+    image: gcr.io/disco-horizon-103614/helm-pod:0.0.5
     #image: lmecld/helm-pod:latest
     imagePullPolicy: Always
     command: ["/root/helm-pod"]

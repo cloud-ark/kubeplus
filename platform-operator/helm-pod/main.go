@@ -164,17 +164,20 @@ func getChartValues(request *restful.Request, response *restful.Response) {
 
 func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 
+	//sync.Mutex.Lock()
 	fmt.Printf("Inside deleteCRDInstances...\n")
 	kind := request.QueryParameter("kind")
 	group := request.QueryParameter("group")
 	version := request.QueryParameter("version")
 	plural := request.QueryParameter("plural")
 	namespace := request.QueryParameter("namespace")
+	crName := request.QueryParameter("instance")
 	fmt.Printf("Kind:%s\n", kind)
 	fmt.Printf("Group:%s\n", group)
 	fmt.Printf("Version:%s\n", version)
 	fmt.Printf("Plural:%s\n", plural)
 	fmt.Printf("Namespace:%s\n", namespace)
+	fmt.Printf("CRName:%s\n", crName)
 
 	apiVersion := group + "/" + version
 
@@ -183,7 +186,8 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 	ownerRes := schema.GroupVersionResource{Group: group,
 									 		Version: version,
 									   		Resource: plural}
-	fmt.Printf("OwnerRes:%v\n", ownerRes)
+
+	fmt.Printf("GVR:%v\n", ownerRes)
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -199,7 +203,7 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 			fmt.Printf("Error:%v\n", err)
 		}
 	}
-	fmt.Printf("CRDObjList:%v\n", crdObjList)
+	//fmt.Printf("CRDObjList:%v\n", crdObjList)
 
 	for _, instanceObj := range crdObjList.Items {
 		objData := instanceObj.UnstructuredContent()
@@ -207,24 +211,37 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 		//if ok1 {
 		objName := instanceObj.GetName()
 		fmt.Printf("Instance Name:%s\n", objName)
-		fmt.Printf("objData:%v\n", objData)
+
+		if crName != "" && objName != crName {
+			continue;
+		}
+
+		//fmt.Printf("objData:%v\n", objData)
 		status := objData["status"]
 		fmt.Printf("Status:%v\n", status)
 		helmrelease := getHelmReleaseName(status)
 		fmt.Printf("Helm release:%s\n", helmrelease)
-		ok := deleteHelmRelease(helmrelease)
-		if ok {
-			fmt.Printf("Helm release deleted..deleting the object %s\n", objName)
-			dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(objName, &metav1.DeleteOptions{})
+		if helmrelease != "" {
+			ok := deleteHelmRelease(helmrelease)
+			if ok {
+				fmt.Printf("Helm release deleted...\n")
+				if crName == "" {
+					fmt.Printf("Deleting the object %s\n", objName)
+					dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(objName, &metav1.DeleteOptions{})
+				}
+			}
 		}
 	}
-	lowercaseKind := strings.ToLower(kind)
-	configMapName := lowercaseKind + "-usage"
-	// Delete the usage configmap
-	fmt.Printf("Deleting the usage configmap:%s\n", configMapName)
-	kubeClient.CoreV1().ConfigMaps(namespace).Delete(configMapName, &metav1.DeleteOptions{})
 
-	fmt.Println("Done deleting CRD Instances..")
+	if crName == "" { //crName == "" means that we received request to delete all objects
+		lowercaseKind := strings.ToLower(kind)
+		configMapName := lowercaseKind + "-usage"
+		// Delete the usage configmap
+		fmt.Printf("Deleting the usage configmap:%s\n", configMapName)
+		kubeClient.CoreV1().ConfigMaps(namespace).Delete(configMapName, &metav1.DeleteOptions{})
+		fmt.Println("Done deleting CRD Instances..")
+	}
+	//sync.mutex.Unlock()
 }
 
 func deleteHelmRelease(helmrelease string) bool {
@@ -282,9 +299,9 @@ func getPlural(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Inside getPlural...\n")
 
 	kind := request.QueryParameter("kind")
-	group := request.QueryParameter("group")
+	//group := request.QueryParameter("group")
 	fmt.Printf("Kind:%s\n", kind)
-	fmt.Printf("Group:%s\n", group)
+	//fmt.Printf("Group:%s\n", group)
 
  	cmdRunnerPod := CMD_RUNNER_POD
 
@@ -307,7 +324,7 @@ func getPlural(request *restful.Request, response *restful.Response) {
 		if len(nonEmptySlice) > 0 {
 			existingKind := nonEmptySlice[len(nonEmptySlice)-1]
 			existingKind = strings.TrimSuffix(existingKind, "\n")
-			fmt.Printf("ExistingKind:%s\n", existingKind)
+			//fmt.Printf("ExistingKind:%s\n", existingKind)
 			if kind == existingKind {
 				pluralToReturn = nonEmptySlice[0]
 				break
@@ -315,7 +332,7 @@ func getPlural(request *restful.Request, response *restful.Response) {
 		}
 	}
 
-	fmt.Printf("Plural to return:%s\n", string(pluralToReturn))
+	//fmt.Printf("Plural to return:%s\n", string(pluralToReturn))
 
 	response.Write([]byte(pluralToReturn))
 }

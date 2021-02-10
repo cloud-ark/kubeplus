@@ -13,7 +13,7 @@ webhooks:
         path: "/mutate"
       caBundle: ${CA_BUNDLE}
     rules:
-      - operations: [ "CREATE" ]
+      - operations: [ "CREATE","DELETE"]
         apiGroups: ["workflows.kubeplus", "apps", "extensions", "", "apiextensions.k8s.io" ]
         apiVersions: ["v1alpha1", "v1", "v1beta1"]
         resources: ["resourcepolicies", "deployments", "statefulsets", "replicasets", "daemonsets", "replicationcontrollers", "pods", "customresourcedefinitions","namespaces"]
