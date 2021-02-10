@@ -100,23 +100,38 @@ func init() {
 }
 
 // main mutation process
-func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod string) *v1beta1.AdmissionResponse {
 	req := ar.Request
 
 	fmt.Println("=== Request ===")
 	fmt.Println(req.Kind.Kind)
 	fmt.Println(req.Name)
 	fmt.Println(req.Namespace)
+	fmt.Println(httpMethod)
 	fmt.Println("=== Request ===")
 
 	fmt.Println("=== User ===")
 	fmt.Println(req.UserInfo.Username)
 	fmt.Println("=== User ===")
 
-	saveResource(ar)
-
 	var patchOperations []patchOperation
 	patchOperations = make([]patchOperation, 0)
+
+	if httpMethod == http.MethodDelete {
+		handleDelete(ar)
+		return nil
+		/*//patchBytes, _ := json.Marshal(patchOperations)
+		return &v1beta1.AdmissionResponse{
+			Allowed: true,
+			Patch:   patchBytes,
+			PatchType: func() *v1beta1.PatchType {
+				pt := v1beta1.PatchTypeJSONPatch
+				return &pt
+			}(),
+		}*/
+	}
+
+	saveResource(ar)
 
 	if req.Kind.Kind == "ResourcePolicy" {
 		saveResourcePolicy(ar)
@@ -179,6 +194,35 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 			return &pt
 		}(),
 	}
+}
+
+func handleDelete(ar *v1beta1.AdmissionReview) {
+	fmt.Println("Inside handleDelete...")
+	req := ar.Request
+	//fmt.Printf("%v\n---",req)
+	//body := req.Object.Raw
+	namespace := req.Namespace
+	resName := req.Name
+
+	//fmt.Printf("Body:%v\n", body)
+	apiv1 := req.Kind
+	apiv2 := req.Resource
+	fmt.Printf("&&&&&\n")
+	fmt.Printf("APIv1:%s, APIv2:%s\n", apiv1, apiv2)
+	group := req.Resource.Group
+	version := req.Resource.Version
+	kind := req.Kind.Kind
+
+	fmt.Printf("Group:%s, version:%s\n", group, version)
+	plural := string(GetPlural(kind, group))
+	apiVersion := group + "/" + version
+
+	fmt.Printf("NS:%s, Kind:%s, apiVersion:%s, group:%s, version:%s plural:%s resName:%s\n", 
+		namespace, kind, apiVersion, group, version, plural, resName)
+
+	fmt.Printf("Calling DeleteCRDInstances...")
+	DeleteCRDInstances(kind, group, version, plural, namespace, resName)
+	fmt.Println("After calling DeleteCRDInstances...")
 }
 
 func checkAndApplyNSPolicies(ar *v1beta1.AdmissionReview) []patchOperation {
@@ -368,13 +412,7 @@ func checkServiceLevelPolicyApplicability(ar *v1beta1.AdmissionReview) (string, 
 	return "", "", "", ""
 }
 
-func findRoot(namespace, kind, name, apiVersion string) (string, string, string) {
-	rootKind := ""
-	rootName := ""
-	rootAPIVersion := ""
-
-	time.Sleep(10)
-
+func getGroupVersion(apiVersion string) (string, string) {
 	parts := strings.Split(apiVersion, "/")
 	group := ""
 	version := ""
@@ -384,6 +422,17 @@ func findRoot(namespace, kind, name, apiVersion string) (string, string, string)
 	} else {
 		version = parts[0]
 	}
+	return group, version
+}
+
+func findRoot(namespace, kind, name, apiVersion string) (string, string, string) {
+	rootKind := ""
+	rootName := ""
+	rootAPIVersion := ""
+
+	time.Sleep(10)
+
+	group, version := getGroupVersion(apiVersion)
 	fmt.Printf("Group:%s\n", group)
 	fmt.Printf("Version:%s\n", version)
 	fmt.Printf("ResName:%s\n", name)
@@ -1127,9 +1176,12 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 	} else {
+		//fmt.Printf("%v\n", ar.Request)
+		//fmt.Printf("####### METHOD:%s #######\n", ar.Request.Operation)
 		fmt.Println(r.URL.Path)
 		if r.URL.Path == "/mutate" {
-			admissionResponse = whsvr.mutate(&ar)
+			method := string(ar.Request.Operation)
+			admissionResponse = whsvr.mutate(&ar, method)
 		}
 	}
 
@@ -1139,16 +1191,15 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 		if ar.Request != nil {
 			admissionReview.Response.UID = ar.Request.UID
 		}
-	}
-
-	resp, err := json.Marshal(admissionReview)
-	if err != nil {
-		fmt.Printf("Can't encode response: %v", err)
-		http.Error(w, fmt.Sprintf("could not encode response: %v", err), http.StatusInternalServerError)
-	}
-	fmt.Println("Ready to write reponse ...")
-	if _, err := w.Write(resp); err != nil {
-		fmt.Printf("Can't write response: %v", err)
-		http.Error(w, fmt.Sprintf("could not write response: %v", err), http.StatusInternalServerError)
+		resp, err := json.Marshal(admissionReview)
+		if err != nil {
+			fmt.Printf("Can't encode response: %v", err)
+			http.Error(w, fmt.Sprintf("could not encode response: %v", err), http.StatusInternalServerError)
+		}
+		fmt.Println("Ready to write reponse ...")
+		if _, err := w.Write(resp); err != nil {
+			fmt.Printf("Can't write response: %v", err)
+			http.Error(w, fmt.Sprintf("could not write response: %v", err), http.StatusInternalServerError)
+		}
 	}
 }

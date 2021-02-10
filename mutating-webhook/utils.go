@@ -840,6 +840,18 @@ func AnnotateCRD(kind, plural, group, chartkinds string) []byte {
 	return body
 }
 
+func DeleteCRDInstances(kind, group, version, plural, namespace, instance string) []byte {
+	fmt.Printf("Inside deleteCRDInstances...\n")
+	args := fmt.Sprintf("kind=%s&group=%s&version=%s&plural=%s&namespace=%s&instance=%s", kind, group, version, plural, namespace, instance)
+	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	fmt.Printf("After getServiceEndpoint...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deletecrdinstances?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
 func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
 	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, crdKindName, namespace)
 	fmt.Printf("Inside QueryCompositionEndpoint...\n")
