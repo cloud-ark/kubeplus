@@ -11,7 +11,7 @@ Checkout `Operator Maturity Model Guidelines`_.
 .. _Operator Maturity Model Guidelines: https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md
 
 
-Operator Analyis
+Operator Analysis
 -----------------
 
 Checkout analysis of `community Operators`_.
