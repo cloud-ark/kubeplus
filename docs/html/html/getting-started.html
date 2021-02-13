@@ -1,0 +1,129 @@
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Getting Started &#8212; KubePlus 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bizstyle.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Kubernetes Operators" href="operators.html" />
+    <link rel="prev" title="KubePlus Components" href="kubeplus-components.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="operators.html" title="Kubernetes Operators"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="kubeplus-components.html" title="KubePlus Components"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KubePlus 1.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Getting Started</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="getting-started">
+<h1>Getting Started</h1>
+<ol class="arabic simple">
+<li><p>Try <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">connections</span></code> plugin in your environment. It can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
+$ gunzip kubeplus-kubectl-plugins.tar.gz
+$ tar -xvf kubeplus-kubectl-plugins.tar
+$ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
+$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
+$ kubectl kubeplus commands
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Install KubePlus server-side component before trying out below examples:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git clone --depth <span class="m">1</span> https://github.com/cloud-ark/kubeplus.git
+$ <span class="nb">cd</span> kubeplus/deploy
+$ ./deploy-kubeplus.sh
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>CRD for CRDs:</p>
+<ul class="simple">
+<li><p>Example outlined in Kubeplus Components section is <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/examples/resource-composition/steps.txt">here</a>.</p></li>
+</ul>
+</li>
+</ol>
+<ol class="arabic simple" start="4">
+<li><p>Multitenancy examples:</p>
+<ul class="simple">
+<li><p>Multiple <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/stacks/steps.txt">application stacks</a></p></li>
+<li><p>Multiple <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/team/steps.txt">teams with applications deployed later</a></p></li>
+</ul>
+</li>
+</ol>
+<ol class="arabic simple" start="5">
+<li><p>Try with your own Helm chart:</p>
+<ul class="simple">
+<li><p>Install Helm version 3.0 and above</p></li>
+<li><p>Create Helm chart and make it available at a publicly accessible URL</p></li>
+<li><p>Follow steps similar to above examples</p></li>
+</ul>
+</li>
+</ol>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="operators.html" title="Kubernetes Operators"
+             >next</a></li>
+        <li class="right" >
+          <a href="kubeplus-components.html" title="KubePlus Components"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KubePlus 1.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Getting Started</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>

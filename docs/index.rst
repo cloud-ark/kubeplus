@@ -18,11 +18,11 @@ Next section provides details about KubePlus components.
    :caption: Contents:
 
    kubeplus-components
+   getting-started
    operators
    community
    comparison
    contact
-   getting-started
    faq
 
 ..   roadmap

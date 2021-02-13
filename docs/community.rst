@@ -10,16 +10,15 @@ Community Participation
 
 .. _Helm Summit 2019: https://youtu.be/F_Dgz1V5Q2g
 
+..	3. Kubernetes Community Meeting notes_
 
-3. Kubernetes Community Meeting notes_
+..	.. _notes: https://discuss.kubernetes.io/t/kubernetes-weekly-community-meeting-notes/35/60
 
-.. _notes: https://discuss.kubernetes.io/t/kubernetes-weekly-community-meeting-notes/35/60
+..	4. Kubernetes Community Meeting `slide deck`_
 
-4. Kubernetes Community Meeting `slide deck`_
+..	.. _slide deck: https://drive.google.com/open?id=1fzRLBpCLYBZoMPQhKMQDM4KE5xUh6-xU
 
-.. _slide deck: https://drive.google.com/open?id=1fzRLBpCLYBZoMPQhKMQDM4KE5xUh6-xU
+..	5. Kubernetes Community Meeting demo_
 
-5. Kubernetes Community Meeting demo_
-
-.. _demo: https://www.youtube.com/watch?v=taOrKGkZpEc&feature=youtu.be
+..	.. _demo: https://www.youtube.com/watch?v=taOrKGkZpEc&feature=youtu.be
 
