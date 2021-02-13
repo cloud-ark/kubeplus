@@ -4,7 +4,7 @@ Kubernetes Operators
 
 
 Operator Maturity Model
--------------------------
+------------------------
 
 Checkout `Operator Maturity Model Guidelines`_.
 
@@ -12,7 +12,7 @@ Checkout `Operator Maturity Model Guidelines`_.
 
 
 Operator Analysis
------------------
+------------------
 
 Checkout analysis of `community Operators`_.
 

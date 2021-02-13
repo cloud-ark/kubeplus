@@ -16,7 +16,7 @@
     <script src="_static/doctools.js"></script>
     <script src="_static/bizstyle.js"></script>
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Kubernetes Operators" href="operators.html" />
+    <link rel="next" title="Getting Started" href="getting-started.html" />
     <link rel="prev" title="Welcome to KubePlus documentation" href="index.html" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
@@ -27,7 +27,7 @@
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="operators.html" title="Kubernetes Operators"
+          <a href="getting-started.html" title="Getting Started"
              accesskey="N">next</a></li>
         <li class="right" >
           <a href="index.html" title="Welcome to KubePlus documentation"
@@ -152,6 +152,10 @@ In the future we plan to support creation of <code class="docutils literal notra
 </div>
 <div class="section" id="kubectl-plugins">
 <h2>Kubectl plugins</h2>
+<p>KubePlus kubectl plugins enable users to discover, monitor and troubleshoot resource relationships in a platform workflow. The plugins run entirely client-side and do not require the in-cluster component. The primary plugin of this functionality is: kubectl connections. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus is able to runtime construct Kubernetes Resource relationship graphs. This enables KubePlus to build resource topologies and offer fine grained visibility and control over the platform service.</p>
+<p>Here is the resource relationship graph for MysqlSevice created above discovered using the kubectl connections command.</p>
+<p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">connections</span> <span class="pre">MysqlService</span> <span class="pre">mysql1</span></code></p>
+<a class="reference internal image-reference" href="_images/mysqlservice-connections.png"><img alt="_images/mysqlservice-connections.png" class="align-center" src="_images/mysqlservice-connections.png" style="width: 800px; height: 350px;" /></a>
 <p>KubePlus offers following kubectl plugins.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="m">1</span>. kubectl connections - Get relationships of a Kubernetes resource with other resources based on ownerReferences, labels, spec properties, annotations.
 
@@ -198,7 +202,7 @@ resource/specproperty-relationship
 </div>
 <p>The relationship annotations are used to declare annotation / label / spec-property based relationships that instances of this Custom Resource can have with other Resources.</p>
 <p>Above annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers.</p>
-<p>KubePlus adds these annotations to the CRD for the new API that is registered via <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code>. But the annotations are general and can be used with any Operator/CRD. Here are some examples of using these annotations.</p>
+<p>KubePlus adds these annotations to the CRD for the new API that is registered via <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code>. But the annotations are general and can be used with any Operator/CRD. Here are some examples of using these annotations on community Operators.</p>
 <p><strong>Moodle Operator</strong></p>
 <p>Annotations on Moodle Custom Resource Definition (CRD) are shown below:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apiextensions.k8s.io/v1beta1</span>
@@ -270,7 +274,7 @@ resource/label-relationship: <span class="s2">&quot;on:Deployment, value:INSTANC
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="operators.html" title="Kubernetes Operators"
+          <a href="getting-started.html" title="Getting Started"
              >next</a></li>
         <li class="right" >
           <a href="index.html" title="Welcome to KubePlus documentation"

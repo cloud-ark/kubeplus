@@ -146,6 +146,19 @@ In the future we plan to support creation of ``ResourcePolicy`` and ``ResourceMo
 Kubectl plugins
 ----------------
 
+KubePlus kubectl plugins enable users to discover, monitor and troubleshoot resource relationships in a platform workflow. The plugins run entirely client-side and do not require the in-cluster component. The primary plugin of this functionality is: kubectl connections. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus is able to runtime construct Kubernetes Resource relationship graphs. This enables KubePlus to build resource topologies and offer fine grained visibility and control over the platform service.
+
+Here is the resource relationship graph for MysqlSevice created above discovered using the kubectl connections command. 
+
+``kubectl connections MysqlService mysql1``
+
+
+.. image:: mysqlservice-connections.png
+   :height: 350px
+   :width: 800px
+   :align: center
+
+
 KubePlus offers following kubectl plugins. 
 
 .. code-block:: bash
@@ -205,7 +218,7 @@ The relationship annotations are used to declare annotation / label / spec-prope
 
 Above annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers. 
 
-KubePlus adds these annotations to the CRD for the new API that is registered via ``ResourceComposition``. But the annotations are general and can be used with any Operator/CRD. Here are some examples of using these annotations.
+KubePlus adds these annotations to the CRD for the new API that is registered via ``ResourceComposition``. But the annotations are general and can be used with any Operator/CRD. Here are some examples of using these annotations on community Operators.
 
 **Moodle Operator**
 
