@@ -92,6 +92,7 @@ class CRMetrics(object):
 	def _get_pod(self, pod):
 		cmd = 'kubectl get pods ' + pod['Name'] + ' -n ' + pod['Namespace'] + ' -o json'
 		out = ''
+		#print(cmd)
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 								   stderr=subprocess.PIPE, shell=True).communicate()[0]
@@ -379,9 +380,9 @@ class CRMetrics(object):
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
 		cmd = ''
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format + ' --ignore=ServiceAccount:default'
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format + ' --ignore=ServiceAccount:default,Namespace:default'
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format + ' --ignore=ServiceAccount:default'
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format + ' --ignore=ServiceAccount:default,Namespace:default'
 
 		if cmd:
 			output = ''
@@ -621,6 +622,80 @@ class CRMetrics(object):
 				pod_list = utils.get_pods(json_output)
 		return pod_list
 
+	def _parse_network_bytes(self, cAdvisorLine):
+		parts = cAdvisorLine.split("}")
+		networkMetric = 0
+		#print("PARTS:")
+		#print(parts)
+		#print("Len:" + str(int(len(parts))))
+		if len(parts) == 2:
+			metricPart = parts[1]
+			part1 = metricPart.split(" ")
+			part2 = []
+			for p in part1:
+				if p != '':
+					part2.append(p)
+			#print("Len1:" + str(int(len(part2))))
+			if len(part2) == 2:
+				networkMetric = part2[0]
+		#print(networkMetric)
+		return float(networkMetric)
+
+	def _get_network_usage(self, pod_list):
+		networkReceiveBytesTotal = 0
+		networkTransmitBytesTotal = 0
+
+		#print(pod_list)
+		platf = platform.system()
+		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
+		cmd = ''
+		if platf == "Darwin":
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos networkmetrics ' 
+		if platf == "Linux":
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux networkmetrics '
+
+		for pod in pod_list:
+			pod_json = self._get_pod(pod)
+			#print(pod_json)
+			podName = pod['Name']
+			nodeName = pod_json['spec']['nodeName']
+			#print("PodName:" + podName)
+			#print("NodeName:" + nodeName)
+			networkMetricsCmd = cmd + " " + nodeName
+			try:
+				output = subprocess.Popen(networkMetricsCmd, stdout=subprocess.PIPE,
+										  stderr=subprocess.PIPE, shell=True).communicate()[0]
+				output = output.decode('utf-8')
+				output = output.strip("\n")
+			except Exception as e:
+				print(e)
+
+			pod_found_network_receive_bytes = {}
+			pod_found_network_transmit_bytes = {}
+			if output != '':
+				#print("-------\n")
+				#print(output)
+				for line in output.split("\n"):
+					if 'container_network_receive_bytes_total' in line and podName in line:
+						if podName not in pod_found_network_receive_bytes:
+							#print("ABC ---\n")
+							#print(line)
+							pod_found_network_receive_bytes[podName] = line
+							networkReceiveBytes = self._parse_network_bytes(line)
+							networkReceiveBytesTotal = networkReceiveBytesTotal + networkReceiveBytes
+					if 'container_network_transmit_bytes_total' in line and podName in line:
+						if podName not in pod_found_network_transmit_bytes:
+							#print("DEF ---\n")
+							#print(line)
+							pod_found_network_transmit_bytes[podName] = line
+							networkTransmitBytes = self._parse_network_bytes(line)
+							networkTransmitBytesTotal = networkTransmitBytesTotal + networkTransmitBytes
+				#print("--------\n")
+
+		#print("NetworkReceiveBytesTotal:" + str(networkReceiveBytesTotal))
+		#print("NetworkTransmitBytesTotal:" + str(networkTransmitBytesTotal))
+		return networkReceiveBytesTotal, networkTransmitBytesTotal
+
 	def _get_metrics_creator_account_with_connections(self, account):
 
 		#print("---------------------------------------------------------- ")
@@ -747,6 +822,7 @@ class CRMetrics(object):
 		total_storage_conn = self._parse_persistentvolumeclaims(pod_list, namespace)
 		num_of_hosts_conn = self._parse_number_of_hosts(pod_list)
 		cpu_conn, memory_conn = self._get_cpu_memory_usage(pod_list)
+		networkReceiveBytesTotal, networkTransmitBytesTotal = self._get_network_usage(pod_list)
 
 		num_of_pods = len(pod_list)
 		num_of_containers = num_of_containers_conn
@@ -773,9 +849,11 @@ class CRMetrics(object):
 			cpuMetrics = 'cpu{custom_resource="'+custom_res_instance+'"} ' + str(cpu) + ' ' + str(millis)
 			memoryMetrics = 'memory{custom_resource="'+custom_res_instance+'"} ' + str(memory) + ' ' + str(millis)
 			storageMetrics = 'storage{custom_resource="'+custom_res_instance+'"} ' + str(total_storage) + ' ' + str(millis)
+			networkReceiveBytes = 'network_receive_bytes_total{custom_resource="'+custom_res_instance+'"} ' + str(networkReceiveBytesTotal) + ' ' + str(millis)
+			networkTransmitBytes = 'network_transmit_bytes_total{custom_resource="'+custom_res_instance+'"} ' + str(networkTransmitBytesTotal) + ' ' + str(millis)
 			numOfPods = 'pods{custom_resource="'+custom_res_instance+'"} ' + str(num_of_pods) + ' ' + str(millis)
 			numOfContainers = 'containers{custom_resource="'+custom_res_instance+'"} ' + str(num_of_containers) + ' ' + str(millis)
-			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers
+			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers + "\n" + networkReceiveBytes + "\n" + networkTransmitBytes
 			print(metricsToReturn)
 		elif opformat == 'pretty':
 			#print("---------------------------------------------------------- ")
