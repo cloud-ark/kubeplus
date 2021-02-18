@@ -23,14 +23,15 @@ Getting Started
 
 3. CRD for CRDs:
 
-   - Example outlined in Kubeplus Components section is `here`_.
+   - Try example outlined in Kubeplus Components section by following steps `here`_.
 
 .. _here: https://github.com/cloud-ark/kubeplus/blob/master/examples/resource-composition/steps.txt
 
 4. Multitenancy examples:
 
-   - Multiple `application stacks`_
-   - Multiple `teams with applications deployed later`_
+   - Try following multitenancy examples:
+     - Multiple `application stacks`_
+     - Multiple `teams with applications deployed later`_
 
 .. _application stacks: https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/stacks/steps.txt
 
@@ -38,6 +39,6 @@ Getting Started
 
 5. Try with your own Helm chart:
    
-   - Install Helm version 3.0 and above
+   - Install Helm version 3.0+
    - Create Helm chart and make it available at a publicly accessible URL
    - Follow steps similar to above examples

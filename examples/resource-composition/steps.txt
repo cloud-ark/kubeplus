@@ -54,18 +54,31 @@ Instantiate Platform workflow using the new API (done by Product team):
          - mysqlservice-service1-mysql-1
 
 5. Check connectivity graph:
-   - kubectl connections MysqlService service1 default -o png --ignore=ServiceAccount:default
+   - kubectl connections MysqlService service1 default -o png --ignore=ServiceAccount:default,Namespace:default
 
 6. Verify Policy application:
    - kubectl get pods mysqlservice-service1-mysql-0 -o json | jq -r '.spec.containers[0].resources'
    - kubectl get pods mysqlservice-service1-mysql-1 -o json | jq -r '.spec.containers[0].resources'
 
-7. Get Metrics:
-   - MASTER_IP=Get IP Address of the cluster API server
-     - export MASTER_IP=34.121.16.241 (this is just an example)
-   - NODEPORT=`kubectl get svc | grep kubeplus | awk '{print $5}' | cut -d ':' -f 2 | cut -d '/' -f 1`
-   - curl -kv "http://$MASTER_IP:$NODEPORT/apis/kubeplus/metrics?kind=MysqlService&instance=service1&namespace=default"
+7. Get Metrics. There are two ways to get the metrics:
+   - Using kubectl proxy:
+     - Open a terminal and start kubect proxy:
+       - kubectl port-forward  kubeplus -n default 8081:8090
+       - curl -kv "http://127.0.0.1:8081/apis/kubeplus/metrics?kind=MysqlService&instance=service1&namespace=default"
+   - Querying API server directly
+     - MASTER_IP=Get IP Address of the cluster API server
+       - export MASTER_IP=34.121.16.241 (this is just an example)
+     - NODEPORT=`kubectl get svc | grep kubeplus | awk '{print $5}' | cut -d ':' -f 2 | cut -d '/' -f 1`
+     - curl -kv "http://$MASTER_IP:$NODEPORT/apis/kubeplus/metrics?kind=MysqlService&instance=service1&namespace=default"
 
+   - Verify that following metrics are output (actual values will be different for your setup):
+      cpu{custom_resource="service1"} 18 1613666185165
+      memory{custom_resource="service1"} 281 1613666185165
+      storage{custom_resource="service1"} 8 1613666185165
+      pods{custom_resource="service1"} 2 1613666185165
+      containers{custom_resource="service1"} 12 1613666185165
+      network_receive_bytes_total{custom_resource="service1"} 4657685.0 1613666185165
+      network_transmit_bytes_total{custom_resource="service1"} 14398706.0 1613666185165
 
 Demo Clean up:
 --------------
