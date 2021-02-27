@@ -21,6 +21,13 @@ metadata:
     app: wordpress
     tier: frontend
 spec:
+  initContainers:
+  - image: gcr.io/disco-horizon-103614/waiter
+    name: waiter
+    command: ["./root/waiter.sh"]
+    args:
+      - {{ .Values.namespace }}
+      - mysql
   containers:
   - image: wordpress:4.8-apache
     name: wordpress
@@ -39,4 +46,30 @@ spec:
   - name: wordpress-persistent-storage
     persistentVolumeClaim:
       claimName: wp-pv-claim
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: {{ .Values.namespace }} 
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-reader-binding
+  namespace: {{ .Values.namespace }}
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: {{ .Values.namespace }}
+  apiGroup: ""
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+---
 
