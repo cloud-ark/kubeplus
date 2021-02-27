@@ -1,3 +1,5 @@
 # Default value for namespace. 
 namespace: abc
 
+nodeName: test
+
