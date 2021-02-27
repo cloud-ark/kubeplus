@@ -656,6 +656,11 @@ class CRMetrics(object):
 
 		for pod in pod_list:
 			pod_json = self._get_pod(pod)
+
+            # If nodeName is not present in Pod spec then it means that Pod is not scheduled
+			if 'nodeName' not in pod_json:
+				continue
+
 			#print(pod_json)
 			podName = pod['Name']
 			nodeName = pod_json['spec']['nodeName']

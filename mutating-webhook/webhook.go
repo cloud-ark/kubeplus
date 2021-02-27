@@ -396,10 +396,33 @@ func checkServiceLevelPolicyApplicability(ar *v1beta1.AdmissionReview) (string, 
 	ownerNameS := string(ownerName)
 	ownerAPIVersionS := string(ownerAPIVersion)
 
-	rootKind, rootName, rootAPIVersion := findRoot(namespace, ownerKindS, ownerNameS, ownerAPIVersionS)
+	rootKind := ""
+	rootName := ""
+	rootAPIVersion := ""
+	if ownerKindS == "" && ownerNameS == "" && ownerAPIVersionS == "" {
+		annotations1 := make(map[string]string, 0)
+		allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
+		if err != nil {
+			fmt.Printf("Error in parsing existing annotations")
+		} else {
+			json.Unmarshal(allAnnotations, &annotations1)
+			fmt.Printf("All Annotations:%v\n", annotations1)
+		}
+		releaseName := annotations1["meta.helm.sh/release-name"]
+		fmt.Printf("Helm release name:%s\n", releaseName)
+		capiGroup := ""
+		capiVersion := ""
+        rootKind, rootName, capiGroup, capiVersion = getAPIDetailsFromHelmReleaseAnnotation(releaseName)
+        rootAPIVersion = capiGroup + "/" + capiVersion
+        fmt.Printf("RK:%s, RN:%s, RAPI:%s\n", rootKind, rootName, rootAPIVersion)
+	} else {
+		rootKind, rootName, rootAPIVersion = findRoot(namespace, ownerKindS, ownerNameS, ownerAPIVersionS)
+	}
+
 	fmt.Printf("Root Kind:%s\n", rootKind)
 	fmt.Printf("Root Name:%s\n", rootName)
 	fmt.Printf("Root API Version:%s\n", rootAPIVersion)
+
 	lowercaseKind := strings.ToLower(rootKind)
 
 	// Check if the rootKind, rootName, rootAPIVersion is registered to be applied policies on.
@@ -475,30 +498,9 @@ func findRoot(namespace, kind, name, apiVersion string) (string, string, string)
 
 		annotations := instanceObj.GetAnnotations()
 		releaseName := annotations["meta.helm.sh/release-name"]
-		parts := strings.Split(releaseName, "-")
-		if len(parts) == 2 {
-			okindLowerCase := parts[0]
-			oinstance := parts[1]
-			fmt.Printf("KindPluralMap2:%v\n", kindPluralMap)
-			oplural := kindPluralMap[okindLowerCase]
-			fmt.Printf("OPlural:%s OInstance:%s\n", oplural, oinstance)
-			customAPI := ""
-			for k, v := range customKindPluralMap {
-				if v == oplural {
-					customAPI = k
-					break
-				}
-			}
-			fmt.Printf("CustomAPI:%s\n", customAPI)
-			capiParts := strings.Split(customAPI, "/")
-			capiGroup := capiParts[0]
-			capiVersion := capiParts[1]
-			capiKind := capiParts[2]
-			fmt.Printf("capiGroup:%s capiVersion:%s capiKind:%s\n", capiGroup, capiVersion, capiKind)
-			return capiKind, oinstance, capiGroup + "/" + capiVersion
-		} else {
-			return "","",""
-		}
+
+        capiKind, oinstance, capiGroup, capiVersion := getAPIDetailsFromHelmReleaseAnnotation(releaseName)
+		return capiKind, oinstance, capiGroup + "/" + capiVersion
 	} else {
 		owner := ownerReference[0]
 		ownerKind := owner.Kind
@@ -507,6 +509,38 @@ func findRoot(namespace, kind, name, apiVersion string) (string, string, string)
 		rootKind, rootName, rootAPIVersion := findRoot(namespace, ownerKind, ownerName, ownerAPIVersion)
 		return rootKind, rootName, rootAPIVersion
 	}
+}
+
+func getAPIDetailsFromHelmReleaseAnnotation(releaseName string) (string, string, string, string) {
+	capiKind := ""
+	oinstance := ""
+	capiGroup := ""
+	capiVersion := ""
+
+	parts := strings.Split(releaseName, "-")
+	if len(parts) == 2 {
+		okindLowerCase := parts[0]
+		oinstance = parts[1]
+		fmt.Printf("KindPluralMap2:%v\n", kindPluralMap)
+		oplural := kindPluralMap[okindLowerCase]
+		fmt.Printf("OPlural:%s OInstance:%s\n", oplural, oinstance)
+		customAPI := ""
+		for k, v := range customKindPluralMap {
+			if v == oplural {
+				customAPI = k
+				break
+			}
+		}
+		fmt.Printf("CustomAPI:%s\n", customAPI)
+		capiParts := strings.Split(customAPI, "/")
+		capiGroup = capiParts[0]
+		capiVersion = capiParts[1]
+		capiKind = capiParts[2]
+		fmt.Printf("capiGroup:%s capiVersion:%s capiKind:%s\n", capiGroup, capiVersion, capiKind)
+	} else {
+		return "","","",""
+	}
+	return capiKind, oinstance, capiGroup, capiVersion
 }
 
 func applyPolicies(ar *v1beta1.AdmissionReview, customAPI, rootKind, rootName, rootNamespace string) []patchOperation {
