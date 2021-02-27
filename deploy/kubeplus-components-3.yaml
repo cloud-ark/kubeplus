@@ -56,7 +56,7 @@ spec:
   containers:
   - name: crd-hook
     #image: lmecld/pac-mutating-admission-webhook:develop
-    image: gcr.io/disco-horizon-103614/pac-mutating-admission-webhook:0.5.7
+    image: gcr.io/disco-horizon-103614/pac-mutating-admission-webhook:0.5.8
     imagePullPolicy: Always
     args:
       - -tlsCertFile=/etc/webhook/certs/cert.pem
