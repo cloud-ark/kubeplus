@@ -1,0 +1,107 @@
+Setup:
+------
+Clone KubePlus repo:
+- git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
+
+Create a two node GKE cluster
+- Check scripts/create-gke-cluster.sh
+  - Modify the script as needed
+
+Once the cluster is ready, install KubePlus
+- cd kubeplus/deploy
+- ./deploy-kubeplus.sh
+- cd ../
+
+Check KubePlus status:
+- kubectl get pods (verify if kubeplus Pod shows as 5/5 Running)
+
+Once KubePlus is running open a proxy to connect to KubePlus
+- Open a new terminal and run:
+  - kubectl port-forward  kubeplus -n default 8081:8090
+
+
+Create new API:
+---------------
+Create WordPressStack Custom Resource Definition (CRD)
+- cd examples/multitenancy/wordpress-mysqlcluster-stack
+- Check wordpress-stack-api.yaml
+  - If required modify the Pod policies in the podconfig section (cpu/memory requests and limits) 
+  - kubectl create -f wordpress-stack-api.yaml
+- Verify WordpressStack CRD registered
+  - kubectl get crds | grep 'wordperss' 
+
+
+Create Tenant1 stack: 
+---------------------
+Deploy WordPressStack for tenant1
+- kubectl get nodes
+- Choose a node name and add it to 'nodeName' attribute to tenant1.yaml
+- Check/modify the namespace defined in tenant1.yaml
+  - kubectl create -f tenant1.yaml
+
+Verify that stack is created:
+- kubectl get ns
+  -> verify that namespace defined in tenant1.yaml is created
+- kubectl get pods -n <namespace-from-tenant1.yaml> 
+
+Verify policy:
+- kubectl get pods wordpress-pod -n wp-stack-ns1 -o json | jq -r '.spec.containers[0].resources'
+- kubectl get pods wordpress-pod -n wp-stack-ns1 -o json | jq -r '.spec.nodeName'
+- kubectl get pods wordpressstack-tenant1-mysql-0 -n wp-stack-ns1 -o json | jq -r '.spec.containers[0].resources'
+- kubectl get pods wordpressstack-tenant1-mysql-0  -n wp-stack-ns1 -o json | jq -r '.spec.nodeName'
+
+Retrieve consumption metrics:
+- curl -kv "http://127.0.0.1:8081/apis/kubeplus/metrics?kind=WordpressStack&instance=tenant1&namespace=default"
+
+  The output should be of following type:
+
+   cpu{custom_resource="tenant1"} 32 1614515921407
+   memory{custom_resource="tenant1"} 304 1614515921407
+   storage{custom_resource="tenant1"} 2 1614515921407
+   pods{custom_resource="tenant1"} 2 1614515921407
+   containers{custom_resource="tenant1"} 8 1614515921407
+   network_receive_bytes_total{custom_resource="tenant1"} 415446.0 1614515921407
+   network_transmit_bytes_total{custom_resource="tenant1"} 509238.0 1614515921407
+
+Visualize Topology:
+- kubectl connections WordpressStack tenant1 default -o png --ignore=ServiceAccount:default,Namespace:default
+
+  - Check the generated png file. For reference check tenant1.png
+
+
+Create Tenant2 stack: 
+---------------------
+Deploy WordPressStack for tenant2
+- kubectl get nodes
+- Choose a node name and add it to 'nodeName' attribute to tenant2.yaml
+- kubectl create -f tenant2.yaml
+
+Verify policy:
+- kubectl get pods wordpressstack-tenant2-mysql-0 -n wp-stack-ns2 -o json | jq -r '.spec.containers[0].resources'
+- kubectl get pods wordpressstack-tenant2-mysql-0 -n wp-stack-ns2 -o json | jq -r '.spec.nodeName'
+- kubectl get pods wordpress-pod -n wp-stack-ns2 -o json | jq -r '.spec.containers[0].resources'
+- kubectl get pods wordpress-pod -n wp-stack-ns2 -o json | jq -r '.spec.nodeName'
+
+Retrieve consumption metrics:
+- curl -kv "http://127.0.0.1:8081/apis/kubeplus/metrics?kind=WordpressStack&instance=tenant1&namespace=default"
+
+   cpu{custom_resource="tenant2"} 22 1614516379943
+   memory{custom_resource="tenant2"} 288 1614516379943
+   storage{custom_resource="tenant2"} 2 1614516379943
+   pods{custom_resource="tenant2"} 2 1614516379943
+   containers{custom_resource="tenant2"} 8 1614516379943
+   network_receive_bytes_total{custom_resource="tenant2"} 404525.0 1614516379943
+   network_transmit_bytes_total{custom_resource="tenant2"} 540887.0 1614516379943
+
+
+Visualize Topology:
+- kubectl connections WordpressStack tenant2 default -o png --ignore=ServiceAccount:default,Namespace:default
+
+  - Check the generated png file. For reference check tenant2.png
+
+
+Cleanup
+--------
+- kubectl delete -f tenant1.yaml
+- kubectl delete -f tenant2.yaml
+- kubectl delete -f wordpress-stack-api.yaml
