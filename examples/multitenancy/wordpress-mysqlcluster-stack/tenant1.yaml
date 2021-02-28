@@ -5,5 +5,4 @@ metadata:
 spec:
   namespace: wp-stack-ns1 
   # Change this value appropriately for your setup
-  nodeName: gke-cluster-2-default-pool-b3a56a0d-3dxx
-
+  nodeName: gke-cluster-4-default-pool-dacc3ab3-1x4v
