@@ -30,10 +30,10 @@ spec:
         podconfig:
           limits:
             cpu: 200m
-            memory: 4Gi
+            memory: 2Gi
           requests:
             cpu: 100m
-            memory: 2Gi
+            memory: 1Gi
           nodeSelector: values.nodeName
   # resmonitor identifies the resource instances that should be monitored for CPU/Memory/Storage.
   # All the Pods that are related to the resource instance through either ownerReference relationship, or all the relationships

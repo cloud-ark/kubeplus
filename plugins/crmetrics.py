@@ -127,10 +127,11 @@ class CRMetrics(object):
 				num_of_containers = num_of_containers + len(init_containers)
 		return num_of_containers
 
-	def _parse_persistentvolumeclaims(self, pod_list, namespace):
+	def _parse_persistentvolumeclaims(self, pod_list):
 		total_storage = 0
 		pvc_list = []
 		for pod in pod_list:
+			pvc_details = {}
 			json_output = self._get_pod(pod)
 			if json_output['spec']['volumes']:
 				volumes = json_output['spec']['volumes']
@@ -140,8 +141,12 @@ class CRMetrics(object):
 						pvc_name = pvc['claimName']
 						if pvc_name not in pvc_list:
 							pvc_list.append(pvc_name)
-		for pvc in pvc_list:
-			cmd = "kubectl get pvc " + pvc + ' -n ' + namespace + " -o json"
+							pvc_details['name'] = pvc_name
+							pvc_details['namespace'] = json_output['metadata']['namespace']
+		for pvc in pvc_details:
+			pvc_name = pvc_details['name']
+			pvc_ns = pvc_details['namespace']
+			cmd = "kubectl get pvc " + pvc_name + ' -n ' + pvc_ns + " -o json"
 			out = ''
 			try:
 				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -658,14 +663,16 @@ class CRMetrics(object):
 			pod_json = self._get_pod(pod)
 
             # If nodeName is not present in Pod spec then it means that Pod is not scheduled
-			if 'nodeName' not in pod_json:
+			if 'nodeName' not in pod_json['spec']:
 				continue
 
 			#print(pod_json)
 			podName = pod['Name']
 			nodeName = pod_json['spec']['nodeName']
+			podNS = pod_json['metadata']['namespace']
 			#print("PodName:" + podName)
 			#print("NodeName:" + nodeName)
+			#print("PodNS:" + podNS)
 			networkMetricsCmd = cmd + " " + nodeName
 			try:
 				output = subprocess.Popen(networkMetricsCmd, stdout=subprocess.PIPE,
@@ -735,7 +742,7 @@ class CRMetrics(object):
 		cpu, mem = self._get_cpu_memory_usage(pod_list_for_metrics)
 		storage = 0
 		for p in pod_list_for_metrics:
-			stor = self._parse_persistentvolumeclaims([p], p['Namespace'])
+			stor = self._parse_persistentvolumeclaims([p])
 			storage = storage + stor
 
 		num_of_containers = self._parse_number_of_containers(pod_list_for_metrics)
@@ -824,7 +831,7 @@ class CRMetrics(object):
 		#cpu, memory = self._get_cpu_memory_usage(pod_list)
 		
 		num_of_containers_conn = self._parse_number_of_containers(pod_list)
-		total_storage_conn = self._parse_persistentvolumeclaims(pod_list, namespace)
+		total_storage_conn = self._parse_persistentvolumeclaims(pod_list)
 		num_of_hosts_conn = self._parse_number_of_hosts(pod_list)
 		cpu_conn, memory_conn = self._get_cpu_memory_usage(pod_list)
 		networkReceiveBytesTotal, networkTransmitBytesTotal = self._get_network_usage(pod_list)
@@ -889,7 +896,7 @@ class CRMetrics(object):
 		num_of_containers = self._parse_number_of_containers(pod_list)
 		print("        Number of Containers: " + str(num_of_containers))
 
-		total_storage = self._parse_persistentvolumeclaims(pod_list, namespace)
+		total_storage = self._parse_persistentvolumeclaims(pod_list)
 
 		num_of_hosts = self._parse_number_of_hosts(pod_list)
 		print("        Number of Nodes: " + str(num_of_hosts))
@@ -914,7 +921,7 @@ class CRMetrics(object):
 		# TODO: What should be the namespace parameter for Helm releases?
 		# Currently setting to "default"
 		time1 = int(round(time.time() * 1000))
-		total_storage = self._parse_persistentvolumeclaims(pod_list, "default")
+		total_storage = self._parse_persistentvolumeclaims(pod_list)
 		time2 = int(round(time.time() * 1000))
 		#print("      pvc time:" + str(time2-time1))
 
