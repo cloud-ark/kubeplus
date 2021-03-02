@@ -1,5 +1,5 @@
 # Default value for namespace. 
 namespace: abc
-
+tenantName: test-tenant
 nodeName: test
 

@@ -33,7 +33,7 @@ spec:
     name: wordpress
     env:
     - name: WORDPRESS_DB_HOST
-      value: cluster1-mysql-master
+      value: {{ .Values.tenantName }}-mysql-master
     - name: WORDPRESS_DB_PASSWORD
       value: mypass
     ports:

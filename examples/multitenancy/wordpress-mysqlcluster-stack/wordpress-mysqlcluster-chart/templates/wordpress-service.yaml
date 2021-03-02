@@ -11,5 +11,5 @@ spec:
   selector:
     app: wordpress
     tier: frontend
-  type: ClusterIP
+  type: LoadBalancer
 

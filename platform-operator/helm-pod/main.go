@@ -219,15 +219,17 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 		//fmt.Printf("objData:%v\n", objData)
 		status := objData["status"]
 		fmt.Printf("Status:%v\n", status)
-		helmrelease := getHelmReleaseName(status)
-		fmt.Printf("Helm release:%s\n", helmrelease)
-		if helmrelease != "" {
-			ok := deleteHelmRelease(helmrelease)
-			if ok {
-				fmt.Printf("Helm release deleted...\n")
-				if crName == "" {
-					fmt.Printf("Deleting the object %s\n", objName)
-					dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(objName, &metav1.DeleteOptions{})
+		if status != nil {
+			helmreleaseNS, helmrelease := getHelmReleaseName(status)
+			fmt.Printf("Helm release:%s, %s\n", helmreleaseNS, helmrelease)
+			if helmreleaseNS != "" && helmrelease != "" {
+				ok := deleteHelmRelease(helmreleaseNS, helmrelease)
+				if ok {
+					fmt.Printf("Helm release deleted...\n")
+					if crName == "" {
+						fmt.Printf("Deleting the object %s\n", objName)
+						dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(objName, &metav1.DeleteOptions{})
+					}
 				}
 			}
 		}
@@ -244,9 +246,9 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 	//sync.mutex.Unlock()
 }
 
-func deleteHelmRelease(helmrelease string) bool {
+func deleteHelmRelease(helmreleaseNS, helmrelease string) bool {
 	fmt.Printf("Helm release:%s\n", helmrelease)
-	cmd := "./root/helm delete " + helmrelease
+	cmd := "./root/helm delete " + helmrelease + " -n " + helmreleaseNS
 	fmt.Printf("Helm delete cmd:%s\n", cmd)
 	var output string 
 	namespace := "default" // NAMEspace for the CMD_RUNNER_POD
@@ -434,8 +436,9 @@ func getPrometheusMetrics(kind, customresource, namespace, helmreleaseMetrics st
 }
 */
 
-func getReleaseName(kind, customresource, namespace string) string {
+func getReleaseName(kind, customresource, namespace string) (string, string) {
 	helmrelease := ""
+	helmreleaseNS := ""
 	fmt.Printf("Kind:%s, Instance:%s, Namespace:%s\n", kind, customresource, namespace)
 	derefstring := kind + ":" + customresource
 	fmt.Printf("De-ref string:%s\n", derefstring)
@@ -455,14 +458,16 @@ func getReleaseName(kind, customresource, namespace string) string {
 		fmt.Printf("objData:%v\n", objData)
 		status := objData["status"]
 		fmt.Printf("Status:%v\n", status)
-		helmrelease = getHelmReleaseName(status)
+		helmreleaseNS, helmrelease = getHelmReleaseName(status)
 		fmt.Printf("Helm release2:%s\n", helmrelease)
 	}
-	return helmrelease
+	return helmreleaseNS, helmrelease
 }
 
-func getHelmReleaseName(object interface{}) string {
+func getHelmReleaseName(object interface{}) (string, string) {
 	helmrelease := ""
+	helmreleaseNS := ""
+	helmreleaseName := ""
 	status := object.(map[string]interface{})
 	for key, element := range status {
 		fmt.Printf("Key:%s\n",key)
@@ -470,10 +475,13 @@ func getHelmReleaseName(object interface{}) string {
 		if key == "helmrelease" {
 			helmrelease = element.(string)
 			fmt.Printf("Helm release1:%s\n", helmrelease)
+			parts := strings.Split(helmrelease,":")
+			helmreleaseNS = parts[0]
+			helmreleaseName = parts[1]
 			break
 		}
 	}
-	return helmrelease
+	return helmreleaseNS, helmreleaseName
 }
 
 // ./kubectl exec helmer-677f87c67f-xvzz6 -- ./root/helm install moodle-operator-chart
@@ -507,7 +515,8 @@ func deployChart(request *restful.Request, response *restful.Response) {
 		var sampleclientset platformworkflowclientset.Interface
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
-		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Get(platformWorkflowName, metav1.GetOptions{})
+		resourceCompositionNS := "default"
+		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(resourceCompositionNS).Get(platformWorkflowName, metav1.GetOptions{})
 		fmt.Printf("PlatformWorkflow:%v\n", platformWorkflow1)
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
@@ -549,9 +558,9 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 			lowercaseKind := strings.ToLower(kind)
 	 			releaseName := lowercaseKind + "-" + customresource
 	 			fmt.Printf("Release name:%s\n", releaseName)
-	 			helmInstallCmd := "./root/helm install " + releaseName + " ./" + chartName  + " -f /chart/overrides.yaml "
+	 			helmInstallCmd := "./root/helm install " + releaseName + " ./" + chartName  + " -f /chart/overrides.yaml " + " -n " + namespace
 	 			if dryrun != "" {
-		 			helmInstallCmd = "./root/helm install " + releaseName + " ./" + chartName  + " -f /chart/overrides.yaml " + " --dry-run"			
+		 			helmInstallCmd = "./root/helm install " + releaseName + " ./" + chartName  + " -f /chart/overrides.yaml " + " -n " + namespace + " --dry-run" 		
 	 			}
 	  			fmt.Printf("helm install cmd:%s\n", helmInstallCmd)
 	 			ok, helmReleaseOP := executeExecCall(cmdRunnerPod, namespace, helmInstallCmd)
@@ -645,7 +654,7 @@ func updateStatus(kind, group, version, plural, instance, namespace, releaseName
 		if err == nil {
 			objData := obj.UnstructuredContent()
 			helmrelease := make(map[string]interface{},0)
-			helmrelease["helmrelease"] = releaseName
+			helmrelease["helmrelease"] = namespace + ":" + releaseName
 			objData["status"] = helmrelease
 			obj.SetUnstructuredContent(objData)
 			dynamicClient.Resource(res).Namespace(namespace).Update(obj, metav1.UpdateOptions{})
