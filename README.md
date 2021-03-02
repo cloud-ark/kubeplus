@@ -1,6 +1,6 @@
 ## KubePlus - CRD for CRDs to design multi-tenant platform services from Helm charts
 
-Kubernetes platform engineering teams prepare their clusters for sharing between multiple users and workloads. This requires them to build platform services with appropriate tenant level isolation and resource consumption tracking. The key challenge in building such services is to enable a self-service experience and avoid the dreaded exchange of YAMLs between platform teams and their cluster users.
+Kubernetes platform engineering teams prepare their clusters for sharing between multiple tenants. This requires them to build platform services with appropriate tenant level isolation and resource consumption tracking. The key challenge in building such services is to enable a self-service experience and avoid the dreaded exchange of YAMLs between platform teams and their cluster users.
 KubePlus solves this problem for Kubernetes platform engineering teams.
 It is a framework to create multi-tenant platform services with the required isolation guarantees and per-tenant consumption metrics tracking. KubePlus achieves this by providing a mechanism that takes Helm charts of operational workflows and builds Kubernetes APIs to deliver them as-a-service, along with attaching required policies and Prometheus monitoring to them. The Kubernetes APIs thus created provide platform engineering teams a Kubernetes-native way to create, govern and monitor multitenant environments on their clusters.
 
@@ -18,7 +18,7 @@ KubePlus has two components:
 KubePlus offers a CRD named ResourceComposition to 
 - Compose new CRDs (Custom Resource Definition) to publish platform services from Helm charts
 - Define policies (e.g. Node selection, CPU/Memory limits, etc.) for managing resources of the platform services
-- Get aggregated CPU/Memory/Storage Prometheus metrics for the platform services
+- Get aggregated CPU/Memory/Storage/Network Prometheus metrics for the platform services
 Here is the high-level structure of ResourceComposition CRD: 
 
 <p align="center">
@@ -37,7 +37,7 @@ The platform workflow requirements are:
 - Create Secret objects for MySQL instance and AWS backup.
 - Create a MySQL instance with a backup target as AWS S3 bucket.
 - Setup a policy in such a way that Pods created under this service will have specified Resource Request and Limits.  
-- Get aggregated CPU/Memory metrics for the overall workflow.
+- Get aggregated CPU/Memory/Storage/Network metrics for the overall workflow.
 
 Here is a new platform service named MysqlService as Kubernetes API. 
 
@@ -52,19 +52,19 @@ Product teams can use this service to get MySQL database for their application a
 ### 2. Kubectl plugins to visualize platform workflows
 
 KubePlus kubectl plugins enable users to discover, monitor and troubleshoot resource relationships in a platform workflow. The plugins run entirely client-side and do not require the in-cluster component. The primary plugin of this functionality is: 
-```kubectl connections```. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus is able to runtime construct Kubernetes Resource relationship graphs. This enables KubePlus to build resource topologies and offer fine grained visibility and control over the platform service.
+```kubectl connections```. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus is able to  construct Kubernetes Resource relationship graphs at runtime. This enables KubePlus to build resource topologies and offer fine grained visibility and control over the platform service.
 
 Here is the resource relationship graph for MysqlSevice created above discovered using the ```kubectl connections``` command. 
-```kubectl connections MysqlService mysql1'```.
+```kubectl connections MysqlService mysql1```.
 
 <p align="center">
 <img src="./docs/mysqlservice-connections.png" width="750" height="300" class="center">
 </p>
 
 We have additional plugins such as ```kubectl metrics``` and ```kubectl grouplogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the platform workflow.
-You can also directly get CPU/Memory/Storage metrics in Prometheus format if you setup ```ResourceMonitor``` while creating your new CRD.
+You can also directly get CPU/Memory/Storage/Network metrics in Prometheus format if you setup ```ResourceMonitor``` while creating your new CRD.
 
-[Here](./kubeplus-kubectl-commands.md) are all the kubeplus kubectl commands.
+More details about ```ResourceComposition``` CRD and other KubePlus details are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html).
 
 
 ## Try it:
@@ -82,6 +82,8 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
    $ kubectl kubeplus commands
 ```
 
+[Here](./kubeplus-kubectl-commands.md) are all the kubeplus kubectl commands.
+
 - Install KubePlus server-side component for before trying out below examples:
     ```
     - git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
@@ -93,16 +95,13 @@ You can also directly get CPU/Memory/Storage metrics in Prometheus format if you
   - Example outlined above is [here](./examples/resource-composition/steps.txt).
 
 - Multitenancy examples:
-  - Multiple [application stacks](./examples/multitenancy/stacks/steps.txt)
+  - [Wordpress stacks](./examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt)
+  - [Mysql stacks](./examples/multitenancy/stacks/steps.txt)
+  - [MongoDB stacks](./examples/multitenancy/mongodb-as-a-service/steps.md)
   - Multiple [teams](./examples/multitenancy/team/steps.txt) with applications deployed later
-
-- KubePlus documentation on [Github Pages](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html)
 
 Note: To obtain metrics, enable Kubernetes Metrics API Server on your cluster. Hosted Kubernetes solutions like GKE has this already installed.
 
-## More details
-
-Check [this](./details.rst) for additional details of KubePlus architecture, comparison, etc.
 
 ## Platform-as-Code
 
