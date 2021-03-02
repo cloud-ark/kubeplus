@@ -20,6 +20,8 @@ Available commands:
 
 kubectl connections <Kind> <Instance> <Namespace> [--kubeconfig=<Absolute path to kubeconfig>] [-o json|png] (default value='flat') [--ignore=<Kind1:Instance1,Kind1:Instance1>]
 
+Ignore list enables ignoring the specified kinds and their instances when discovering the graph.
+
 ---
 
 2. kubectl man <Custom Resource Kind> - Get Man page information about a Custom Resource
