@@ -1,11 +1,11 @@
 apiVersion: mysql.presslabs.org/v1alpha1
 kind: MysqlCluster
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Values.tenantName }}
   namespace: {{ .Values.namespace }}
 spec:
   replicas: 1 
-  secretName: {{ .Release.Name }}-secret
+  secretName: {{ .Values.tenantName }}-secret
   #backupSchedule: "1 * * * *"
   #backupURL: s3://cloudark-moodle/mysql-backups
   #backupSecretName: backups-aws-secret

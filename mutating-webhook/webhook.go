@@ -518,9 +518,13 @@ func getAPIDetailsFromHelmReleaseAnnotation(releaseName string) (string, string,
 	capiVersion := ""
 
 	parts := strings.Split(releaseName, "-")
-	if len(parts) == 2 {
+	if len(parts) >= 2 {
 		okindLowerCase := parts[0]
-		oinstance = parts[1]
+		if len(parts) > 2 {
+			oinstance = strings.Join(parts[1:],"-")
+		} else if len(parts) == 2 {
+			oinstance = parts[1]
+		}
 		fmt.Printf("KindPluralMap2:%v\n", kindPluralMap)
 		oplural := kindPluralMap[okindLowerCase]
 		fmt.Printf("OPlural:%s OInstance:%s\n", oplural, oinstance)
