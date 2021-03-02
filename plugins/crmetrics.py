@@ -133,6 +133,8 @@ class CRMetrics(object):
 		for pod in pod_list:
 			pvc_details = {}
 			json_output = self._get_pod(pod)
+			#print(json_output)
+			#print("--------\n")
 			if json_output['spec']['volumes']:
 				volumes = json_output['spec']['volumes']
 				for v in volumes:
@@ -143,31 +145,33 @@ class CRMetrics(object):
 							pvc_list.append(pvc_name)
 							pvc_details['name'] = pvc_name
 							pvc_details['namespace'] = json_output['metadata']['namespace']
-		for pvc in pvc_details:
-			pvc_name = pvc_details['name']
-			pvc_ns = pvc_details['namespace']
-			cmd = "kubectl get pvc " + pvc_name + ' -n ' + pvc_ns + " -o json"
-			out = ''
-			try:
-				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-									   stderr=subprocess.PIPE, shell=True).communicate()[0]
-				out = out.decode('utf-8')
-				out = out.strip("\n")
-			except Exception as e:
-				print(e)
-			if out != '':
-				json_output = json.loads(out)
-				if 'status' in json_output:
-					phase = json_output['status']['phase']
-					if phase == "Bound":
-						if 'capacity' in json_output['status']:
-							capacity = json_output['status']['capacity']
-							storage = capacity['storage']
-							#print("Storage:" + storage)
-							temp = re.findall(r'\d+', storage) 
-							storage_nums = list(map(int, temp))
-							#print(storage_nums)
-							total_storage = total_storage + storage_nums[0]
+
+		if len(pod_list) > 0:
+			for pvc in pvc_details:
+				pvc_name = pvc_details['name']
+				pvc_ns = pvc_details['namespace']
+				cmd = "kubectl get pvc " + pvc_name + ' -n ' + pvc_ns + " -o json"
+				out = ''
+				try:
+					out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+										   stderr=subprocess.PIPE, shell=True).communicate()[0]
+					out = out.decode('utf-8')
+					out = out.strip("\n")
+				except Exception as e:
+					print(e)
+				if out != '':
+					json_output = json.loads(out)
+					if 'status' in json_output:
+						phase = json_output['status']['phase']
+						if phase == "Bound":
+							if 'capacity' in json_output['status']:
+								capacity = json_output['status']['capacity']
+								storage = capacity['storage']
+								#print("Storage:" + storage)
+								temp = re.findall(r'\d+', storage) 
+								storage_nums = list(map(int, temp))
+								#print(storage_nums)
+								total_storage = total_storage + storage_nums[0]
 		return total_storage
 
 	def _get_cpu_memory_usage(self, pod_list):
@@ -881,6 +885,8 @@ class CRMetrics(object):
 			print("    Total CPU(cores): " + str(cpu) + "m")
 			print("    Total MEMORY(bytes): " + str(memory) + "Mi")
 			print("    Total Storage(bytes): " + str(total_storage) + "Gi")
+			print("    Total Network bytes received: " + str(networkReceiveBytesTotal))
+			print("    Total Network bytes transferred: " + str(networkTransmitBytesTotal))
 			print("---------------------------------------------------------- ")
 		else:
 			print("Unknown output format specified. Accepted values: pretty, json, prometheus")
