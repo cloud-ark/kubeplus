@@ -12,6 +12,7 @@ output=$5
 
 if [[ $output != "pretty" && $output != "json" && $output != "prometheus" ]]; then
 	echo "Unknown output format specified $output. Accepted values: pretty, json, prometheus"
+    echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
 	exit 0
 fi
 
@@ -22,7 +23,8 @@ if [ $# == 6 ]; then
 	if [[ $connection_flag == "--follow-connections" ]]; then
 		follow_connections=true
 	else
-		echo "Unknown flag specified $connection_flag. Accepted value: --follow-connections" 
+		echo "Unknown flag specified $connection_flag. Accepted value: --follow-connections"
+	    echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
 		exit 0
 	fi
 fi
