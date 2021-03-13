@@ -15,6 +15,10 @@ Once the cluster is ready, install KubePlus
 Check KubePlus status:
 - kubectl get pods (verify if kubeplus Pod shows as 5/5 Running)
 
+- Install MysqlCluster Operator on the cluster
+  - helm install mysqloperator https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-6.tgz?raw=true
+
+
 Once KubePlus is running open a proxy to connect to KubePlus
 - Open a new terminal and run:
   - kubectl port-forward  kubeplus -n default 8081:8090
@@ -28,7 +32,7 @@ Create WordPressStack Custom Resource Definition (CRD)
   - If required modify the Pod policies in the podconfig section (cpu/memory requests and limits) 
   - kubectl create -f wordpress-service-composition.yaml
 - Verify WordpressStack CRD registered
-  - kubectl get crds | grep 'wordperss' 
+  - kubectl get crds | grep 'wordpress' 
 
 
 Create Tenant1 Wordpress stack: 
