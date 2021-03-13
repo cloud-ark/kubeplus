@@ -89,6 +89,7 @@ More details about ```ResourceComposition``` CRD and other KubePlus details are 
     - git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
     - cd kubeplus/deploy
     - ./deploy-kubeplus.sh
+    - helm install kubeplus kubeplus-chart --set caBundle=$(kubectl config view --raw --flatten -o json |  sed 's/certificate-authority-data/certificateauthdata/'g | jq -r '.clusters[] | select(.name == "'$(kubectl config current-context)'") | .cluster.certificateauthdata')
     ```
 
 - CRD for CRDs:
