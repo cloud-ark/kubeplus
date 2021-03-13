@@ -16,8 +16,10 @@ if [ "$artifacttype" = "versioned" ]; then
     version=`tail -1 versions.txt`
     echo "Building version $version"
     export GOOS=linux; go build .
-    docker build -t lmecld/mutating-webhook-helper:$version .
-    docker push lmecld/mutating-webhook-helper:$version
+    #docker build -t lmecld/mutating-webhook-helper:$version .
+    #docker push lmecld/mutating-webhook-helper:$version
+    docker build --no-cache -t gcr.io/cloudark-kubeplus/mutating-webhook-helper:$version .
+    docker push gcr.io/cloudark-kubeplus/mutating-webhook-helper:$version
 fi
 
 

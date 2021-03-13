@@ -18,8 +18,8 @@ if [ "$artifacttype" = "versioned" ]; then
     CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o crd-hook
     #docker build --no-cache -t lmecld/pac-mutating-admission-webhook:$version .
     #docker push lmecld/pac-mutating-admission-webhook:$version
-    docker build --no-cache -t gcr.io/disco-horizon-103614/pac-mutating-admission-webhook:$version .
-    docker push gcr.io/disco-horizon-103614/pac-mutating-admission-webhook:$version
+    docker build --no-cache -t gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:$version .
+    docker push gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:$version
 fi
 
 
