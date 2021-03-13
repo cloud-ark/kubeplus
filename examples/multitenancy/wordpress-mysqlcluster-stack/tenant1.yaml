@@ -7,4 +7,4 @@ spec:
   namespace: wp-stack-ns1
   tenantName: tenant1
   # Change this value appropriately for your setup
-  nodeName: gke-cluster-4-default-pool-dacc3ab3-1x4v
+  nodeName: gke-cluster-1-default-pool-b0ecddac-bqs2
