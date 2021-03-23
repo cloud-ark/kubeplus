@@ -6,10 +6,19 @@
 Welcome to KubePlus documentation
 ====================================
 
-KubePlus enables creating Kubernetes-style APIs from Helm charts with the ability to define policies and monitoring for the resources defined in the charts. 
-Helm charts can contain any valid Kubernetes resource (built-in or custom). For custom resources defined in a chart, KubePlus assumes that the corresponding Operator is already installed on the cluster.
+KubePlus is a framework to create managed services from Helm charts. It consists of a Kubernetes Operator that enables Platform Engineering teams to create new Kubernetes CRDs wrapping Helm charts with policies and monitoring controls. Platform Engineering teams are able to offer a SaaS like experience for any application stack packaged as a Helm chart with this. It enables them to create a Helm release per tenant with tenant isolation, tenant level policy and tenant level consumption tracking.
 
-KubePlus simplifies creating multi-tenant SaaS application stacks with the required governance and monitoring defined per tenant. Think WordPress-as-a-Service with different Wordpress stacks created for different tenants, where the Wordpress stack is defined as a Helm chart. The second use case of KubePlus is when Platform Engineering teams want to share an opinionated Kubernetes workflow with their users. Platform teams can create a Kubernetes-style API wrapping the Helm chart representing such a  workflow and define required policies and monitoring for it. When users consume this API, KubePlus enables the Platform team to transaparently configure and monitor the resources that are created as part of the underlying Helm releases.
+Think WordPress-as-a-Service with different Wordpress stacks created for different tenants, where the Wordpress stack is defined as a Helm chart.
+
+Here are primary use cases of KubePlus:
+
+-Enterprise platform engineering teams delivering software stack as a service to their internal clients.
+
+-ISVs delivering managed service for their software on any managed Kubernetes service on public clouds.
+
+-ISVs accelerate building multi-tenant SaaS for their software on Kubernetes.
+
+
 
 Next section provides details about KubePlus components.
 
