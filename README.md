@@ -10,9 +10,9 @@ Today Platform Engineering teams are dealing with a wide variety of Helm charts 
 It consists of a Kubernetes Operator that enables Platform Engineering teams to create new Kubernetes CRDs wrapping Helm charts with policies and monitoring controls. Platform Engineering teams are able to offer a SaaS like experience for any application stack packaged as a Helm chart with this. It enables them to create a Helm release per tenant with tenant isolation, tenant level policy and tenant level consumption tracking. 
 
 Here are primary use cases of KubePlus:
--Enterprise platform engineering teams delivering software stack as a service to their internal clients.
--ISVs delivering managed service for their software on any managed Kubernetes service on public clouds.
--ISVs accelerate building multi-tenant SaaS for their software on Kubernetes.
+- Enterprise platform engineering teams delivering software stack as a service to their internal clients.
+- ISVs delivering managed service for their software on any managed Kubernetes service on public clouds.
+- ISVs accelerate building multi-tenant SaaS for their software on Kubernetes.
 
 
 ## KubePlus components
