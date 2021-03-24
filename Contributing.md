@@ -36,14 +36,8 @@ File an Issue with following information:
 
   * Error log output
 
-    * kubectl logs kubeplus-apiserver-pod
-
-    * kubectl logs kubeplus-apiserver-pod -c kube-discovery-apiserver
-
-    * kubectl logs kubeplus-mutating-webhook-pod
+    * kubectl logs kubeplus 
 
   * Sample YAMLs that you were using
 
-  * Image tags from deploy/rc.yaml, platform-operator/artifacts/deployment/deployment.yaml,
-    mutating-webhook/deployment/deployment.yaml, mutating-webhook-helper/deployment.yaml
-
+  * Image tags from deploy/rc.yaml, platform-operator/artifacts/deployment/deployment.yaml, mutating-webhook/deployment/deployment.yaml, mutating-webhook-helper/deployment.yaml
