@@ -1,17 +1,26 @@
 ## KubePlus - CRD for CRDs to design multi-tenant platform services from Helm charts
 
-Kubernetes platform engineering teams prepare their clusters for sharing between multiple tenants. This requires them to build platform services with appropriate tenant level isolation and resource consumption tracking. The key challenge in building such services is to enable a self-service experience and avoid the dreaded exchange of YAMLs between platform teams and their cluster users.
-KubePlus solves this problem for Kubernetes platform engineering teams.
-It is a framework to create multi-tenant platform services with the required isolation guarantees and per-tenant consumption metrics tracking. KubePlus achieves this by providing a mechanism that takes Helm charts of operational workflows and builds Kubernetes APIs to deliver them as-a-service, along with attaching required policies and Prometheus monitoring to them. The Kubernetes APIs thus created provide platform engineering teams a Kubernetes-native way to create, govern and monitor multitenant environments on their clusters.
+Today Platform Engineering teams are dealing with a wide variety of Helm charts coming from different sources - open source repositories, software vendors, Cloud marketplaces, or enterprise internal stakeholders. They are required to offer managed services for these application stacks packaged as Helm charts by taking care of the day2 operations post deployment. KubePlus is designed to simplify this task of creating a managed service from a Helm chart. 
 
 <p align="center">
-<img src="./docs/platform-team-challenge.png" width="500" height="250" class="center">
+<img src="./docs/application-stacks.png" width="500" height="250" class="center">
 </p>
+
+
+It consists of a Kubernetes Operator that enables Platform Engineering teams to create new Kubernetes CRDs wrapping Helm charts with policies and monitoring controls. Platform Engineering teams are able to offer a SaaS like experience for any application stack packaged as a Helm chart with this. It enables them to create a Helm release per tenant with tenant isolation, tenant level policy and tenant level consumption tracking. 
+
+Here are primary use cases of KubePlus:
+
+-Enterprise platform engineering teams delivering software stack as a service to their internal clients.
+-ISVs delivering managed service for their software on any managed Kubernetes service on public clouds.
+-ISVs accelerate building multi-tenant SaaS for their software on Kubernetes.
 
 
 ## KubePlus components
 
-KubePlus has two components: 
+KubePlus has two components, which are briefly described below.
+Details about these components are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html).
+
 
 ### 1. CRD for CRDs to design your platform services from Helm charts
 
@@ -63,8 +72,6 @@ Here is the resource relationship graph for MysqlSevice created above discovered
 
 We have additional plugins such as ```kubectl metrics``` and ```kubectl grouplogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the platform workflow.
 You can also directly get CPU/Memory/Storage/Network metrics in Prometheus format if you setup ```ResourceMonitor``` while creating your new CRD.
-
-More details about ```ResourceComposition``` CRD and other KubePlus details are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html).
 
 
 ## Try it:
