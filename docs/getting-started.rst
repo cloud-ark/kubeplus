@@ -42,3 +42,9 @@ Getting Started
    - Install Helm version 3.0+
    - Create Helm chart and make it available at a publicly accessible URL
    - Follow steps similar to above examples
+
+6. Contributing:
+   
+   We would love your contributions. The process is simple_.
+
+.. _simple: https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md
