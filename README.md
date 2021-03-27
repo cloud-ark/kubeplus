@@ -41,7 +41,7 @@ The MySQL Operator is assumed to be installed on the cluster.
 KubePlus takes Helm chart and other policy and monitoring inputs through ResourceComposition CRD as shown below to deliver a new CRD for Wordpress as-a-Service. 
 
 <p align="center">
-<img src="./docs/wordpress-saas.png" width="400" height="250" class="center">
+<img src="./docs/wordpress-saas.png" class="center">
 </p>
 
 Here is a new platform service named WordpressService. 
@@ -67,7 +67,7 @@ Here is the resource relationship graph for WordpressService instance discovered
 ```kubectl connections WordpressService wp-service-tenant1```.
 
 <p align="center">
-<img src="./docs/wordpress-service-connections.png" width="750" height="300" class="center">
+<img src="./docs/wordpress-service-connections.png" class="center">
 </p>
 
 We have additional plugins such as ```kubectl metrics``` and ```kubectl grouplogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the platform workflow.
