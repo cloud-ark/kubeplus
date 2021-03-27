@@ -30,7 +30,7 @@ Steps:
 
 4) ./deploy-kubeplus.sh
 
-5) Wait till kubeplus is ready (5/5 Ready containers)
+5) Wait till kubeplus is ready (4/4 Ready containers)
    - kubectl get pods
 
 6) cd examples/moodle

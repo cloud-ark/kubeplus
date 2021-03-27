@@ -1,8 +1,9 @@
 apiVersion: platformapi.kubeplus/v1alpha1
 kind: WordpressService 
 metadata:
-  name: wp-service-tenant2 
+  name: wp-service-tenant2
+  namespace: wp-stack-ns2
 spec:
   namespace: wp-stack-ns2
   tenantName: tenant2
-  nodeName: gke-cluster-4-default-pool-dacc3ab3-l93m
+  nodeName: gke-cluster-1-default-pool-b0ecddac-bqs2 

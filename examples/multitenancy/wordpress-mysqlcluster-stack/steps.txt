@@ -1,5 +1,8 @@
 Setup:
 ------
+Install Helm v3
+Install jq
+
 Clone KubePlus repo:
 - git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
 
@@ -8,20 +11,25 @@ Create a two node GKE cluster
   - Modify the script as needed
 
 Once the cluster is ready, install KubePlus
+
 - cd kubeplus/deploy
 - ./deploy-kubeplus.sh
 - cd ../
 
 Check KubePlus status:
-- kubectl get pods (verify if kubeplus Pod shows as 5/5 Running)
-
-- Install MysqlCluster Operator on the cluster
-  - helm install mysqloperator https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-6.tgz?raw=true
-
+- kubectl get pods (verify if kubeplus Pod shows as 4/4 Running)
 
 Once KubePlus is running open a proxy to connect to KubePlus
 - Open a new terminal and run:
   - kubectl port-forward  kubeplus -n default 8081:8090
+
+Install KubePlus kubectl plugins:
+- export KUBEPLUS_HOME=`pwd` (the kubeplus directory.)
+- export PATH=$KUBEPLUS_HOME/plugins/:$PATH
+- kubectl kubeplus commands
+
+- Install MysqlCluster Operator on the cluster
+  - helm install mysqloperator https://github.com/cloud-ark/operatorcharts/blob/master/mysql-operator-0.2.5-7.tgz?raw=true
 
 
 Create new API:
@@ -32,7 +40,8 @@ Create WordPressStack Custom Resource Definition (CRD)
   - If required modify the Pod policies in the podconfig section (cpu/memory requests and limits) 
   - kubectl create -f wordpress-service-composition.yaml
 - Verify WordpressStack CRD registered
-  - kubectl get crds | grep 'wordpress' 
+  - kubectl get crds | grep 'wordpress'
+  - Wait till the CRD is not created (CRD name to look for: wordpressservices.platformapi.kubeplus)
 
 
 Create Tenant1 Wordpress stack: 
@@ -42,7 +51,7 @@ Deploy WordPressService for tenant1
 - Choose a node name and add it to 'nodeName' attribute to tenant1.yaml
 - Create namespace
   - kubectl create ns wp-stack-ns1
-- Check/modify the namespace defined in tenant1.yaml
+- Check/modify the namespace defined in tenant1.yaml if required.
   - kubectl create -f tenant1.yaml
 
 Verify that WP instance is created:
@@ -92,19 +101,19 @@ Verify policy:
 - kubectl get pods wordpress-pod -n wp-stack-ns2 -o json | jq -r '.spec.nodeName'
 
 Retrieve consumption metrics:
-- curl -kv "http://127.0.0.1:8081/apis/kubeplus/metrics?kind=WordpressService&instance=tenant2&namespace=default"
+- curl -kv "http://127.0.0.1:8081/apis/kubeplus/metrics?kind=WordpressService&instance=wp-service-tenant2&namespace=wp-stack-ns2"
 
-   cpu{custom_resource="tenant2"} 22 1614516379943
-   memory{custom_resource="tenant2"} 288 1614516379943
-   storage{custom_resource="tenant2"} 2 1614516379943
-   pods{custom_resource="tenant2"} 2 1614516379943
-   containers{custom_resource="tenant2"} 8 1614516379943
-   network_receive_bytes_total{custom_resource="tenant2"} 404525.0 1614516379943
-   network_transmit_bytes_total{custom_resource="tenant2"} 540887.0 1614516379943
+   cpu{custom_resource="wp-service-tenant2"} 22 1614516379943
+   memory{custom_resource="wp-service-tenant2"} 288 1614516379943
+   storage{custom_resource="wp-service-tenant2"} 2 1614516379943
+   pods{custom_resource="wp-service-tenant2"} 2 1614516379943
+   containers{custom_resource="wp-service-tenant2"} 8 1614516379943
+   network_receive_bytes_total{custom_resource="wp-service-tenant2"} 404525.0 1614516379943
+   network_transmit_bytes_total{custom_resource="wp-service-tenant2"} 540887.0 1614516379943
 
 
 Visualize Topology:
-- kubectl connections WordpressService tenant2 default -o png --ignore=ServiceAccount:default,Namespace:default
+- kubectl connections WordpressService wp-service-tenant2 wp-stack-ns2 -o png --ignore=ServiceAccount:default,Namespace:default
 
   - Check the generated png file. For reference check tenant2.png
 
