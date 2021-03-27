@@ -79,7 +79,7 @@ $ ./deploy-kubeplus.sh
 </ul>
 </li>
 </ol>
-<ol class="arabic" start="5">
+<ol class="arabic simple" start="5">
 <li><p>Try with your own Helm chart:</p>
 <ul class="simple">
 <li><p>Install Helm version 3.0+</p></li>
@@ -87,6 +87,17 @@ $ ./deploy-kubeplus.sh
 <li><p>Follow steps similar to above examples</p></li>
 </ul>
 </li>
+<li><p>Debug:</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>kubectl logs kubeplus -c crd-hook</p></li>
+<li><p>kubectl logs kubeplus -c helmer</p></li>
+<li><p>kubectl logs kubeplus -c platform-operator</p></li>
+<li><p>kubectl logs kubeplus -c webhook-cert-setup</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic" start="7">
 <li><p>Contributing:</p>
 <p>We would love your contributions. The process is <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md">simple</a>.</p>
 </li>

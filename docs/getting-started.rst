@@ -43,7 +43,15 @@ Getting Started
    - Create Helm chart and make it available at a publicly accessible URL
    - Follow steps similar to above examples
 
-6. Contributing:
+6. Debug:
+
+  - kubectl logs kubeplus -c crd-hook
+  - kubectl logs kubeplus -c helmer
+  - kubectl logs kubeplus -c platform-operator
+  - kubectl logs kubeplus -c webhook-cert-setup
+
+
+7. Contributing:
    
    We would love your contributions. The process is simple_.
 
