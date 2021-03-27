@@ -36,7 +36,13 @@ File an Issue with following information:
 
   * Error log output
 
-    * kubectl logs kubeplus 
+    * Include container logs:
+  ```
+    - kubectl logs kubeplus -c crd-hook
+    - kubectl logs kubeplus -c helmer
+    - kubectl logs kubeplus -c platform-operator
+    - kubectl logs kubeplus -c webhook-cert-setup
+  ```
 
   * Sample YAMLs that you were using
 

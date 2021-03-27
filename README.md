@@ -99,6 +99,7 @@ Note - to obtain metrics, enable Kubernetes Metrics API Server on your cluster. 
     - cd kubeplus/deploy
     - ./deploy-kubeplus.sh
     - We also provide a Helm chart
+      - Install Helm version 3
       - helm install kubeplus kubeplus-chart --set caBundle=$(kubectl config view --raw --flatten -o json |  sed 's/certificate-authority-data/certificateauthdata/'g | jq -r '.clusters[] | select(.name == "'$(kubectl config current-context)'") | .cluster.certificateauthdata')
     ```
 
@@ -111,6 +112,13 @@ Note - to obtain metrics, enable Kubernetes Metrics API Server on your cluster. 
   - [MongoDB stacks](./examples/multitenancy/mongodb-as-a-service/steps.md)
   - Multiple [teams](./examples/multitenancy/team/steps.txt) with applications deployed later
 
+- Debug (check container logs):
+  ```
+  - kubectl logs kubeplus -c crd-hook
+  - kubectl logs kubeplus -c helmer
+  - kubectl logs kubeplus -c platform-operator
+  - kubectl logs kubeplus -c webhook-cert-setup
+  ```
 
 ## Platform-as-Code
 

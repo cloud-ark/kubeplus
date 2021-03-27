@@ -31,8 +31,6 @@ Next section provides details about KubePlus components.
    operators
    community
    comparison
-   contact
-   faq
 
 ..   roadmap
 ..   examples
