@@ -35,39 +35,39 @@ Here is the high-level structure of ResourceComposition CRD:
 <img src="./docs/crd-for-crds.png" width="650" height="250" class="center">
 </p>
 
-To understand this further let us see how a platform team can build a MySQL service for their product team/s to consume. The base Kubernetes cluster has MySQL Operator on it (either installed by the Platform team or bundled by the Kubernetes provider).
+To understand this further let us see how a multi-tenant platform service can be created from WordPress Deployment Helm chart. The Helm chart 
+creates wordpress pod that depends on a MySQL custom resource. 
+The MySQL Operator is assumed to be installed on the cluster.
+KubePlus takes Helm chart and other policy and monitoring inputs through ResourceComposition CRD as shown below to deliver a new CRD for Wordpress as-a-Service. 
 
 <p align="center">
-<img src="./docs/mysql-as-a-service.png" width="400" height="250" class="center">
+<img src="./docs/wordpress-saas.png" width="400" height="250" class="center">
 </p>
 
-
-The platform workflow requirements are: 
-- Create a PersistentVolume of required type for MySQL instance. 
-- Create Secret objects for MySQL instance and AWS backup.
-- Create a MySQL instance with a backup target as AWS S3 bucket.
-- Setup a policy in such a way that Pods created under this service will have specified Resource Request and Limits.  
-- Get aggregated CPU/Memory/Storage/Network metrics for the overall workflow.
-
-Here is a new platform service named MysqlService. 
+Here is a new platform service named WordpressService. 
 
 <p align="center">
-<img src="./docs/mysql-as-a-service-crd.png" width="650" height="250" class="center">
+<img src="./docs/wordpress-service-crd.png" width="650" height="250" class="center">
 </p>
 
-A new CRD named MysqlService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources, and additionally provide policy and monitoring inputs for the workflow. The Spec Properties of MysqlService come from values.yaml of the Helm chart. 
-Product teams can use this service to get MySQL database for their application and all the required setups will be performed transparently by this service.
+A new CRD named WordpressService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources, and additionally provide policy and monitoring inputs for the workflow. The Spec Properties of WordpressService come from values.yaml of the Helm chart.
+
+<p align="center">
+<img src="./docs/wordpress-service-tenant1.png" width="650" height="250" class="center">
+</p>
+
+Here is a YAML definition that allows us to create first tenant using newly created WordpressService CRD.
 
 
 ### 2. Kubectl plugins to visualize platform workflows
 
 KubePlus kubectl plugins enable users to discover, monitor and troubleshoot resource relationships in a platform workflow. The plugins run entirely client-side and do not require the in-cluster component. The primary plugin is: ```kubectl connections```. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus constructs Kubernetes Resource relationship graphs at runtime providing it the ability to build resource topologies and offer fine grained visibility and control over the platform service.
 
-Here is the resource relationship graph for MysqlSevice instance discovered using the ```kubectl connections``` command. 
-```kubectl connections MysqlService mysql1```.
+Here is the resource relationship graph for WordpressService instance discovered using the ```kubectl connections``` command. 
+```kubectl connections WordpressService wp-service-tenant1```.
 
 <p align="center">
-<img src="./docs/mysqlservice-connections.png" width="750" height="300" class="center">
+<img src="./docs/wordpress-service-connections.png" width="750" height="300" class="center">
 </p>
 
 We have additional plugins such as ```kubectl metrics``` and ```kubectl grouplogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the platform workflow.
@@ -102,9 +102,6 @@ Note - to obtain metrics, enable Kubernetes Metrics API Server on your cluster. 
       - Install Helm version 3
       - helm install kubeplus kubeplus-chart --set caBundle=$(kubectl config view --raw --flatten -o json |  sed 's/certificate-authority-data/certificateauthdata/'g | jq -r '.clusters[] | select(.name == "'$(kubectl config current-context)'") | .cluster.certificateauthdata')
     ```
-
-- CRD for CRDs:
-  - Example outlined above is [here](./examples/resource-composition/steps.txt).
 
 - Multitenancy examples:
   - [Wordpress stacks](./examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt)
