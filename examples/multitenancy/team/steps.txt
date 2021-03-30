@@ -1,6 +1,19 @@
 Team-level multi-tenancy:
 -------------------------
 
+- Create a GKE cluster
+- Install Docker on your machine
+- Install Helmv3
+
+
+- git clone  --depth 1 https://github.com/cloud-ark/kubeplus
+- Install KubePlus kubectl plugins
+  - export KUBEPLUS_HOME=`pwd`
+  - export PATH=$KUBEPLUS_HOME/plugins/:$PATH
+- Install KubePlus server-side component
+  - cd deploy/
+  - ./deploy-kubeplus.sh
+
 Create different Namespaces with different resource requests for CPU and Memory
 for all the Pods created in that Namespace.
 

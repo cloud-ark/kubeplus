@@ -15,7 +15,7 @@ Setup:
 
 
 - git clone  --depth 1 https://github.com/cloud-ark/kubeplus
-- Install KubePlus client-side kubectl plugins
+- Install KubePlus kubectl plugins
   - export KUBEPLUS_HOME=`pwd`
   - export PATH=$KUBEPLUS_HOME/plugins/:$PATH
 - Install KubePlus server-side component

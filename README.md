@@ -78,7 +78,7 @@ You can also directly get CPU/Memory/Storage/Network metrics in Prometheus forma
 
 - Getting started:
 
-  - Try ```kubectl connections``` plugin in your environment. It can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).
+  - Install KubePlus kubectl plugins. They can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).
 
 ```
    $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
