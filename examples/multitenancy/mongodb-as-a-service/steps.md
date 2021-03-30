@@ -3,7 +3,9 @@
 - Install Docker 
 - Install Helm v3
 - Create a cluster
-- Install KubePlus
+- Install KubePlus kubectl plugins
+- Install KubePlus server-side component
+
 
 ## Deploy Mongodb Operator
 
