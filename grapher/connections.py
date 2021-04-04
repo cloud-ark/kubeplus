@@ -1,5 +1,8 @@
 import sys
 import json
+import subprocess
+import sys
+import os
 from graphviz import Digraph
 from graphviz import Graph
 
@@ -7,9 +10,13 @@ class ConnectionsGraph(object):
 
 	def draw(self, connections_json, output_folder):
 		#print(connections_json)
+		cmd = "ls -ltr /root/"
+		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+		#print(out)
 		fp = open(output_folder + "/" + connections_json, "r")
 		json_data = fp.read()
 		json_output = json.loads(json_data)
+		#print(json_output)
 
 		nodemap = {}
 		for n in json_output:
@@ -52,15 +59,17 @@ class ConnectionsGraph(object):
 					if relationshipType == 'owner reference':
 						color = 'blue'
 					dot.edge(fqpeername, fqnodename, color=color, label=relationshipType)
-					dot.edge
 
 		# Create edges
 		#dot.edges(['AB', 'AL'])
 		#dot.edge('B', 'L', constraint='false')
+		#print(dot.source)
 
 		filename = connections_json + ".gv"
-		dot.render(filename, view=False)
-		print("Output available in " + filename + "." + opformat)
+		rendered_file_path = dot.render('/root/' + filename, view=False)
+		#print("FILENAME:" + filename)
+		#print("Rendered file path:" + rendered_file_path)
+		#print("Output available in " + filename + "." + opformat)
 
 		#fp1 = open(output_folder + "/abc.txt", "w")
 		#fp1.write(connections_json)

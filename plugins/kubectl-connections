@@ -78,7 +78,7 @@ fi
 if [[ "$OSTYPE" == "darwin"* ]]; then
     if [[ "$output" == "png" ]]; then
       /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace -o json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
-      docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:latest connections-op.json /root/
+      docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.0 connections-op.json /root/
       echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
     else
       /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace -o $output $kubeconfig $ignorelist
@@ -86,7 +86,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     if [[ "$output" == "png" ]]; then
       /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
-      docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:latest connections-op.json /root/
+      docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.0 connections-op.json /root/
       echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
     else
       /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o $output $kubeconfig $ignorelist
