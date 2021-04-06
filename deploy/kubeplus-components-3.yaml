@@ -81,7 +81,7 @@ spec:
     imagePullPolicy: Always
     command: [ "/platform-operator"]
   - name: helmer
-    image: gcr.io/cloudark-kubeplus/helm-pod:0.0.7
+    image: gcr.io/cloudark-kubeplus/helm-pod:0.0.8
     #image: lmecld/helm-pod:latest
     imagePullPolicy: Always
     command: ["/root/helm-pod"]
