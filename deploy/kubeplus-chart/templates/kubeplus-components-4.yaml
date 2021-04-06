@@ -56,7 +56,7 @@ spec:
   initContainers:
   - name: webhook-cert-setup
     # This is a minimal kubectl image based on Alpine Linux that signs certificates using the k8s extension api server
-    image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.3
+    image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.5
     imagePullPolicy: Always
     command: ["./webhook-create-signed-cert-new.sh"]
     args:
@@ -91,7 +91,7 @@ spec:
     imagePullPolicy: Always
     command: [ "/platform-operator"]
   - name: helmer
-    image: gcr.io/cloudark-kubeplus/helm-pod:0.0.7
+    image: gcr.io/cloudark-kubeplus/helm-pod:0.0.8
     imagePullPolicy: Always
     command: ["/root/helm-pod"]
     volumeMounts:
@@ -111,7 +111,7 @@ metadata:
 spec:
   selector:
     app: kubeplus
-  type: NodePort
+  type: ClusterIP 
   ports:
   - protocol: TCP
     port: 90
