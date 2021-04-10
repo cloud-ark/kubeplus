@@ -48,6 +48,10 @@ class ConnectionsGraph(object):
 				if level > 0:
 					color = 'gray0'
 					relationshipType = n['RelationType']
+					relationshipDetails = n['RelationDetails']
+					relationInfo = relationshipType
+					if relationshipDetails != '':
+						relationInfo = relationInfo + " (" + relationshipDetails + ")"
 					if relationshipType == 'specproperty':
 						color = 'crimson'
 					if relationshipType == 'label':
@@ -58,7 +62,7 @@ class ConnectionsGraph(object):
 						color = 'indigo'
 					if relationshipType == 'owner reference':
 						color = 'blue'
-					dot.edge(fqpeername, fqnodename, color=color, label=relationshipType)
+					dot.edge(fqpeername, fqnodename, color=color, label=relationInfo)
 
 		# Create edges
 		#dot.edges(['AB', 'AL'])
