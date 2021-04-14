@@ -1,25 +1,107 @@
 #!/bin/bash
 
-#echo "kubectl connections cr"
-#echo "kubectl connections service"
-#echo "kubectl connections pod"
-
-if (( $# < 2 )); then
-    echo "kubectl connections <Kind> <Instance> <Namespace> [--kubeconfig=<Absolute path to kubeconfig>] [-o json|png] (default value='flat') [--ignore=<Kind1:Instance1,Kind1:Instance1>]"
+print_help () {
+    echo "NAME"
+    echo "        kubectl connections"
+    echo ""
+    echo "SYNOPSIS"
+    echo "        kubectl connections <Kind> <Instance> <Namespace> [-k <Absolute path to kubeconfig>] [-o json|png|flat] [-i <Kind1:Instance1,Kind1:Instance1>] [-n <label|specproperty|envvariable|annotation>]"
+    echo ""
+    echo "DESCRIPTION"
+    echo "        kubectl connections show the relationships graph between different Kubernetes resources in a cluster."
+    echo "        You provide the name of the Kubernetes Kind, the name of the instance of that Kind and the Namespace."
+    echo "        kubectl connections will build the resource graph showing how that instance is connected to other"
+    echo "        Kubernetes resources and through which types of relationships"
+    echo "        (ownerReference, labels, annotations, spec property)."
+    echo "OPTIONS"
+    echo "        kubectl connections takes following optional flags as input."
+    echo "        -k <Absolute path to kubeconfig file>"
+    echo "        -o <json|png|flat>"
+    echo "            This flag controls what type of output to generate."
+    echo "        -i <Kind1:Instance1,Kind2:Instance2>" 
+    echo "            This flag defines which Kinds and instances to ignore when traversing the resource graph."
+    echo "            kubectl connections will not discover the sub graphs starting at such resources."
+    echo "        -n <label|specproperty|envvariable|annotation>"
+    echo "            This flag defines the relationship types whose details should not be displayed in the output."
     exit 0
+}
+
+check_namespace() {
+  ns=$1
+  kubeconfg=$2
+  ns_output=`kubectl get ns $ns $kubeconfig 2>&1 | awk '{print $1}'`
+  #echo "NS:$ns_output"
+  if [[ $ns_output =~ 'Error' ]]; then
+     echo "Namespace $ns not found."
+     exit 0
+  fi
+}
+
+if (( $# < 3 )); then
+  print_help
 fi
 
 kind=$1
 instance=$2
 namespace=$3
 output="flat"
-kubeconfig=""
-ignorelist=""
+kubeconfig1="$HOME/.kube/config"
+ignorelist1=""
+hidedetails=""
 
-canonicalKind=`kubectl api-resources | grep -w $kind | awk '{print $4}'`
+shift;
+shift;
+shift;
+
+#echo $@
+while getopts ":k:o:i:n:h" opt; do
+  case ${opt} in
+    k )
+      kubeconfig1=$OPTARG;;
+    o )
+      output=$OPTARG;;
+    i )
+      ignorelist1=$OPTARG
+      ignorelist="--ignore="$ignorelist1;;
+    n )
+      hidedetails=$OPTARG
+      OLDIFS=$IFS
+      IFS=','
+      read -a hidedetailsarr <<< "$hidedetails"
+#      echo ${hidedetailsarr[0]}
+#      echo ${hidedetailsarr[1]}
+      for val in "${hidedetailsarr[@]}";
+      do
+        if [[ $val != "label" ]] && [[ $val != "specproperty" ]] && [[ $val != "envvariable" ]] && [[ $val != "annotation" ]]; then
+          echo "Invalid argument value for -n flag. Allowed values are:"
+          echo "  label, specproperty, envvariable, annotation."
+          echo "  You can specify multiple values as comma separated list."
+          exit 0
+        fi
+      done
+      IFS=$OLDIFS;;
+    \? ) print_help;;
+    h ) print_help;;
+    : )
+      echo "Invalid option: $OPTARG requires an argument" 1>&2
+      ;;
+  esac
+#  shift $((OPTIND -2))
+done
+
+#echo "---"
+#echo "$kubeconfig1"
+#echo "$output"
+#echo "$ignorelist"
+#echo "$hidedetails"
+
+kubeconfig="--kubeconfig="$kubeconfig1
+check_namespace $namespace $kubeconfig
+
+canonicalKind=`kubectl api-resources $kubeconfig | grep -w $kind | awk '{print $4}'`
 
 if [[ $canonicalKind == 'true' ]]; then
-  canonicalKind=`kubectl api-resources | grep -w $kind | awk '{print $5}'`
+  canonicalKind=`kubectl api-resources $kubeconfig | grep -w $kind | awk '{print $5}'`
 fi
 
 count=0
@@ -39,46 +121,11 @@ if [[ $count > 1 ]]; then
   exit 0
 fi
 
-if [ $# = 7 ]; then
-   output=$6 # If output format is passed; use that
-   kubeconfig=$4
-   ignorelist=$7
-fi
-
-# Both specified --kubeconfig and -o 
-if [ $# = 6 ] && [[ $4 == "-o" ]]; then
-   output=$5 # If output format is passed; use that
-   ignorelist=$6
-   #kubeconfig=$4
-fi
-
-# Only -o specified
-if [ $# = 5 ] && [[ $4 == "-o" ]]; then
-   output=$5 # If output format is passed; use that
-fi
-
-# Only -o specified but no value passed in
-if [ $# = 4 ] && [[ $4 == "-o" ]]; then
-   echo "Output format not specified."
-   exit 0
-fi
-
-# Only --kubeconfig specified
-if [ $# = 4 ] && [[ $4 == *"kubeconfig="* ]]; then
-	kubeconfig=$4
-fi
-
-# Only --ignore specified
-if [ $# = 4 ] && [[ $4 == *"ignore="* ]]; then
-  ignorelist=$4
-fi
-
-
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     if [[ "$output" == "png" ]]; then
       /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace -o json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
-      docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.1 connections-op.json /root/
+      docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
       echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
     else
       /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace -o $output $kubeconfig $ignorelist
@@ -86,7 +133,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     if [[ "$output" == "png" ]]; then
       /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
-      docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.1 connections-op.json /root/
+      docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
       echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
     else
       /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o $output $kubeconfig $ignorelist

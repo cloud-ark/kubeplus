@@ -8,7 +8,7 @@ from graphviz import Graph
 
 class ConnectionsGraph(object):
 
-	def draw(self, connections_json, output_folder):
+	def draw(self, connections_json, output_folder, relsToHide):
 		#print(connections_json)
 		cmd = "ls -ltr /root/"
 		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
@@ -35,6 +35,11 @@ class ConnectionsGraph(object):
 #		dot.node('B', 'Sir Bedevere the Wise')
 #		dot.node('L', 'Sir Lancelot the Brave')
 
+		relsToHideList1 = relsToHide.split(",")
+		relsToHideList = []
+		for rel in relsToHideList1:
+			relsToHideList.append(rel.strip())
+		#print(relsToHideList)
 		# Create Nodes
 		for level, nodelist in nodemap.items():
 			for n in nodelist:
@@ -50,7 +55,7 @@ class ConnectionsGraph(object):
 					relationshipType = n['RelationType']
 					relationshipDetails = n['RelationDetails']
 					relationInfo = relationshipType
-					if relationshipDetails != '':
+					if relationshipDetails != '' and relationshipType not in relsToHideList:
 						relationInfo = relationInfo + " (" + relationshipDetails + ")"
 					if relationshipType == 'specproperty':
 						color = 'crimson'
@@ -85,8 +90,13 @@ if __name__ == '__main__':
 	#print("Inside connections.py")
 	connections_json = sys.argv[1]
 	output_folder = sys.argv[2]
+	if len(sys.argv) == 4:
+		relsToHide = sys.argv[3]
+	else:
+		relsToHide = ""
 	#print("Connections_json:"+ connections_json)
 	#print("Output folder:" + output_folder)
+	#print(relsToHide)
 
-	graph.draw(connections_json, output_folder)
+	graph.draw(connections_json, output_folder, relsToHide)
 
