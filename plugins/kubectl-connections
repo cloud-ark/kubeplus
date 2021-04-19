@@ -9,10 +9,9 @@ print_help () {
     echo ""
     echo "DESCRIPTION"
     echo "        kubectl connections shows the relationships graph between different Kubernetes resources in a cluster."
-    echo "        You provide the name of the Kubernetes Kind, the name of the instance of that Kind and the Namespace."
-    echo "        kubectl connections will build the resource graph showing how that instance is connected to other"
-    echo "        Kubernetes resources through the type of relationships"
-    echo "        (ownerReference, labels, annotations, spec property)."
+    echo "        It take three inputs - the name of the Kubernetes Resource/Kind, the name of the instance of that Kind and the Namespace name."
+    echo "        kubectl connections builds the resource graph showing how the provided instance is connected to other"
+    echo "        Kubernetes resource instances through various relationships (ownerReference, labels, annotations, spec property)."
     echo "OPTIONS"
     echo "        kubectl connections takes following optional flags as input."
     echo "        -k <Absolute path to kubeconfig file>"
@@ -20,18 +19,24 @@ print_help () {
     echo "            This flag controls what type of output to generate."
     echo "        -i <Kind1:Instance1,Kind2:Instance2>" 
     echo "            This flag defines which Kinds and instances to ignore when traversing the resource graph."
-    echo "            kubectl connections will not discover the sub graphs starting at nodes representing such resources."
+    echo "            kubectl connections will not discover the sub-graphs starting at such nodes."
     echo "        -n <label|specproperty|envvariable|annotation>"
-    echo "            This flag defines the relationship types whose details should not be displayed in the output."
+    echo "            This flag defines the relationship types whose details should not be displayed in the graphical output (png)."
+    echo "            You can specify multiple values as comma separated list."
     exit 0
 }
 
 check_namespace() {
   local ns=$1
   local kubeconfg=$2
-  ns_output=`kubectl get ns $ns $kubeconfig 2>&1 | awk '{print $1}'`
+#  ns_output=`kubectl get ns $ns $kubeconfig 2>&1 | awk '{print $1}'`
+  ns_output=`kubectl get ns $ns $kubeconfig 2>&1`
   if [[ $ns_output =~ 'Error' ]]; then
      echo "Namespace $ns not found."
+     exit 0
+  fi
+  if [[ $ns_output =~ 'Unable' ]]; then
+     echo $ns_output
      exit 0
   fi
 }
@@ -53,7 +58,7 @@ kind=$1
 instance=$2
 namespace=$3
 output="flat"
-kubeconfig1="$HOME/.kube/config"
+kubeconfig1="$HOME/.kube/config" #default value
 ignorelist1=""
 hidedetails=""
 
@@ -65,7 +70,11 @@ shift;
 while getopts ":k:o:i:n:h" opt; do
   case ${opt} in
     k )
-      kubeconfig1=$OPTARG;;
+      kubeconfig1=$OPTARG
+      if [ ! -f $kubeconfig1 ]; then
+        echo "Kubeconfig $kubeconfig1 does not exist."
+        exit 0
+      fi;;
     o )
       output=$OPTARG
       if [[ $output != 'png' ]] && [[ $output != 'json' ]] && [[ $output != 'flat' ]]; then
