@@ -8,10 +8,10 @@ print_help () {
     echo "        kubectl connections <Kind> <Instance> <Namespace> [-k <Absolute path to kubeconfig>] [-o json|png|flat] [-i <Kind1:Instance1,Kind1:Instance1>] [-n <label|specproperty|envvariable|annotation>]"
     echo ""
     echo "DESCRIPTION"
-    echo "        kubectl connections show the relationships graph between different Kubernetes resources in a cluster."
+    echo "        kubectl connections shows the relationships graph between different Kubernetes resources in a cluster."
     echo "        You provide the name of the Kubernetes Kind, the name of the instance of that Kind and the Namespace."
     echo "        kubectl connections will build the resource graph showing how that instance is connected to other"
-    echo "        Kubernetes resources and through which types of relationships"
+    echo "        Kubernetes resources through the type of relationships"
     echo "        (ownerReference, labels, annotations, spec property)."
     echo "OPTIONS"
     echo "        kubectl connections takes following optional flags as input."
@@ -20,20 +20,28 @@ print_help () {
     echo "            This flag controls what type of output to generate."
     echo "        -i <Kind1:Instance1,Kind2:Instance2>" 
     echo "            This flag defines which Kinds and instances to ignore when traversing the resource graph."
-    echo "            kubectl connections will not discover the sub graphs starting at such resources."
+    echo "            kubectl connections will not discover the sub graphs starting at nodes representing such resources."
     echo "        -n <label|specproperty|envvariable|annotation>"
     echo "            This flag defines the relationship types whose details should not be displayed in the output."
     exit 0
 }
 
 check_namespace() {
-  ns=$1
-  kubeconfg=$2
+  local ns=$1
+  local kubeconfg=$2
   ns_output=`kubectl get ns $ns $kubeconfig 2>&1 | awk '{print $1}'`
-  #echo "NS:$ns_output"
   if [[ $ns_output =~ 'Error' ]]; then
      echo "Namespace $ns not found."
      exit 0
+  fi
+}
+
+check_docker() {
+  docker ps 2>1 1>/dev/null
+  if [[ $? == 1 ]]; then
+    echo "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?."
+    echo "Docker is needed for creating png output."
+    exit 0
   fi
 }
 
@@ -59,7 +67,11 @@ while getopts ":k:o:i:n:h" opt; do
     k )
       kubeconfig1=$OPTARG;;
     o )
-      output=$OPTARG;;
+      output=$OPTARG
+      if [[ $output != 'png' ]] && [[ $output != 'json' ]] && [[ $output != 'flat' ]]; then
+          echo "Invalid output type $output. Valid options: flat, json, png."
+          exit 0
+      fi;;
     i )
       ignorelist1=$OPTARG
       ignorelist="--ignore="$ignorelist1;;
@@ -68,8 +80,6 @@ while getopts ":k:o:i:n:h" opt; do
       OLDIFS=$IFS
       IFS=','
       read -a hidedetailsarr <<< "$hidedetails"
-#      echo ${hidedetailsarr[0]}
-#      echo ${hidedetailsarr[1]}
       for val in "${hidedetailsarr[@]}";
       do
         if [[ $val != "label" ]] && [[ $val != "specproperty" ]] && [[ $val != "envvariable" ]] && [[ $val != "annotation" ]]; then
@@ -98,32 +108,33 @@ done
 kubeconfig="--kubeconfig="$kubeconfig1
 check_namespace $namespace $kubeconfig
 
-canonicalKind=`kubectl api-resources $kubeconfig | grep -w $kind | awk '{print $4}'`
+#canonicalKindPresent=`kubectl api-resources $kubeconfig | grep -w $kind | awk '{print $4}'`
+canonicalKindPresent=`kubectl api-resources $kubeconfig | grep -w $kind`
+OLDIFS=$IFS
+IFS=' '
+read -a canonicalKindPresentArr <<< "$canonicalKindPresent"
+IFS=$OLDIFS
 
-if [[ $canonicalKind == 'true' ]]; then
-  canonicalKind=`kubectl api-resources $kubeconfig | grep -w $kind | awk '{print $5}'`
-fi
-
-count=0
-for k in $canonicalKind
-do 
-  count=$(( count + 1 ))
-done
-
-if [[ $count == 0 ]]; then
-  echo "Unknown resource $kind."
+if [[ "${#canonicalKindPresentArr}" == 0 ]]; then
+  echo "Unknown Kind $kind."
   exit 0
 fi
 
-if [[ $count > 1 ]]; then
-  echo "Ambiguous resource $kind. Found"
-  echo $canonicalKind
-  exit 0
+# For Kinds in empty API group (like Pods)
+a="${canonicalKindPresentArr[2]}" 
+if [[ $a == 'true' ]]; then
+  canonicalKind="${canonicalKindPresentArr[3]}"
 fi
 
+# For Kinds in non-empty API group (like Ingress)
+b="${canonicalKindPresentArr[3]}" 
+if [[ $b == 'true' ]]; then
+  canonicalKind="${canonicalKindPresentArr[4]}"
+fi
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     if [[ "$output" == "png" ]]; then
+      check_docker
       /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace -o json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
       docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
       echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
@@ -132,6 +143,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     fi
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     if [[ "$output" == "png" ]]; then
+      check_docker
       /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
       docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
       echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
