@@ -1,27 +1,37 @@
-## KubePlus - CRD for CRDs to design multi-tenant platform services from Helm charts
+## KubePlus - CRD for CRDs to build multi-tenant SaaS from Helm charts
 
-Today Platform Engineering teams are dealing with a wide variety of Helm charts coming from different sources - open source repositories, software vendors, Cloud marketplaces, or enterprise internal stakeholders. They are required to offer managed services for these application stacks packaged as Helm charts by taking care of the day2 operations post deployment. KubePlus is designed to simplify this task of creating a managed service from a Helm chart. 
+Today Platform Engineering teams are dealing with a wide variety of Helm charts coming from different sources - open-source repositories, software vendors, Cloud marketplaces, or enterprise internal stakeholders. The requirement is to deliver these custom application stacks as-a-service taking care of multi-tenancy and day2 operations.
+
+KubePlus is a turn-key solution to transform any containerized application into a SaaS. It takes an application Helm chart and delivers it as-a-service by automating multi-tenancy management and day2 operations such as monitoring, troubleshooting and application upgrades. KubePlus consists of a CRD that enables creating new Kubernetes APIs (CRDs) to realize such services. The new CRDs enable creation of a Helm release per tenant with tenant level isolation, monitoring and consumption tracking.
+
 
 <p align="center">
-<img src="./docs/application-stacks.png" width="500" height="250" class="center">
+<img src="./docs/application-stacks-1.png" width="500" height="250" class="center">
 </p>
 
+KubePlus is designed to help software vendors accelerate their journey to SaaS or enterprise platform teams rapidly deliver managed services for any custom applications.
 
-It consists of a Kubernetes Operator that enables Platform Engineering teams to create new Kubernetes CRDs wrapping Helm charts with policies and monitoring controls. Platform Engineering teams are able to offer a SaaS like experience for any application stack packaged as a Helm chart with this. It enables them to create a Helm release per tenant with tenant isolation, tenant level policy and tenant level consumption tracking. 
+## Overview
 
-Here are primary use cases of KubePlus:
-- Enterprise platform engineering teams delivering software stack as a service to their internal clients.
-- ISVs delivering managed service for their software on any managed Kubernetes service on public clouds.
-- ISVs accelerate building multi-tenant SaaS for their software on Kubernetes.
+KubePlus takes an application Helm chart and delivers it as-a-service by automating multi-tenancy management and day2 operations. KubePlus consists of a CRD that enables creating new Kubernetes APIs (CRDs) to realize such services. Provider of the service has privileged access to the cluster and is able to create these services from Helm charts. Consumer of the service has limited access to the cluster and is able to use newly created service API / CRD and create an instance of the application. Behind the scene the provider is able to upgrade, monitor or govern this service.
+
+<p align="center">
+<img src="./docs/kubeplus-provider-consumer.png" width="500" height="250" class="center">
+</p>
+
+- Create: Create SaaS for any application packaged as Helm chart.
+- Govern: Tenant level policies for isolation and resource utilization.
+- Monitor: Tenant level consumption metrics for CPU, memory, storage, network.
+- Troubleshoot: Tenant level Kubernetes resource relationship graphs. 
 
 
-## KubePlus components
+## Components
 
 KubePlus has two components briefly described below.
 Details about these components are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html).
 
 
-### 1. CRD for CRDs to design your platform services from Helm charts
+### 1. In cluster component - CRD for CRDs to design your services from Helm charts
 
 KubePlus offers a CRD named ```ResourceComposition``` to 
 - Compose new CRDs (Custom Resource Definitions) to publish platform services wrapping Helm charts
@@ -32,7 +42,7 @@ KubePlus offers a CRD named ```ResourceComposition``` to
 Here is the high-level structure of ResourceComposition CRD: 
 
 <p align="center">
-<img src="./docs/crd-for-crds.png" width="650" height="250" class="center">
+<img src="./docs/crd-for-crds-1.png" width="650" height="250" class="center">
 </p>
 
 To understand this further let us see how a multi-tenant platform service can be created from WordPress Deployment Helm chart. The Helm chart 
@@ -50,18 +60,18 @@ Here is a new platform service named WordpressService.
 <img src="./docs/wordpress-service-crd.png" width="650" height="250" class="center">
 </p>
 
-A new CRD named WordpressService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources, and additionally provide policy and monitoring inputs for the workflow. The Spec Properties of WordpressService come from values.yaml of the Helm chart.
+A new CRD named WordpressService has been created here using ResourceComposition. Wordpress SaaS provider provides a Helm chart that defines the required underlying resources and additionally provides the required policy and monitoring inputs through ResourceComposition. The consumer of the service creates instances of WordpressService. The spec properties of the WordpressService Custom Resource come from values.yaml of the underlying Helm chart.
 
 <p align="center">
 <img src="./docs/wordpress-service-tenant1.png" width="650" height="250" class="center">
 </p>
 
-Here is a YAML definition that allows us to create first tenant using newly created WordpressService CRD.
+Here is a YAML definition to create a tenant service instance using newly created WordpressService CRD.
 
 
-### 2. Kubectl plugins to visualize platform workflows
+### 2. Client side Kubectl plugins for monitoring and troubleshooting
 
-KubePlus kubectl plugins enable users to discover, monitor and troubleshoot resource relationships in a platform workflow. The plugins run entirely client-side and do not require the in-cluster component. The primary plugin is: ```kubectl connections```. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus constructs Kubernetes Resource relationship graphs at runtime providing it the ability to build resource topologies and offer fine grained visibility and control over the platform service.
+KubePlus kubectl plugins enable users to discover, monitor and troubleshoot service instances. The primary plugin is: ```kubectl connections```. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus constructs Kubernetes Resource relationship graphs at runtime providing it the ability to build resource topologies and offer fine grained visibility and control over the application service.
 
 Here is the resource relationship graph for WordpressService instance discovered using the ```kubectl connections``` command. 
 ```kubectl connections WordpressService wp-service-tenant1```.
@@ -70,7 +80,7 @@ Here is the resource relationship graph for WordpressService instance discovered
 <img src="./docs/wordpress-service-connections.png" class="center">
 </p>
 
-We have additional plugins such as ```kubectl metrics``` and ```kubectl grouplogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the platform workflow.
+We have additional plugins such as ```kubectl metrics``` and ```kubectl grouplogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the service instance.
 You can also directly get CPU/Memory/Storage/Network metrics in Prometheus format if you setup ```ResourceMonitor``` while creating your new CRD.
 
 
@@ -104,9 +114,9 @@ Note - to obtain metrics, enable Kubernetes Metrics API Server on your cluster. 
     ```
 
 - Multitenancy examples:
-  - [Wordpress stacks](./examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt)
-  - [Mysql stacks](./examples/multitenancy/stacks/steps.txt)
-  - [MongoDB stacks](./examples/multitenancy/mongodb-as-a-service/steps.md)
+  - [Wordpress service](./examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt)
+  - [Mysql service](./examples/multitenancy/stacks/steps.txt)
+  - [MongoDB service](./examples/multitenancy/mongodb-as-a-service/steps.md)
   - Multiple [teams](./examples/multitenancy/team/steps.txt) with applications deployed later
 
 - Debug (check container logs):
@@ -117,14 +127,9 @@ Note - to obtain metrics, enable Kubernetes Metrics API Server on your cluster. 
   - kubectl logs kubeplus -c webhook-cert-setup
   ```
 
-## Platform-as-Code
-
-KubePlus has been developed as part of our Platform-as-Code practice. Learn more about Platform-as-Code [here](https://cloudark.io/platform-as-code).
-
-
 ## Operator Maturity Model
 
-As enterprise teams build their custom PaaSes using community or in house developed Operators, they need a set of guidelines for Operator development and evaluation. We have developed [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) focusing on Operator usage in multi-tenant and multi-Operator environments. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators for curating community Operators towards building their custom PaaSes.
+As enterprise teams build their custom platforms using community or in house developed Operators, they need a set of guidelines for Operator readiness in multi-Operator and multi-tenant environments. We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) for this purpose. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators for curating community Operators towards building their custom platforms.
 
 
 ## Presentations/Talks
@@ -133,7 +138,7 @@ As enterprise teams build their custom PaaSes using community or in house develo
 
 2. [Operators and Helm: It takes two to Tango, Helm Summit 2019](https://youtu.be/F_Dgz1V5Q2g)
 
-3. [KubePlus presentation at Kubernetes community meeting](https://youtu.be/ZckVULU9sYc)
+3. [KubePlus presentation at community meetings (CNCF sig-app-delivery, Kubernetes sig-apps, Helm)](https://github.com/cloud-ark/kubeplus/blob/master/KubePlus-presentation.pdf)
 
 
 ## Contact
