@@ -45,8 +45,7 @@ Here is the high-level structure of ResourceComposition CRD:
 <img src="./docs/crd-for-crds-1.png" width="650" height="250" class="center">
 </p>
 
-To understand this further let us see how a multi-tenant platform service can be created from WordPress Deployment Helm chart. The Helm chart 
-creates wordpress pod that depends on a MySQL custom resource. 
+To understand this further let us see how a multi-tenant platform service can be created from WordPress Deployment Helm chart. The Helm chart creates Wordpress pod that depends on a MySQL custom resource.
 The MySQL Operator is assumed to be installed on the cluster.
 KubePlus takes Helm chart and other policy and monitoring inputs through ResourceComposition CRD as shown below to deliver a new CRD for Wordpress as-a-Service. 
 
@@ -60,7 +59,7 @@ Here is a new platform service named WordpressService.
 <img src="./docs/wordpress-service-crd.png" width="650" height="250" class="center">
 </p>
 
-A new CRD named WordpressService has been created here using ResourceComposition. Wordpress SaaS provider provides a Helm chart that defines the required underlying resources and additionally provides the required policy and monitoring inputs through ResourceComposition. The consumer of the service creates instances of WordpressService. The spec properties of the WordpressService Custom Resource come from values.yaml of the underlying Helm chart. Here is a YAML definition to create a tenant service instance using newly created WordpressService CRD.
+A new CRD named WordpressService has been created here using ResourceComposition. Wordpress SaaS provider uses a Helm chart that defines the required underlying resources, and additionally, defines the required policy and monitoring inputs, through ResourceComposition. The consumer of the service creates instances of WordpressService. The spec properties of the WordpressService Custom Resource are essentially the attributes exposed via the underlying Helm chart's values.yaml. Here is a YAML definition to create a tenant service instance using newly created WordpressService CRD.
 
 <p align="center">
 <img src="./docs/wordpress-service-tenant1.png" width="500" height="250" class="center">
@@ -97,25 +96,23 @@ You can also directly get CPU/Memory/Storage/Network metrics in Prometheus forma
    $ kubectl kubeplus commands
 ```
 
-[Here](./kubeplus-kubectl-commands.md) are all the kubeplus kubectl commands.
-
-- Install KubePlus server-side component for before trying out below examples.
-Note - to obtain metrics, enable Kubernetes Metrics API Server on your cluster. Hosted Kubernetes solutions like GKE has this already installed.
+- Install KubePlus in-cluster component before trying out below examples.
+To obtain metrics, enable Kubernetes Metrics API Server on your cluster. Hosted Kubernetes solutions like GKE has this already installed.
 
     ```
     - git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
     - cd kubeplus/deploy
     - ./deploy-kubeplus.sh
-    - We also provide a Helm chart
+    - We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
       - Install Helm version 3
       - helm install kubeplus kubeplus-chart --set caBundle=$(kubectl config view --raw --flatten -o json |  sed 's/certificate-authority-data/certificateauthdata/'g | jq -r '.clusters[] | select(.name == "'$(kubectl config current-context)'") | .cluster.certificateauthdata')
     ```
 
-- Multitenancy examples:
+- SaaS examples:
   - [Wordpress service](./examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt)
   - [Mysql service](./examples/multitenancy/stacks/steps.txt)
   - [MongoDB service](./examples/multitenancy/mongodb-as-a-service/steps.md)
-  - Multiple [teams](./examples/multitenancy/team/steps.txt) with applications deployed later
+  - [Multiple teams](./examples/multitenancy/team/steps.txt) with applications deployed later
 
 - Debug (check container logs):
   ```
