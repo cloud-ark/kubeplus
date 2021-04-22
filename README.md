@@ -6,7 +6,7 @@ KubePlus is a turn-key solution to transform any containerized application into 
 
 
 <p align="center">
-<img src="./docs/application-stacks-1.png" width="500" height="250" class="center">
+<img src="./docs/application-stacks-1.png" width="700" height="250" class="center">
 </p>
 
 KubePlus is designed to help software vendors accelerate their journey to SaaS or enterprise platform teams rapidly deliver managed services for any custom applications.
@@ -51,7 +51,7 @@ The MySQL Operator is assumed to be installed on the cluster.
 KubePlus takes Helm chart and other policy and monitoring inputs through ResourceComposition CRD as shown below to deliver a new CRD for Wordpress as-a-Service. 
 
 <p align="center">
-<img src="./docs/wordpress-saas.png" class="center">
+<img src="./docs/wordpress-saas.png" width="500" height="150" class="center">
 </p>
 
 Here is a new platform service named WordpressService. 
@@ -60,13 +60,11 @@ Here is a new platform service named WordpressService.
 <img src="./docs/wordpress-service-crd.png" width="650" height="250" class="center">
 </p>
 
-A new CRD named WordpressService has been created here using ResourceComposition. Wordpress SaaS provider provides a Helm chart that defines the required underlying resources and additionally provides the required policy and monitoring inputs through ResourceComposition. The consumer of the service creates instances of WordpressService. The spec properties of the WordpressService Custom Resource come from values.yaml of the underlying Helm chart.
+A new CRD named WordpressService has been created here using ResourceComposition. Wordpress SaaS provider provides a Helm chart that defines the required underlying resources and additionally provides the required policy and monitoring inputs through ResourceComposition. The consumer of the service creates instances of WordpressService. The spec properties of the WordpressService Custom Resource come from values.yaml of the underlying Helm chart. Here is a YAML definition to create a tenant service instance using newly created WordpressService CRD.
 
 <p align="center">
-<img src="./docs/wordpress-service-tenant1.png" width="650" height="250" class="center">
+<img src="./docs/wordpress-service-tenant1.png" width="500" height="150" class="center">
 </p>
-
-Here is a YAML definition to create a tenant service instance using newly created WordpressService CRD.
 
 
 ### 2. Client side Kubectl plugins for monitoring and troubleshooting
