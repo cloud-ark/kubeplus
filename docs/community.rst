@@ -2,13 +2,19 @@
 Community Participation
 ========================
 
-1. Being a good citizen of the Multi-Operator world, `Kubecon NA 2020`_
+1. KubePlus presentation at `community meetings`_ (CNCF sig-app-delivery, Kubernetes sig-apps, Helm - March 2021)
+
+.. _community meetings: https://github.com/cloud-ark/kubeplus/blob/master/KubePlus-presentation.pdf
+
+
+2. Being a good citizen of the Multi-Operator world, `Kubecon NA 2020`_
 
 .. _Kubecon NA 2020: https://www.youtube.com/watch?v=NEGs0GMJbCw&t=2s)
 
-2. Operators and Helm: It takes two to Tango, `Helm Summit 2019`_
+3. Operators and Helm: It takes two to Tango, `Helm Summit 2019`_
 
 .. _Helm Summit 2019: https://youtu.be/F_Dgz1V5Q2g
+
 
 ..	3. Kubernetes Community Meeting notes_
 

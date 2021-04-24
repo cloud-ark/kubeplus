@@ -5,24 +5,25 @@ KubePlus Components
 KubePlus consists of a cluster-side component and a component that you install outside the cluster. The cluster-side component is deployed as a Kubernetes Pod. 
 It consists of a Kubernetes Operator, a MutatingWebHook, and a container that knows how to deploy Helm charts. KubePlus requires that the Helm charts be defined using Helm 3.0.
 
-.. image:: Kubeplus-architecture.png
+..
+ .. image:: Kubeplus-architecture.png
    :height: 300px
    :width: 450px
    :align: center
 
 
-CRD for CRDs to design Kubernetes APIs from Helm charts
----------------------------------------------------------------
+In cluster component - CRD for CRDs to design your services from Helm charts
+-----------------------------------------------------------------------------
 
 KubePlus offers a CRD named ResourceComposition to 
 
 - Create new CRDs (Custom Resource Definition) to publish platform services from Helm charts
 - Define policies (e.g. CPU/Memory limits, Node selection, etc.) for managing resources of the platform services
-- Get aggregated CPU/Memory/Storage Prometheus metrics for the platform services
+- Get aggregated CPU/Memory/Storage/Network Prometheus metrics for the platform services
 
 Here is the high-level structure of ResourceComposition CRD: 
 
-.. image:: crd-for-crds.png
+.. image:: crd-for-crds-1.png
    :height: 250px
    :width: 550px
    :align: center
@@ -142,11 +143,11 @@ Collected metrics are output in Prometheus format.
 The resource section in both ``ResourcePolicy`` and ``ResourceMonitor`` specifies the GVK (group, version, kind) of the resource for which policy needs to be enforced or that needs to be monitored. Set these to be the same as resource that is defined as part of ``ResourceComposition.newResource.resource`` section.
 In the future we plan to support creation of ``ResourcePolicy`` and ``ResourceMonitor`` separately from ``ResourceComposition`` for general purpose policy and monitoring. At that time the resource section can contain the coordinates (GVK) for any resource present in a cluster.
 
- 
-Kubectl plugins
-----------------
 
-KubePlus kubectl plugins enable users to discover, monitor and troubleshoot resource relationships in a platform workflow. The plugins run entirely client-side and do not require the in-cluster component. The primary plugin of this functionality is: kubectl connections. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus is able to runtime construct Kubernetes Resource relationship graphs. This enables KubePlus to build resource topologies and offer fine grained visibility and control over the platform service.
+Client side Kubectl plugins for monitoring and troubleshooting
+---------------------------------------------------------------
+
+KubePlus kubectl plugins enable users to discover, monitor and troubleshoot service instances. The primary plugin is: ```kubectl connections```. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus constructs Kubernetes Resource relationship graphs at runtime providing it the ability to build resource topologies and offer fine grained visibility and control over the application service.
 
 Here is the resource relationship graph for MysqlSevice created above discovered using the kubectl connections command. 
 
@@ -190,7 +191,7 @@ In order to use these plugins you need to add KubePlus folder to your PATH varia
 .. code-block:: bash
 
    $ export KUBEPLUS_HOME=<Full path where kubeplus is cloned>
-   $ export PATH=$PATH:`pwd`/plugins
+   $ export PATH=$KUBEPLUS_HOME/plugins:$PATH
 
 
 KubePlus cluster-side component bundles these plugins as part of the ``Helmer`` container. 
