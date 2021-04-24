@@ -13,7 +13,7 @@ Getting Started
    	$ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
    	$ kubectl kubeplus commands
 
-2. Install KubePlus server-side component before trying out below examples:
+2. Install KubePlus in-cluster component before trying out below examples:
 
 .. code-block:: bash
 
@@ -21,19 +21,32 @@ Getting Started
 	$ cd kubeplus/deploy
 	$ ./deploy-kubeplus.sh
 
+We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
+- Install Helm version 3
+
+.. code-block:: bash
+
+  $ helm install kubeplus kubeplus-chart --set caBundle=$(kubectl config view --raw --flatten -o json |  sed 's/certificate-authority-data/certificateauthdata/'g | jq -r '.clusters[] | select(.name == "'$(kubectl config current-context)'") | .cluster.certificateauthdata')
+
+
 3. CRD for CRDs:
 
    - Try example outlined in Kubeplus Components section by following steps `here`_.
 
 .. _here: https://github.com/cloud-ark/kubeplus/blob/master/examples/resource-composition/steps.txt
 
-4. Multitenancy examples:
+4. SaaS examples:
 
-   - Try following multitenancy examples:
-     - Multiple `application stacks`_
-     - Multiple `teams with applications deployed later`_
+  - `Wordpress service`_
+  - `Mysql service`_
+  - `MongoDB service`_
+  - Multiple `teams with applications deployed later`_
 
-.. _application stacks: https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/stacks/steps.txt
+.. _Wordpress service: https://github.com/cloud-ark/kubeplus/blob/master//examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt
+
+.. _Mysql service: https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/stacks/steps.txt
+
+.. _MongoDB service: https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/mongodb-as-a-service/steps.md
 
 .. _teams with applications deployed later: https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/team/steps.txt
 

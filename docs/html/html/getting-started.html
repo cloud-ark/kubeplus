@@ -56,11 +56,16 @@ $ kubectl kubeplus commands
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
-<li><p>Install KubePlus server-side component before trying out below examples:</p></li>
+<li><p>Install KubePlus in-cluster component before trying out below examples:</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git clone --depth <span class="m">1</span> https://github.com/cloud-ark/kubeplus.git
 $ <span class="nb">cd</span> kubeplus/deploy
 $ ./deploy-kubeplus.sh
+</pre></div>
+</div>
+<p>We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
+- Install Helm version 3</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ helm install kubeplus kubeplus-chart --set <span class="nv">caBundle</span><span class="o">=</span><span class="k">$(</span>kubectl config view --raw --flatten -o json <span class="p">|</span>  sed <span class="s1">&#39;s/certificate-authority-data/certificateauthdata/&#39;</span>g <span class="p">|</span> jq -r <span class="s1">&#39;.clusters[] | select(.name == &quot;&#39;</span><span class="k">$(</span>kubectl config current-context<span class="k">)</span><span class="s1">&#39;&quot;) | .cluster.certificateauthdata&#39;</span><span class="k">)</span>
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
@@ -71,14 +76,16 @@ $ ./deploy-kubeplus.sh
 </li>
 </ol>
 <ol class="arabic simple" start="4">
-<li><p>Multitenancy examples:</p>
-<ul class="simple">
-<li><p>Try following multitenancy examples:
-- Multiple <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/stacks/steps.txt">application stacks</a>
-- Multiple <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/team/steps.txt">teams with applications deployed later</a></p></li>
-</ul>
-</li>
+<li><p>SaaS examples:</p></li>
 </ol>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master//examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt">Wordpress service</a></p></li>
+<li><p><a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/stacks/steps.txt">Mysql service</a></p></li>
+<li><p><a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/mongodb-as-a-service/steps.md">MongoDB service</a></p></li>
+<li><p>Multiple <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/team/steps.txt">teams with applications deployed later</a></p></li>
+</ul>
+</div></blockquote>
 <ol class="arabic simple" start="5">
 <li><p>Try with your own Helm chart:</p>
 <ul class="simple">

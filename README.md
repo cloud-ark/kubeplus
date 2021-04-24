@@ -28,7 +28,6 @@ KubePlus takes an application Helm chart and delivers it as-a-service by automat
 ## Components
 
 KubePlus has two components briefly described below.
-Details about these components are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html).
 
 
 ### 1. In cluster component - CRD for CRDs to design your services from Helm charts
@@ -79,6 +78,9 @@ Here is the resource relationship graph for WordpressService instance discovered
 
 We have additional plugins such as ```kubectl metrics``` and ```kubectl grouplogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the service instance.
 You can also directly get CPU/Memory/Storage/Network metrics in Prometheus format if you setup ```ResourceMonitor``` while creating your new CRD.
+
+
+Details about these components are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/kubeplus-components.html).
 
 
 ## Try it:

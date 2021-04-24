@@ -46,17 +46,16 @@
 <h1>KubePlus Components</h1>
 <p>KubePlus consists of a cluster-side component and a component that you install outside the cluster. The cluster-side component is deployed as a Kubernetes Pod.
 It consists of a Kubernetes Operator, a MutatingWebHook, and a container that knows how to deploy Helm charts. KubePlus requires that the Helm charts be defined using Helm 3.0.</p>
-<a class="reference internal image-reference" href="_images/Kubeplus-architecture.png"><img alt="_images/Kubeplus-architecture.png" class="align-center" src="_images/Kubeplus-architecture.png" style="width: 450px; height: 300px;" /></a>
-<div class="section" id="crd-for-crds-to-design-kubernetes-apis-from-helm-charts">
-<h2>CRD for CRDs to design Kubernetes APIs from Helm charts</h2>
+<div class="section" id="in-cluster-component-crd-for-crds-to-design-your-services-from-helm-charts">
+<h2>In cluster component - CRD for CRDs to design your services from Helm charts</h2>
 <p>KubePlus offers a CRD named ResourceComposition to</p>
 <ul class="simple">
 <li><p>Create new CRDs (Custom Resource Definition) to publish platform services from Helm charts</p></li>
 <li><p>Define policies (e.g. CPU/Memory limits, Node selection, etc.) for managing resources of the platform services</p></li>
-<li><p>Get aggregated CPU/Memory/Storage Prometheus metrics for the platform services</p></li>
+<li><p>Get aggregated CPU/Memory/Storage/Network Prometheus metrics for the platform services</p></li>
 </ul>
 <p>Here is the high-level structure of ResourceComposition CRD:</p>
-<a class="reference internal image-reference" href="_images/crd-for-crds.png"><img alt="_images/crd-for-crds.png" class="align-center" src="_images/crd-for-crds.png" style="width: 550px; height: 250px;" /></a>
+<a class="reference internal image-reference" href="_images/crd-for-crds-1.png"><img alt="_images/crd-for-crds-1.png" class="align-center" src="_images/crd-for-crds-1.png" style="width: 550px; height: 250px;" /></a>
 <p>To understand this further let us see how a platform team can build a MySQL service for their product team/s to consume. The base Kubernetes cluster has MySQL Operator installed on it (either installed by the Platform team or bundled by the Kubernetes provider).</p>
 <a class="reference internal image-reference" href="_images/mysql-as-a-service.png"><img alt="_images/mysql-as-a-service.png" class="align-center" src="_images/mysql-as-a-service.png" style="width: 400px; height: 250px;" /></a>
 <p>The platform workflow requirements are:</p>
@@ -150,9 +149,9 @@ Collected metrics are output in Prometheus format.</p>
 <p>The resource section in both <code class="docutils literal notranslate"><span class="pre">ResourcePolicy</span></code> and <code class="docutils literal notranslate"><span class="pre">ResourceMonitor</span></code> specifies the GVK (group, version, kind) of the resource for which policy needs to be enforced or that needs to be monitored. Set these to be the same as resource that is defined as part of <code class="docutils literal notranslate"><span class="pre">ResourceComposition.newResource.resource</span></code> section.
 In the future we plan to support creation of <code class="docutils literal notranslate"><span class="pre">ResourcePolicy</span></code> and <code class="docutils literal notranslate"><span class="pre">ResourceMonitor</span></code> separately from <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code> for general purpose policy and monitoring. At that time the resource section can contain the coordinates (GVK) for any resource present in a cluster.</p>
 </div>
-<div class="section" id="kubectl-plugins">
-<h2>Kubectl plugins</h2>
-<p>KubePlus kubectl plugins enable users to discover, monitor and troubleshoot resource relationships in a platform workflow. The plugins run entirely client-side and do not require the in-cluster component. The primary plugin of this functionality is: kubectl connections. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus is able to runtime construct Kubernetes Resource relationship graphs. This enables KubePlus to build resource topologies and offer fine grained visibility and control over the platform service.</p>
+<div class="section" id="client-side-kubectl-plugins-for-monitoring-and-troubleshooting">
+<h2>Client side Kubectl plugins for monitoring and troubleshooting</h2>
+<p>KubePlus kubectl plugins enable users to discover, monitor and troubleshoot service instances. The primary plugin is: <code class="docutils literal notranslate"><span class="pre">`kubectl</span> <span class="pre">connections`</span></code>. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus constructs Kubernetes Resource relationship graphs at runtime providing it the ability to build resource topologies and offer fine grained visibility and control over the application service.</p>
 <p>Here is the resource relationship graph for MysqlSevice created above discovered using the kubectl connections command.</p>
 <p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">connections</span> <span class="pre">MysqlService</span> <span class="pre">mysql1</span></code></p>
 <a class="reference internal image-reference" href="_images/mysqlservice-connections.png"><img alt="_images/mysqlservice-connections.png" class="align-center" src="_images/mysqlservice-connections.png" style="width: 800px; height: 350px;" /></a>
@@ -182,7 +181,7 @@ In the future we plan to support creation of <code class="docutils literal notra
 </div>
 <p>In order to use these plugins you need to add KubePlus folder to your PATH variable.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span>&lt;Full path where kubeplus is cloned&gt;
-$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:<span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>/plugins
+$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins:<span class="nv">$PATH</span>
 </pre></div>
 </div>
 <p>KubePlus cluster-side component bundles these plugins as part of the <code class="docutils literal notranslate"><span class="pre">Helmer</span></code> container.</p>

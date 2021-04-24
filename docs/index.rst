@@ -6,18 +6,27 @@
 Welcome to KubePlus documentation
 ====================================
 
-KubePlus is a framework to create managed services from Helm charts. It consists of a Kubernetes Operator that enables Platform Engineering teams to create new Kubernetes CRDs wrapping Helm charts with policies and monitoring controls. Platform Engineering teams are able to offer a SaaS like experience for any application stack packaged as a Helm chart with this. It enables them to create a Helm release per tenant with tenant isolation, tenant level policy and tenant level consumption tracking.
+KubePlus is a turn-key solution to transform any containerized application into a SaaS. It takes an application Helm chart and delivers it as-a-service by automating multi-tenancy management and day2 operations such as monitoring, troubleshooting and application upgrades. KubePlus consists of a CRD that enables creating new Kubernetes APIs (CRDs) to realize such services. The new CRDs enable creation of a Helm release per tenant with tenant level isolation, monitoring and consumption tracking.
 
-Think WordPress-as-a-Service with different Wordpress stacks created for different tenants, where the Wordpress stack is defined as a Helm chart.
+.. image:: application-stacks-1.png
+   :align: center
 
-Here are primary use cases of KubePlus:
 
--Enterprise platform engineering teams delivering software stack as a service to their internal clients.
+KubePlus is designed to help software vendors accelerate their journey to SaaS or enterprise platform teams rapidly deliver managed services for any custom applications.
 
--ISVs delivering managed service for their software on any managed Kubernetes service on public clouds.
+Overview
+---------
+KubePlus takes an application Helm chart and delivers it as-a-service by automating multi-tenancy management and day2 operations. KubePlus consists of a CRD that enables creating new Kubernetes APIs (CRDs) to realize such services. Provider of the service has privileged access to the cluster and is able to create these services from Helm charts. Consumer of the service has limited access to the cluster and is able to use newly created service API / CRD and create an instance of the application. Behind the scene the provider is able to upgrade, monitor or govern this service.
 
--ISVs accelerate building multi-tenant SaaS for their software on Kubernetes.
+.. image:: kubeplus-provider-consumer.png
+   :height: 350px
+   :width: 650px
+   :align: center
 
+- Create: Create SaaS for any application packaged as Helm chart.
+- Govern: Tenant level policies for isolation and resource utilization.
+- Monitor: Tenant level consumption metrics for CPU, memory, storage, network.
+- Troubleshoot: Tenant level Kubernetes resource relationship graphs.
 
 
 Next section provides details about KubePlus components.
@@ -28,6 +37,7 @@ Next section provides details about KubePlus components.
 
    kubeplus-components
    getting-started
+   roadmap
    operators
    community
    comparison
