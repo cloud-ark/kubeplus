@@ -32,6 +32,11 @@ KubePlus has two components briefly described below.
 
 ### 1. In cluster component - CRD for CRDs to design your services from Helm charts
 
+<p align="center">
+<img src="./docs/crd-for-crds-2.jpg" width="700" height="300" class="center">
+</p>
+
+
 KubePlus offers a CRD named ```ResourceComposition``` to 
 - Compose new CRDs (Custom Resource Definitions) to publish platform services wrapping Helm charts
 - Define policies (e.g. Node selection, CPU/Memory limits, etc.) for managing resources of the platform services
