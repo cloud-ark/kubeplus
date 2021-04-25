@@ -33,7 +33,7 @@ KubePlus has two components briefly described below.
 ### 1. In cluster component - CRD for CRDs to design your services from Helm charts
 
 <p align="center">
-<img src="./docs/crd-for-crds-2.jpg" width="700" height="150" class="center">
+<img src="./docs/crd-for-crds-2.jpg" width="700" height="300" class="center">
 </p>
 
 
