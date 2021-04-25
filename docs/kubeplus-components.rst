@@ -2,13 +2,12 @@
 KubePlus Components
 =======================
 
-KubePlus consists of a cluster-side component and a component that you install outside the cluster. The cluster-side component is deployed as a Kubernetes Pod. 
-It consists of a Kubernetes Operator, a MutatingWebHook, and a container that knows how to deploy Helm charts. KubePlus requires that the Helm charts be defined using Helm 3.0.
+KubePlus consists of a in-cluster component and a component that you install outside the cluster. The in-cluster component is deployed as a Kubernetes Pod. 
+It consists of a Kubernetes Controller, a MutatingWebHook, and a container that knows how to deploy Helm charts. KubePlus requires that the Helm charts be defined using Helm 3.0.
 
-..
- .. image:: Kubeplus-architecture.png
-   :height: 300px
-   :width: 450px
+.. image:: KubePlus-components2.jpg
+   :height: 350px
+   :width: 800px
    :align: center
 
 
