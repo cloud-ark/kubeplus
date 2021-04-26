@@ -344,8 +344,8 @@ class CRMetrics(object):
 		mem = 0
 		count = 0
 		pod_list = self._get_pods_for_account(account)
-		print("Pods:")
-		print(pod_list)
+		#print("Pods:")
+		#print(pod_list)
 		cpu, mem = self._get_cpu_memory_usage(pod_list)
 		return cpu, mem, len(pod_list)
 
@@ -394,12 +394,14 @@ class CRMetrics(object):
 			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format + ' --ignore=ServiceAccount:default,Namespace:default'
 
 		if cmd:
+			#print(cmd)
 			output = ''
 			try:
 				output = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 										  stderr=subprocess.PIPE, shell=True).communicate()[0]
 				output = output.decode('utf-8')
 				output = output.strip("\n")
+				#print(output)
 			except Exception as e:
 				print(e)
 
@@ -446,7 +448,7 @@ class CRMetrics(object):
 
 	def _parse_pods_from_connections_op(self, output):
 		pod_list = []
-		print(output)
+		#print(output)
 		start = False
 		for line in output.split("\n"):
 			if line.startswith("Level"):
@@ -822,6 +824,7 @@ class CRMetrics(object):
 	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace, follow_connections, opformat):
 		accountidentity = self._get_identity(custom_resource, custom_res_instance, namespace)
 		accountidentity = ''
+		pod_list = []
 		if follow_connections == "false":
 			composition = self._get_composition(custom_resource, custom_res_instance, namespace)
 			num_of_resources = self._parse_number_of_resources(composition)
@@ -830,8 +833,7 @@ class CRMetrics(object):
 			num_of_resources = "-"
 			conn_op_format = "json"
 			pod_list = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace, conn_op_format)
-
-		#print(pod_list)
+			#print(pod_list)
 		#cpu, memory = self._get_cpu_memory_usage(pod_list)
 		
 		num_of_containers_conn = self._parse_number_of_containers(pod_list)

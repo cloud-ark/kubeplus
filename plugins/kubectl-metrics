@@ -1,6 +1,26 @@
 #!/bin/bash
 
-echo "kubectl metrics cr"
-echo "kubectl metrics service"
-echo "kubectl metrics helmrelease"
-echo "kubectl metrics account"
+print_help () {
+    echo "NAME"
+    echo "        kubectl metrics"
+    echo ""
+    echo "SYNOPSIS"
+    echo "        kubectl metrics has following sub-commands:"
+    echo ""
+    echo "           kubectl metrics cr"
+    echo "           kubectl metrics service"
+    echo "           kubectl metrics helmrelease"
+    echo "           kubectl metrics account"
+    echo ""
+    echo "DESCRIPTION"
+    echo "        kubectl metrics commands help with collecting CPU, Memory, Storage and Network consumption metrics for a stack."
+    echo "        The starting point of the stack can be name of a Kubernetes resource, name of a Kubernetes Service, name of a Helm release, or name of an 'account'."
+    echo "        Each of these stack identifications have separate metrics tracking sub-commands as identified above."
+    echo "        These use kubectl connections behind the scene to discover all the Pods in a stack and then collect above metrics for those Pods."
+    echo "        - Pod cpu and memory data is collected from metrics-apiserver, which needs to be running in the cluster."
+    echo "        - Pod storage data is collected from the PersistentVolumeClaims that are associated with the Pods in the stack."
+    echo "        - Pod network consumption data is collected from cAdvisor."
+    exit 0
+}
+
+print_help
