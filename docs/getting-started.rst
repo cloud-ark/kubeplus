@@ -36,11 +36,13 @@ We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
 .. _here: https://github.com/cloud-ark/kubeplus/blob/master/examples/resource-composition/steps.txt
 
 4. SaaS examples:
-
+  - `Helloworld service`_
   - `Wordpress service`_
   - `Mysql service`_
   - `MongoDB service`_
   - Multiple `teams with applications deployed later`_
+
+.. _Helloworld service: https://github.com/cloud-ark/kubeplus/blob/master//examples/multitenancy/hello-world/steps.txt
 
 .. _Wordpress service: https://github.com/cloud-ark/kubeplus/blob/master//examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt
 

@@ -1,0 +1,17 @@
+1. kubectl create -f hello-world-service-composition.yaml
+2. kubectl get crds | grep helloworldservices.platformapi.kubeplus
+   - Wait till the HelloWorldService CRD is registered
+3. kubectl create -f tenant1.yaml
+4. HELLOWORLD_POD=`kubectl get pods | grep hello | awk '{print $1}'`
+5. kubectl get pods $HELLOWORLD_POD -o json | jq -r '.spec.containers[0].resources'
+6. kubectl get pods $HELLOWORLD_POD -o json | jq -r '.spec.nodeName'
+7. kubectl create -f tenant2.yaml 
+8. kubectl describe helloworldservices hello-world-tenant2
+9. KUBEPLUS_POD=`kubectl get pods | grep kubeplus | awk '{print $1}'`
+10. In a new terminal window:
+    - kubectl port-forward $KUBEPLUS_POD -n default 8081:8090
+11. curl -kv "http://127.0.0.1:8081/apis/kubeplus/metrics?kind=HelloWorldService&instance=hello-world-tenant1&namespace=default"
+12. kubectl delete -f tenant2.yaml
+13. kubectl delete -f tenant2.yaml
+14. kubectl delete -f tenant1.yaml
+15. kubectl delete -f hello-world-service-composition.yaml
