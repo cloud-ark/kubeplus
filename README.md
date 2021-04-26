@@ -116,6 +116,7 @@ To obtain metrics, enable Kubernetes Metrics API Server on your cluster. Hosted 
     ```
 
 - SaaS examples:
+  - [Hello World service](./examples/multitenancy/hello-world/steps.txt)
   - [Wordpress service](./examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt)
   - [Mysql service](./examples/multitenancy/stacks/steps.txt)
   - [MongoDB service](./examples/multitenancy/mongodb-as-a-service/steps.md)
