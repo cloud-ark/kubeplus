@@ -53,6 +53,7 @@ var (
 	err error
 	kindDetailsMap map[string]kindDetails
 	CMD_RUNNER_POD string
+	KUBEPLUS_DEPLOYMENT string
 	CMD_RUNNER_CONTAINER string
 	KUBEPLUS_NAMESPACE string
 )
@@ -67,6 +68,7 @@ func init() {
 	dynamicClient, err = dynamic.NewForConfig(cfg)
 	kindDetailsMap = make(map[string]kindDetails, 0)
 	CMD_RUNNER_POD = "kubeplus"
+	KUBEPLUS_DEPLOYMENT = "kubeplus-deployment"
 	CMD_RUNNER_CONTAINER = "helmer"
 	KUBEPLUS_NAMESPACE = "default"
 }
@@ -146,7 +148,11 @@ func getChartValues(request *restful.Request, response *restful.Response) {
     		chartName := customAPI.ChartName
  			fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
 
- 			cmdRunnerPod := CMD_RUNNER_POD
+ 			cmdRunnerPod := getKubePlusPod()
+ 			if cmdRunnerPod == "" {
+ 				fmt.Printf("Command runner Pod name could not be determined.. cannot continue.")
+ 				valuesToReturn = ""
+ 			}
  			if chartURL != "" {
  				// 1. Download the chart
  				downloadChart(chartURL, cmdRunnerPod, namespace)
@@ -160,6 +166,47 @@ func getChartValues(request *restful.Request, response *restful.Response) {
 		}
 
 	response.Write([]byte(valuesToReturn))
+}
+
+func getKubePlusPod() string {
+	podName := ""
+	/*
+	deploymentObj, err1 := kubeClient.AppsV1().Deployments(KUBEPLUS_NAMESPACE).Get(KUBEPLUS_DEPLOYMENT, metav1.GetOptions{})
+	if err1 != nil {
+		fmt.Printf("Error:%v\n", err1)
+		return podName
+	}*/
+	replicaSetList, err2 := kubeClient.AppsV1().ReplicaSets(KUBEPLUS_NAMESPACE).List(metav1.ListOptions{})
+	if err2 != nil {
+		fmt.Printf("Error:%v\n", err2)
+		return podName
+	}
+	replicaSetName := ""
+	for _, repSetObj := range replicaSetList.Items {
+		ownerRefObj := repSetObj.ObjectMeta.OwnerReferences[0]
+		depOwnerName := ownerRefObj.Name
+		if depOwnerName == KUBEPLUS_DEPLOYMENT {
+			replicaSetName = repSetObj.ObjectMeta.Name
+			fmt.Printf("DepOwnerName:%s, RSSetName:%s\n", depOwnerName, replicaSetName)
+			break
+		}
+	}
+
+	podList, err3 := kubeClient.CoreV1().Pods(KUBEPLUS_NAMESPACE).List(metav1.ListOptions{})
+	if err3 != nil {
+		fmt.Printf("Error:%v\n", err3)
+		return podName
+	}
+	for _, podObj := range podList.Items {
+		ownerRefObj := podObj.ObjectMeta.OwnerReferences[0]
+		podOwnerName := ownerRefObj.Name
+		if podOwnerName == replicaSetName {
+			podName = podObj.ObjectMeta.Name
+			fmt.Printf("RSSetName:%s, PodName:%s\n", replicaSetName, podName)
+			break
+		}
+	}
+	return podName
 }
 
 func deleteCRDInstances(request *restful.Request, response *restful.Response) {
@@ -251,8 +298,9 @@ func deleteHelmRelease(helmreleaseNS, helmrelease string) bool {
 	cmd := "./root/helm delete " + helmrelease + " -n " + helmreleaseNS
 	fmt.Printf("Helm delete cmd:%s\n", cmd)
 	var output string 
-	namespace := "default" // NAMEspace for the CMD_RUNNER_POD
-	ok, output := executeExecCall(CMD_RUNNER_POD, namespace, cmd)
+	namespace := "default" // NAMEspace for the KubePlus Pod
+	cmdRunnerPod := getKubePlusPod()
+	ok, output := executeExecCall(cmdRunnerPod, namespace, cmd)
 	fmt.Printf("Helm delete o/p:%v\n", output)
 	return ok
 }
@@ -269,7 +317,7 @@ func annotateCRD(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Chart Kinds:%s\n", chartkinds)
 	chartkinds = strings.Replace(chartkinds, "-", ";", 1)
 
- 	cmdRunnerPod := CMD_RUNNER_POD
+ 	cmdRunnerPod := getKubePlusPod()
 
  	namespace := "default"
 
@@ -305,7 +353,7 @@ func getPlural(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Kind:%s\n", kind)
 	//fmt.Printf("Group:%s\n", group)
 
- 	cmdRunnerPod := CMD_RUNNER_POD
+ 	cmdRunnerPod := getKubePlusPod()
 
  	namespace := "default"
 
@@ -343,7 +391,7 @@ func getMetrics(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Inside getMetrics...\n")
 
 	metricsToReturn := ""
- 	cmdRunnerPod := CMD_RUNNER_POD
+ 	cmdRunnerPod := getKubePlusPod()
 
 	customresource := request.QueryParameter("instance")
 	kind := request.QueryParameter("kind")
@@ -540,7 +588,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
  			}
  			kindDetailsMap[kind + ":" + customresource] = kinddetails
 
- 			cmdRunnerPod := CMD_RUNNER_POD
+ 			cmdRunnerPod := getKubePlusPod()
  			if chartURL != "" {
  				// 1. Download the chart
  				downloadChart(chartURL, cmdRunnerPod, namespace)

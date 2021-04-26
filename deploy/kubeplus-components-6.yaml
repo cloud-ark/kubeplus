@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: webhook-tls-certificates
+type: Opaque
+data:
+  username: YWRtaW4=
+  password: MWYyZDFlMmU2N2Rm
+---
+#apiVersion: rbac.authorization.k8s.io/v1
+#kind: ClusterRole
+#metadata:
+#  name: webhook-reader
+#rules:
+#- apiGroups: ["apiextensions.k8s.io"]
+#  resources: ["customresourcedefinitions"]
+#  verbs: ["get", "list"]
+#- apiGroups: [""]
+#  resources: ["configmaps"]
+#  verbs: ["get", "list"]
+#---
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubeplus:cluster-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: kubeplus 
+  namespace: default
+  apiGroup: ""
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: kubeplus
+  namespace: default
+---
+#apiVersion: rbac.authorization.k8s.io/v1
+#kind: ClusterRoleBinding
+#metadata:
+#  name: webhook-reader-binding
+#subjects:
+#- kind: ServiceAccount
+#  name: default
+#  namespace: kubeplus
+#  apiGroup: ""
+#roleRef:
+#  kind: ClusterRole
+#  name: cluster-admin
+#  apiGroup: rbac.authorization.k8s.io
+#---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubeplus-deployment # do not change
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubeplus
+  template:
+    metadata:
+      name: kubeplus
+      namespace: default
+      labels:
+        app: kubeplus
+    spec:
+      serviceAccount: kubeplus
+      initContainers:
+      - name: webhook-cert-setup
+        # This is a minimal kubectl image based on Alpine Linux that signs certificates using the k8s extension api server
+        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.6
+        imagePullPolicy: Always
+        command: ["./webhook-create-signed-cert-new.sh"]
+        args:
+          - "--service"
+          - "crd-hook-service"
+          - "--namespace"
+          - "default"
+          - "--secret"
+          - "webhook-tls-certificates"
+      containers:
+      - name: crd-hook
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.8
+        imagePullPolicy: Always
+        args:
+          - -tlsCertFile=/etc/webhook/certs/cert.pem
+          - -tlsKeyFile=/etc/webhook/certs/key.pem
+          - -alsologtostderr
+          #- -v=4
+          - 2>&1
+        volumeMounts:
+        - name: webhook-certs
+          mountPath: /etc/webhook/certs
+          readOnly: true
+      - name: mutating-webhook-helper
+        image: lmecld/mutating-webhook-helper:latest
+        imagePullPolicy: Always
+      - name: platform-operator
+        image: gcr.io/cloudark-kubeplus/platform-operator:0.0.9
+        imagePullPolicy: Always
+        command: [ "/platform-operator"]
+      - name: helmer
+        image: gcr.io/cloudark-kubeplus/helm-pod:0.0.9
+        imagePullPolicy: Always
+        command: ["/root/helm-pod"]
+        volumeMounts:
+        - mountPath: /chart
+          name: chart-volume
+      volumes:
+        - name: chart-volume
+          emptyDir: {}
+        - name: webhook-certs
+          secret:
+            secretName: webhook-tls-certificates
