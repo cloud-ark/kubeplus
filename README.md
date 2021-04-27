@@ -1,4 +1,4 @@
-## KubePlus - CRD for CRDs to build multi-tenant SaaS from Helm charts
+## KubePlus - Kubernetes Operator to create multi-tenant SaaS from Helm charts
 
 Today Platform Engineering teams are dealing with a wide variety of Helm charts coming from different sources - open-source repositories, software vendors, Cloud marketplaces, or enterprise internal stakeholders. The requirement is to deliver these custom application stacks as-a-service taking care of multi-tenancy and day2 operations.
 
