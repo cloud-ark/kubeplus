@@ -36,6 +36,7 @@ We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
 .. _here: https://github.com/cloud-ark/kubeplus/blob/master/examples/resource-composition/steps.txt
 
 4. SaaS examples:
+
   - `Helloworld service`_
   - `Wordpress service`_
   - `Mysql service`_
@@ -71,3 +72,31 @@ We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
    We would love your contributions. The process is simple_.
 
 .. _simple: https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md
+
+
+OpenShift Deployment
+---------------------
+
+1. Spin up a OpenShift cluster
+
+
+2. Install KubePlus Pre-requisite resources
+
+.. code-block:: bash
+
+    kubectl apply -f https://github.com/cloud-ark/kubeplus/blob/master/deploy/kubeplus-openshift-prereqs.yaml
+
+3. Install Metrics API Server
+
+.. code-block:: bash
+
+    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+4: Install KubePlus SaaS Manager
+    Follow the standard steps for installing an Operator on OpenShift
+
+5: Try out KubePlus kubectl plugins
+    See above
+
+6: Try out SaaS examples
+    See above
