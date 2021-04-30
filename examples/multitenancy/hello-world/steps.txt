@@ -3,9 +3,9 @@ Hello World as-a-Service
 
 This example shows a basic Hello World Service creation.
 The provider creates HelloWorldService from the Hello World Helm chart.
-It defines resource requests and limits for cpu and memory resources for the Pods
-that will be created as part of this service instance.
-The consumer creates instances of HelloWorldService to run a Pod that displays Hello World. 
+While creating the HelloWorldService, provider defines the resource requests and limits for cpu and memory resources for the Pods
+that will be created as part of this service instance. The node on which the Pod(s) should be deployed is also
+defined as part of this Service creation. The consumer creates instances of HelloWorldService to run a Pod that displays Hello World. 
 
 Provider steps:
 ----------------
