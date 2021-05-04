@@ -45,16 +45,20 @@
   <div class="section" id="getting-started">
 <h1>Getting Started</h1>
 <ol class="arabic simple">
-<li><p>Try <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">connections</span></code> plugin in your environment. It can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).</p></li>
+<li><p>Install KubePlus kubectl plugins:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
-$ gunzip kubeplus-kubectl-plugins.tar.gz
-$ tar -xvf kubeplus-kubectl-plugins.tar
-$ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
-$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
-$ kubectl kubeplus commands
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ Install Docker
+$
+      $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
+      $ gunzip kubeplus-kubectl-plugins.tar.gz
+      $ tar -xvf kubeplus-kubectl-plugins.tar
+      $ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
+      $ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
+      $ kubectl kubeplus commands
+  $ kubectl connections ServiceAccount default default -o png
 </pre></div>
 </div>
+<p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">connections</span></code> can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).</p>
 <ol class="arabic simple" start="2">
 <li><p>Install KubePlus in-cluster component before trying out below examples:</p></li>
 </ol>
@@ -110,29 +114,30 @@ $ ./deploy-kubeplus.sh
 <p>We would love your contributions. The process is <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md">simple</a>.</p>
 </li>
 </ol>
-<div class="section" id="openshift-deployment">
-<h2>OpenShift Deployment</h2>
+<div class="section" id="openshift-market-place-deployment">
+<h2>OpenShift Market Place Deployment</h2>
 <ol class="arabic simple">
-<li><p>Spin up a OpenShift cluster</p></li>
 <li><p>Install KubePlus Pre-requisite resources</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl apply -f https://github.com/cloud-ark/kubeplus/blob/master/deploy/kubeplus-openshift-prereqs.yaml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Install Metrics API Server</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/metrics-server.yaml
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
-<li><p>Install Metrics API Server</p></li>
-</ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-</pre></div>
-</div>
-<dl class="simple">
-<dt>4: Install KubePlus SaaS Manager</dt><dd><p>Follow the standard steps for installing an Operator on OpenShift</p>
-</dd>
-<dt>5: Try out KubePlus kubectl plugins</dt><dd><p>See above</p>
-</dd>
-<dt>6: Try out SaaS examples</dt><dd><p>See above</p>
+<li><p>Install KubePlus SaaS Manager
+- Follow the standard steps for installing an Operator on OpenShift</p></li>
+<li><dl class="simple">
+<dt>Try out KubePlus kubectl plugins</dt><dd><p>See above</p>
 </dd>
 </dl>
+</li>
+<li><p>Try <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master//examples/multitenancy/hello-world/steps.txt">Helloworld service</a></p></li>
+</ol>
 </div>
 </div>
 

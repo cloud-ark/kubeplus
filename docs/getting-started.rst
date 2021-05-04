@@ -2,16 +2,21 @@
 Getting Started
 ========================
 
-1. Try ``kubectl connections`` plugin in your environment. It can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).
+1. Install KubePlus kubectl plugins:
 
 .. code-block:: bash
 
+  $ Install Docker
+  $ 
 	$ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
    	$ gunzip kubeplus-kubectl-plugins.tar.gz
    	$ tar -xvf kubeplus-kubectl-plugins.tar
    	$ export KUBEPLUS_HOME=`pwd`
    	$ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
    	$ kubectl kubeplus commands
+    $ kubectl connections ServiceAccount default default -o png
+
+``kubectl connections`` can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).
 
 2. Install KubePlus in-cluster component before trying out below examples:
 
@@ -74,29 +79,25 @@ We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
 .. _simple: https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md
 
 
-OpenShift Deployment
----------------------
+OpenShift Market Place Deployment
+-----------------------------------
 
-1. Spin up a OpenShift cluster
-
-
-2. Install KubePlus Pre-requisite resources
+1. Install KubePlus Pre-requisite resources
 
 .. code-block:: bash
 
-    kubectl apply -f https://github.com/cloud-ark/kubeplus/blob/master/deploy/kubeplus-openshift-prereqs.yaml
+    kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml
 
-3. Install Metrics API Server
+2. Install Metrics API Server
 
 .. code-block:: bash
 
-    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+    kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/metrics-server.yaml
 
-4: Install KubePlus SaaS Manager
-    Follow the standard steps for installing an Operator on OpenShift
+3. Install KubePlus SaaS Manager
+   - Follow the standard steps for installing an Operator on OpenShift
 
-5: Try out KubePlus kubectl plugins
+4. Try out KubePlus kubectl plugins
     See above
 
-6: Try out SaaS examples
-    See above
+5. Try `Helloworld service`_
