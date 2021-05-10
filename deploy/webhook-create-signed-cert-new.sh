@@ -131,7 +131,8 @@ echo ${serverCert} | openssl base64 -d -A -out ${tmpdir}/server-cert.pem
         --dry-run=client -o yaml |
     ./root/kubectl -n ${namespace} apply -f -
 
-cat ./root/mutatingwebhook.yaml | ./root/webhook-patch-ca-bundle-new.sh > ./root/mutatingwebhook-ca-bundle.yaml
+sed -i s"/namespace:.*/namespace: $namespace/"g /root/mutatingwebhook.yaml
+cat ./root/mutatingwebhook.yaml | ./root/webhook-patch-ca-bundle-new.sh $namespace > ./root/mutatingwebhook-ca-bundle.yaml
 more /root/mutatingwebhook-ca-bundle.yaml
 
 kubectl apply -f ./root/mutatingwebhook-ca-bundle.yaml 2>/dev/null || true

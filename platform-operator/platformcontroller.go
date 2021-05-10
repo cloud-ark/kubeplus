@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"strconv"
+	"strings"
 
 	_ "github.com/lib/pq"
 	"net/http"
@@ -307,7 +308,7 @@ func (c *Controller) deleteFoo(obj interface{}) {
 	}
 	res := newRes.Resource
 	fmt.Printf("GHI - delete\n")
-	fmt.Printf("%v\n", res)
+	fmt.Printf("%v\n NS:%s", res, namespace)
 	kind := foo.Spec.NewResource.Resource.Kind
 	group := foo.Spec.NewResource.Resource.Group
 	version := foo.Spec.NewResource.Resource.Version
@@ -323,12 +324,12 @@ func (c *Controller) deleteFoo(obj interface{}) {
  	resPolicySpec := foo.Spec.ResPolicy
  	//fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
 
-	deleteResourcePolicy(resPolicySpec)
+	deleteResourcePolicy(resPolicySpec, namespace)
 
  	resMonitorSpec := foo.Spec.ResMonitor
  	//fmt.Printf("ResMonitorSpec:%v\n",resMonitorSpec)
 
-	deleteResourceMonitor(resMonitorSpec)
+	deleteResourceMonitor(resMonitorSpec, namespace)
 
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 }
@@ -338,10 +339,16 @@ func (c *Controller) deleteFoo(obj interface{}) {
 // with the current status of the resource.
 func (c *Controller) syncHandler(key string) error {
 	// Convert the namespace/name string into a distinct namespace and name
+	fmt.Printf("Inside syncHandler...key:%s\n", key)
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+	fmt.Printf("Inside syncHandler...Namespace:%s Name:%s\n", namespace, name)
 	if err != nil {
 		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return nil
+	}
+
+	if namespace == "" {
+		namespace = "default"
 	}
 
 	// Get the Foo resource with this namespace/name
@@ -413,14 +420,14 @@ func createResourceMonitor(resMonitorSpec interface{}, namespace string) {
 	}
 }
 
-func deleteResourceMonitor(resMonitorSpec interface{}) {	
+func deleteResourceMonitor(resMonitorSpec interface{}, namespace string) {	
 	fmt.Println("Inside deleteResourceMonitor")
 	resMonitorObject := resMonitorSpec.(platformworkflowv1alpha1.ResourceMonitor)
 	inputResMonitorName := resMonitorObject.ObjectMeta.Name
-	namespace := resMonitorObject.ObjectMeta.Namespace
+	/*namespace := resMonitorObject.ObjectMeta.Namespace
 	if namespace == "" {
 		namespace = "default"
-	}
+	}*/
 	fmt.Printf("ResMonitor:%s, Namespace:%s\n",inputResMonitorName,namespace)
 
 	// Using Typed client
@@ -469,14 +476,14 @@ func createResourcePolicy(resPolicySpec interface{}, namespace string) {
 	}
 }
 
-func deleteResourcePolicy(resPolicySpec interface{}) {	
+func deleteResourcePolicy(resPolicySpec interface{}, namespace string) {	
 	fmt.Println("Inside deleteResourcePolicy.")
 	resPolicyObject := resPolicySpec.(platformworkflowv1alpha1.ResourcePolicy)
 	inputResPolicyName := resPolicyObject.ObjectMeta.Name
-	namespace := resPolicyObject.ObjectMeta.Namespace
+	/*namespace := resPolicyObject.ObjectMeta.Namespace
 	if namespace == "" {
 		namespace = "default"
-	}
+	}*/
 	fmt.Printf("ResPolicy:%s, Namespace:%s\n",inputResPolicyName,namespace)
 
 	// Using Typed client
@@ -591,7 +598,7 @@ func deleteCRDInstances(kind, group, version, plural, namespace string) []byte {
 
 func getServiceEndpoint(servicename string) (string, string) {
 	fmt.Printf("..Inside getServiceEndpoint...\n")
-	namespace := "default" // Use the namespace in which kubeplus is deployed.
+	namespace := getKubePlusNamespace() // Use the namespace in which kubeplus is deployed.
 	//discoveryService := "discovery-service"
 	cfg, _ := rest.InClusterConfig()
 	kubeClient, _ := kubernetes.NewForConfig(cfg)
@@ -602,6 +609,18 @@ func getServiceEndpoint(servicename string) (string, string) {
 	stringPort := strconv.Itoa(int(port))
     fmt.Printf("Host:%s, Port:%s\n", host, stringPort)
 	return host, stringPort
+}
+
+func getKubePlusNamespace() string {
+	filePath := "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
+	content, err := ioutil.ReadFile(filePath)
+    if err != nil {
+     	fmt.Printf("Namespace file reading error:%v\n", err)
+    }
+    ns := string(content)
+    ns = strings.TrimSpace(ns)
+    //fmt.Printf("CRD Hook NS:%s\n", ns)
+    return ns
 }
 
 func queryKubeDiscoveryService(url1 string) []byte {

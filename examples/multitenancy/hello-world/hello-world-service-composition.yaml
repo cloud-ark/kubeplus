@@ -11,7 +11,7 @@ spec:
       version: v1alpha1
       plural: helloworldservices 
     # URL of the Helm chart that contains Kubernetes resources that represent a workflow.
-    chartURL: https://github.com/cloud-ark/operatorcharts/blob/master/hello-world-chart-0.0.1.tgz?raw=true
+    chartURL: https://github.com/cloud-ark/operatorcharts/blob/master/hello-world-chart-0.0.2.tgz?raw=true
     chartName: hello-world-chart
   # respolicy defines the resource policy to be applied to instances of the specified custom resource.
   respolicy:
