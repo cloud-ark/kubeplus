@@ -37,7 +37,7 @@ var (
 
 	accountidentity = "accountidentity"
 	accountidentities = "accountidentities"
-	webhook_namespace = "default"
+	webhook_namespace = GetNamespace()
  
 	kubeclientset *kubernetes.Clientset
 
@@ -103,7 +103,7 @@ func init() {
 func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod string) *v1beta1.AdmissionResponse {
 	req := ar.Request
 
-	fmt.Println("=== Request ===")
+	/*fmt.Println("=== Request ===")
 	fmt.Println(req.Kind.Kind)
 	fmt.Println(req.Name)
 	fmt.Println(req.Namespace)
@@ -113,6 +113,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 	fmt.Println("=== User ===")
 	fmt.Println(req.UserInfo.Username)
 	fmt.Println("=== User ===")
+	*/
 
 	var patchOperations []patchOperation
 	patchOperations = make([]patchOperation, 0)
@@ -120,15 +121,6 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 	if httpMethod == http.MethodDelete {
 		handleDelete(ar)
 		return nil
-		/*//patchBytes, _ := json.Marshal(patchOperations)
-		return &v1beta1.AdmissionResponse{
-			Allowed: true,
-			Patch:   patchBytes,
-			PatchType: func() *v1beta1.PatchType {
-				pt := v1beta1.PatchTypeJSONPatch
-				return &pt
-			}(),
-		}*/
 	}
 
 	saveResource(ar)
@@ -182,9 +174,9 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 		}
 	}
 
-	fmt.Printf("PatchOperations:%v\n", patchOperations)
+	//fmt.Printf("PatchOperations:%v\n", patchOperations)
 	patchBytes, _ := json.Marshal(patchOperations)
-	fmt.Printf("---------------------------------\n")
+	//fmt.Printf("---------------------------------\n")
 	// marshal the struct into bytes to pass into AdmissionResponse
 	return &v1beta1.AdmissionResponse{
 		Allowed: true,
@@ -223,6 +215,11 @@ func handleDelete(ar *v1beta1.AdmissionReview) {
 	fmt.Printf("Calling DeleteCRDInstances...")
 	DeleteCRDInstances(kind, group, version, plural, namespace, resName)
 	fmt.Println("After calling DeleteCRDInstances...")
+
+	if kind == "ResourceComposition" {
+		
+	}
+
 }
 
 func checkAndApplyNSPolicies(ar *v1beta1.AdmissionReview) []patchOperation {
@@ -298,11 +295,9 @@ func getReleaseName(ar *v1beta1.AdmissionReview) string {
 	annotations1 := make(map[string]string, 0)
 	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
 
-	if err != nil {
-		fmt.Printf("Error in parsing existing annotations")
-	} else {
+	if err == nil {
 		json.Unmarshal(allAnnotations, &annotations1)
-		fmt.Printf("All Annotations:%v\n", annotations1)
+		//fmt.Printf("All Annotations:%v\n", annotations1)
 	}
 
 	for key, value := range annotations1 {
@@ -319,7 +314,7 @@ func saveResource(ar *v1beta1.AdmissionReview) {
 	kind, resName, _ := getObjectDetails(ar)
 	//key := kind + "/" + namespace + "/" + resName
 	key := kind + "-" + resName
-	fmt.Printf("Res Key:%s\n", key)
+	//fmt.Printf("Res Key:%s\n", key)
 	resourceNameObjMap[key] = ar
 }
 
@@ -327,10 +322,7 @@ func saveResourcePolicy(ar *v1beta1.AdmissionReview) {
 	req := ar.Request
 	body := req.Object.Raw
 
-	resPolicyName, err := jsonparser.GetUnsafeString(body, "metadata", "name")
-	if err != nil {
-		fmt.Println(err)
-	}
+	resPolicyName, _ := jsonparser.GetUnsafeString(body, "metadata", "name")
 	fmt.Printf("Resource Policy Name:%s\n", resPolicyName)
 
 	var resourcePolicy platformworkflowv1alpha1.ResourcePolicy
@@ -365,9 +357,7 @@ func checkServiceLevelPolicyApplicability(ar *v1beta1.AdmissionReview) (string, 
 
 	// TODO: looks like we can just keep one - namespace or namespace1
 	namespace1, _, _, err := jsonparser.Get(body, "metadata", "namespace")
-	if err != nil {
-		fmt.Println(err)
-	} else {
+	if err == nil {
 		fmt.Printf("Namespace1:%s\n", namespace1)
 	}
 
@@ -402,11 +392,9 @@ func checkServiceLevelPolicyApplicability(ar *v1beta1.AdmissionReview) (string, 
 	if ownerKindS == "" && ownerNameS == "" && ownerAPIVersionS == "" {
 		annotations1 := make(map[string]string, 0)
 		allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
-		if err != nil {
-			fmt.Printf("Error in parsing existing annotations")
-		} else {
+		if err == nil {
 			json.Unmarshal(allAnnotations, &annotations1)
-			fmt.Printf("All Annotations:%v\n", annotations1)
+			//fmt.Printf("All Annotations:%v\n", annotations1)
 		}
 		releaseName := annotations1["meta.helm.sh/release-name"]
 		fmt.Printf("Helm release name:%s\n", releaseName)
@@ -551,10 +539,7 @@ func applyPolicies(ar *v1beta1.AdmissionReview, customAPI, rootKind, rootName, r
 	req := ar.Request
 	body := req.Object.Raw
 
-	podName, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
-	if err != nil {
-		fmt.Println(err)
-	}
+	podName, _ := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
 
 	fmt.Printf("Pod Name:%s\n", podName)
 
@@ -681,15 +666,10 @@ func getObjectDetails(ar *v1beta1.AdmissionReview) (string, string, string) {
 	kind := req.Kind.Kind
 	lowercaseKind := strings.ToLower(kind)
 
-	resName, err := jsonparser.GetUnsafeString(body, "metadata", "name")
-	if err != nil {
-		fmt.Println(err)
-	}
+	resName, _ := jsonparser.GetUnsafeString(body, "metadata", "name")
 
-	namespace, err := jsonparser.GetUnsafeString(body, "metadata", "namespace")
-	if err != nil {
-		fmt.Println(err)
-	}
+	namespace, _ := jsonparser.GetUnsafeString(body, "metadata", "namespace")
+
 	if namespace == "" {
 		namespace = "default"
 	}
@@ -706,10 +686,7 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) {
 	    fmt.Println(err)	
 	}
 
-	platformWorkflowName, err := jsonparser.GetUnsafeString(body, "metadata", "name")
-	if err != nil {
-		fmt.Println(err)
-	}
+	platformWorkflowName, _ := jsonparser.GetUnsafeString(body, "metadata", "name")
 
 	namespace1, _, _, err := jsonparser.Get(body, "metadata", "namespace")
 	namespace := string(namespace1)
@@ -766,13 +743,13 @@ func registerManPage(kind, platformworkflow, namespace string) string {
 		Data: yamlDataMap,
 	}
 
-	configMap1, err1 := kubeClient.CoreV1().ConfigMaps(namespace).Create(configMap)
+	_, err1 := kubeClient.CoreV1().ConfigMaps(namespace).Create(configMap)
 
 	if err1 != nil {
 		fmt.Printf("Error:%s\n", err1.Error())
 		return ""
 	} else {
-		fmt.Printf("Config Map created:%v\n",configMap1)
+		fmt.Println("Usage Config Map created:")
 	}
 
 	usageAnnotationValue := configMapName + ".spec"
@@ -796,17 +773,17 @@ func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 	chartKinds := ""
 	if ok {
 
-			namespace := "default"
+			namespace := GetNamespace()
 	 		chartKindsB := DryRunChart(platformWorkflowName, namespace)
 	 		chartKinds = string(chartKindsB)
-	 		fmt.Printf("Chart Kinds:%v\n", chartKinds)
+	 		//fmt.Printf("Chart Kinds:%v\n", chartKinds)
 
 	 		// If no kinds are found in the dry run then there is nothing to be done.
 	 		if chartKinds == "" {
 	 			return annotations1
 	 		}
 
-	 	fmt.Printf("Annotating %s\n", chartKinds)
+	 	//fmt.Printf("Annotating %s\n", chartKinds)
 	 	parts := strings.Split(chartKinds, "-")
 	 	uniqueKinds := make([]string,0)
 	 	for _, p := range parts {
@@ -821,29 +798,27 @@ func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 	 		}
 	 	}
 
-	 	fmt.Printf("Unique kinds:%v\n", uniqueKinds)
+	 	//fmt.Printf("Unique kinds:%v\n", uniqueKinds)
 	 	chartKinds = strings.Join(uniqueKinds, ";")
-	  	fmt.Printf("Annotating %s\n", chartKinds)
+	  	//fmt.Printf("Annotating %s\n", chartKinds)
 
 		allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
-		if err != nil {
-			fmt.Printf("Error in parsing existing annotations")
-		} else {
+		if err == nil {
 			json.Unmarshal(allAnnotations, &annotations1)
-			fmt.Printf("All Annotations:%v\n", annotations1)
+			//fmt.Printf("All Annotations:%v\n", annotations1)
 		}
 		annotateRel := "resource/annotation-relationship"
 		lowercaseKind := strings.ToLower(crdkind)
 		kindPluralMap[lowercaseKind] = crdplural
-		fmt.Printf("KindPluralMap1:%v\n", kindPluralMap)
+		//fmt.Printf("KindPluralMap1:%v\n", kindPluralMap)
 	 	annotationValue := lowercaseKind + "-INSTANCE.metadata.name"
-	 	fmt.Printf("Annotation value:%s\n", annotationValue)
+	 	//fmt.Printf("Annotation value:%s\n", annotationValue)
 
 		annotateVal := "on:" + chartKinds + ", key:meta.helm.sh/release-name, value:" + annotationValue
 
 		annotations1[annotateRel] = annotateVal
 
-	 	namespace = "default"
+	 	namespace = GetNamespace()
 	 	manpageConfigMapName := registerManPage(crdkind, platformWorkflowName, namespace)
 	 	fmt.Printf("### ManPage ConfigMap Name:%s ####\n", manpageConfigMapName)
 
@@ -853,13 +828,13 @@ func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 	    annotations1[manPageAnnotation] = manPageAnnotationValue
  	}
 
-	fmt.Printf("All Annotations:%v\n", annotations1)
+	//fmt.Printf("All Annotations:%v\n", annotations1)
 
 	return annotations1
 }
 
 func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
-	fmt.Printf("Inside handleCustomAPIs...")
+	//fmt.Printf("Inside handleCustomAPIs...\n")
 	req := ar.Request
 	body := req.Object.Raw
 	//fmt.Printf("%v\n", req)
@@ -876,23 +851,23 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	if ns != "" {
 		namespace = ns
 	}
-	fmt.Printf("Namespace:%s\n", namespace)
+	//fmt.Printf("Namespace:%s\n", namespace)
 	crname, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
-	fmt.Printf("CR Name:%s\n", crname)
+	//fmt.Printf("CR Name:%s\n", crname)
 
 	//cruid, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "uid")
 	// We have to generate a uid as when the request is received there is no uid yet.
 	// When the object is persisted Kubernetes will overwrite the uid with a new value - that is okay.
 	id := guuid.New()
 	cruid := id.String()
-	fmt.Printf("CR Uid:%s\n", cruid)
+	//fmt.Printf("CR Uid:%s\n", cruid)
 
 	overridesBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "spec")
 	overrides := string(overridesBytes)
 	//fmt.Printf("Overrides:%s\n", overrides)
 
 	customAPI := apiVersion + "/" + kind
-	fmt.Printf("CustomAPI:%s\n", customAPI)
+	//fmt.Printf("CustomAPI:%s\n", customAPI)
 
 	// Save name:uid mapping
 	customAPIInstance := customAPI + "/" + namespace + "/" + crname
@@ -901,7 +876,7 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 
 	platformWorkflowName := customAPIPlatformWorkflowMap[customAPI]
 	if platformWorkflowName != "" {
-		fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
+		//fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
 
 		config, err := rest.InClusterConfig()
 		if err != nil {
@@ -912,7 +887,7 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
 		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Get(platformWorkflowName, metav1.GetOptions{})
-		fmt.Printf("ResourceComposition:%v\n", platformWorkflow1)
+		//fmt.Printf("ResourceComposition:%v\n", platformWorkflow1)
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
 		}
@@ -1075,9 +1050,10 @@ func getAnnotationPatch(allAnnotations map[string]string) patchOperation {
 }
 
 func getAccountIdentityAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
-
+	//fmt.Println("Inside getAccountIdentityAnnotation...")
 	req := ar.Request
 
+	/*
 	kind := req.Kind.Kind
 	name := req.Name
 	namespace := req.Namespace
@@ -1085,19 +1061,18 @@ func getAccountIdentityAnnotation(ar *v1beta1.AdmissionReview) map[string]string
 	fmt.Println(kind)
 	fmt.Println(name)
 	fmt.Println(namespace)
+	*/
 
 	// Add user identity annotation
 	annotations1 := make(map[string]string, 0)
 	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
-	if err != nil {
-		fmt.Printf("Error in parsing existing annotations")
-	} else {
+	if err == nil {
 		json.Unmarshal(allAnnotations, &annotations1)
-		fmt.Printf("All Annotations:%v\n", annotations1)
+		//fmt.Printf("All Annotations:%v\n", annotations1)
 	}
 	delete(annotations1, accountidentity)
 	annotations1[accountidentity] = req.UserInfo.Username
-	fmt.Printf("All Annotations:%v\n", annotations1)
+	//fmt.Printf("All Annotations:%v\n", annotations1)
 	return annotations1
 }
 
@@ -1216,7 +1191,7 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 	} else {
 		//fmt.Printf("%v\n", ar.Request)
 		//fmt.Printf("####### METHOD:%s #######\n", ar.Request.Operation)
-		fmt.Println(r.URL.Path)
+		//fmt.Println(r.URL.Path)
 		if r.URL.Path == "/mutate" {
 			method := string(ar.Request.Operation)
 			admissionResponse = whsvr.mutate(&ar, method)
@@ -1234,7 +1209,7 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("Can't encode response: %v", err)
 			http.Error(w, fmt.Sprintf("could not encode response: %v", err), http.StatusInternalServerError)
 		}
-		fmt.Println("Ready to write reponse ...")
+		//fmt.Println("Ready to write reponse ...")
 		if _, err := w.Write(resp); err != nil {
 			fmt.Printf("Can't write response: %v", err)
 			http.Error(w, fmt.Sprintf("could not write response: %v", err), http.StatusInternalServerError)

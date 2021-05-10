@@ -8,7 +8,7 @@ spec:
   names:
     kind: ResourceEvent
     plural: resourceevents
-  scope: Namespaced
+  scope: Namespaced 
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -20,7 +20,7 @@ spec:
   names:
     kind: ResourceMonitor
     plural: resourcemonitors
-  scope: Namespaced
+  scope: Namespaced 
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -32,7 +32,7 @@ spec:
   names:
     kind: ResourceComposition 
     plural: resourcecompositions 
-  scope: Namespaced
+  scope: Namespaced 
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -44,44 +44,5 @@ spec:
   names:
     kind: ResourcePolicy 
     plural: resourcepolicies 
-  scope: Namespaced
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: kubeplus
-spec:
-  selector:
-    app: kubeplus
-  type: NodePort 
-  ports:
-  - protocol: TCP
-    port: 90
-    targetPort: 8090
----
-#kind: Service
-#apiVersion: v1
-#metadata:
-#  name: discovery-service
-#spec:
-#  selector:
-#    app: kubeplus 
-#  ports:
-#  - protocol: TCP 
-#    port: 80
-#    targetPort: 8080 
-#  type: ClusterIP 
-#---
-apiVersion: v1
-kind: Service
-metadata:
-  name: crd-hook-service
-  labels:
-    app: crd-hook-service
-spec:
-  ports:
-  - port: 443
-    targetPort: 443
-  selector:
-    app: kubeplus
+  scope: Namespaced 
 ---

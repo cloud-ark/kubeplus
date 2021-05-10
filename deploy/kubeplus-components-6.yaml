@@ -7,19 +7,6 @@ data:
   username: YWRtaW4=
   password: MWYyZDFlMmU2N2Rm
 ---
-#apiVersion: rbac.authorization.k8s.io/v1
-#kind: ClusterRole
-#metadata:
-#  name: webhook-reader
-#rules:
-#- apiGroups: ["apiextensions.k8s.io"]
-#  resources: ["customresourcedefinitions"]
-#  verbs: ["get", "list"]
-#- apiGroups: [""]
-#  resources: ["configmaps"]
-#  verbs: ["get", "list"]
-#---
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -40,25 +27,36 @@ metadata:
   name: kubeplus
   namespace: default
 ---
-#apiVersion: rbac.authorization.k8s.io/v1
-#kind: ClusterRoleBinding
-#metadata:
-#  name: webhook-reader-binding
-#subjects:
-#- kind: ServiceAccount
-#  name: default
-#  namespace: kubeplus
-#  apiGroup: ""
-#roleRef:
-#  kind: ClusterRole
-#  name: cluster-admin
-#  apiGroup: rbac.authorization.k8s.io
-#---
+kind: Service
+apiVersion: v1
+metadata:
+  name: kubeplus
+spec:
+  selector:
+    app: kubeplus
+  type: NodePort 
+  ports:
+  - protocol: TCP
+    port: 90
+    targetPort: 8090
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: crd-hook-service
+  labels:
+    app: crd-hook-service
+spec:
+  ports:
+  - port: 443
+    targetPort: 443
+  selector:
+    app: kubeplus
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kubeplus-deployment # do not change
-  namespace: default
 spec:
   replicas: 1
   selector:
@@ -67,7 +65,6 @@ spec:
   template:
     metadata:
       name: kubeplus
-      namespace: default
       labels:
         app: kubeplus
     spec:
@@ -75,19 +72,24 @@ spec:
       initContainers:
       - name: webhook-cert-setup
         # This is a minimal kubectl image based on Alpine Linux that signs certificates using the k8s extension api server
-        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.6
+        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.8
         imagePullPolicy: Always
+        env:
+          - name: KUBEPLUS_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
         command: ["./webhook-create-signed-cert-new.sh"]
         args:
           - "--service"
           - "crd-hook-service"
           - "--namespace"
-          - "default"
+          - "$(KUBEPLUS_NAMESPACE)"
           - "--secret"
           - "webhook-tls-certificates"
       containers:
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.8
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.9
         imagePullPolicy: Always
         args:
           - -tlsCertFile=/etc/webhook/certs/cert.pem
@@ -103,11 +105,11 @@ spec:
         image: lmecld/mutating-webhook-helper:latest
         imagePullPolicy: Always
       - name: platform-operator
-        image: gcr.io/cloudark-kubeplus/platform-operator:0.0.9
+        image: gcr.io/cloudark-kubeplus/platform-operator:0.0.10
         imagePullPolicy: Always
         command: [ "/platform-operator"]
       - name: helmer
-        image: gcr.io/cloudark-kubeplus/helm-pod:0.0.9
+        image: gcr.io/cloudark-kubeplus/helm-pod:0.0.10
         imagePullPolicy: Always
         command: ["/root/helm-pod"]
         volumeMounts:

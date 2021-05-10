@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"bytes"
 	"net/http"
+	"net/url"
+	"io/ioutil"
 	"k8s.io/client-go/rest"
 	//"k8s.io/client-go/kubernetes"
 	//"os/exec"
@@ -52,7 +54,6 @@ var (
 	cfg *rest.Config
 	err error
 	kindDetailsMap map[string]kindDetails
-	CMD_RUNNER_POD string
 	KUBEPLUS_DEPLOYMENT string
 	CMD_RUNNER_CONTAINER string
 	KUBEPLUS_NAMESPACE string
@@ -60,17 +61,15 @@ var (
 
 func init() {
 	cfg, err = rest.InClusterConfig()
-	//	config, err := clientcmd.BuildConfigFromFlags("", "")
 	if err != nil {
 		panic(err.Error())
 	}
 	kubeClient = kubernetes.NewForConfigOrDie(cfg)
 	dynamicClient, err = dynamic.NewForConfig(cfg)
 	kindDetailsMap = make(map[string]kindDetails, 0)
-	CMD_RUNNER_POD = "kubeplus"
 	KUBEPLUS_DEPLOYMENT = "kubeplus-deployment"
 	CMD_RUNNER_CONTAINER = "helmer"
-	KUBEPLUS_NAMESPACE = "default"
+	KUBEPLUS_NAMESPACE = getNamespace()
 }
 
 func main() {
@@ -114,6 +113,18 @@ func register() {
 	fmt.Printf("Done installing helmer paths...")
 }
 
+func getNamespace() string {
+	filePath := "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
+	content, err := ioutil.ReadFile(filePath)
+    if err != nil {
+     	fmt.Printf("Namespace file reading error:%v\n", err)
+    }
+    ns := string(content)
+    ns = strings.TrimSpace(ns)
+    fmt.Printf("Helmer NS:%s\n", ns)
+    return ns
+}
+
 func getChartValues(request *restful.Request, response *restful.Response) {
 
     platformWorkflowName := request.QueryParameter("platformworkflow")
@@ -133,7 +144,7 @@ func getChartValues(request *restful.Request, response *restful.Response) {
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
 		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Get(platformWorkflowName, metav1.GetOptions{})
-		fmt.Printf("PlatformWorkflow:%v\n", platformWorkflow1)
+		//fmt.Printf("PlatformWorkflow:%v\n", platformWorkflow1)
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
 		}
@@ -187,7 +198,7 @@ func getKubePlusPod() string {
 		depOwnerName := ownerRefObj.Name
 		if depOwnerName == KUBEPLUS_DEPLOYMENT {
 			replicaSetName = repSetObj.ObjectMeta.Name
-			fmt.Printf("DepOwnerName:%s, RSSetName:%s\n", depOwnerName, replicaSetName)
+			//fmt.Printf("DepOwnerName:%s, RSSetName:%s\n", depOwnerName, replicaSetName)
 			break
 		}
 	}
@@ -202,7 +213,7 @@ func getKubePlusPod() string {
 		podOwnerName := ownerRefObj.Name
 		if podOwnerName == replicaSetName {
 			podName = podObj.ObjectMeta.Name
-			fmt.Printf("RSSetName:%s, PodName:%s\n", replicaSetName, podName)
+			//fmt.Printf("RSSetName:%s, PodName:%s\n", replicaSetName, podName)
 			break
 		}
 	}
@@ -257,7 +268,7 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 		//mapval, ok1 := lhsContent.(map[string]interface{})
 		//if ok1 {
 		objName := instanceObj.GetName()
-		fmt.Printf("Instance Name:%s\n", objName)
+		//fmt.Printf("Instance Name:%s\n", objName)
 
 		if crName != "" && objName != crName {
 			continue;
@@ -265,7 +276,7 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 
 		//fmt.Printf("objData:%v\n", objData)
 		status := objData["status"]
-		fmt.Printf("Status:%v\n", status)
+		//fmt.Printf("Status:%v\n", status)
 		if status != nil {
 			helmreleaseNS, helmrelease := getHelmReleaseName(status)
 			fmt.Printf("Helm release:%s, %s\n", helmreleaseNS, helmrelease)
@@ -298,7 +309,7 @@ func deleteHelmRelease(helmreleaseNS, helmrelease string) bool {
 	cmd := "./root/helm delete " + helmrelease + " -n " + helmreleaseNS
 	fmt.Printf("Helm delete cmd:%s\n", cmd)
 	var output string 
-	namespace := "default" // NAMEspace for the KubePlus Pod
+	namespace := KUBEPLUS_NAMESPACE // NAMEspace for the KubePlus Pod
 	cmdRunnerPod := getKubePlusPod()
 	ok, output := executeExecCall(cmdRunnerPod, namespace, cmd)
 	fmt.Printf("Helm delete o/p:%v\n", output)
@@ -311,15 +322,15 @@ func annotateCRD(request *restful.Request, response *restful.Response) {
 	group := request.QueryParameter("group")
 	plural := request.QueryParameter("plural")
 	chartkinds := request.QueryParameter("chartkinds")	
-	fmt.Printf("Kind:%s\n", kind)
-	fmt.Printf("Group:%s\n", group)
-	fmt.Printf("Plural:%s\n", plural)
-	fmt.Printf("Chart Kinds:%s\n", chartkinds)
+	//fmt.Printf("Kind:%s\n", kind)
+	//fmt.Printf("Group:%s\n", group)
+	//fmt.Printf("Plural:%s\n", plural)
+	//fmt.Printf("Chart Kinds:%s\n", chartkinds)
 	chartkinds = strings.Replace(chartkinds, "-", ";", 1)
 
  	cmdRunnerPod := getKubePlusPod()
 
- 	namespace := "default"
+ 	namespace := KUBEPLUS_NAMESPACE
 
 	//kubectl annotate crd mysqlservices.platformapi.kubeplus resource/annotation-relationship="on:MysqlCluster; Secret, key:meta.helm.sh/release-name, value:INSTANCE.metadata.name"
 
@@ -350,12 +361,12 @@ func getPlural(request *restful.Request, response *restful.Response) {
 
 	kind := request.QueryParameter("kind")
 	//group := request.QueryParameter("group")
-	fmt.Printf("Kind:%s\n", kind)
+	//fmt.Printf("Kind:%s\n", kind)
 	//fmt.Printf("Group:%s\n", group)
 
  	cmdRunnerPod := getKubePlusPod()
 
- 	namespace := "default"
+ 	namespace := KUBEPLUS_NAMESPACE
 
 	cmd := "./root/kubectl api-resources " //| grep " + kind + " | grep " + group + " | awk '{print $1}' " 
 	fmt.Printf("API resources cmd:%s\n", cmd)
@@ -505,7 +516,7 @@ func getReleaseName(kind, customresource, namespace string) (string, string) {
 		objData := obj.UnstructuredContent()
 		fmt.Printf("objData:%v\n", objData)
 		status := objData["status"]
-		fmt.Printf("Status:%v\n", status)
+		//fmt.Printf("Status:%v\n", status)
 		helmreleaseNS, helmrelease = getHelmReleaseName(status)
 		fmt.Printf("Helm release2:%s\n", helmrelease)
 	}
@@ -518,7 +529,7 @@ func getHelmReleaseName(object interface{}) (string, string) {
 	helmreleaseName := ""
 	status := object.(map[string]interface{})
 	for key, element := range status {
-		fmt.Printf("Key:%s\n",key)
+		//fmt.Printf("Key:%s\n",key)
 		key = strings.TrimSpace(key)
 		if key == "helmrelease" {
 			helmrelease = element.(string)
@@ -543,7 +554,13 @@ func deployChart(request *restful.Request, response *restful.Response) {
     platformWorkflowName := request.QueryParameter("platformworkflow")
 	customresource := request.QueryParameter("customresource")
 	namespace := request.QueryParameter("namespace")
-	overrides := request.QueryParameter("overrides")
+	encodedoverrides := request.QueryParameter("overrides")
+	overrides, err := url.QueryUnescape(encodedoverrides)
+	if err != nil {
+		fmt.Printf("Error encountered in decoding overrides:%v\n", err)
+		fmt.Printf("Not continuing...")
+		return
+	}
 	dryrun := request.QueryParameter("dryrun")
 	fmt.Printf("PlatformWorkflowName:%s\n", platformWorkflowName)
 	fmt.Printf("Custom Resource:%s\n", customresource)
@@ -563,7 +580,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 		var sampleclientset platformworkflowclientset.Interface
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
-		resourceCompositionNS := "default"
+		resourceCompositionNS := KUBEPLUS_NAMESPACE
 		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(resourceCompositionNS).Get(platformWorkflowName, metav1.GetOptions{})
 		fmt.Printf("PlatformWorkflow:%v\n", platformWorkflow1)
 		if err != nil {
@@ -602,7 +619,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 			f.WriteString(overrides)
 
 	 			// 6. Install the Chart
-	 			fmt.Printf("ChartName to install:%s\n", chartName)
+	 			//fmt.Printf("ChartName to install:%s\n", chartName)
 	 			lowercaseKind := strings.ToLower(kind)
 	 			releaseName := lowercaseKind + "-" + customresource
 	 			fmt.Printf("Release name:%s\n", releaseName)
@@ -638,7 +655,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 								kindName := parts[1]
 	 								kindName = strings.TrimSpace(kindName)
 	 								kindName = strings.TrimSuffix(kindName, "\n")
-	 								fmt.Printf("Found Kind:%s\n", kindName)
+	 								//fmt.Printf("Found Kind:%s\n", kindName)
 	 								kinds = append(kinds, kindName)
 	 							}
 	 						}
@@ -651,9 +668,9 @@ func deployChart(request *restful.Request, response *restful.Response) {
  		//}
 	}
 	if dryrun != "" {
-		fmt.Printf("Kinds:%v\n", kinds)
+		//fmt.Printf("Kinds:%v\n", kinds)
 		kindsString := strings.Join(kinds, "-")
-		fmt.Printf("KindString:%s\n", kindsString)
+		//fmt.Printf("KindString:%s\n", kindsString)
 		response.Write([]byte(kindsString))
 	}
 }
@@ -662,10 +679,10 @@ func downloadChart(chartURL, cmdRunnerPod, namespace string) string {
 	 			// 1. Extract Chart Name
 	 			lastIndexOfSlash := strings.LastIndex(chartURL, "/")
 	 			chartName1 := chartURL[lastIndexOfSlash+1:]
-	 			fmt.Printf("ChartName1:%s\n", chartName1)
+	 			//fmt.Printf("ChartName1:%s\n", chartName1)
 	 			parts := strings.Split(chartName1, "?")
 	 			chartName2 := parts[0]
-	 			fmt.Printf("ChartName2:%s\n", chartName2)
+	 			//fmt.Printf("ChartName2:%s\n", chartName2)
 
 	 			lsCmd := "ls -l "
 
@@ -734,7 +751,7 @@ func getOverrides(kind, group, version, plural, instance, namespace string) stri
 	spec := objData["spec"]
 	fmt.Printf("Spec:%v\n", spec)
 	for key, element := range spec.(map[string]interface{}) {
-		fmt.Printf("Key:%s\n",key)
+		//fmt.Printf("Key:%s\n",key)
 		elem, ok := element.(int64)
 		if ok {
 			strelem := strconv.FormatInt(elem, 10)
@@ -751,7 +768,7 @@ func getOverrides(kind, group, version, plural, instance, namespace string) stri
 }
 
 func executeExecCall(runner, namespace, command string) (bool, string) {
-	fmt.Println("Inside ExecuteExecCall")
+	//fmt.Println("Inside ExecuteExecCall")
 	req := kubeClient.CoreV1().RESTClient().Post().
 		Resource("pods").
 		Name(runner).
@@ -802,6 +819,6 @@ func executeExecCall(runner, namespace, command string) (bool, string) {
 	}
 
 	responseString := execOut.String()
-	fmt.Printf("Output! :%v\n", responseString)
+	//fmt.Printf("Output! :%v\n", responseString)
 	return true, responseString
 }
