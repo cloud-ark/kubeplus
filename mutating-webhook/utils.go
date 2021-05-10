@@ -42,6 +42,7 @@ var (
 	err error
 	dynamicClient dynamic.Interface
 	platformStackMap map[string]PlatformStackData
+	serviceHost, servicePort string
 )
 
 func init() {
@@ -50,6 +51,8 @@ func init() {
 		panic(err.Error())
 	}
 	platformStackMap = make(map[string]PlatformStackData)
+	serviceHost = "localhost"
+	servicePort = "8090"
 }
 
 func buildConfig() (*rest.Config, error) {
@@ -795,7 +798,7 @@ func addAnnotation(labelkey, labelvalue, kind, resource, namespace string) {
 func GetPlural(kind, group string) []byte {
 	args := fmt.Sprintf("kind=%s&group=%s", kind, group)
 	fmt.Printf("Inside GetPlural...\n")
-	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
 	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/getPlural?%s", serviceHost, servicePort, args)
@@ -810,7 +813,7 @@ func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides 
 	encodedOverrides := url.QueryEscape(overrides)
 	args := fmt.Sprintf("platformworkflow=%s&customresource=%s&namespace=%s&overrides=%s", platformworkflow, customresource, namespace, encodedOverrides)
 	fmt.Printf("Inside QueryDeployEndpoint...\n")
-	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
 	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deploy?%s", serviceHost, servicePort, args)
@@ -822,7 +825,7 @@ func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides 
 func DryRunChart(platformworkflow, namespace string) []byte {
 	args := fmt.Sprintf("platformworkflow=%s&namespace=%s&dryrun=true", platformworkflow, namespace)
 	fmt.Printf("Inside DryRunChart...\n")
-	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
 	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deploy?%s", serviceHost, servicePort, args)
@@ -834,7 +837,7 @@ func DryRunChart(platformworkflow, namespace string) []byte {
 func AnnotateCRD(kind, plural, group, chartkinds string) []byte {
 	args := fmt.Sprintf("kind=%s&plural=%s&group=%s&chartkinds=%s", kind, plural, group, chartkinds)
 	fmt.Printf("Inside AnnotateCRD...\n")
-	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
 	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/annotatecrd?%s", serviceHost, servicePort, args)
@@ -846,7 +849,7 @@ func AnnotateCRD(kind, plural, group, chartkinds string) []byte {
 func DeleteCRDInstances(kind, group, version, plural, namespace, instance string) []byte {
 	fmt.Printf("Inside deleteCRDInstances...\n")
 	args := fmt.Sprintf("kind=%s&group=%s&version=%s&plural=%s&namespace=%s&instance=%s", kind, group, version, plural, namespace, instance)
-	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
 	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deletecrdinstances?%s", serviceHost, servicePort, args)
@@ -858,7 +861,7 @@ func DeleteCRDInstances(kind, group, version, plural, namespace, instance string
 func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
 	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, crdKindName, namespace)
 	fmt.Printf("Inside QueryCompositionEndpoint...\n")
-	serviceHost, servicePort := getServiceEndpoint("discovery-service")
+	//serviceHost, servicePort := getServiceEndpoint("discovery-service")
 	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/platform-as-code/v1/composition?%s", serviceHost, servicePort, args)
@@ -870,7 +873,7 @@ func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
 func GetValuesYaml(platformworkflow, namespace string) []byte {
 	args := fmt.Sprintf("platformworkflow=%s&namespace=%s", platformworkflow, namespace)
 	fmt.Printf("Inside GetValuesYaml...\n")
-	serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
 	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/getchartvalues?%s", serviceHost, servicePort, args)
