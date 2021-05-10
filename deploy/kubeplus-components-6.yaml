@@ -102,7 +102,7 @@ spec:
           mountPath: /etc/webhook/certs
           readOnly: true
       - name: mutating-webhook-helper
-        image: lmecld/mutating-webhook-helper:latest
+        image: gcr.io/cloudark-kubeplus/mutating-webhook-helper:0.2.0 
         imagePullPolicy: Always
       - name: platform-operator
         image: gcr.io/cloudark-kubeplus/platform-operator:0.0.10
