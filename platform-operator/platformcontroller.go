@@ -56,6 +56,10 @@ const (
 	// MessageResourceSynced is the message used for an Event fired when a Foo
 	// is synced successfully
 	MessageResourceSynced = "PlatformStack synced successfully"
+
+	// Annotations to put on Consumer CRDs.
+	CREATED_BY_KEY = "created-by"
+	CREATED_BY_VALUE = "kubeplus"
 )
 
 // Controller is the controller implementation for Foo resources
@@ -520,9 +524,13 @@ func handleCRD(kind, version, group, plural, action, namespace string) error {
 
 	crdClient, _ := apiextensionsclientset.NewForConfig(cfg)
 
+	kubePlusAnnotation := make(map[string]string)
+	kubePlusAnnotation[CREATED_BY_KEY] = CREATED_BY_VALUE
+
 	crd := &apiextensionsv1beta1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: plural + "." + group,
+			Annotations: kubePlusAnnotation,
 		},
 		Spec: apiextensionsv1beta1.CustomResourceDefinitionSpec{
 			Group: group,

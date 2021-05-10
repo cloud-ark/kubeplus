@@ -16,6 +16,12 @@ import (
 	admissionregistrationclientset "k8s.io/client-go/kubernetes/typed/admissionregistration/v1beta1"
 )
 
+const (
+	// Annotations to check on CRDs.
+	CREATED_BY_KEY = "created-by"
+	CREATED_BY_VALUE = "kubeplus"
+)
+
 func main() {
 
 	for {
@@ -29,6 +35,11 @@ func main() {
 			//crdName := "moodles.moodlecontroller.kubeplus"
 			crdName := crd.Name
 			crdObj, err := crdClient.CustomResourceDefinitions().Get(crdName, metav1.GetOptions{})
+			annotations := crdObj.ObjectMeta.Annotations
+			val, ok := annotations[CREATED_BY_KEY]
+			if !ok || val != CREATED_BY_VALUE {
+				continue;
+			}
 
 			resourceAPIGroup := crdObj.Spec.Group
 			//fmt.Printf("Custom Resource API Group:%s\n", resourceAPIGroup)
