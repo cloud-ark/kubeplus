@@ -80,7 +80,9 @@ while getopts ":k:o:i:n:h" opt; do
       if [[ $output != 'png' ]] && [[ $output != 'json' ]] && [[ $output != 'flat' ]]; then
           echo "Invalid output type $output. Valid options: flat, json, png."
           exit 0
-      fi;;
+      fi
+      outputString="--output="$output
+      ;;
     i )
       ignorelist1=$OPTARG
       ignorelist="--ignore="$ignorelist1;;
@@ -144,20 +146,20 @@ fi
 if [[ "$OSTYPE" == "darwin"* ]]; then
     if [[ "$output" == "png" ]]; then
       check_docker
-      /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace -o json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
+      /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
       docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
       echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
     else
-      /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace -o $output $kubeconfig $ignorelist
+      /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace $outputString $kubeconfig $ignorelist
     fi
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     if [[ "$output" == "png" ]]; then
       check_docker
-      /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
+      /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
       docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
       echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
     else
-      /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o $output $kubeconfig $ignorelist
+      /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o $outputString $kubeconfig $ignorelist
     fi
 else
     echo "$OSTYPE not supported."
