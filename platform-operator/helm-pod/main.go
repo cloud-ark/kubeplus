@@ -57,6 +57,7 @@ var (
 	KUBEPLUS_DEPLOYMENT string
 	CMD_RUNNER_CONTAINER string
 	KUBEPLUS_NAMESPACE string
+	HELMER_PORT string
 )
 
 func init() {
@@ -70,6 +71,7 @@ func init() {
 	KUBEPLUS_DEPLOYMENT = "kubeplus-deployment"
 	CMD_RUNNER_CONTAINER = "helmer"
 	KUBEPLUS_NAMESPACE = getNamespace()
+	HELMER_PORT = "8090"
 }
 
 func main() {
@@ -108,8 +110,8 @@ func register() {
 		Doc("Get Chart Values"))
 
 	restful.Add(ws)
-	http.ListenAndServe(":8090", nil)
-	fmt.Printf("Listening on port 8090...")
+	http.ListenAndServe(":" + HELMER_PORT, nil)
+	fmt.Printf("Listening on port " + HELMER_PORT + " ...")
 	fmt.Printf("Done installing helmer paths...")
 }
 

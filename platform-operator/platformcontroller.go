@@ -60,6 +60,8 @@ const (
 	// Annotations to put on Consumer CRDs.
 	CREATED_BY_KEY = "created-by"
 	CREATED_BY_VALUE = "kubeplus"
+	HELMER_HOST = "localhost"
+	HELMER_PORT = "8090"
 )
 
 // Controller is the controller implementation for Foo resources
@@ -595,10 +597,10 @@ func handleCRD(kind, version, group, plural, action, namespace string) error {
 func deleteCRDInstances(kind, group, version, plural, namespace string) []byte {
 	fmt.Printf("Inside deleteCRDInstances...\n")
 	args := fmt.Sprintf("kind=%s&group=%s&version=%s&plural=%s&namespace=%s", kind, group, version, plural, namespace)
-	serviceHost, servicePort := getServiceEndpoint("kubeplus")
-	fmt.Printf("After getServiceEndpoint...\n")
+	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
-	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deletecrdinstances?%s", serviceHost, servicePort, args)
+	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deletecrdinstances?%s", HELMER_HOST, HELMER_PORT, args)
 	fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body
