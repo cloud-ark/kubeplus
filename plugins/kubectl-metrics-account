@@ -1,18 +1,18 @@
 #!/bin/bash
 
 if (( $# < 1 )); then
-    echo "kubectl metrics account <Account name> [--follow-connections]"
+    echo "kubectl metrics account <Account name>"
     exit 0
 fi
 
 account=$1
 
-if [ $# = 2 ]; then
-    connections=$2
+#if [ $# = 2 ]; then
+    connections="--follow-connections"
     python /$KUBEPLUS_HOME/plugins/crmetrics.py "account" $account $connections
-else
-	python /$KUBEPLUS_HOME/plugins/crmetrics.py "account" $account
-fi
+#else
+#	python /$KUBEPLUS_HOME/plugins/crmetrics.py "account" $account
+#fi
 
 
 

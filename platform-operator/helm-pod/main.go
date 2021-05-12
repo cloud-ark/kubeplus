@@ -452,7 +452,7 @@ func getMetrics(request *restful.Request, response *restful.Response) {
 				}
 			}
 		}
-		metricsCmd := "./root/kubectl metrics cr " + kind + " " + customresource + " " + namespace + " -o prometheus " + followConnections
+		metricsCmd := "./root/kubectl metrics " + kind + " " + customresource + " " + namespace + " -o prometheus " + followConnections
 		fmt.Printf("metrics cmd:%s\n", metricsCmd)
 		_, metricsToReturn = executeExecCall(cmdRunnerPod, namespace, metricsCmd)
 	//}

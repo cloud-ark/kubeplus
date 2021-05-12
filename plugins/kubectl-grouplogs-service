@@ -24,7 +24,7 @@ serviceInstance=$1
 namespace=$2
 
 # Only --kubeconfig specified
-kubeconfig='--kubeconfig=~/.kube/config'
+kubeconfig='--kubeconfig="$HOME/.kube/config"'
 if [ $# = 3 ] && [[ $3 == *"kubeconfig="* ]]; then
 	kubeconfig=$3
 fi

@@ -3,14 +3,15 @@ import sys
 import json
 import platform
 import os
+from crmetrics import CRBase
 
-class CRLogs(object):
+class CRLogs(CRBase):
 
 	def _get_container_logs(self, pod, namespace, containers, kubeconfig):
 		for c in containers:
 			container = c['name']
 			cmd = 'kubectl logs ' + pod + ' -n ' + namespace + ' -c ' + container + ' ' + kubeconfig
-			print(cmd)
+			#print(cmd)
 
 			print("======== Pod::" + pod + "/container::" + container + " ===========")
 			try:
@@ -23,7 +24,7 @@ class CRLogs(object):
 
 	def get_logs(self, pod, namespace, kubeconfig):
 		cmd = 'kubectl get pods ' + pod + ' -n ' + namespace + ' -o json ' + kubeconfig
-		print(cmd)
+		#print(cmd)
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									stderr=subprocess.PIPE, shell=True).communicate()[0]
@@ -52,8 +53,9 @@ class CRLogs(object):
 		else:
 			print("OS not supported:" + platf)
 			return json_output
-		cmd = cmd + kind + ' ' + instance + ' ' + namespace + ' -o json ' + kubeconfig
-		print(cmd)
+		kb_ns = self._get_kubeplus_namespace()
+		cmd = cmd + kind + ' ' + instance + ' ' + namespace + ' --output=json ' + kubeconfig + ' --ignore=ServiceAccount:default,Namespace:' + kb_ns
+		#print(cmd)
 		out = ''
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -62,7 +64,7 @@ class CRLogs(object):
 		except Exception as e:
 			print(e)
 		if out:
-			print(out)
+			#print(out)
 			try:
 				json_output = json.loads(out)
 			except Exception as e:
@@ -82,7 +84,7 @@ class CRLogs(object):
 			print("OS not supported:" + platf)
 			return json_output
 		cmd = cmd + kind + ' ' + instance + ' ' + namespace + ' ' + kubeconfig
-		print(cmd)
+		#print(cmd)
 		out = ''
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -134,6 +136,6 @@ if __name__ == '__main__':
 	pods = crLogs.get_pods(resources)
 	for pod in pods:
 		pod_name = pod['Name']
-		print(pod_name)
+		#print(pod_name)
 		crLogs.get_logs(pod_name, namespace, kubeconfig)
 		print("---------------------------------------")
