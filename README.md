@@ -81,7 +81,7 @@ Here is the resource relationship graph for WordpressService instance discovered
 <img src="./docs/wordpress-service-connections.png" class="center">
 </p>
 
-We have additional plugins such as ```kubectl metrics``` and ```kubectl grouplogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the service instance.
+We have additional plugins such as ```kubectl metrics``` and ```kubectl applogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the service instance.
 You can also directly get CPU/Memory/Storage/Network metrics in Prometheus format if you setup ```ResourceMonitor``` while creating your new CRD.
 
 

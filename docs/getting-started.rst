@@ -2,19 +2,20 @@
 Getting Started
 ========================
 
-1. Install KubePlus kubectl plugins:
+1. Install Docker
+
+2. Install KubePlus kubectl plugins:
 
 .. code-block:: bash
 
-  $ Install Docker
-  $ 
-	$ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
-   	$ gunzip kubeplus-kubectl-plugins.tar.gz
-   	$ tar -xvf kubeplus-kubectl-plugins.tar
-   	$ export KUBEPLUS_HOME=`pwd`
-   	$ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
-   	$ kubectl kubeplus commands
-    $ kubectl connections ServiceAccount default default -o png
+  $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
+  $ gunzip kubeplus-kubectl-plugins.tar.gz
+  $ tar -xvf kubeplus-kubectl-plugins.tar
+  $ export KUBEPLUS_HOME=`pwd`
+  $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
+  $ kubectl kubeplus commands
+  $ KUBEPROXY=`kubectl get pods -n kube-system| grep kube-proxy| awk '{print $1}'`
+  $ kubectl connections Pod $KUBEPROXY kube-system -o png
 
 ``kubectl connections`` can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).
 
@@ -66,10 +67,11 @@ We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
 
 6. Debug:
 
-  - kubectl logs kubeplus -c crd-hook
-  - kubectl logs kubeplus -c helmer
-  - kubectl logs kubeplus -c platform-operator
-  - kubectl logs kubeplus -c webhook-cert-setup
+  - KUBEPLUS=kubectl get pods -A | grep kubeplus | awk '{print $2}'
+  - kubectl logs $KUBEPLUS -c crd-hook
+  - kubectl logs $KUBEPLUS -c helmer
+  - kubectl logs $KUBEPLUS -c platform-operator
+  - kubectl logs $KUBEPLUS -c webhook-cert-setup
 
 
 7. Contributing:
@@ -88,16 +90,10 @@ OpenShift Market Place Deployment
 
     kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml
 
-2. Install Metrics API Server
-
-.. code-block:: bash
-
-    kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/metrics-server.yaml
-
-3. Install KubePlus SaaS Manager
+2. Install KubePlus SaaS Manager
    - Follow the standard steps for installing an Operator on OpenShift
 
-4. Try out KubePlus kubectl plugins
+3. Try out KubePlus kubectl plugins
     See above
 
-5. Try `Helloworld service`_
+4. Try `Helloworld service`_

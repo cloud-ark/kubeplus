@@ -156,28 +156,28 @@ In the future we plan to support creation of <code class="docutils literal notra
 <p>Here is the resource relationship graph for MysqlSevice created above discovered using the kubectl connections command.</p>
 <p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">connections</span> <span class="pre">MysqlService</span> <span class="pre">mysql1</span></code></p>
 <a class="reference internal image-reference" href="_images/mysqlservice-connections.png"><img alt="_images/mysqlservice-connections.png" class="align-center" src="_images/mysqlservice-connections.png" style="width: 800px; height: 350px;" /></a>
-<p>KubePlus offers following kubectl plugins.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="m">1</span>. kubectl connections - Get relationships of a Kubernetes resource with other resources based on ownerReferences, labels, spec properties, annotations.
+<p>Check the available KubePlus kubectl plugins by running: <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">kubeplus</span> <span class="pre">commands</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$  kubectl kubeplus commands
+   NAME
+           kubectl kubeplus commands
 
-   kubectl connections &lt;Kind&gt; &lt;Instance&gt; &lt;Namespace&gt; <span class="o">[</span>--kubeconfig<span class="o">=</span>&lt;Absolute path to kubeconfig&gt;<span class="o">]</span> <span class="o">[</span>-o json<span class="p">|</span>png<span class="o">]</span> <span class="o">(</span>default <span class="nv">value</span><span class="o">=</span><span class="s1">&#39;flat&#39;</span><span class="o">)</span> <span class="o">[</span>--ignore<span class="o">=</span>&lt;Kind1:Instance1,Kind1:Instance1&gt;<span class="o">]</span>
+   SYNOPSIS
+           kubectl man
+           kubectl connections
+           kubectl metrics
+           kubectl applogs
 
-<span class="m">2</span>. kubectl man &lt;Custom Resource Kind&gt; - Get Man page information about a Custom Resource
+   DESCRIPTION
+           KubePlus provides a suite of kubectl plugins to discover, monitor and troubleshoot Kubernetes applications.
 
-<span class="m">3</span>. kubectl metrics cr - Get CPU/Memory/Storage consumption of a Custom Resource instance
-
-<span class="m">4</span>. kubectl metrics service - Get CPU/Memory/Storage consumption of all the Pods reachable from a Service instance
-
-<span class="m">5</span>. kubectl metrics account - Get CPU/Memory/Storage consumption of all the Pods that are created by the given account
-
-<span class="m">6</span>. kubectl metrics helmrelease - Get CPU/Memory/Storyage consumption of all the Pods that are part of a Helm release
-
-<span class="m">7</span>. kubectl grouplogs cr composition - Get logs of all the Pod/containers that are children of a Custom Resource instance
-
-<span class="m">8</span>. kubectl grouplogs cr connections - Get logs of all the Pod/containers that are related to a Custom Resource instance
-
-<span class="m">9</span>. kubectl grouplogs service - Get logs of all the Pods/containers that are related to a Service instance
-
-<span class="m">10</span>. kubectl grouplogs helmrelease - Get logs of all the Pods/containers that are part of a Helm release
+           The discovery plugins <span class="o">(</span>kubectl man and kubectl connections<span class="o">)</span> <span class="nb">help</span> with discovering the static and runtime
+           information about an application.
+           - kubectl man provides the ability to discover man page like information about Kubernetes Custom Resources.
+           - kubectl connections provides the ability to discover Kubernetes resources that are related to one another
+             through one of the following relationships - ownerReferences, label, annotations, spec properties.
+           The monitoring and troubleshooting plugins <span class="o">(</span>kubectl metrics and kubectl applogs<span class="o">)</span> <span class="nb">enable</span> collecting application metrics and logs.
+           - kubectl metrics collects CPU, Memory, Storage, and Network metrics <span class="k">for</span> an application. These are available <span class="k">in</span> Prometheus format.
+           - kubectl applogs collects logs <span class="k">for</span> all the containers of all the Pods <span class="k">in</span> an application.
 </pre></div>
 </div>
 <p>In order to use these plugins you need to add KubePlus folder to your PATH variable.</p>

@@ -60,15 +60,16 @@ class CRLogs(CRBase):
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 								   stderr=subprocess.PIPE, shell=True).communicate()[0]
-			out = out.decode('utf-8')
+			out = out.decode('utf-8').strip()
 		except Exception as e:
 			print(e)
 		if out:
-			#print(out)
+			print(out)
 			try:
 				json_output = json.loads(out)
 			except Exception as e:
-				print(e)
+				#print(e)
+				pass
 		return json_output
 
 	def get_resources_composition(self, kind, instance, namespace, kubeconfig):

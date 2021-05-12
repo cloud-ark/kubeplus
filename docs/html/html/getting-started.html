@@ -45,17 +45,17 @@
   <div class="section" id="getting-started">
 <h1>Getting Started</h1>
 <ol class="arabic simple">
+<li><p>Install Docker</p></li>
 <li><p>Install KubePlus kubectl plugins:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ Install Docker
-$
-      $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
-      $ gunzip kubeplus-kubectl-plugins.tar.gz
-      $ tar -xvf kubeplus-kubectl-plugins.tar
-      $ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
-      $ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
-      $ kubectl kubeplus commands
-  $ kubectl connections ServiceAccount default default -o png
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
+$ gunzip kubeplus-kubectl-plugins.tar.gz
+$ tar -xvf kubeplus-kubectl-plugins.tar
+$ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
+$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
+$ kubectl kubeplus commands
+$ <span class="nv">KUBEPROXY</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -n kube-system<span class="p">|</span> grep kube-proxy<span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
+$ kubectl connections Pod <span class="nv">$KUBEPROXY</span> kube-system -o png
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">connections</span></code> can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).</p>
@@ -103,10 +103,11 @@ $ ./deploy-kubeplus.sh
 </ol>
 <blockquote>
 <div><ul class="simple">
-<li><p>kubectl logs kubeplus -c crd-hook</p></li>
-<li><p>kubectl logs kubeplus -c helmer</p></li>
-<li><p>kubectl logs kubeplus -c platform-operator</p></li>
-<li><p>kubectl logs kubeplus -c webhook-cert-setup</p></li>
+<li><p>KUBEPLUS=kubectl get pods -A | grep kubeplus | awk ‘{print $2}’</p></li>
+<li><p>kubectl logs $KUBEPLUS -c crd-hook</p></li>
+<li><p>kubectl logs $KUBEPLUS -c helmer</p></li>
+<li><p>kubectl logs $KUBEPLUS -c platform-operator</p></li>
+<li><p>kubectl logs $KUBEPLUS -c webhook-cert-setup</p></li>
 </ul>
 </div></blockquote>
 <ol class="arabic" start="7">
@@ -123,12 +124,6 @@ $ ./deploy-kubeplus.sh
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
-<li><p>Install Metrics API Server</p></li>
-</ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/metrics-server.yaml
-</pre></div>
-</div>
-<ol class="arabic simple" start="3">
 <li><p>Install KubePlus SaaS Manager
 - Follow the standard steps for installing an Operator on OpenShift</p></li>
 <li><dl class="simple">
