@@ -843,6 +843,19 @@ func DryRunChart(platformworkflow, namespace string) []byte {
 	return body
 }
 
+func TestChartDeployment(kind, namespace, chartName, chartURL string) []byte {
+	fmt.Printf("Inside TestChartDeployment...\n")
+	encodedChartURL := url.QueryEscape(chartURL)
+	args := fmt.Sprintf("kind=%s&namespace=%s&chartName=%s&chartURL=%s", kind, namespace, chartName, encodedChartURL)
+	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	//fmt.Printf("After getServiceEndpoint...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/testChartDeployment?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
 func AnnotateCRD(kind, plural, group, chartkinds string) []byte {
 	args := fmt.Sprintf("kind=%s&plural=%s&group=%s&chartkinds=%s", kind, plural, group, chartkinds)
 	fmt.Printf("Inside AnnotateCRD...\n")

@@ -712,6 +712,14 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	kind := platformWorkflow.Spec.NewResource.Resource.Kind
 	group := platformWorkflow.Spec.NewResource.Resource.Group
 	plural := platformWorkflow.Spec.NewResource.Resource.Plural
+	version := platformWorkflow.Spec.NewResource.Resource.Version
+	chartURL := platformWorkflow.Spec.NewResource.ChartURL
+	chartName := platformWorkflow.Spec.NewResource.ChartName
+ 	fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
+ 	
+ 	customAPI := group + "/" + version + "/" + kind
+ 	customAPIPlatformWorkflowMap[customAPI] = platformWorkflowName
+ 	customKindPluralMap[customAPI] = plural
 
 	// Ensure that the consumer Kind name does not already exist in the cluster.
 	failed := checkResourceExists(kind, plural)
@@ -730,13 +738,16 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 		}
 	}
 
-	version := platformWorkflow.Spec.NewResource.Resource.Version
-	chartURL := platformWorkflow.Spec.NewResource.ChartURL
-	chartName := platformWorkflow.Spec.NewResource.ChartName
- 	fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
- 	customAPI := group + "/" + version + "/" + kind
- 	customAPIPlatformWorkflowMap[customAPI] = platformWorkflowName
- 	customKindPluralMap[customAPI] = plural
+	message := string(TestChartDeployment(kind, namespace, chartName, chartURL))
+	fmt.Printf("After TestChartDeployment - message:%s\n", message)
+	if strings.Contains(message, "Error") {
+		return &v1beta1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: message,
+			},
+		}
+	}
+
  	return nil
 }
 
