@@ -100,6 +100,9 @@ func register() {
 	ws.Route(ws.GET("/getPlural").To(getPlural).
 		Doc("Get Plural"))
 
+	ws.Route(ws.GET("/checkResource").To(checkResource).
+		Doc("Check Resource"))
+
 	ws.Route(ws.GET("/annotatecrd").To(annotateCRD).
 		Doc("Annotate CRD"))
 
@@ -358,6 +361,52 @@ func annotateCRD(request *restful.Request, response *restful.Response) {
 	}
 }
 
+func checkResource(request *restful.Request, response *restful.Response) {
+	fmt.Printf("Inside checkResource...\n")
+
+	kind := request.QueryParameter("kind")
+	plural := request.QueryParameter("plural")
+
+ 	cmdRunnerPod := getKubePlusPod()
+
+ 	namespace := KUBEPLUS_NAMESPACE
+
+	cmd := "./root/kubectl api-resources " //| grep " + kind + " | grep " + group + " | awk '{print $1}' " 
+	fmt.Printf("API resources cmd:%s\n", cmd)
+	_, output := executeExecCall(cmdRunnerPod, namespace, cmd)
+
+	failed := ""
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		parts := strings.Split(line, " ")
+		nonEmptySlice := make([]string,0)
+		for _, p := range parts {
+			if p != "" && p != " " {
+				nonEmptySlice = append(nonEmptySlice, p)
+			}
+		}
+		if len(nonEmptySlice) > 0 {
+			existingKind := nonEmptySlice[len(nonEmptySlice)-1]
+			existingKind = strings.TrimSuffix(existingKind, "\n")
+			//fmt.Printf("ExistingKind:%s\n", existingKind)
+			if kind == existingKind {
+				failed = kind
+				break
+			}
+			existingPlural := nonEmptySlice[0]
+			existingPlural = strings.TrimSuffix(existingPlural, "\n")
+			//fmt.Printf("ExistingKind:%s\n", existingKind)
+			if plural == existingPlural {
+				failed = plural
+			}
+		}
+	}
+
+	//fmt.Printf("Plural to return:%s\n", string(pluralToReturn))
+	response.Write([]byte(failed))
+}
+
+
 func getPlural(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Inside getPlural...\n")
 
@@ -425,7 +474,7 @@ func getMetrics(request *restful.Request, response *restful.Response) {
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
 		resourceMonitors, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(KUBEPLUS_NAMESPACE).List(metav1.ListOptions{})
-		followConnections := ""
+		//followConnections := ""
 		for _, resMonitor := range resourceMonitors.Items {
 			fmt.Printf("ResourceMonitor:%v\n", resMonitor)
 			if err != nil {
@@ -448,11 +497,11 @@ func getMetrics(request *restful.Request, response *restful.Response) {
 			}
 			if reskind == kind {
 				if relationshipToMonitor == "all" {
-					followConnections = " --follow-connections"
+					//followConnections = " --follow-connections"
 				}
 			}
 		}
-		metricsCmd := "./root/kubectl metrics " + kind + " " + customresource + " " + namespace + " -o prometheus " + followConnections
+		metricsCmd := "./root/kubectl metrics " + kind + " " + customresource + " " + namespace + " -o prometheus " //+ followConnections
 		fmt.Printf("metrics cmd:%s\n", metricsCmd)
 		_, metricsToReturn = executeExecCall(cmdRunnerPod, namespace, metricsCmd)
 	//}
