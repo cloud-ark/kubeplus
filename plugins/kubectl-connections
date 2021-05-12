@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source utils.sh
+
 print_help () {
     echo "NAME"
     echo "        kubectl connections"
@@ -8,10 +10,8 @@ print_help () {
     echo "        kubectl connections <Kind> <Instance> <Namespace> [-k <Absolute path to kubeconfig>] [-o json|png|flat] [-i <Kind1:Instance1,Kind1:Instance1>] [-n <label|specproperty|envvariable|annotation>]"
     echo ""
     echo "DESCRIPTION"
-    echo "        kubectl connections shows the relationships graph between different Kubernetes resources in a cluster."
-    echo "        It take three inputs - the name of the Kubernetes Resource/Kind, the name of the instance of that Kind and the Namespace name."
-    echo "        kubectl connections builds the resource graph showing how the provided instance is connected to other"
-    echo "        Kubernetes resource instances through various relationships (ownerReference, labels, annotations, spec property)."
+    echo "        kubectl connections shows how the input resource is connected to other Kubernetes resources through one of the following "
+    echo "        types of relationships: ownerReference, labels, annotations, spec property."
     echo "OPTIONS"
     echo "        kubectl connections takes following optional flags as input."
     echo "        -k <Absolute path to kubeconfig file>"
@@ -26,20 +26,6 @@ print_help () {
     exit 0
 }
 
-check_namespace() {
-  local ns=$1
-  local kubeconfg=$2
-#  ns_output=`kubectl get ns $ns $kubeconfig 2>&1 | awk '{print $1}'`
-  ns_output=`kubectl get ns $ns $kubeconfig 2>&1`
-  if [[ $ns_output =~ 'Error' ]]; then
-     echo "Namespace $ns not found."
-     exit 0
-  fi
-  if [[ $ns_output =~ 'Unable' ]]; then
-     echo $ns_output
-     exit 0
-  fi
-}
 
 check_docker() {
   docker ps 2>1 1>/dev/null
@@ -101,7 +87,7 @@ while getopts ":k:o:i:n:h" opt; do
         fi
       done
       IFS=$OLDIFS;;
-    \? ) print_help;;
+    #\? ) print_help;;
     h ) print_help;;
     : )
       echo "Invalid option: $OPTARG requires an argument" 1>&2

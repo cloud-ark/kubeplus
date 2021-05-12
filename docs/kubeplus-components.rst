@@ -158,32 +158,31 @@ Here is the resource relationship graph for MysqlSevice created above discovered
    :width: 800px
    :align: center
 
-
-KubePlus offers following kubectl plugins. 
+Check the available KubePlus kubectl plugins by running: ``kubectl kubeplus commands``
 
 .. code-block:: bash
 
-  1. kubectl connections - Get relationships of a Kubernetes resource with other resources based on ownerReferences, labels, spec properties, annotations.
+   $  kubectl kubeplus commands
+      NAME
+              kubectl kubeplus commands
 
-     kubectl connections <Kind> <Instance> <Namespace> [--kubeconfig=<Absolute path to kubeconfig>] [-o json|png] (default value='flat') [--ignore=<Kind1:Instance1,Kind1:Instance1>]
+      SYNOPSIS
+              kubectl man
+              kubectl connections
+              kubectl metrics
+              kubectl applogs
 
-  2. kubectl man <Custom Resource Kind> - Get Man page information about a Custom Resource
+      DESCRIPTION
+              KubePlus provides a suite of kubectl plugins to discover, monitor and troubleshoot Kubernetes applications.
 
-  3. kubectl metrics cr - Get CPU/Memory/Storage consumption of a Custom Resource instance
-
-  4. kubectl metrics service - Get CPU/Memory/Storage consumption of all the Pods reachable from a Service instance
-
-  5. kubectl metrics account - Get CPU/Memory/Storage consumption of all the Pods that are created by the given account
-
-  6. kubectl metrics helmrelease - Get CPU/Memory/Storyage consumption of all the Pods that are part of a Helm release
-
-  7. kubectl grouplogs cr composition - Get logs of all the Pod/containers that are children of a Custom Resource instance
-
-  8. kubectl grouplogs cr connections - Get logs of all the Pod/containers that are related to a Custom Resource instance
-
-  9. kubectl grouplogs service - Get logs of all the Pods/containers that are related to a Service instance
-
-  10. kubectl grouplogs helmrelease - Get logs of all the Pods/containers that are part of a Helm release
+              The discovery plugins (kubectl man and kubectl connections) help with discovering the static and runtime
+              information about an application.
+              - kubectl man provides the ability to discover man page like information about Kubernetes Custom Resources.
+              - kubectl connections provides the ability to discover Kubernetes resources that are related to one another
+                through one of the following relationships - ownerReferences, label, annotations, spec properties.
+              The monitoring and troubleshooting plugins (kubectl metrics and kubectl applogs) enable collecting application metrics and logs.
+              - kubectl metrics collects CPU, Memory, Storage, and Network metrics for an application. These are available in Prometheus format.
+              - kubectl applogs collects logs for all the containers of all the Pods in an application.
 
 In order to use these plugins you need to add KubePlus folder to your PATH variable.
 

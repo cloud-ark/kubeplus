@@ -1,15 +1,19 @@
 #!/bin/bash
 
+source utils.sh
+
 print_help () {
     echo "NAME"
     echo "        kubectl metrics"
     echo ""
     echo "SYNOPSIS"
-    echo "        kubectl metrics <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus}"
+    echo "        kubectl metrics <Kind> <Instance> <Namespace> [-o pretty|prometheus|json]"
  #   echo "        kubectl metrics account <Account name>"
     echo ""
     echo "DESCRIPTION"
-    echo "        kubectl metrics command collects CPU, Memory, Storage and Network consumption metrics for a Kubernetes resource."
+    echo "        kubectl metrics collects CPU, Memory, Storage and Network consumption metrics for all the Pods in a Kubernetes application."
+    echo "        Given the input resource (Kind and Instance), kubectl metrics discovers all the Pods that are reachable from that resource and"
+    echo "        aggregates their metrics."
 #    echo "        The starting point of the stack can be name of a Kubernetes resource, name of a Kubernetes Service, name of a Helm release, or name of an 'account'."
 #    echo "        Each of these stack identifications have separate metrics tracking sub-commands as identified above."
 #    echo "        These use kubectl connections behind the scene to discover all the Pods in a stack and then collect above metrics for those Pods."
@@ -26,17 +30,50 @@ fi
 customres=$1
 instance=$2
 namespace="$3"
-
 output="pretty"
-if [ $# == 5 ]; then
-    output=$5
-fi
+kubeconfig1="$HOME/.kube/config" #default value
 
-if [[ $output != "pretty" && $output != "json" && $output != "prometheus" ]]; then
-    echo "Unknown output format specified $output. Accepted values: pretty, json, prometheus"
-    echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
-    exit 0
-fi
+shift;
+shift;
+shift;
+
+while getopts ":k:o:h" opt; do
+  case ${opt} in
+    k )
+      kubeconfig1=$OPTARG
+      if [ ! -f $kubeconfig1 ]; then
+        echo "Kubeconfig $kubeconfig1 does not exist."
+        exit 0
+      fi;;
+    o )
+      output=$OPTARG
+      if [[ $output != 'pretty' ]] && [[ $output != 'prometheus' ]] && [[ $output != 'json' ]]; then
+          echo "Invalid output type $output. Valid options: pretty, prometheus, json."
+          exit 0
+      fi
+      outputString="--output="$output
+      ;;
+    \? ) print_help;;
+    h ) print_help;;
+    : )
+      echo "Invalid option: $OPTARG requires an argument" 1>&2
+      ;;
+  esac
+#  shift $((OPTIND -2))
+done
+
+kubeconfig="--kubeconfig="$kubeconfig1
+check_namespace $namespace $kubeconfig
+
+#if [ $# == 5 ]; then
+#    output=$5
+#fi
+
+#if [[ $output != "pretty" && $output != "json" && $output != "prometheus" ]]; then
+#    echo "Unknown output format specified $output. Accepted values: pretty, json, prometheus"
+#    echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
+#    exit 0
+#fi
 
 follow_connections=true
 #connection_flag=$6
