@@ -89,7 +89,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.9
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.10
         imagePullPolicy: Always
         args:
           - -tlsCertFile=/etc/webhook/certs/cert.pem
@@ -109,7 +109,7 @@ spec:
         imagePullPolicy: Always
         command: [ "/platform-operator"]
       - name: helmer
-        image: gcr.io/cloudark-kubeplus/helm-pod:0.0.10
+        image: gcr.io/cloudark-kubeplus/helm-pod:0.1.0
         imagePullPolicy: Always
         command: ["/root/helm-pod"]
         volumeMounts:

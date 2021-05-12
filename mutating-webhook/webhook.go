@@ -130,7 +130,10 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 	}
 
 	if req.Kind.Kind == "ResourceComposition" {
-		trackCustomAPIs(ar)
+		errResponse := trackCustomAPIs(ar)
+		if errResponse != nil {
+			return errResponse
+		}
 	}
 
 	var pacAnnotationMap map[string]string
@@ -676,7 +679,7 @@ func getObjectDetails(ar *v1beta1.AdmissionReview) (string, string, string) {
 	return lowercaseKind, resName, namespace
 }
 
-func trackCustomAPIs(ar *v1beta1.AdmissionReview) {
+func trackCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	req := ar.Request
 	body := req.Object.Raw
 
@@ -694,17 +697,52 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) {
 		namespace = "default"
 	}
 
+	// Ensure that ResourceComposition is created in the same Namespace
+	// where KubePlus is deployed.
+	kubePlusNS := GetNamespace()
+	if namespace != kubePlusNS {
+		return &v1beta1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: "ResourceComposition instance should be created in the same Namespace (" + namespace + ") as KubePlus Namespace (" + kubePlusNS + ")",
+			},
+		}
+	}
+
 	fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
 	kind := platformWorkflow.Spec.NewResource.Resource.Kind
 	group := platformWorkflow.Spec.NewResource.Resource.Group
-	version := platformWorkflow.Spec.NewResource.Resource.Version
 	plural := platformWorkflow.Spec.NewResource.Resource.Plural
+
+	// Ensure that the consumer Kind name does not already exist in the cluster.
+	failed := checkResourceExists(kind, plural)
+	if failed != "" {
+		message := ""
+		if failed == kind {
+			message = "Resource with Kind Name " + kind + " exists in the cluster."
+		}
+		if failed == plural {
+			message = "Resource with Plural Name " + plural + " exists in the cluster."
+		}
+		return &v1beta1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: message,
+			},
+		}
+	}
+
+	version := platformWorkflow.Spec.NewResource.Resource.Version
 	chartURL := platformWorkflow.Spec.NewResource.ChartURL
 	chartName := platformWorkflow.Spec.NewResource.ChartName
  	fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
  	customAPI := group + "/" + version + "/" + kind
  	customAPIPlatformWorkflowMap[customAPI] = platformWorkflowName
  	customKindPluralMap[customAPI] = plural
+ 	return nil
+}
+
+func checkResourceExists(kind, plural string) string {
+	kindPlural := string(CheckResource(kind, plural))
+	return kindPlural
 }
 
 func registerManPage(kind, platformworkflow, namespace string) string {

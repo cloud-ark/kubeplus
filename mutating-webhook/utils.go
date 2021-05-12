@@ -807,6 +807,15 @@ func GetPlural(kind, group string) []byte {
 	return body
 }
 
+func CheckResource(kind, plural string) []byte {
+	fmt.Printf("Inside CheckResource...\n")
+	args := fmt.Sprintf("kind=%s&plural=%s", kind, plural)
+	url1 := fmt.Sprintf("http://%s:%s/apis/kubeplus/checkResource?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
 // http://10.80.10.160:90/apis/kubeplus/deploy?platformworkflow=hello-world-service-composition&customresource=hello-world-tenant1&namespace=default&overrides={"greeting":"Hello Kubernauts - This is KubePlus"}
 // http://10.80.10.160:90/apis/kubeplus/deploy?platformworkflow=hello-world-service-composition&customresource=hello-world-tenant1&namespace=default&overrides={"greeting":"Hi"}
 func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides string) []byte {

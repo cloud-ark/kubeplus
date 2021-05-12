@@ -2,7 +2,7 @@ require (
 	github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23
 	github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20201027010238-8e4740bdc7ad
 	github.com/google/uuid v1.0.0
-	k8s.io/api v0.18.1
+	k8s.io/api v0.18.2
 	k8s.io/apiextensions-apiserver v0.18.1
 	k8s.io/apimachinery v0.18.2
 	k8s.io/client-go v8.0.0+incompatible
