@@ -97,6 +97,9 @@ func register() {
 	ws.Route(ws.GET("/metrics").To(getMetrics).
 		Doc("Get Metrics"))
 
+	ws.Route(ws.GET("/testChartDeployment").To(testChartDeployment).
+		Doc("Test Chart Deployment"))
+
 	ws.Route(ws.GET("/getPlural").To(getPlural).
 		Doc("Get Plural"))
 
@@ -621,6 +624,8 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Dryrun:%s\n", dryrun)
 
 	kinds := make([]string, 0)
+	ok := false
+	execOutput := ""
 
 	if platformWorkflowName != "" {
 		config, err := rest.InClusterConfig()
@@ -679,7 +684,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 		 			helmInstallCmd = "./root/helm install " + releaseName + " ./" + chartName  + " -f /chart/overrides.yaml " + " -n " + namespace + " --dry-run" 		
 	 			}
 	  			fmt.Printf("helm install cmd:%s\n", helmInstallCmd)
-	 			ok, execOutput := executeExecCall(cmdRunnerPod, namespace, helmInstallCmd)
+	 			ok, execOutput = executeExecCall(cmdRunnerPod, namespace, helmInstallCmd)
 	 			if ok {
 	 				helmReleaseOP := execOutput
 	 				lines := strings.Split(helmReleaseOP, "\n")
@@ -718,12 +723,38 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	    	}
  		//}
 	}
-	if dryrun != "" {
+	if dryrun == "true" {
+		fmt.Printf("DRY RUN - ABC:%s\n", dryrun)
 		//fmt.Printf("Kinds:%v\n", kinds)
-		kindsString := strings.Join(kinds, "-")
-		//fmt.Printf("KindString:%s\n", kindsString)
-		response.Write([]byte(kindsString))
+		if strings.Contains(execOutput, "Error") {
+			fmt.Printf("ExecOutput:%s\n", execOutput)
+			response.Write([]byte(execOutput))
+		} else {
+			kindsString := strings.Join(kinds, "-")
+			fmt.Printf("KindString:%s\n", kindsString)
+			response.Write([]byte(kindsString))
+		}
 	}
+}
+
+func testChartDeployment(request *restful.Request, response *restful.Response) {
+	fmt.Printf("Inside testChartDeployment...\n")
+
+	namespace := request.QueryParameter("namespace")
+	kind := request.QueryParameter("kind")
+	chartName := request.QueryParameter("chartName")
+	encodedChartURL := request.QueryParameter("chartURL")
+	chartURL, _ := url.QueryUnescape(encodedChartURL)
+
+ 	cmdRunnerPod := getKubePlusPod()
+ 	downloadChart(chartURL, cmdRunnerPod, namespace)
+ 	releaseName := kind + "-" + chartName
+
+	helmInstallCmd := "./root/helm install " + releaseName + " ./" + chartName  + " -n " + namespace + " --dry-run" 
+	fmt.Printf("helm install cmd:%s\n", helmInstallCmd)
+	_, execOutput := executeExecCall(cmdRunnerPod, namespace, helmInstallCmd)
+	fmt.Printf("DRY RUN - DEF:%s\n", execOutput)
+	response.Write([]byte(execOutput))
 }
 
 func downloadChart(chartURL, cmdRunnerPod, namespace string) string {
@@ -828,7 +859,7 @@ func executeExecCall(runner, namespace, command string) (bool, string) {
 
 	scheme := runtime.NewScheme()
 	if err := corev1.AddToScheme(scheme); err != nil {
-		responseString := err.Error()
+		responseString := "Error: " + err.Error()
 		fmt.Printf("Error found trying to Exec command on pod: %s \n", responseString)
 		return false, responseString
 	}
@@ -845,7 +876,7 @@ func executeExecCall(runner, namespace, command string) (bool, string) {
 
 	exec, err := remotecommand.NewSPDYExecutor(cfg, "POST", req.URL())
 	if err != nil {
-		responseString := err.Error()
+		responseString := "Error: " + err.Error()
 		fmt.Printf("Error found trying to Exec command on pod: %s \n", responseString)
 		return false, responseString
 	}
@@ -863,7 +894,7 @@ func executeExecCall(runner, namespace, command string) (bool, string) {
 	})
 	if err != nil {
 		fmt.Printf("StdOutput: %s\n", execOut.String())
-		responseString := execErr.String()
+		responseString := "Error: " + execErr.String()
 		fmt.Printf("StdErr: %s\n", responseString)
 		fmt.Printf("The command %s returned False : %s \n", command, err.Error())
 		return false, responseString
