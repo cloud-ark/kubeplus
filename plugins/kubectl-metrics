@@ -5,22 +5,51 @@ print_help () {
     echo "        kubectl metrics"
     echo ""
     echo "SYNOPSIS"
-    echo "        kubectl metrics has following sub-commands:"
-    echo ""
-    echo "           kubectl metrics cr"
-    echo "           kubectl metrics service"
-    echo "           kubectl metrics helmrelease"
-    echo "           kubectl metrics account"
+    echo "        kubectl metrics <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus}"
+ #   echo "        kubectl metrics account <Account name>"
     echo ""
     echo "DESCRIPTION"
-    echo "        kubectl metrics commands help with collecting CPU, Memory, Storage and Network consumption metrics for a stack."
-    echo "        The starting point of the stack can be name of a Kubernetes resource, name of a Kubernetes Service, name of a Helm release, or name of an 'account'."
-    echo "        Each of these stack identifications have separate metrics tracking sub-commands as identified above."
-    echo "        These use kubectl connections behind the scene to discover all the Pods in a stack and then collect above metrics for those Pods."
-    echo "        - Pod cpu and memory data is collected from metrics-apiserver, which needs to be running in the cluster."
-    echo "        - Pod storage data is collected from the PersistentVolumeClaims that are associated with the Pods in the stack."
+    echo "        kubectl metrics command collects CPU, Memory, Storage and Network consumption metrics for a Kubernetes resource."
+#    echo "        The starting point of the stack can be name of a Kubernetes resource, name of a Kubernetes Service, name of a Helm release, or name of an 'account'."
+#    echo "        Each of these stack identifications have separate metrics tracking sub-commands as identified above."
+#    echo "        These use kubectl connections behind the scene to discover all the Pods in a stack and then collect above metrics for those Pods."
+    echo "        - Pod cpu and memory data is collected by querying kubelet."
+    echo "        - Pod storage data is collected from the PersistentVolumeClaims of the Pods that are associated with the input resource."
     echo "        - Pod network consumption data is collected from cAdvisor."
     exit 0
 }
 
-print_help
+if (( $# < 3 )); then
+  print_help
+fi
+
+customres=$1
+instance=$2
+namespace="$3"
+
+output="pretty"
+if [ $# == 5 ]; then
+    output=$5
+fi
+
+if [[ $output != "pretty" && $output != "json" && $output != "prometheus" ]]; then
+    echo "Unknown output format specified $output. Accepted values: pretty, json, prometheus"
+    echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
+    exit 0
+fi
+
+follow_connections=true
+#connection_flag=$6
+#if [ $# == 6 ]; then
+#   if [[ $connection_flag == "--follow-connections" ]]; then
+#       follow_connections=true
+#   else
+#       echo "Unknown flag specified $connection_flag. Accepted value: --follow-connections"
+#       echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
+#       exit 0
+#   fi
+#fi
+
+#echo $output
+
+python /$KUBEPLUS_HOME/plugins/crmetrics.py "cr" $customres $instance $namespace $output $follow_connections

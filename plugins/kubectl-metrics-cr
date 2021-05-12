@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if (( $# < 3 )); then
-    echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
+    echo "kubectl metrics <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
     exit 0
 fi
 
@@ -17,17 +17,17 @@ if [[ $output != "pretty" && $output != "json" && $output != "prometheus" ]]; th
 fi
 
 #output="pretty"
-follow_connections=false
-connection_flag=$6
-if [ $# == 6 ]; then
-	if [[ $connection_flag == "--follow-connections" ]]; then
-		follow_connections=true
-	else
-		echo "Unknown flag specified $connection_flag. Accepted value: --follow-connections"
-	    echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
-		exit 0
-	fi
-fi
+follow_connections=true
+#connection_flag=$6
+#if [ $# == 6 ]; then
+#	if [[ $connection_flag == "--follow-connections" ]]; then
+#		follow_connections=true
+#	else
+#		echo "Unknown flag specified $connection_flag. Accepted value: --follow-connections"
+#	    echo "kubectl metrics cr <Custom Resource Kind> <Resource Instance> <Namespace> -o {pretty|json|prometheus} [--follow-connections]"
+#		exit 0
+#	fi
+#fi
 
 #echo $output
 

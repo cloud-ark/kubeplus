@@ -9,7 +9,22 @@ import time
 
 import utils
 
-class CRMetrics(object):
+class CRBase(object):
+
+	def _get_kubeplus_namespace(self):
+		kb_namespace = 'default'
+		cmd = "kubectl get pods -A | grep kubeplus | awk '{print $1}'"
+		try:
+			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+									stderr=subprocess.PIPE, shell=True).communicate()[0]
+			out = out.decode('utf-8')
+			kb_namespace = out.strip()
+			#print("KubePlus NS:" + kb_namespace)
+		except Exception as e:
+			print(e)
+		return kb_namespace
+
+class CRMetrics(CRBase):
 
 	def _get_identity(self, custom_resource, custom_res_instance, namespace):
 		cmd = 'kubectl get ' + custom_resource + ' ' + custom_res_instance + ' -n ' + namespace + ' -o json'
@@ -174,7 +189,74 @@ class CRMetrics(object):
 								total_storage = total_storage + storage_nums[0]
 		return total_storage
 
-	def _get_cpu_memory_usage(self, pod_list):
+	def _get_cpu_memory_usage_kubelet(self, pod_list):
+		total_cpu = 0
+		total_mem = 0
+
+		platf = platform.system()
+		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
+		cmd = ''
+		if platf == "Darwin":
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos podmetrics '
+		if platf == "Linux":
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux podmetrics '
+
+		#print("POD LIST:")
+		#print(pod_list)
+		for pod in pod_list:
+			#print("POD:")
+			#print(pod)
+			pod_json = self._get_pod(pod)
+
+            # If nodeName is not present in Pod spec then it means that Pod is not scheduled
+			if 'nodeName' not in pod_json['spec']:
+				continue
+
+			#print(pod_json)
+			podName = pod['Name']
+			nodeName = pod_json['spec']['nodeName']
+			podNS = pod_json['metadata']['namespace']
+			#print("PodName:" + podName)
+			#print("NodeName:" + nodeName)
+			#print("PodNS:" + podNS)
+			podMetricsCmd = cmd + " " + nodeName
+			try:
+				output = subprocess.Popen(podMetricsCmd, stdout=subprocess.PIPE,
+										  stderr=subprocess.PIPE, shell=True).communicate()[0]
+				output = output.decode('utf-8')
+				output = output.strip("\n")
+			except Exception as e:
+				print(e)
+
+			#print("stats/summary output:")
+			#print(output)
+			#print("===")
+			nodeMetrics = json.loads(output)
+			podMetricsJSONList = nodeMetrics["pods"]
+			#print("====\n")
+			#print(podMetricsJSONList)
+			#print("====\n")
+
+			for podMetric in podMetricsJSONList:
+				podName1 = podMetric["podRef"]["name"].strip()
+				podNamespace1 = podMetric["podRef"]["namespace"].strip()
+				if podName1 == podName and podNamespace1 == podNS:
+					cpuInNanoCores = podMetric["cpu"]["usageNanoCores"]
+					memoryInBytes = podMetric["memory"]["workingSetBytes"]
+					#print("CPU:" + str(cpuInNanoCores))
+					#print("MEMORY:" + str(memoryInBytes))
+					total_cpu = total_cpu + cpuInNanoCores
+					total_mem = total_mem + memoryInBytes
+
+		total_cpu_milli_cores = float(total_cpu) / 1000000
+		total_mem_mib = float(total_mem) / (1024*1024)
+
+		#print("TOTAL CPU:" + str(total_cpu_milli_cores) + " mi")
+		#print("TOTAL MEM:" + str(total_mem_mib) + " Mib")
+
+		return total_cpu_milli_cores, total_mem_mib
+
+	def _get_cpu_memory_usage_kubectl_top(self, pod_list):
 		pod_usage_map = {}
 		total_cpu = 0
 		total_mem = 0
@@ -227,7 +309,7 @@ class CRMetrics(object):
 			count = count + 1
 			composition = self._get_composition(kind, instance, namespace)
 			pod_list = self._parse_number_of_pods(composition)
-			cpu, memory = self._get_cpu_memory_usage(pod_list)
+			cpu, memory = self._get_cpu_memory_usage_kubelet(pod_list)
 		return cpu, memory, count
 
 	def _get_metrics_cr_instances(self, account):
@@ -346,7 +428,7 @@ class CRMetrics(object):
 		pod_list = self._get_pods_for_account(account)
 		#print("Pods:")
 		#print(pod_list)
-		cpu, mem = self._get_cpu_memory_usage(pod_list)
+		cpu, mem = self._get_cpu_memory_usage_kubelet(pod_list)
 		return cpu, mem, len(pod_list)
 
 	def _get_metrics_kind(self, kind, account):
@@ -388,11 +470,11 @@ class CRMetrics(object):
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
 		cmd = ''
+		kb_ns = self._get_kubeplus_namespace()
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format + ' --ignore=ServiceAccount:default,Namespace:default'
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' --output=' + conn_op_format + ' --ignore=ServiceAccount:default,Namespace:' + kb_ns
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' -o ' + conn_op_format + ' --ignore=ServiceAccount:default,Namespace:default'
-
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' --output=' + conn_op_format + ' --ignore=ServiceAccount:default,Namespace:'+ kb_ns
 		if cmd:
 			#print(cmd)
 			output = ''
@@ -412,7 +494,8 @@ class CRMetrics(object):
 					json_output = json.loads(output)
 					pod_list = utils.get_pods(json_output)
 				except Exception as e:
-					print(e)
+					pass
+					#print(e)
 		return pod_list
 
 	def _get_pods_for_service(self, service_name, namespace):
@@ -421,9 +504,9 @@ class CRMetrics(object):
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
 		cmd = ''
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Service ' + service_name + ' ' + namespace + ' -o json'
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Service ' + service_name + ' ' + namespace + ' --output=json'
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections Service ' + service_name + ' ' + namespace + ' -o json'
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections Service ' + service_name + ' ' + namespace + ' --output=json'
 
 		if cmd:
 			output = ''
@@ -609,9 +692,9 @@ class CRMetrics(object):
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
 		cmd = ''
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Pod ' + ' ' + pod_name + ' ' + namespace + ' -o json'
+			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Pod ' + ' ' + pod_name + ' ' + namespace + ' --output=json'
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections Pod ' + ' ' + pod_name + ' ' + namespace + ' -o json'
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections Pod ' + ' ' + pod_name + ' ' + namespace + ' --output=json'
 
 		#print(cmd)
 		if cmd:
@@ -745,7 +828,7 @@ class CRMetrics(object):
 			print("    " + pod['Name'])
 		#print(pod_list_for_metrics)
 
-		cpu, mem = self._get_cpu_memory_usage(pod_list_for_metrics)
+		cpu, mem = self._get_cpu_memory_usage_kubelet(pod_list_for_metrics)
 		storage = 0
 		for p in pod_list_for_metrics:
 			stor = self._parse_persistentvolumeclaims([p])
@@ -820,7 +903,6 @@ class CRMetrics(object):
 		print("    Total MEMORY(bytes): " + str(all_mem) + "Mi")
 		print("    Total Storage(bytes): (Upcoming)")
 
-
 	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace, follow_connections, opformat):
 		accountidentity = self._get_identity(custom_resource, custom_res_instance, namespace)
 		accountidentity = ''
@@ -833,13 +915,11 @@ class CRMetrics(object):
 			num_of_resources = "-"
 			conn_op_format = "json"
 			pod_list = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace, conn_op_format)
-			#print(pod_list)
 		#cpu, memory = self._get_cpu_memory_usage(pod_list)
-		
 		num_of_containers_conn = self._parse_number_of_containers(pod_list)
 		total_storage_conn = self._parse_persistentvolumeclaims(pod_list)
 		num_of_hosts_conn = self._parse_number_of_hosts(pod_list)
-		cpu_conn, memory_conn = self._get_cpu_memory_usage(pod_list)
+		cpu_conn, memory_conn = self._get_cpu_memory_usage_kubelet(pod_list)
 		networkReceiveBytesTotal, networkTransmitBytesTotal = self._get_network_usage(pod_list)
 
 		num_of_pods = len(pod_list)
