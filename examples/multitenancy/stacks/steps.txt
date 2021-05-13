@@ -58,9 +58,9 @@ Instantiate Platform workflow using the new API (done by Product team):
          - mysqlservicetenant-tenant1-mysql-1
 
 5. Check connectivity graph:
-   - kubectl connections MysqlServiceTenant tenant1 default -o png --ignore=ServiceAccount:default
-   - kubectl connections Pod mysqlservicetenant-tenant1-mysql-0 ns1 -o png --ignore=ServiceAccount:default
-   - kubectl connections Pod mysqlservicetenant-tenant1-mysql-1 ns1 -o png --ignore=ServiceAccount:default
+   - kubectl connections MysqlServiceTenant tenant1 default -o png -i ServiceAccount:default
+   - kubectl connections Pod mysqlservicetenant-tenant1-mysql-0 ns1 -o png -i ServiceAccount:default
+   - kubectl connections Pod mysqlservicetenant-tenant1-mysql-1 ns1 -o png -i ServiceAccount:default
 
 6. Verify Policy application:
    - kubectl get pods mysqlservicetenant-tenant1-mysql-0 -n ns1 -o json | jq -r '.spec.containers[0].resources'
