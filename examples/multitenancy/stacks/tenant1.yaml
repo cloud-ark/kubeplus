@@ -5,5 +5,6 @@ metadata:
 spec:
   namespace: ns1 
   # Change this value to appropriately for your setup
-  nodeName: gke-cluster-2-default-pool-b3a56a0d-3dxx
+  #nodeName: gke-cluster-2-default-pool-b3a56a0d-3dxx
+  nodeName: minikube
 

@@ -80,7 +80,7 @@ Retrieve consumption metrics:
    network_transmit_bytes_total{custom_resource="wp-service-tenant1"} 509238.0 1614515921407
 
 Visualize Topology:
-- kubectl connections WordpressService wp-service-tenant1 wp-stack-ns1 -o png --ignore=ServiceAccount:default,Namespace:wp-stack-ns1,Service:tenant1-mysql-master
+- kubectl connections WordpressService wp-service-tenant1 wp-stack-ns1 -o png -i ServiceAccount:default,Namespace:wp-stack-ns1,Service:tenant1-mysql-master
 
   - Check the generated png file. For reference check wp-service-connections.png
 
@@ -113,7 +113,7 @@ Retrieve consumption metrics:
 
 
 Visualize Topology:
-- kubectl connections WordpressService wp-service-tenant2 wp-stack-ns2 -o png --ignore=ServiceAccount:default,Namespace:default
+- kubectl connections WordpressService wp-service-tenant2 wp-stack-ns2 -o png -i ServiceAccount:default,Namespace:default
 
   - Check the generated png file. For reference check tenant2.png
 

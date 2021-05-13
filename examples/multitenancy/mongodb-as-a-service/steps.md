@@ -31,12 +31,12 @@ kubectl apply -f tenant1.yaml
 
 ## Check composition
 ```
-kubectl connections MongoDBServiceTenant tenant1 default -o png --ignore=ServiceAccount:default
+kubectl connections MongoDBServiceTenant tenant1 default -o png -i ServiceAccount:default
 ```
 
 ## Check policies
 ```
-kubectl get pods example-mongodb-0 -n ns1 -o json | jq -r '.spec.containers[0].resources'
+kubectl get pods example-mongodb-0 -n namespace1 -o json | jq -r '.spec.containers[0].resources'
 ```
 
 ## Check monitoring

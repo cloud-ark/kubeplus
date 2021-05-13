@@ -54,7 +54,7 @@ Instantiate Platform workflow using the new API (done by Product team):
          - mysqlservice-service1-mysql-1
 
 5. Check connectivity graph:
-   - kubectl connections MysqlService service1 default -o png --ignore=ServiceAccount:default,Namespace:default
+   - kubectl connections MysqlService service1 default -o png -i ServiceAccount:default,Namespace:default
 
 6. Verify Policy application:
    - kubectl get pods mysqlservice-service1-mysql-0 -o json | jq -r '.spec.containers[0].resources'
