@@ -42,7 +42,8 @@ kubectl get pods example-mongodb-0 -n namespace1 -o json | jq -r '.spec.containe
 ## Check monitoring
 ### open terminal 1
 ```
-kubectl port-forward  kubeplus -n default 8081:8090
+KUBEPLUS_POD=`kubectl get pods | grep kubeplus | awk '{print $1}'`
+kubectl port-forward $KUBEPLUS_POD -n default 8081:8090
 ```
 ### open terminal 2
 ```
