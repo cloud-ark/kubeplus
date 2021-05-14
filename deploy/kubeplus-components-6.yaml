@@ -18,14 +18,14 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: kubeplus 
-  namespace: default
+  namespace: openshift-operators
   apiGroup: ""
 ---
 kind: ServiceAccount
 apiVersion: v1
 metadata:
   name: kubeplus
-  namespace: default
+  namespace: openshift-operators
 ---
 kind: Service
 apiVersion: v1
