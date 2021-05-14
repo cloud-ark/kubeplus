@@ -37,6 +37,7 @@ Next section provides details about KubePlus components.
 
    kubeplus-components
    getting-started
+   openshift-deployment
    roadmap
    operators
    community

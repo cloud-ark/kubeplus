@@ -79,21 +79,3 @@ We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
    We would love your contributions. The process is simple_.
 
 .. _simple: https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md
-
-
-OpenShift Market Place Deployment
------------------------------------
-
-1. Install KubePlus Pre-requisite resources
-
-.. code-block:: bash
-
-    kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml
-
-2. Install KubePlus SaaS Manager
-   - Follow the standard steps for installing an Operator on OpenShift
-
-3. Try out KubePlus kubectl plugins
-    See above
-
-4. Try `Helloworld service`_

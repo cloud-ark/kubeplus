@@ -703,7 +703,7 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	if namespace != kubePlusNS {
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
-				Message: "ResourceComposition instance should be created in the same Namespace (" + namespace + ") as KubePlus Namespace (" + kubePlusNS + ")",
+				Message: "ResourceComposition instance should be created in the same Namespace as KubePlus Namespace (" + kubePlusNS + ")",
 			},
 		}
 	}
