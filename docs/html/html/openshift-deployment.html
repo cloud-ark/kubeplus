@@ -50,9 +50,13 @@
 <li><p>Make sure your Openshift Cluster is registered with Redhat Marketplace. Follow <a class="reference external" href="https://marketplace.redhat.com/en-us/documentation/clusters#register-openshift-cluster-with-red-hat-marketplace">cluster registration link</a> for reference:</p></li>
 </ol>
 <ol class="arabic simple" start="2">
-<li><p>Install KubePlus Pre-requisite resources</p></li>
+<li><p>Install KubePlus Pre-requisite resources. You can use either oc cli or kubectl cli. The commands are exactly the same.</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
@@ -82,7 +86,12 @@ Customer can do free trial signup or Purchase.</p></li>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-resource-composition.yaml -n openshift-operators
 </pre></div>
 </div>
-<p>hello-world-resource-composition.yaml:</p>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f hello-world-resource-composition.yaml -n openshift-operators
+</pre></div>
+</div>
+<p>Here is the hello-world-resource-composition.yaml file. You will have to save it on your machine and then
+use it with above commands.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apiVersion: workflows.kubeplus/v1alpha1
 kind: ResourceComposition
 metadata:
@@ -145,6 +154,11 @@ spec:
 helloworldservices.platformapi.kubeplus                     <span class="m">2021</span>-05-14T08:11:28Z
 </pre></div>
 </div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc get crds <span class="p">|</span> grep -i hello
+helloworldservices.platformapi.kubeplus                     <span class="m">2021</span>-05-14T08:11:28Z
+</pre></div>
+</div>
 </div>
 <div class="section" id="consumer-window">
 <h2>Consumer window</h2>
@@ -158,12 +172,18 @@ $ tar -xvf kubeplus-kubectl-plugins.tar
 $ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
 $ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
 $ kubectl kubeplus commands
+or
+$ oc kubeplus commands
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
 <li><p>Create HelloWorldService instance</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-service.yaml
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f hello-world-service.yaml
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
@@ -174,6 +194,12 @@ $ <span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">
 kubectl get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
 </pre></div>
 </div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nv">HELLOWORLD_POD</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
+$ <span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
+oc get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
+</pre></div>
+</div>
 <p>You should see following output:</p>
 <a class="reference internal image-reference" href="_images/hello-world-resources.png"><img alt="_images/hello-world-resources.png" class="align-center" src="_images/hello-world-resources.png" style="width: 200px; height: 150px;" /></a>
 <ol class="arabic simple" start="4">
@@ -182,17 +208,25 @@ kubectl get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HE
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 default
 </pre></div>
 </div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc connections HelloWorldService hs1 default
+</pre></div>
+</div>
 <p>You should see following output:</p>
 <img alt="_images/hello-world-connections-flat.png" class="align-center" src="_images/hello-world-connections-flat.png" />
 <p>Visualize the relationship graph:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 default -o png
 </pre></div>
 </div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc connections HelloWorldService hs1 default -o png
+</pre></div>
+</div>
 <img alt="_images/hello-world-connections-png.png" class="align-center" src="_images/hello-world-connections-png.png" />
 </div>
 <div class="section" id="id1">
 <h2>Provider window 1</h2>
-<p>Back in provider window 1, perform following steps:</p>
+<p>Back on the provider window 1, perform following steps:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">KUBEPLUS_POD</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
 
 <span class="nv">KUBEPLUS_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
@@ -200,13 +234,26 @@ kubectl get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HE
 kubectl port-forward <span class="nv">$KUBEPLUS_POD</span> -n <span class="nv">$KUBEPLUS_NS</span> <span class="m">8081</span>:8090
 </pre></div>
 </div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">KUBEPLUS_POD</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
+
+<span class="nv">KUBEPLUS_NS</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
+
+oc port-forward <span class="nv">$KUBEPLUS_POD</span> -n <span class="nv">$KUBEPLUS_NS</span> <span class="m">8081</span>:8090
+</pre></div>
+</div>
 </div>
 <div class="section" id="provider-window-2">
 <h2>Provider window 2</h2>
 <p>In provider window 2, get CPU/Memory/Storage/Network metrics for HelloWorldService instance:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
-
-curl -kv <span class="s2">&quot;http://127.0.0.1:8081/apis/kubeplus/metrics?kind=HelloWorldService&amp;instance=hs1&amp;namespace=</span><span class="nv">$HELLOWORLD_NS</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl -kv <span class="s2">&quot;http://127.0.0.1:8081/apis/kubeplus/metrics?kind=HelloWorldService&amp;instance=hs1&amp;namespace=</span><span class="nv">$HELLOWORLD_NS</span><span class="s2">&quot;</span>
 </pre></div>
 </div>
 <p>You should see output of the following form:</p>
