@@ -112,7 +112,7 @@ To obtain metrics, enable Kubernetes Metrics API Server on your cluster. Hosted 
     - ./deploy-kubeplus.sh
     - We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
       - Install Helm version 3
-      - helm install kubeplus kubeplus-chart --set caBundle=$(kubectl config view --raw --flatten -o json |  sed 's/certificate-authority-data/certificateauthdata/'g | jq -r '.clusters[] | select(.name == "'$(kubectl config current-context)'") | .cluster.certificateauthdata')
+      - helm install kubeplus kubeplus-chart
     ```
 
 - SaaS examples:
