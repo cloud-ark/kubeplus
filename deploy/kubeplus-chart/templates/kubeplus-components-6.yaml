@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: webhook-tls-certificates
+  namespace: {{ .Values.namespace }}
 type: Opaque
 data:
   username: YWRtaW4=
@@ -18,19 +19,20 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: kubeplus 
-  namespace: default
+  namespace: {{ .Values.namespace }} 
   apiGroup: ""
 ---
 kind: ServiceAccount
 apiVersion: v1
 metadata:
   name: kubeplus
-  namespace: default
+  namespace: {{ .Values.namespace }} 
 ---
 kind: Service
 apiVersion: v1
 metadata:
   name: kubeplus
+  namespace: {{ .Values.namespace }}
 spec:
   selector:
     app: kubeplus
@@ -44,6 +46,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: crd-hook-service
+  namespace: {{ .Values.namespace }}
   labels:
     app: crd-hook-service
 spec:
@@ -57,6 +60,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kubeplus-deployment # do not change
+  namespace: {{ .Values.namespace }}
 spec:
   replicas: 1
   selector:

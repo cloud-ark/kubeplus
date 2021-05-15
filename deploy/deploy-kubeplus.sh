@@ -1,8 +1,18 @@
-#!/bin/bash
+#!/bin/bash -x
 
-kubectl apply -f ./kubeplus-components-6.yaml
+if (( $# < 1 )); then
+    echo "./deploy-kubeplus.sh <namespace>"
+    exit 0
+fi
 
-#bash ./webhook-create-signed-cert.sh --service crd-hook-service --namespace default --secret webhook-tls-certificates
-#cat ./mutatingwebhook.yaml | ./webhook-patch-ca-bundle.sh > ./mutatingwebhook-ca-bundle.yaml
-#kubectl apply -f ./mutatingwebhook-ca-bundle.yaml
-#kubectl apply -f ./kubeplus-components-3.yaml
+KUBEPLUS_DEPLOYMENT=`kubectl get deployments -A | grep kubeplus-deployment | awk '{print $1}'`
+
+if [[ -n $KUBEPLUS_DEPLOYMENT ]]; then
+   echo "KubePlus already deployed in $KUBEPLUS_DEPLOYMENT namespace. Cannot deploy multiple instances of KubePlus in a cluster."
+   echo "Exiting..."
+   exit 0
+fi
+
+namespace=$1
+sed -i.bak s"/namespace:.*/namespace: $namespace/"g kubeplus-components-6.yaml 
+kubectl create -f ./kubeplus-components-6.yaml -n $namespace 
