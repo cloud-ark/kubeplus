@@ -81,17 +81,9 @@ Customer can do free trial signup or Purchase.</p></li>
 <h2>Provider window 1</h2>
 <p>Do following steps in provider window 1:</p>
 <ol class="arabic simple">
-<li><p>Create hello-world-resource-composition as follows:</p></li>
+<li><p>Create hello-world-resource-composition:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-resource-composition.yaml -n openshift-operators
-</pre></div>
-</div>
-<p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f hello-world-resource-composition.yaml -n openshift-operators
-</pre></div>
-</div>
-<p>Here is the hello-world-resource-composition.yaml file. You will have to save it on your machine and then
-use it with above commands.</p>
+<p>Here is the hello-world-resource-composition.yaml file. Save it on your machine as hello-world-resource-composition.yaml.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apiVersion: workflows.kubeplus/v1alpha1
 kind: ResourceComposition
 metadata:
@@ -147,16 +139,22 @@ spec:
       monitorRelationships: all
 </pre></div>
 </div>
-<ol class="arabic simple" start="2">
-<li><p>Wait till HelloWorldService CRD is registered in the cluster. You can check this by running following command. Proceed only after this command shows following output:</p></li>
-</ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get crds <span class="p">|</span> grep -i hello
-helloworldservices.platformapi.kubeplus                     <span class="m">2021</span>-05-14T08:11:28Z
+<p>Create hello-world-resource-composition as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-resource-composition.yaml -n openshift-operators
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc get crds <span class="p">|</span> grep -i hello
-helloworldservices.platformapi.kubeplus                     <span class="m">2021</span>-05-14T08:11:28Z
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f hello-world-resource-composition.yaml -n openshift-operators
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Wait till HelloWorldService CRD is registered in the cluster. You can check this by running following command. Proceed only after this command shows following output:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">until</span> kubectl get crds <span class="p">|</span> grep hello  <span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> <span class="s2">&quot;Waiting for HelloworldService CRD to be registered..&quot;</span><span class="p">;</span> sleep <span class="m">1</span><span class="p">;</span> <span class="k">done</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">until</span> kubectl get crds <span class="p">|</span> grep hello  <span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> <span class="s2">&quot;Waiting for HelloworldService CRD to be registered..&quot;</span><span class="p">;</span> sleep <span class="m">1</span><span class="p">;</span> <span class="k">done</span>
 </pre></div>
 </div>
 </div>
@@ -179,6 +177,15 @@ $ oc kubeplus commands
 <ol class="arabic simple" start="2">
 <li><p>Create HelloWorldService instance</p></li>
 </ol>
+<p>Copy below YAML and save it as hello-world-service.yaml</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apiVersion: platformapi.kubeplus/v1alpha1
+kind: HelloWorldService
+metadata:
+  name: hs1
+spec:
+  greeting: Hello hello hello
+</pre></div>
+</div>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-service.yaml
 </pre></div>
 </div>
@@ -187,17 +194,28 @@ $ oc kubeplus commands
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
+<li><p>Verify that HelloWorldService has started</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_POD</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
+<span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
+kubectl port-forward <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> <span class="m">8082</span>:5000 <span class="p">&amp;</span>
+or
+oc port-forward <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> <span class="m">8082</span>:5000 <span class="p">&amp;</span>
+curl localhost:8082
+</pre></div>
+</div>
+<p>You should see following output:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Hello hello hello
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
 <li><p>Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance.</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nv">HELLOWORLD_POD</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
-$ <span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
-kubectl get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nv">HELLOWORLD_POD</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
-$ <span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
-oc get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ oc get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
 </pre></div>
 </div>
 <p>You should see following output:</p>
