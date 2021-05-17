@@ -90,9 +90,7 @@ Details about these components are available [here](https://cloud-ark.github.io/
 
 ## Try it:
 
-- Getting started:
-
-  - Install KubePlus kubectl plugins. They can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).
+- Install KubePlus kubectl plugins. They can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).
 
 ```
    $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
@@ -103,31 +101,26 @@ Details about these components are available [here](https://cloud-ark.github.io/
    $ kubectl kubeplus commands
 ```
 
-- Install KubePlus in-cluster component before trying out below examples.
-To obtain metrics, enable Kubernetes Metrics API Server on your cluster. Hosted Kubernetes solutions like GKE has this already installed.
+- Install Helm v3 and install KubePlus in-cluser component using following command. KubePlus can be installed in any Namespace.
 
-    ```
-    - git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
-    - cd kubeplus/deploy
-    - ./deploy-kubeplus.sh
-    - We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
-      - Install Helm version 3
-      - helm install kubeplus kubeplus-chart
-    ```
+```
+   $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
+   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-0.2.0.tgz?raw=true" -n $KUBEPLUS_NS
+```
 
-- SaaS examples:
+- Try following examples:
   - [Hello World service](./examples/multitenancy/hello-world/steps.txt)
   - [Wordpress service](./examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt)
   - [Mysql service](./examples/multitenancy/stacks/steps.txt)
   - [MongoDB service](./examples/multitenancy/mongodb-as-a-service/steps.md)
   - [Multiple teams](./examples/multitenancy/team/steps.txt) with applications deployed later
 
-- Debug (check container logs):
+- Debug:
   ```
-  - kubectl logs kubeplus -c crd-hook
-  - kubectl logs kubeplus -c helmer
-  - kubectl logs kubeplus -c platform-operator
-  - kubectl logs kubeplus -c webhook-cert-setup
+  - kubectl logs kubeplus $KUBEPLUS_NS -c crd-hook
+  - kubectl logs kubeplus $KUBEPLUS_NS -c helmer
+  - kubectl logs kubeplus $KUBEPLUS_NS -c platform-operator
+  - kubectl logs kubeplus $KUBEPLUS_NS -c webhook-cert-setup
   ```
 
 ## Operator Maturity Model
