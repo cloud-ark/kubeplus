@@ -16,9 +16,9 @@ KubePlus can be installed in any Namespace.
 Examples
 ---------
 
-1. Try `HelloWorldSerivce sample example`_
+1. Try `hello world service`_
 
-.. _HelloWorldService sample example: https://cloud-ark.github.io/kubeplus/docs/html/html/sample-example.html
+.. _hello world service: https://cloud-ark.github.io/kubeplus/docs/html/html/sample-example.html
 
 
 2. Try example outlined in Kubeplus Components section by following steps `here`_.

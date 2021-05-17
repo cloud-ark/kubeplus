@@ -34,9 +34,9 @@ or
 .. _Redhat Marketplace Operators section: https://marketplace.redhat.com/en-us/documentation/operators
 
 
-Follow `HelloWorldSerivce sample example`_
+Try `hello world service`_
 
-.. _HelloWorldService sample example: https://cloud-ark.github.io/kubeplus/docs/html/html/sample-example.html
+.. _hello world service: https://cloud-ark.github.io/kubeplus/docs/html/html/sample-example.html
 
 
 5. Debug:
