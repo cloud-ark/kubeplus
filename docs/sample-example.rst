@@ -106,7 +106,7 @@ or
     oc create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS
 
 
-3. Wait till HelloWorldService CRD is registered in the cluster. You can check this by running following command. Proceed only after this command shows following output:
+3. Wait till HelloWorldService CRD is registered in the cluster.
 
 .. code-block:: bash
 
@@ -220,13 +220,13 @@ You should see following output:
 
 .. code-block:: bash
    
-   kubectl connections HelloWorldService hs1 default
+   kubectl connections HelloWorldService hs1 $HELLOWORLD_NS
 
 or
 
 .. code-block:: bash
    
-   oc connections HelloWorldService hs1 default
+   oc connections HelloWorldService hs1 $HELLOWORLD_NS
 
 You should see following output:
 
@@ -237,13 +237,13 @@ Visualize the relationship graph:
 
 .. code-block:: bash
 
-   kubectl connections HelloWorldService hs1 default -o png
+   kubectl connections HelloWorldService hs1 $HELLOWORLD_NS -o png
 
 or
 
 .. code-block:: bash
 
-   oc connections HelloWorldService hs1 default -o png
+   oc connections HelloWorldService hs1 $HELLOWORLD_NS -o png
 
 
 .. image:: hello-world-connections-png.png
