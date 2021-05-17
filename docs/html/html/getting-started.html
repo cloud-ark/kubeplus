@@ -44,77 +44,53 @@
             
   <div class="section" id="getting-started">
 <h1>Getting Started</h1>
+<div class="section" id="setup">
+<h2>Setup</h2>
+<p>Install Helm v3 and install KubePlus using following command.
+KubePlus can be installed in any Namespace.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nv">KUBEPLUS_NS</span><span class="o">=</span>default <span class="o">(</span>or any namespace <span class="k">in</span> which you want to install KubePlus<span class="o">)</span>
+$ helm install kubeplus <span class="s2">&quot;https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-0.2.0.tgz?raw=true&quot;</span> -n <span class="nv">$KUBEPLUS_NS</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="examples">
+<h2>Examples</h2>
 <ol class="arabic simple">
-<li><p>Install Docker</p></li>
-<li><p>Install KubePlus kubectl plugins:</p></li>
+<li><p>Try <a href="#id1"><span class="problematic" id="id2">`HelloWorldSerivce sample example`_</span></a></p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
-$ gunzip kubeplus-kubectl-plugins.tar.gz
-$ tar -xvf kubeplus-kubectl-plugins.tar
-$ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
-$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
-$ kubectl kubeplus commands
-$ <span class="nv">KUBEPROXY</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -n kube-system<span class="p">|</span> grep kube-proxy<span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
-$ kubectl connections Pod <span class="nv">$KUBEPROXY</span> kube-system -o png
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">connections</span></code> can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).</p>
 <ol class="arabic simple" start="2">
-<li><p>Install KubePlus in-cluster component before trying out below examples:</p></li>
-</ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git clone --depth <span class="m">1</span> https://github.com/cloud-ark/kubeplus.git
-$ <span class="nb">cd</span> kubeplus/deploy
-$ ./deploy-kubeplus.sh
-</pre></div>
-</div>
-<p>We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
-- Install Helm version 3</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ helm install kubeplus kubeplus-chart --set <span class="nv">caBundle</span><span class="o">=</span><span class="k">$(</span>kubectl config view --raw --flatten -o json <span class="p">|</span>  sed <span class="s1">&#39;s/certificate-authority-data/certificateauthdata/&#39;</span>g <span class="p">|</span> jq -r <span class="s1">&#39;.clusters[] | select(.name == &quot;&#39;</span><span class="k">$(</span>kubectl config current-context<span class="k">)</span><span class="s1">&#39;&quot;) | .cluster.certificateauthdata&#39;</span><span class="k">)</span>
-</pre></div>
-</div>
-<ol class="arabic simple" start="3">
-<li><p>CRD for CRDs:</p>
-<ul class="simple">
 <li><p>Try example outlined in Kubeplus Components section by following steps <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/examples/resource-composition/steps.txt">here</a>.</p></li>
-</ul>
-</li>
 </ol>
-<ol class="arabic simple" start="4">
-<li><p>SaaS examples:</p></li>
+<ol class="arabic simple" start="3">
+<li><p>Other SaaS examples:</p></li>
 </ol>
 <blockquote>
 <div><ul class="simple">
-<li><p><a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master//examples/multitenancy/hello-world/steps.txt">Helloworld service</a></p></li>
 <li><p><a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master//examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt">Wordpress service</a></p></li>
 <li><p><a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/stacks/steps.txt">Mysql service</a></p></li>
 <li><p><a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/mongodb-as-a-service/steps.md">MongoDB service</a></p></li>
 <li><p>Multiple <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/team/steps.txt">teams with applications deployed later</a></p></li>
 </ul>
 </div></blockquote>
-<ol class="arabic simple" start="5">
-<li><p>Try with your own Helm chart:</p>
+<ol class="arabic simple" start="4">
+<li><p>Build your own SaaS:</p>
 <ul class="simple">
 <li><p>Install Helm version 3.0+</p></li>
-<li><p>Create Helm chart and make it available at a publicly accessible URL</p></li>
+<li><p>Create Helm chart for your application stack and make it available at a publicly accessible URL</p></li>
 <li><p>Follow steps similar to above examples</p></li>
 </ul>
 </li>
 <li><p>Debug:</p></li>
 </ol>
-<blockquote>
-<div><ul class="simple">
-<li><p>KUBEPLUS=kubectl get pods -A | grep kubeplus | awk ‘{print $2}’</p></li>
-<li><p>kubectl logs $KUBEPLUS -c crd-hook</p></li>
-<li><p>kubectl logs $KUBEPLUS -c helmer</p></li>
-<li><p>kubectl logs $KUBEPLUS -c platform-operator</p></li>
-<li><p>kubectl logs $KUBEPLUS -c webhook-cert-setup</p></li>
-</ul>
-</div></blockquote>
-<ol class="arabic" start="7">
-<li><p>Contributing:</p>
-<p>We would love your contributions. The process is <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md">simple</a>.</p>
-</li>
-</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nv">KUBEPLUS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep kubeplus <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
+$ <span class="nv">KUBEPLUS_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep kubeplus <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
+$ kubectl logs <span class="nv">$KUBEPLUS</span> -n <span class="nv">$KUBEPLUS_NS</span> -c crd-hook
+$ kubectl logs <span class="nv">$KUBEPLUS</span> -n <span class="nv">$KUBEPLUS_NS</span> -c helmer
+$ kubectl logs <span class="nv">$KUBEPLUS</span> -n <span class="nv">$KUBEPLUS_NS</span> -c platform-operator
+$ kubectl logs <span class="nv">$KUBEPLUS</span> -n <span class="nv">$KUBEPLUS_NS</span> -c webhook-cert-setup
+</pre></div>
+</div>
+</div>
 </div>
 
 

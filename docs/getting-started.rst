@@ -1,55 +1,36 @@
-========================
+=================
 Getting Started
-========================
+=================
 
-1. Install Docker
+Setup
+------
 
-2. Install KubePlus kubectl plugins:
-
-.. code-block:: bash
-
-  $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
-  $ gunzip kubeplus-kubectl-plugins.tar.gz
-  $ tar -xvf kubeplus-kubectl-plugins.tar
-  $ export KUBEPLUS_HOME=`pwd`
-  $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
-  $ kubectl kubeplus commands
-  $ KUBEPROXY=`kubectl get pods -n kube-system| grep kube-proxy| awk '{print $1}'`
-  $ kubectl connections Pod $KUBEPROXY kube-system -o png
-
-``kubectl connections`` can be used with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster).
-
-2. Install KubePlus in-cluster component before trying out below examples:
+Install Helm v3 and install KubePlus using following command.
+KubePlus can be installed in any Namespace. 
 
 .. code-block:: bash
 
-	$ git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
-	$ cd kubeplus/deploy
-	$ ./deploy-kubeplus.sh
+    $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
+    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-0.2.0.tgz?raw=true" -n $KUBEPLUS_NS
 
-We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
-- Install Helm version 3
+Examples
+---------
 
-.. code-block:: bash
+1. Try `HelloWorldSerivce sample example`_
 
-  $ helm install kubeplus kubeplus-chart --set caBundle=$(kubectl config view --raw --flatten -o json |  sed 's/certificate-authority-data/certificateauthdata/'g | jq -r '.clusters[] | select(.name == "'$(kubectl config current-context)'") | .cluster.certificateauthdata')
+.. _HelloWorldService sample example: https://cloud-ark.github.io/kubeplus/docs/html/html/sample-example.html
 
 
-3. CRD for CRDs:
-
-   - Try example outlined in Kubeplus Components section by following steps `here`_.
+2. Try example outlined in Kubeplus Components section by following steps `here`_.
 
 .. _here: https://github.com/cloud-ark/kubeplus/blob/master/examples/resource-composition/steps.txt
 
-4. SaaS examples:
+3. Other SaaS examples:
 
-  - `Helloworld service`_
   - `Wordpress service`_
   - `Mysql service`_
   - `MongoDB service`_
   - Multiple `teams with applications deployed later`_
-
-.. _Helloworld service: https://github.com/cloud-ark/kubeplus/blob/master//examples/multitenancy/hello-world/steps.txt
 
 .. _Wordpress service: https://github.com/cloud-ark/kubeplus/blob/master//examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt
 
@@ -59,23 +40,19 @@ We also provide a Helm chart (v3) (available inside kubeplus/deploy directory)
 
 .. _teams with applications deployed later: https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/team/steps.txt
 
-5. Try with your own Helm chart:
+4. Build your own SaaS:
    
    - Install Helm version 3.0+
-   - Create Helm chart and make it available at a publicly accessible URL
+   - Create Helm chart for your application stack and make it available at a publicly accessible URL
    - Follow steps similar to above examples
 
-6. Debug:
+5. Debug:
 
-  - KUBEPLUS=kubectl get pods -A | grep kubeplus | awk '{print $2}'
-  - kubectl logs $KUBEPLUS -c crd-hook
-  - kubectl logs $KUBEPLUS -c helmer
-  - kubectl logs $KUBEPLUS -c platform-operator
-  - kubectl logs $KUBEPLUS -c webhook-cert-setup
+.. code-block:: bash
 
-
-7. Contributing:
-   
-   We would love your contributions. The process is simple_.
-
-.. _simple: https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md
+    $ KUBEPLUS=`kubectl get pods -A | grep kubeplus | awk '{print $2}'`
+    $ KUBEPLUS_NS=`kubectl get pods -A | grep kubeplus | awk '{print $1}'`
+    $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c crd-hook
+    $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c helmer
+    $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c platform-operator
+    $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c webhook-cert-setup
