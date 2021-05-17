@@ -139,7 +139,7 @@ spec:
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
-<li><p>Wait till HelloWorldService CRD is registered in the cluster. You can check this by running following command. Proceed only after this command shows following output:</p></li>
+<li><p>Wait till HelloWorldService CRD is registered in the cluster.</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">until</span> kubectl get crds <span class="p">|</span> grep hello  <span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> <span class="s2">&quot;Waiting for HelloworldService CRD to be registered..&quot;</span><span class="p">;</span> sleep <span class="m">1</span><span class="p">;</span> <span class="k">done</span>
 </pre></div>
@@ -230,21 +230,21 @@ curl localhost:8082
 <ol class="arabic simple" start="7">
 <li><p>Check resource relationship graph for HelloWorldService instance:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 default
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span>
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc connections HelloWorldService hs1 default
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span>
 </pre></div>
 </div>
 <p>You should see following output:</p>
 <img alt="_images/hello-world-connections-flat.png" class="align-center" src="_images/hello-world-connections-flat.png" />
 <p>Visualize the relationship graph:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 default -o png
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -o png
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc connections HelloWorldService hs1 default -o png
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -o png
 </pre></div>
 </div>
 <img alt="_images/hello-world-connections-png.png" class="align-center" src="_images/hello-world-connections-png.png" />
