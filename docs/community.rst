@@ -16,6 +16,14 @@ Community Participation
 .. _Helm Summit 2019: https://youtu.be/F_Dgz1V5Q2g
 
 
+Contributions
+-------------
+   
+We would love your contributions. The process is simple_.
+
+.. _simple: https://github.com/cloud-ark/kubeplus/blob/master/Contributing.md
+
+
 ..	3. Kubernetes Community Meeting notes_
 
 ..	.. _notes: https://discuss.kubernetes.io/t/kubernetes-weekly-community-meeting-notes/35/60
