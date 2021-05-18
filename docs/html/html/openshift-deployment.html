@@ -67,8 +67,16 @@ Customer can do free trial signup or Purchase.</p></li>
 <ol class="arabic simple" start="4">
 <li><p>Install operator from <a class="reference external" href="https://marketplace.redhat.com/en-us/documentation/operators">Redhat Marketplace Operators section</a></p></li>
 </ol>
-<p>Try <a class="reference external" href="https://cloud-ark.github.io/kubeplus/docs/html/html/sample-example.html">hello world service</a></p>
 <ol class="arabic simple" start="5">
+<li><p>Delete any previous installed resources of KubePlus</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl -L https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/delete-kubeplus-components-oc.sh -o delete-kubeplus-components-oc.sh
+chmod +x delete-kubeplus-components-oc.sh
+./delete-kubeplus-components-oc.sh
+</pre></div>
+</div>
+<p>Try <a class="reference external" href="https://cloud-ark.github.io/kubeplus/docs/html/html/sample-example.html">hello world service</a></p>
+<ol class="arabic simple" start="6">
 <li><p>Debug:</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nv">KUBEPLUS_NS</span><span class="o">=</span>openshift-operators

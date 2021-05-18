@@ -127,16 +127,22 @@ Do following steps in consumer window:
 
 .. code-block:: bash
 
-  $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
-  $ gunzip kubeplus-kubectl-plugins.tar.gz
-  $ tar -xvf kubeplus-kubectl-plugins.tar
-  $ export KUBEPLUS_HOME=`pwd`
-  $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
-  $ kubectl kubeplus commands
+    curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
+    gunzip kubeplus-kubectl-plugins.tar.gz
+    tar -xvf kubeplus-kubectl-plugins.tar
+    export KUBEPLUS_HOME=`pwd`
+    export PATH=$KUBEPLUS_HOME/plugins/:$PATH
+    kubectl kubeplus commands
   or
-  $ oc kubeplus commands
+    oc kubeplus commands
 
-2. Install Docker
+2. Install Docker and verify that you are able to run docker commands without requiring sudo.
+
+.. code-block:: bash
+
+	docker ps
+
+This should return without any errors.
 
 3. Create HelloWorldService instance. 
 
@@ -179,14 +185,24 @@ or
      oc get helloworldservices
      oc describe helloworldservices hs1
 
+Verify that the Status field is populated in hs1 instance.
+
+
 5. Verify that HelloWorldService has started
 
 .. code-block:: bash
 
-     HELLOWORLD_POD=`kubectl get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $2}'`
-     HELLOWORLD_NS=`kubectl get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
-     kubectl port-forward $HELLOWORLD_POD -n $HELLOWORLD_NS 8082:5000 &
-     or
+    HELLOWORLD_POD=`kubectl get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $2}'`
+    HELLOWORLD_NS=`kubectl get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
+    kubectl port-forward $HELLOWORLD_POD -n $HELLOWORLD_NS 8082:5000 &
+    curl localhost:8082
+
+or
+
+.. code-block:: bash
+
+     HELLOWORLD_POD=`oc get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $2}'`
+     HELLOWORLD_NS=`oc get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
      oc port-forward $HELLOWORLD_POD -n $HELLOWORLD_NS 8082:5000 &
      curl localhost:8082
 
@@ -200,13 +216,13 @@ You should see following output:
 
 .. code-block:: bash
 
-	$ kubectl get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json | jq -r '.spec.containers[0].resources'
+	kubectl get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json | jq -r '.spec.containers[0].resources'
 
 or
 
 .. code-block:: bash
    
-    $ oc get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json | jq -r '.spec.containers[0].resources'
+    oc get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json | jq -r '.spec.containers[0].resources'
 
 
 You should see following output:
@@ -219,14 +235,14 @@ You should see following output:
 7. Check resource relationship graph for HelloWorldService instance:
 
 .. code-block:: bash
-   
-   kubectl connections HelloWorldService hs1 $HELLOWORLD_NS
+
+    kubectl connections HelloWorldService hs1 $HELLOWORLD_NS
 
 or
 
 .. code-block:: bash
-   
-   oc connections HelloWorldService hs1 $HELLOWORLD_NS
+
+    oc connections HelloWorldService hs1 $HELLOWORLD_NS
 
 You should see following output:
 
@@ -237,13 +253,13 @@ Visualize the relationship graph:
 
 .. code-block:: bash
 
-   kubectl connections HelloWorldService hs1 $HELLOWORLD_NS -o png
+    kubectl connections HelloWorldService hs1 $HELLOWORLD_NS -o png
 
 or
 
 .. code-block:: bash
 
-   oc connections HelloWorldService hs1 $HELLOWORLD_NS -o png
+    oc connections HelloWorldService hs1 $HELLOWORLD_NS -o png
 
 
 .. image:: hello-world-connections-png.png

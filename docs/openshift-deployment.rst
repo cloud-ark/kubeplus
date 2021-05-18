@@ -34,12 +34,20 @@ or
 .. _Redhat Marketplace Operators section: https://marketplace.redhat.com/en-us/documentation/operators
 
 
+5. Delete any previous installed resources of KubePlus
+
+.. code-block:: bash
+
+    curl -L https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/delete-kubeplus-components-oc.sh -o delete-kubeplus-components-oc.sh
+    chmod +x delete-kubeplus-components-oc.sh
+    ./delete-kubeplus-components-oc.sh
+
 Try `hello world service`_
 
 .. _hello world service: https://cloud-ark.github.io/kubeplus/docs/html/html/sample-example.html
 
 
-5. Debug:
+6. Debug:
 
 .. code-block:: bash
 

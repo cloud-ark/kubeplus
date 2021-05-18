@@ -155,18 +155,24 @@ spec:
 <ol class="arabic simple">
 <li><p>Install KubePlus kubectl plugins</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
-$ gunzip kubeplus-kubectl-plugins.tar.gz
-$ tar -xvf kubeplus-kubectl-plugins.tar
-$ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
-$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
-$ kubectl kubeplus commands
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>  curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
+  gunzip kubeplus-kubectl-plugins.tar.gz
+  tar -xvf kubeplus-kubectl-plugins.tar
+  <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
+  <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
+  kubectl kubeplus commands
 or
-$ oc kubeplus commands
+  oc kubeplus commands
 </pre></div>
 </div>
-<ol class="arabic" start="2">
-<li><p>Install Docker</p></li>
+<ol class="arabic simple" start="2">
+<li><p>Install Docker and verify that you are able to run docker commands without requiring sudo.</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker ps
+</pre></div>
+</div>
+<p>This should return without any errors.</p>
+<ol class="arabic" start="3">
 <li><p>Create HelloWorldService instance.</p>
 <p>HelloWorldService instances can be created in any namespace.</p>
 </li>
@@ -200,13 +206,19 @@ kubectl describe helloworldservices hs1
 oc describe helloworldservices hs1
 </pre></div>
 </div>
+<p>Verify that the Status field is populated in hs1 instance.</p>
 <ol class="arabic simple" start="5">
 <li><p>Verify that HelloWorldService has started</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_POD</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
 <span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
 kubectl port-forward <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> <span class="m">8082</span>:5000 <span class="p">&amp;</span>
-or
+curl localhost:8082
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_POD</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
+<span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
 oc port-forward <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> <span class="m">8082</span>:5000 <span class="p">&amp;</span>
 curl localhost:8082
 </pre></div>
@@ -218,11 +230,11 @@ curl localhost:8082
 <ol class="arabic simple" start="6">
 <li><p>Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance.</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ oc get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
 </pre></div>
 </div>
 <p>You should see following output:</p>

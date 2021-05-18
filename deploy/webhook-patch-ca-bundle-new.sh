@@ -25,7 +25,7 @@ fi
 
 #export CA_BUNDLE=$(/root/kubectl get secret -o jsonpath="{.items[?(@.type==\"kubernetes.io/service-account-token\")].data['ca\.crt']}")
 #echo $CA_BUNDLE
-export CA_BUNDLE=$(kubectl get secrets -n $namespace | grep service-account-token | head -1 | awk '{print $1'} | xargs kubectl get secret -n $namespace -o jsonpath="{.data['ca\.crt']}")
+export CA_BUNDLE=$(kubectl get secrets -n $namespace | grep service-account-token | head -1 | awk '{print $1}' | xargs kubectl get secret -n $namespace -o jsonpath="{.data['ca\.crt']}")
 
 if command -v envsubst >/dev/null 2>&1; then
     envsubst
