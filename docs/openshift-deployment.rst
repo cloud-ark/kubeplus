@@ -9,19 +9,28 @@ Setup
 
 .. _cluster registration link: https://marketplace.redhat.com/en-us/documentation/clusters#register-openshift-cluster-with-red-hat-marketplace
 
-2. Install KubePlus Pre-requisite resources. You can use either oc cli or kubectl cli. The commands are exactly the same.
+2. Delete any previous installed resources of KubePlus
 
 .. code-block:: bash
 
-    kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml
+    curl -L https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/delete-kubeplus-components-oc.sh -o delete-kubeplus-components-oc.sh
+    chmod +x delete-kubeplus-components-oc.sh
+    ./delete-kubeplus-components-oc.sh
+
+
+3. Install KubePlus Pre-requisite resources. You can use either oc cli or kubectl cli. The commands are exactly the same.
+
+.. code-block:: bash
+
+    kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml -n openshift-operators
 
 or
 
 .. code-block:: bash
 
-    oc create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml
+    oc create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml -n openshift-operators
 
-3. Go to `Redhat Marketplace`_, search for "KubePlus" operator.
+4. Go to `Redhat Marketplace`_, search for "KubePlus" operator.
    Customer can do free trial signup or Purchase.
 
 .. _Redhat Marketplace: marketplace.redhat.com
@@ -29,18 +38,10 @@ or
 .. image:: search-kubeplus-mp.png
    :align: center
 
-4. Install operator from `Redhat Marketplace Operators section`_
+5. Install operator from `Redhat Marketplace Operators section`_
 
 .. _Redhat Marketplace Operators section: https://marketplace.redhat.com/en-us/documentation/operators
 
-
-5. Delete any previous installed resources of KubePlus
-
-.. code-block:: bash
-
-    curl -L https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/delete-kubeplus-components-oc.sh -o delete-kubeplus-components-oc.sh
-    chmod +x delete-kubeplus-components-oc.sh
-    ./delete-kubeplus-components-oc.sh
 
 Try `hello world service`_
 

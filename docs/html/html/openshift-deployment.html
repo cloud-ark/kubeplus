@@ -50,24 +50,6 @@
 <li><p>Make sure your Openshift Cluster is registered with Redhat Marketplace. Follow <a class="reference external" href="https://marketplace.redhat.com/en-us/documentation/clusters#register-openshift-cluster-with-red-hat-marketplace">cluster registration link</a> for reference:</p></li>
 </ol>
 <ol class="arabic simple" start="2">
-<li><p>Install KubePlus Pre-requisite resources. You can use either oc cli or kubectl cli. The commands are exactly the same.</p></li>
-</ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml
-</pre></div>
-</div>
-<p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml
-</pre></div>
-</div>
-<ol class="arabic simple" start="3">
-<li><p>Go to <a class="reference external" href="marketplace.redhat.com">Redhat Marketplace</a>, search for “KubePlus” operator.
-Customer can do free trial signup or Purchase.</p></li>
-</ol>
-<img alt="_images/search-kubeplus-mp.png" class="align-center" src="_images/search-kubeplus-mp.png" />
-<ol class="arabic simple" start="4">
-<li><p>Install operator from <a class="reference external" href="https://marketplace.redhat.com/en-us/documentation/operators">Redhat Marketplace Operators section</a></p></li>
-</ol>
-<ol class="arabic simple" start="5">
 <li><p>Delete any previous installed resources of KubePlus</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl -L https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/delete-kubeplus-components-oc.sh -o delete-kubeplus-components-oc.sh
@@ -75,6 +57,24 @@ chmod +x delete-kubeplus-components-oc.sh
 ./delete-kubeplus-components-oc.sh
 </pre></div>
 </div>
+<ol class="arabic simple" start="3">
+<li><p>Install KubePlus Pre-requisite resources. You can use either oc cli or kubectl cli. The commands are exactly the same.</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml -n openshift-operators
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml -n openshift-operators
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Go to <a class="reference external" href="marketplace.redhat.com">Redhat Marketplace</a>, search for “KubePlus” operator.
+Customer can do free trial signup or Purchase.</p></li>
+</ol>
+<img alt="_images/search-kubeplus-mp.png" class="align-center" src="_images/search-kubeplus-mp.png" />
+<ol class="arabic simple" start="5">
+<li><p>Install operator from <a class="reference external" href="https://marketplace.redhat.com/en-us/documentation/operators">Redhat Marketplace Operators section</a></p></li>
+</ol>
 <p>Try <a class="reference external" href="https://cloud-ark.github.io/kubeplus/docs/html/html/sample-example.html">hello world service</a></p>
 <ol class="arabic simple" start="6">
 <li><p>Debug:</p></li>
