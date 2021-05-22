@@ -124,7 +124,7 @@ echo ${serverCert} | openssl base64 -d -A -out ${tmpdir}/server-cert.pem
 
 
 # create the secret with CA cert and server cert/key
-./root/kubectl delete secret ${secret} 2>/dev/null || true
+./root/kubectl delete secret ${secret} -n ${namespace} 2>/dev/null || true
 ./root/kubectl create secret generic ${secret} \
         --from-file=key.pem=${tmpdir}/server-key.pem \
         --from-file=cert.pem=${tmpdir}/server-cert.pem \
