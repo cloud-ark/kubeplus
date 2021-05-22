@@ -249,7 +249,7 @@ You should see following output:
 .. image:: hello-world-connections-flat.png
    :align: center
 
-Visualize the relationship graph:
+8. (Only on Linux or MacOS) Visualize the relationship graph:
 
 .. code-block:: bash
 

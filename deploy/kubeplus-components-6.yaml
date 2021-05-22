@@ -72,7 +72,7 @@ spec:
       initContainers:
       - name: webhook-cert-setup
         # This is a minimal kubectl image based on Alpine Linux that signs certificates using the k8s extension api server
-        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.8
+        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.9
         imagePullPolicy: Always
         env:
           - name: KUBEPLUS_NAMESPACE
@@ -89,7 +89,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.10
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.11
         imagePullPolicy: Always
         args:
           - -tlsCertFile=/etc/webhook/certs/cert.pem

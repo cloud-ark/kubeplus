@@ -25,7 +25,23 @@ fi
 
 #export CA_BUNDLE=$(/root/kubectl get secret -o jsonpath="{.items[?(@.type==\"kubernetes.io/service-account-token\")].data['ca\.crt']}")
 #echo $CA_BUNDLE
-export CA_BUNDLE=$(kubectl get secrets -n $namespace | grep service-account-token | head -1 | awk '{print $1}' | xargs kubectl get secret -n $namespace -o jsonpath="{.data['ca\.crt']}")
+
+### Works - May 21, 2021
+export CA_BUNDLE=$(kubectl get csr crd-hook-service.$namespace -o jsonpath='{.status.certificate}')
+
+
+#kubectl get secrets -n $namespace | grep service-account-token | grep default-token | head -1 | awk '{print $1}' | xargs kubectl get secret -n $namespace -o jsonpath="{.data['ca\.crt']}" | base64 --decode > ca_chain.pem
+#csplit -s -z -f individual- ca_chain.pem '/-----BEGIN CERTIFICATE-----/' '{*}'
+#base64 -i individual-05 > root-ca.encoded
+#export CA_BUNDLE=$(readarray -t ARRAY < root-ca.encoded; IFS=''; echo "${ARRAY[*]}")
+
+#export CA_BUNDLE=`base64 individual-00 | cut -d '\'' -f1`
+#export CA_BUNDLE=`base64 individual-00 | sed "s/'//g"`
+#export CA_BUNDLE=`cat root-ca.encoded`
+
+# - working export CA_BUNDLE=$(kubectl get secrets -n $namespace | grep service-account-token | head -1 | awk '{print $1}' | xargs kubectl get secret -n $namespace -o jsonpath="{.data['ca\.crt']}")
+
+#export CA_BUNDLE=$(kubectl get configmaps -n $namespace kube-root-ca.crt -o jsonpath="{.data['ca\.crt']}")
 
 if command -v envsubst >/dev/null 2>&1; then
     envsubst

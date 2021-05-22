@@ -272,22 +272,24 @@ func checkAndApplyNSPolicies(ar *v1beta1.AdmissionReview) []patchOperation {
 	patchOperations := make([]patchOperation, 0)
 
 	// Check if this is Namespace-scoped policy
-	podPolicy1 := podPolicy.(platformworkflowv1alpha1.Pol)
-	scope := podPolicy1.PolicyResources.Scope
-	fmt.Printf("Scope:%s\n",scope)
-	if scope == "Namespace" {
-		resKindAndName := serviceKind + "-" + serviceInstance
-		resAR := resourceNameObjMap[resKindAndName].(*v1beta1.AdmissionReview)
-		req := resAR.Request
-		body := resAR.Request.Object.Raw
+	if podPolicy != nil {
+		podPolicy1 := podPolicy.(platformworkflowv1alpha1.Pol)
+		scope := podPolicy1.PolicyResources.Scope
+		fmt.Printf("Scope:%s\n",scope)
+		if scope == "Namespace" {
+			resKindAndName := serviceKind + "-" + serviceInstance
+			resAR := resourceNameObjMap[resKindAndName].(*v1beta1.AdmissionReview)
+			req := resAR.Request
+			body := resAR.Request.Object.Raw
 
-		serviceKindCanonical := req.Kind.Kind
-		serviceKindNamespace, _ := jsonparser.GetUnsafeString(body, "metadata", "namespace")
-		if serviceKindNamespace == "" {
-			serviceKindNamespace = "default"
+			serviceKindCanonical := req.Kind.Kind
+			serviceKindNamespace, _ := jsonparser.GetUnsafeString(body, "metadata", "namespace")
+			if serviceKindNamespace == "" {
+				serviceKindNamespace = "default"
+			}
+			fmt.Printf("serviceKindCanonical:%s ServiceInstance:%s ServiceNamespace:%s\n", serviceKindCanonical, serviceInstance, serviceKindNamespace)
+			patchOperations = applyPolicies(ar, customAPI, serviceKindCanonical, serviceInstance, serviceKindNamespace)
 		}
-		fmt.Printf("serviceKindCanonical:%s ServiceInstance:%s ServiceNamespace:%s\n", serviceKindCanonical, serviceInstance, serviceKindNamespace)
-		patchOperations = applyPolicies(ar, customAPI, serviceKindCanonical, serviceInstance, serviceKindNamespace)
 	}
 
 	return patchOperations

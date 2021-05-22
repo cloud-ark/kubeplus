@@ -31,7 +31,7 @@ metadata:
     createdAt: 2021-04-28T12:59:59Z
     support: CloudARK, Inc.
     repository: https://github.com/cloud-ark/kubeplus
-  name: kubeplus.v1.0.4
+  name: kubeplus.v1.0.5
   namespace: default
 spec:
   apiservicedefinitions: {}
@@ -85,7 +85,7 @@ spec:
               - name: webhook-cert-setup
                 # This is a minimal kubectl image based on Alpine Linux that signs certificates using the k8s extension api server
                 #image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.6
-                image: registry.connect.redhat.com/cloudark/kubeplus-webhook-cert-setup:0.0.8-rh
+                image: registry.connect.redhat.com/cloudark/kubeplus-webhook-cert-setup:0.0.9-rh
                 imagePullPolicy: Always
                 command: ["./webhook-create-signed-cert-new.sh"]
                 args:
@@ -98,7 +98,7 @@ spec:
               containers:
               - name: crd-hook
                 #image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.8
-                image: registry.connect.redhat.com/cloudark/kubeplus-mutating-webhook:0.5.10-rh
+                image: registry.connect.redhat.com/cloudark/kubeplus-mutating-webhook:0.5.11-rh
                 imagePullPolicy: Always
                 args:
                   - -tlsCertFile=/etc/webhook/certs/cert.pem
@@ -166,4 +166,4 @@ spec:
   provider:
     name: CloudARK, Inc.
     url: https://cloudark.io/
-  version: 1.0.4
+  version: 1.0.5
