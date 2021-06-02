@@ -1,9 +1,10 @@
-## KubePlus - Kubernetes Operator to create multi-tenant SaaS from Helm charts
+## KubePlus - Kubernetes Operator to deliver Helm charts as-a-service
 
-Today Platform Engineering teams are dealing with a wide variety of Helm charts coming from different sources - open-source repositories, software vendors, Cloud marketplaces, or enterprise internal stakeholders. The requirement is to deliver these custom application stacks as-a-service taking care of multi-tenancy and day2 operations.
+Today Platform Engineering teams are dealing with a wide variety of Helm charts coming from different sources - open-source repositories, software vendors, Cloud marketplaces, or enterprise internal stakeholders. The desire is to deliver these custom application stacks as-a-service. Platform teams want an easy way for their customers to instantiate these application instances while being able to manage and monitor them behind the scene.
 
-KubePlus is a turn-key solution to transform any containerized application into a SaaS. It takes an application Helm chart and delivers it as-a-service by automating multi-tenancy management and day2 operations such as monitoring, troubleshooting and application upgrades. KubePlus consists of a CRD that enables creating new Kubernetes APIs (CRDs) to realize such services. The new CRDs enable creation of a Helm release per tenant with tenant level isolation, monitoring and consumption tracking.
+KubePlus offers a turn-key solution to deliver any Helm chart as-a-service. KubePlus takes an application Helm chart and delivers it as-a-service by abstracting it under provider and consumer APIs. The consumer of the service can simply use Kubernetes native consumer API to provision the application. And behind the scene provider of the service can apply policies and monitor the instances of the application. This open-source KubePlus software forms the foundation for our KubePlus SaaS Manager offering.
 
+KubePlus consists of a CRD that enables creating new Kubernetes APIs (CRDs) to realize such services. The new CRDs enable creation of a Helm release per tenant with tenant level isolation, monitoring and consumption tracking.
 
 <p align="center">
 <img src="./docs/application-stacks-1.png" width="700" height="150" class="center">
@@ -19,7 +20,7 @@ KubePlus takes an application Helm chart and delivers it as-a-service by automat
 <img src="./docs/kubeplus-provider-consumer.png" width="600" height="250" class="center">
 </p>
 
-- Create: Create SaaS for any application packaged as Helm chart.
+- Create: Create service for any application packaged as Helm chart.
 - Govern: Tenant level policies for isolation and resource utilization.
 - Monitor: Tenant level consumption metrics for CPU, memory, storage, network.
 - Troubleshoot: Tenant level Kubernetes resource relationship graphs. 
@@ -27,20 +28,20 @@ KubePlus takes an application Helm chart and delivers it as-a-service by automat
 
 ## Components
 
-KubePlus has two components briefly described below.
+KubePlus consists of two components briefly described below.
 
 
-### 1. In cluster component - CRD for CRDs to design your services from Helm charts
+### 1. In cluster component - CRD for CRDs to design consumer services wrapping Helm charts
 
 <p align="center">
 <img src="./docs/crd-for-crds-2.jpg" width="700" height="300" class="center">
 </p>
 
 
-KubePlus offers a CRD named ```ResourceComposition``` to 
-- Compose new CRDs (Custom Resource Definitions) to publish platform services wrapping Helm charts
-- Define policies (e.g. Node selection, CPU/Memory limits, etc.) for managing resources of the platform services
-- Get aggregated CPU/Memory/Storage/Network metrics for the platform services
+KubePlus offers a Kubernetes Custom Resource Definition (CRD) named ```ResourceComposition``` to 
+- Compose consumer services wrapping Helm charts
+- Define policies (e.g. Node selection, CPU/Memory limits, etc.) for managing resources of the service
+- Get aggregated CPU/Memory/Storage/Network metrics for the services
 (in prometheus format)
 
 Here is the high-level structure of ResourceComposition CRD: 
