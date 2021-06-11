@@ -81,7 +81,7 @@ Here is the resource relationship graph for WordpressService instance discovered
 ```kubectl connections WordpressService wp-service-tenant1```.
 
 <p align="center">
-<img src="./docs/wordpress-service-connections.png" width="650" height="250" class="center">
+<img src="./docs/wordpress-service-connections.png" class="center">
 </p>
 
 We have additional plugins such as ```kubectl metrics``` and ```kubectl applogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the service instance.
@@ -109,8 +109,8 @@ Details about these components are available [here](https://cloud-ark.github.io/
 ```
    $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-0.2.0.tgz?raw=true" -n $KUBEPLUS_NS
-   $ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n kubeplus -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider-kubeconfig.json
-   $ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n kubeplus -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer-kubeconfig.json
+   $ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider-kubeconfig.json
+   $ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer-kubeconfig.json
    $ kubectl auth can-i --list --as=system:serviceaccount:kubeplus:kubeplus-saas-provider
    $ kubectl auth can-i --list --as=system:serviceaccount:kubeplus:kubeplus-saas-consumer
 ```
