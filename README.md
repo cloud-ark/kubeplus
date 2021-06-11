@@ -57,7 +57,7 @@ The MySQL Operator is assumed to be installed on the cluster.
 KubePlus takes Helm chart and other policy and monitoring inputs through ResourceComposition CRD as shown below to deliver a new CRD for Wordpress as-a-Service. 
 
 <p align="center">
-<img src="./docs/wordpress-saas.png" width="500" height="250" class="center">
+<img src="./docs/wordpress-saas.png" width="650" height="250" class="center">
 </p>
 
 Here is a new platform service named WordpressService. 
@@ -69,7 +69,7 @@ Here is a new platform service named WordpressService.
 A new CRD named WordpressService has been created here using ResourceComposition. Wordpress SaaS provider uses a Helm chart that defines the required underlying resources, and additionally, defines the required policy and monitoring inputs, through ResourceComposition. The consumer of the service creates instances of WordpressService. The spec properties of the WordpressService Custom Resource are essentially the attributes exposed via the underlying Helm chart's values.yaml. Here is a YAML definition to create a tenant service instance using newly created WordpressService CRD.
 
 <p align="center">
-<img src="./docs/wordpress-service-tenant1.png" width="500" height="250" class="center">
+<img src="./docs/wordpress-service-tenant1.png" width="650" height="250" class="center">
 </p>
 
 
@@ -81,7 +81,7 @@ Here is the resource relationship graph for WordpressService instance discovered
 ```kubectl connections WordpressService wp-service-tenant1```.
 
 <p align="center">
-<img src="./docs/wordpress-service-connections.png" class="center">
+<img src="./docs/wordpress-service-connections.png" width="650" height="250" class="center">
 </p>
 
 We have additional plugins such as ```kubectl metrics``` and ```kubectl applogs``` that use resource relationship graphs behind the scene and aggregate metrics and logs for the service instance.
@@ -109,6 +109,10 @@ Details about these components are available [here](https://cloud-ark.github.io/
 ```
    $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-0.2.0.tgz?raw=true" -n $KUBEPLUS_NS
+   $ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n kubeplus -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider-kubeconfig.json
+   $ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n kubeplus -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer-kubeconfig.json
+   $ kubectl auth can-i --list --as=system:serviceaccount:kubeplus:kubeplus-saas-provider
+   $ kubectl auth can-i --list --as=system:serviceaccount:kubeplus:kubeplus-saas-consumer
 ```
 
 - Try following examples:
