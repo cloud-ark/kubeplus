@@ -111,8 +111,8 @@ Details about these components are available [here](https://cloud-ark.github.io/
    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-0.2.0.tgz?raw=true" -n $KUBEPLUS_NS
    $ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider-kubeconfig.json
    $ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer-kubeconfig.json
-   $ kubectl auth can-i --list --as=system:serviceaccount:kubeplus:kubeplus-saas-provider
-   $ kubectl auth can-i --list --as=system:serviceaccount:kubeplus:kubeplus-saas-consumer
+   $ kubectl auth can-i --list --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus-saas-provider
+   $ kubectl auth can-i --list --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus-saas-consumer
 ```
 
 - Try following examples:
