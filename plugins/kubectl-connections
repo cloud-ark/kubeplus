@@ -36,6 +36,14 @@ check_docker() {
   fi
 }
 
+show_image() {
+  local filePath=$1
+  pythonPath=`which python3`
+  if [[ $? == 0 ]]; then
+    `$pythonPath /$KUBEPLUS_HOME/plugins/imageviewer.py $filePath`
+  fi
+}
+
 if (( $# < 3 )); then
   print_help
 fi
@@ -143,6 +151,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
       /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
       docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
       echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
+      show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
     else
       /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace $outputString $kubeconfig $ignorelist
     fi
@@ -152,6 +161,7 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
       /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
       docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
       echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
+      show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
     else
       /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o $outputString $kubeconfig $ignorelist
     fi

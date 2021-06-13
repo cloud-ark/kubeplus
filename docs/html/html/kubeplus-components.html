@@ -68,7 +68,9 @@ It consists of a Kubernetes Controller, a MutatingWebHook, and a container that 
 </ul>
 <p>Here is a new platform service named MysqlService created using
 <code class="code docutils literal notranslate"><span class="pre">ResourceComposition</span></code>.</p>
-<p>A new CRD named MysqlService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources. Additionally provide policy and monitoring inputs for the workflow as part of <code class="code docutils literal notranslate"><span class="pre">ResourceComposition</span></code> definition. The Spec Properties of MysqlService come from values.yaml of the Helm chart. Product teams can use this service to get MySQL database for their application and all the required setups will be performed transparently by this service.</p>
+<p>A new CRD named MysqlService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources.
+When defining the new <code class="code docutils literal notranslate"><span class="pre">Kind</span></code>, make sure that you define the group as <code class="code docutils literal notranslate"><span class="pre">platformapi.kubeplus</span></code> and version as <code class="code docutils literal notranslate"><span class="pre">v1alpha1</span></code>.
+Additionally provide any policy and monitoring inputs for the workflow as part of <code class="code docutils literal notranslate"><span class="pre">ResourceComposition</span></code> definition. The Spec Properties of MysqlService come from values.yaml of the Helm chart. Product teams can use this service to get MySQL database for their application and all the required setups will be performed transparently by this service.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apiVersion: workflows.kubeplus/v1alpha1
 kind: ResourceComposition
 metadata:
@@ -128,7 +130,7 @@ spec:
 <p><strong>ResourceComposition</strong></p>
 <p>ResourceComposition definition consists of the following:</p>
 <ul class="simple">
-<li><p>Details of the new API that you want to create (group, version, kind, plural). Currently a unique kind name is required across all the resources present in the cluster.</p></li>
+<li><p>Details of the new API that you want to create (group, version, kind, plural). Currently a unique kind name is required across all the resources present in the cluster. Also, the new API should be registered under the group <code class="docutils literal notranslate"><span class="pre">platformapi.kubeplus</span></code> and version <code class="docutils literal notranslate"><span class="pre">v1alpha1</span></code>.</p></li>
 <li><p>A publicly accessible Helm chart URL.</p></li>
 <li><p>A friendly chart name.</p></li>
 <li><p>ResourcePolicy section (defined under <cite>respolicy</cite>)</p></li>

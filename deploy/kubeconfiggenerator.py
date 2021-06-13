@@ -266,6 +266,4 @@ if __name__ == '__main__':
 	# 2. Generate Consumer kubeconfig
 	sa = 'kubeplus-saas-consumer'
 	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
-	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')
-
-
+#	kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')

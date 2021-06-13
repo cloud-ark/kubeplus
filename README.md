@@ -130,6 +130,12 @@ Details about these components are available [here](https://cloud-ark.github.io/
   - kubectl logs kubeplus $KUBEPLUS_NS -c webhook-cert-setup
   ```
 
+- Cleanup:
+  ```
+  - wget https://github.com/cloud-ark/kubeplus/raw/master/deploy/delete-kubeplus-components.sh
+  - ./delete-kubeplus-components.sh
+  ```
+
 ## Operator Maturity Model
 
 As enterprise teams build their custom platforms using community or in house developed Operators, they need a set of guidelines for Operator readiness in multi-Operator and multi-tenant environments. We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) for this purpose. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators for curating community Operators towards building their custom platforms.
