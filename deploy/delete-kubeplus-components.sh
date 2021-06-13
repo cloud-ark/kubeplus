@@ -12,6 +12,7 @@ kubectl delete crds resourceevents.workflows.kubeplus
 kubectl delete crds resourcemonitors.workflows.kubeplus
 kubectl delete secret webhook-tls-certificates -n $KUBEPLUS_NS
 kubectl delete clusterrolebinding kubeplus:cluster-admin
-
-
-
+kubectl delete configmaps kubeplus-saas-consumer-kubeconfig kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS
+kubectl delete sa kubeplus-saas-consumer  kubeplus-saas-provider -n $KUBEPLUS_NS
+kubectl delete clusterroles kubeplus-saas-consumer kubeplus-saas-provider
+kubectl delete clusterrolebindings kubeplus-saas-consumer kubeplus-saas-provider

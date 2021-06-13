@@ -56,3 +56,10 @@ Examples
     $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c helmer
     $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c platform-operator
     $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c webhook-cert-setup
+
+6. Cleanup:
+
+.. code-block:: bash
+
+    $ wget https://github.com/cloud-ark/kubeplus/raw/master/deploy/delete-kubeplus-components.sh
+    $ ./delete-kubeplus-components.sh

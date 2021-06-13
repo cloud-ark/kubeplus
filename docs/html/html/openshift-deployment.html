@@ -87,6 +87,13 @@ $ kubectl logs <span class="nv">$KUBEPLUS</span> -n <span class="nv">$KUBEPLUS_N
 $ kubectl logs <span class="nv">$KUBEPLUS</span> -n <span class="nv">$KUBEPLUS_NS</span> -c webhook-cert-setup
 </pre></div>
 </div>
+<ol class="arabic simple" start="7">
+<li><p>Cleanup:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget https://github.com/cloud-ark/kubeplus/raw/master/deploy/delete-kubeplus-components-oc.sh
+$ ./delete-kubeplus-components-oc.sh
+</pre></div>
+</div>
 </div>
 </div>
 

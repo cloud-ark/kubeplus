@@ -51,7 +51,9 @@ Here is a new platform service named MysqlService created using
    :width: 550px
    :align: center
 
-A new CRD named MysqlService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources. Additionally provide policy and monitoring inputs for the workflow as part of :code:`ResourceComposition` definition. The Spec Properties of MysqlService come from values.yaml of the Helm chart. Product teams can use this service to get MySQL database for their application and all the required setups will be performed transparently by this service.
+A new CRD named MysqlService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources. 
+When defining the new :code:`Kind`, make sure that you define the group as :code:`platformapi.kubeplus` and version as :code:`v1alpha1`.
+Additionally provide any policy and monitoring inputs for the workflow as part of :code:`ResourceComposition` definition. The Spec Properties of MysqlService come from values.yaml of the Helm chart. Product teams can use this service to get MySQL database for their application and all the required setups will be performed transparently by this service.
 
 .. code-block:: bash
 
@@ -114,7 +116,7 @@ A new CRD named MysqlService has been created here using ResourceComposition. Yo
 
 ResourceComposition definition consists of the following:
 
-- Details of the new API that you want to create (group, version, kind, plural). Currently a unique kind name is required across all the resources present in the cluster. 
+- Details of the new API that you want to create (group, version, kind, plural). Currently a unique kind name is required across all the resources present in the cluster. Also, the new API should be registered under the group ``platformapi.kubeplus`` and version ``v1alpha1``.
 - A publicly accessible Helm chart URL.
 - A friendly chart name.
 - ResourcePolicy section (defined under `respolicy`)
