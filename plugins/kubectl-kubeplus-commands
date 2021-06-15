@@ -9,6 +9,8 @@ print_help () {
     echo "        kubectl connections"
     echo "        kubectl metrics"
     echo "        kubectl applogs"
+    echo "        kubectl retrieve kubeconfig provider"
+    echo "        kubectl retrieve kubeconfig consumer"
     echo ""
     echo "DESCRIPTION"
     echo "        KubePlus provides a suite of kubectl plugins to discover, monitor and troubleshoot Kubernetes applications."
@@ -21,6 +23,10 @@ print_help () {
     echo "        The monitoring and troubleshooting plugins (kubectl metrics and kubectl applogs) enable collecting application metrics and logs."
     echo "        - kubectl metrics collects CPU, Memory, Storage, and Network metrics for an application. These are available in Prometheus format."
     echo "        - kubectl applogs collects logs for all the containers of all the Pods in an application."
+    echo "        The kubeconfig files that are meant to be used by SaaS provider and SaaS consumers are available through:"
+    echo "        - kubectl retrieve kubeconfig provider"
+    echo "        - kubectl retrieve kubeconfig consumer"
+    echo "        These kubeconfig files are provided with limited RBAC permissions appropriate for the persona."
     exit 0
 }
 
