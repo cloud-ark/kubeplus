@@ -126,6 +126,15 @@ class KubeconfigGenerator(object):
 		ruleGroup3["resources"] = resourceGroup3
 		ruleGroup3["verbs"] = verbsGroup3
 
+		# CRUD on Port forward
+		ruleGroup4 = {}
+		apiGroup4 = [""]
+		resourceGroup4 = ["pods/portforward"]
+		verbsGroup4 = ["get","watch","list","create","delete","update"]
+		ruleGroup4["apiGroups"] = apiGroup4
+		ruleGroup4["resources"] = resourceGroup4
+		ruleGroup4["verbs"] = verbsGroup4
+
 		# CRUD on platformapi.kubeplus
 		ruleGroup5 = {}
 		apiGroup5 = ["platformapi.kubeplus"]
@@ -166,6 +175,7 @@ class KubeconfigGenerator(object):
 		ruleList.append(ruleGroup1)
 		ruleList.append(ruleGroup2)
 		ruleList.append(ruleGroup3)
+		ruleList.append(ruleGroup4)
 		ruleList.append(ruleGroup5)
 		ruleList.append(ruleGroup6)
 		ruleList.append(ruleGroup7)
