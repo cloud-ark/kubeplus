@@ -112,7 +112,7 @@ class KubeconfigGenerator(object):
 		ruleGroup2 = {}
 		apiGroup2 = ["workflows.kubeplus"]
 		resourceGroup2 = ["resourcecompositions","resourcemonitors","resourcepolicies","resourceevents"]
-		verbsGroup2 = ["get","watch","list","create","delete","update"]
+		verbsGroup2 = ["get","watch","list","create","delete","update","patch"]
 		ruleGroup2["apiGroups"] = apiGroup2
 		ruleGroup2["resources"] = resourceGroup2
 		ruleGroup2["verbs"] = verbsGroup2
@@ -121,7 +121,7 @@ class KubeconfigGenerator(object):
 		ruleGroup3 = {}
 		apiGroup3 = ["rbac.authorization.k8s.io"]
 		resourceGroup3 = ["clusterroles","clusterrolebindings"]
-		verbsGroup3 = ["get","watch","list","create","delete","update"]
+		verbsGroup3 = ["get","watch","list","create","delete","update","patch"]
 		ruleGroup3["apiGroups"] = apiGroup3
 		ruleGroup3["resources"] = resourceGroup3
 		ruleGroup3["verbs"] = verbsGroup3
@@ -130,7 +130,7 @@ class KubeconfigGenerator(object):
 		ruleGroup4 = {}
 		apiGroup4 = [""]
 		resourceGroup4 = ["pods/portforward"]
-		verbsGroup4 = ["get","watch","list","create","delete","update"]
+		verbsGroup4 = ["get","watch","list","create","delete","update","patch"]
 		ruleGroup4["apiGroups"] = apiGroup4
 		ruleGroup4["resources"] = resourceGroup4
 		ruleGroup4["verbs"] = verbsGroup4
@@ -139,7 +139,7 @@ class KubeconfigGenerator(object):
 		ruleGroup5 = {}
 		apiGroup5 = ["platformapi.kubeplus"]
 		resourceGroup5 = ["*"]
-		verbsGroup5 = ["get","watch","list","create","delete","update"]
+		verbsGroup5 = ["get","watch","list","create","delete","update","patch"]
 		ruleGroup5["apiGroups"] = apiGroup5
 		ruleGroup5["resources"] = resourceGroup5
 		ruleGroup5["verbs"] = verbsGroup5
@@ -148,7 +148,7 @@ class KubeconfigGenerator(object):
 		ruleGroup6 = {}
 		apiGroup6 = ["networking.k8s.io"]
 		resourceGroup6 = ["networkpolicies"]
-		verbsGroup6 = ["get","watch","list","create","delete","update"]
+		verbsGroup6 = ["get","watch","list","create","delete","update","patch"]
 		ruleGroup6["apiGroups"] = apiGroup6
 		ruleGroup6["resources"] = resourceGroup6
 		ruleGroup6["verbs"] = verbsGroup6
@@ -157,7 +157,7 @@ class KubeconfigGenerator(object):
 		ruleGroup7 = {}
 		apiGroup7 = [""]
 		resourceGroup7 = ["namespaces"]
-		verbsGroup7 = ["get","watch","list","create","delete","update"]
+		verbsGroup7 = ["get","watch","list","create","delete","update","patch"]
 		ruleGroup7["apiGroups"] = apiGroup7
 		ruleGroup7["resources"] = resourceGroup7
 		ruleGroup7["verbs"] = verbsGroup7
@@ -166,7 +166,7 @@ class KubeconfigGenerator(object):
 		ruleGroup8 = {}
 		apiGroup8 = ["autoscaling"]
 		resourceGroup8 = ["horizontalpodautoscalers"]
-		verbsGroup8 = ["get","watch","list","create","delete","update"]
+		verbsGroup8 = ["get","watch","list","create","delete","update","patch"]
 		ruleGroup8["apiGroups"] = apiGroup8
 		ruleGroup8["resources"] = resourceGroup8
 		ruleGroup8["verbs"] = verbsGroup8

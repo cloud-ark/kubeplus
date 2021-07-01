@@ -27,7 +27,7 @@ spec:
     command: ["./root/waiter.sh"]
     args:
       - {{ .Values.namespace }}
-      - mysql
+      - {{ .Values.tenantName }}-mysql
   containers:
   - image: wordpress:4.8-apache
     name: wordpress

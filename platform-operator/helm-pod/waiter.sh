@@ -5,7 +5,7 @@ dependency=$2
 
 while [ True ]
 do
-   status=`./root/kubectl get pods -n $namespace | grep $dependency | awk '{print $3}'`    
+   status=`./root/kubectl get pods -n $namespace | grep $dependency | awk '{print $3}' | head -1`    
    if [[ $status != 'Running' ]]; then
     echo $status
     sleep 30
