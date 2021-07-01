@@ -16,3 +16,4 @@ kubectl delete configmaps kubeplus-saas-consumer-kubeconfig kubeplus-saas-provid
 kubectl delete sa kubeplus-saas-consumer  kubeplus-saas-provider -n $KUBEPLUS_NS
 kubectl delete clusterroles kubeplus-saas-consumer kubeplus-saas-provider
 kubectl delete clusterrolebindings kubeplus-saas-consumer kubeplus-saas-provider
+echo "If you had installed KubePlus using Helm, delete the kubeplus helm release."

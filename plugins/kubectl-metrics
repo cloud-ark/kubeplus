@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 source utils.sh
 
@@ -53,7 +53,7 @@ while getopts ":k:o:h" opt; do
       fi
       outputString="--output="$output
       ;;
-    \? ) print_help;;
+    #\? ) print_help;;
     h ) print_help;;
     : )
       echo "Invalid option: $OPTARG requires an argument" 1>&2

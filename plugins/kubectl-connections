@@ -7,7 +7,7 @@ print_help () {
     echo "        kubectl connections"
     echo ""
     echo "SYNOPSIS"
-    echo "        kubectl connections <Kind> <Instance> <Namespace> [-k <Absolute path to kubeconfig>] [-o json|png|flat] [-i <Kind1:Instance1,Kind1:Instance1>] [-n <label|specproperty|envvariable|annotation>]"
+    echo "        kubectl connections <Kind> <Instance> <Namespace> [-k <Absolute path to kubeconfig>] [-o json|png|flat|html] [-i <Kind1:Instance1,Kind1:Instance1>] [-n <label|specproperty|envvariable|annotation>]"
     echo ""
     echo "DESCRIPTION"
     echo "        kubectl connections shows how the input resource is connected to other Kubernetes resources through one of the following "
@@ -31,7 +31,7 @@ check_docker() {
   docker ps 2>1 1>/dev/null
   if [[ $? == 1 ]]; then
     echo "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?."
-    echo "Docker is needed for creating png output."
+    echo "Docker is needed for creating png and html output."
     exit 0
   fi
 }
@@ -41,6 +41,43 @@ show_image() {
   pythonPath=`which python3`
   if [[ $? == 0 ]]; then
     `$pythonPath /$KUBEPLUS_HOME/plugins/imageviewer.py $filePath`
+  fi
+}
+
+gen_html() {
+  local fileName=$1
+  local filePath=$2
+  ostype=`uname -a | awk '{print $1}'`
+  if [[ $ostype == 'Darwin' ]]; then
+    base64 -i $filePath -o $fileName.txt
+  fi
+  if [[ $ostype == 'Linux' ]]; then
+    base64 -i $filePath > $fileName.txt
+  fi
+  mkdir -p ~/.kubeplus/
+  if [ -f ~/.kubeplus/$fileName.html ]; then
+    rm ~/.kubeplus/$fileName.html
+  else
+    touch ~/.kubeplus/$fileName.html
+  fi
+  echo "<html>" >> ~/.kubeplus/$fileName.html
+  echo "<head></head>" >> ~/.kubeplus/$fileName.html
+  echo "<body>" >> ~/.kubeplus/$fileName.html
+  fcontents=`cat $fileName.txt`
+  echo "<img src=\"data:image/png;base64,$fcontents\">" >> ~/.kubeplus/$fileName.html
+
+  echo "</body>" >> ~/.kubeplus/$fileName.html
+  echo "</html>" >> ~/.kubeplus/$fileName.html
+
+  # Check for EC2
+  # Reference: https://serverfault.com/questions/462903/how-to-know-if-a-machine-is-an-ec2-instance
+  if [ -f /sys/hypervisor/uuid ]; then
+    if [ `head -c 3 /sys/hypervisor/uuid` == "ec2" ]; then
+      ec2ip=`curl http://checkip.amazonaws.com`
+      echo "Output available in: http://$ec2ip:9090/consoles/$fileName.html"
+    fi
+  else
+      echo "Output available in: $HOME/.kubeplus/$fileName.html"
   fi
 }
 
@@ -71,8 +108,8 @@ while getopts ":k:o:i:n:h" opt; do
       fi;;
     o )
       output=$OPTARG
-      if [[ $output != 'png' ]] && [[ $output != 'json' ]] && [[ $output != 'flat' ]]; then
-          echo "Invalid output type $output. Valid options: flat, json, png."
+      if [[ $output != 'png' ]] && [[ $output != 'json' ]] && [[ $output != 'flat' ]] && [[ $output != 'html' ]]; then
+          echo "Invalid output type $output. Valid options: flat, json, png, html."
           exit 0
       fi
       outputString="--output="$output
@@ -146,22 +183,32 @@ if [[ $resStatus =~ "Error" ]]; then
 fi
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    if [[ "$output" == "png" ]]; then
+    if [[ "$output" == "png" ]] || [[ "$output" == "html" ]]; then
       check_docker
       /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
       docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
-      echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
-      show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+      if [[ "$output" == "png" ]]; then
+        echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
+        show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+      fi
+      if [[ "$output" == "html" ]]; then
+        gen_html connections-op.json.gv $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+      fi
     else
       /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace $outputString $kubeconfig $ignorelist
     fi
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    if [[ "$output" == "png" ]]; then
+    if [[ "$output" == "png" ]] || [[ "$output" == "html" ]]; then
       check_docker
       /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
       docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
-      echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
-      show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+      if [[ "$output" == "png" ]]; then
+        echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
+        show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+      fi
+      if [[ "$output" == "html" ]]; then
+        gen_html connections-op.json.gv $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+      fi
     else
       /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o $outputString $kubeconfig $ignorelist
     fi
