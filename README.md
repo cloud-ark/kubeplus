@@ -1,11 +1,11 @@
 ## KubePlus - Kubernetes Operator to deliver Helm charts as-a-service
 
-As enterprise adoption of Kubernetes is growing, we see multiple teams collaborate on a Kubernetes cluster to realize the broader organizational goals. Typically, there is one team that is offering a service that the other team is looking to consume. It can be a platform team offering a service for an internal application (e.g.: cicd) that the product team is planning to use in their stack. Or, it can be an ISV offering a service for their special database software that their customer is looking to consume. Such teams can be thought of as providers and consumers in the context of delivering and consuming software on Kubernetes. The softwares that providers want to enable their consumers to use is typically available in the form of a Helm chart.
+As enterprise adoption of Kubernetes is growing, we see multiple teams collaborate on a Kubernetes cluster to realize the broader organizational goals. Typically, there is one team that is offering a service that the other team is looking to consume. It can be a platform team offering a service for an internal application that the product team is planning to use in their stack (e.g.: cicd). Or, it can be an ISV offering a service for their special database software that their customer is looking to consume. Such teams can be thought of as providers and consumers in the context of delivering and consuming software on Kubernetes. The softwares that providers want to enable their consumers to use is typically available in the form of a Helm chart.
 
 KubePlus is a turn-key solution that enables delivering any Helm chart as-a-service. KubePlus takes an application Helm chart and delivers it as a service by abstracting it under provider and consumer APIs. 
 
 KubePlus brings following advantages to provider teams:
-- API-based access to Helm charts on a cluster. 
+- API-based access to Helm charts on a cluster for consumers.
 - Seamless support for Namespace-based multi-tenancy where each application instance (Helm release) can be deployed in a separate namespace.
 - Monitoring and governance of application instances. 
 - Tracking cpu, memory, storage and network metrics at Helm release level. This enables providers to define consumption based tracking and chargeback models, which are essential in a service-based delivery mechanism.
@@ -25,7 +25,7 @@ At a high-level a provider is looking for:
 
 KubePlus achieves these goals as follows.
 The ```provider API``` in KubePlus is a built-in CRD (Custom Resource Definition) that enables registering application Helm charts by 
-creating new Kubernetes APIs (CRDs). These new CRD are essentially the ```consumer API``` which the application consumers use to provision / instantiate the registered Helm chart in a self-service manner. As part of the Helm chart registration step, the provider team can define policies that should be applied to every instantiation of the registered chart.
+creating new Kubernetes APIs (CRDs). These new CRD are essentially the ```consumer API``` which the application consumers use to provision / instantiate the registered Helm chart in a self-service manner. As part of the Helm chart registration step, the provider team can define policies that KubePlus applies to every instantiation of the registered chart.
 
 <p align="center">
 <img src="./docs/provider-consumer.png" width="600" height="200" class="center">
@@ -33,7 +33,7 @@ creating new Kubernetes APIs (CRDs). These new CRD are essentially the ```consum
 
 - Create: Create service for any application packaged as Helm chart.
 - Govern: Tenant level policies for isolation and resource utilization.
-- Monitor: Tenant level consumption metrics for CPU, memory, storage, network.
+- Monitor: Tenant level consumption metrics for cpu, memory, storage, network.
 - Troubleshoot: Tenant level Kubernetes resource relationship graphs. 
 
 
@@ -51,15 +51,15 @@ The KubePlus Operator runs on the cluster and consists of a custom controller, a
 
 The custom controller handles KubePlus CRDs, the primary amongst which is ```ResourceComposition```. It is used to:
 - Define new CRDs (consumer APIs) wrapping Helm charts
-- Define policies (e.g. Node selection, CPU/Memory limits, etc.) for managing resources of the service
-- Get aggregated CPU/Memory/Storage/Network metrics for the service instances (in Prometheus format)
+- Define policies (e.g. node selection, cpu/memory limits, etc.) for managing resources of the service
+- Get aggregated cpu/memory/storage/network metrics for the service instances (in Prometheus format)
 
 The mutating webook and helmer module support the custom controller in delivering the KubePlus experience.
 
 
 ### 2. KubePlus kubectl plugins
 
-KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot application instances. The primary plugin is: ```kubectl connections```. It tracks resource relationships through owner references, labels, annotations, and spec properties. These relationships enable providers to gain fine grained visibility and control over application instances.
+KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot application instances. The primary plugin is: ```kubectl connections```. It tracks resource relationships through owner references, labels, annotations, and spec properties. These relationships enable providers to gain fine grained visibility into running application instances.
 
 Details about these components are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/kubeplus-components.html).
 
@@ -68,17 +68,13 @@ Details about these components are available [here](https://cloud-ark.github.io/
 
 To understand the working of KubePlus and provider/consumer APIs further, let us see how a multi-tenant platform service can be created from WordPress Helm chart. The Helm chart defines a Wordpress Pod and a MySQL managed by a third-party MySQL Operator.
 
-<p align="center">
-<img src="./docs/wordpress-saas.png" width="650" height="250" class="center">
-</p>
-
-Here is a new platform service named WordpressService that a Wordpress ISV or an internal platform team can create through ``ResourceComposition``.
+Here is a new consumer API named WordpressService that a Wordpress ISV or an internal platform team can create through ``ResourceComposition``.
 
 <p align="center">
 <img src="./docs/wordpress-service-crd.png" width="650" height="250" class="center">
 </p>
 
-The spec properties of the WordpressService Custom Resource are the attributes exposed via the underlying Helm chart's values.yaml. Here is a YAML definition to create a WordpressService instance by a consumer. 
+The spec properties of the WordpressService Custom Resource are the attributes exposed via the WordPress Helm chart's values.yaml. Here is a YAML definition to create a WordpressService instance by consumer. 
 
 <p align="center">
 <img src="./docs/wordpress-service-tenant1.png" width="650" height="250" class="center">
