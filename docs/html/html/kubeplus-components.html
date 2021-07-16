@@ -160,6 +160,8 @@ In the future we plan to support creation of <code class="docutils literal notra
 <a class="reference internal image-reference" href="_images/mysqlservice-connections.png"><img alt="_images/mysqlservice-connections.png" class="align-center" src="_images/mysqlservice-connections.png" style="width: 800px; height: 350px;" /></a>
 <p>Check the available KubePlus kubectl plugins by running: <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">kubeplus</span> <span class="pre">commands</span></code></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$  kubectl kubeplus commands
+
+
    NAME
            kubectl kubeplus commands
 
@@ -168,6 +170,8 @@ In the future we plan to support creation of <code class="docutils literal notra
            kubectl connections
            kubectl metrics
            kubectl applogs
+           kubectl retrieve kubeconfig provider
+           kubectl retrieve kubeconfig consumer
 
    DESCRIPTION
            KubePlus provides a suite of kubectl plugins to discover, monitor and troubleshoot Kubernetes applications.
@@ -180,6 +184,10 @@ In the future we plan to support creation of <code class="docutils literal notra
            The monitoring and troubleshooting plugins <span class="o">(</span>kubectl metrics and kubectl applogs<span class="o">)</span> <span class="nb">enable</span> collecting application metrics and logs.
            - kubectl metrics collects CPU, Memory, Storage, and Network metrics <span class="k">for</span> an application. These are available <span class="k">in</span> Prometheus format.
            - kubectl applogs collects logs <span class="k">for</span> all the containers of all the Pods <span class="k">in</span> an application.
+           The kubeconfig files that are meant to be used by SaaS provider and SaaS consumers are available through:
+           - kubectl retrieve kubeconfig provider
+           - kubectl retrieve kubeconfig consumer
+           These kubeconfig files are provided with limited RBAC permissions appropriate <span class="k">for</span> the persona.
 </pre></div>
 </div>
 <p>In order to use these plugins you need to add KubePlus folder to your PATH variable.</p>
@@ -203,8 +211,9 @@ resource/specproperty-relationship
 </pre></div>
 </div>
 <p>The relationship annotations are used to declare annotation / label / spec-property based relationships that instances of this Custom Resource can have with other Resources.</p>
-<p>Above annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers.</p>
-<p>KubePlus adds these annotations to the CRD for the new API that is registered via <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code>. But the annotations are general and can be used with any Operator/CRD. Here are some examples of using these annotations on community Operators.</p>
+<p>KubePlus adds these annotations to the CRD for the new API that is registered via <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code>. The annotations are general and can be used with any Operator/CRD.
+Above annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers.
+However, it is possible for KubePlus to build the resource relationship graph even if the annotations are not specified. In such a case KubePlus will discover only owner relationships though. Here are some examples of using these annotations on community Operators.</p>
 <p><strong>Moodle Operator</strong></p>
 <p>Annotations on Moodle Custom Resource Definition (CRD) are shown below:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apiextensions.k8s.io/v1beta1</span>

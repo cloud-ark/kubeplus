@@ -165,6 +165,8 @@ Check the available KubePlus kubectl plugins by running: ``kubectl kubeplus comm
 .. code-block:: bash
 
    $  kubectl kubeplus commands
+
+
       NAME
               kubectl kubeplus commands
 
@@ -173,6 +175,8 @@ Check the available KubePlus kubectl plugins by running: ``kubectl kubeplus comm
               kubectl connections
               kubectl metrics
               kubectl applogs
+              kubectl retrieve kubeconfig provider
+              kubectl retrieve kubeconfig consumer
 
       DESCRIPTION
               KubePlus provides a suite of kubectl plugins to discover, monitor and troubleshoot Kubernetes applications.
@@ -185,6 +189,10 @@ Check the available KubePlus kubectl plugins by running: ``kubectl kubeplus comm
               The monitoring and troubleshooting plugins (kubectl metrics and kubectl applogs) enable collecting application metrics and logs.
               - kubectl metrics collects CPU, Memory, Storage, and Network metrics for an application. These are available in Prometheus format.
               - kubectl applogs collects logs for all the containers of all the Pods in an application.
+              The kubeconfig files that are meant to be used by SaaS provider and SaaS consumers are available through:
+              - kubectl retrieve kubeconfig provider
+              - kubectl retrieve kubeconfig consumer
+              These kubeconfig files are provided with limited RBAC permissions appropriate for the persona.
 
 In order to use these plugins you need to add KubePlus folder to your PATH variable.
 
@@ -215,11 +223,11 @@ The 'composition' annotation is used to define Kubernetes's built-in resources t
    resource/label-relationship
    resource/specproperty-relationship
 
-The relationship annotations are used to declare annotation / label / spec-property based relationships that instances of this Custom Resource can have with other Resources.  
+The relationship annotations are used to declare annotation / label / spec-property based relationships that instances of this Custom Resource can have with other Resources.   
 
-Above annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers. 
-
-KubePlus adds these annotations to the CRD for the new API that is registered via ``ResourceComposition``. But the annotations are general and can be used with any Operator/CRD. Here are some examples of using these annotations on community Operators.
+KubePlus adds these annotations to the CRD for the new API that is registered via ``ResourceComposition``. The annotations are general and can be used with any Operator/CRD.
+Above annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers.
+However, it is possible for KubePlus to build the resource relationship graph even if the annotations are not specified. In such a case KubePlus will discover only owner relationships though. Here are some examples of using these annotations on community Operators.
 
 **Moodle Operator**
 
