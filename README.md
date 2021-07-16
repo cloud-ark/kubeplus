@@ -38,11 +38,11 @@ KubePlus functions:
 - Troubleshoot: Tenant level Kubernetes resource relationship graphs. 
 
 
-### Example
+## Example
 
 To understand the working of KubePlus and provider/consumer APIs further, let us see how a multi-tenant platform service can be created from WordPress Helm chart. The Helm chart defines a Wordpress Pod and a MySQL managed by a third-party MySQL Operator.
 
-## Provider actions:
+### Provider actions:
 
 - Provider team creates a new consumer API (CRD) named WordpressService using ```ResourceComposition``` CRD/provider API as shown below. 
 
@@ -62,7 +62,7 @@ The spec properties of the WordpressService Custom Resource are the attributes e
 
 We have additional plugins such as ```kubectl metrics``` and ```kubectl applogs``` that use resource relationship graphs to aggregate metrics and logs for service instances.
 
-### Consumer actions
+### Consumer action
 
 The consumer uses WordpressService CRD (Consumer API) to provision an instance of WordPress stack. Here is a YAML definition to create a WordpressService instance by consumer.
 
