@@ -1,14 +1,14 @@
 ## KubePlus - Kubernetes Operator to deliver Helm charts as-a-service
 
-As enterprise adoption of Kubernetes is growing, we see multiple teams collaborate on a Kubernetes cluster to realize the broader organizational goals. Typically, there is one team that is offering a service that the other team is looking to consume. It can be a platform team offering a service for an internal application that the product team is planning to use in their stack (e.g.: cicd). Or, it can be an ISV offering a service for their special database software that their customer is looking to consume. Such teams can be thought of as providers and consumers in the context of delivering and consuming software on Kubernetes. The softwares that providers want to enable their consumers to use is typically available in the form of a Helm chart.
+As enterprise adoption of Kubernetes is growing, we see multiple teams collaborate on a Kubernetes cluster to realize the broader organizational goals. Typically, there is one team that is offering a service that the other team is looking to consume. It can be an ISV offering a service for their data & analytics software that their customer is looking to consume or it can be a platform team offering a service for an internal application that the product team is planning to use (e.g secret management, data processing etc.). Such teams can be thought of as providers and consumers in the context of delivering and consuming software on Kubernetes. The softwares that providers want to enable their consumers to use are typically available in the form of a Helm chart.
 
-KubePlus is a turn-key solution that enables delivering any Helm chart as-a-service. KubePlus takes an application Helm chart and delivers it as a service by abstracting it under provider and consumer APIs. 
+KubePlus is a turn-key solution that enables provider teams to deliver any Helm chart as-a-service. KubePlus takes an application Helm chart and delivers it as a service by abstracting it under provider and consumer APIs.
 
 KubePlus brings following advantages to provider teams:
 - API-based access to Helm charts on a cluster for consumers.
 - Seamless support for Namespace-based multi-tenancy where each application instance (Helm release) can be deployed in a separate namespace.
 - Monitoring and governance of application instances. 
-- Tracking cpu, memory, storage and network metrics at Helm release level. This enables providers to define consumption based tracking and chargeback models, which are essential in a service-based delivery mechanism.
+- Tracking consumption metrics (cpu, memory, storage and network) at Helm release / application level. (Providers can use these metrics to define consumption-based chargeback model.)
 
 
 <p align="center">
@@ -31,10 +31,44 @@ creating new Kubernetes APIs (CRDs). These new CRD are essentially the ```consum
 <img src="./docs/provider-consumer.png" width="600" height="200" class="center">
 </p>
 
+KubePlus functions:
 - Create: Create service for any application packaged as Helm chart.
 - Govern: Tenant level policies for isolation and resource utilization.
 - Monitor: Tenant level consumption metrics for cpu, memory, storage, network.
 - Troubleshoot: Tenant level Kubernetes resource relationship graphs. 
+
+
+### Example
+
+To understand the working of KubePlus and provider/consumer APIs further, let us see how a multi-tenant platform service can be created from WordPress Helm chart. The Helm chart defines a Wordpress Pod and a MySQL managed by a third-party MySQL Operator.
+
+## Provider actions:
+
+- Provider team creates a new consumer API (CRD) named WordpressService using ```ResourceComposition``` CRD/provider API as shown below. 
+
+<p align="center">
+<img src="./docs/wordpress-service-crd.png" width="650" height="250" class="center">
+</p>
+
+The spec properties of the WordpressService Custom Resource are the attributes exposed via the WordPress Helm chart's values.yaml. 
+
+- Provider team uses kubectl plugins to troubleshoot or monitor WordpressService instances. Here is an example of a plugin that shows the entire resource relationship graph of a WordpressService.
+
+```kubectl connections WordpressService wp-service-tenant1```.
+
+<p align="center">
+<img src="./docs/wordpress-service-connections.png" class="center">
+</p>
+
+We have additional plugins such as ```kubectl metrics``` and ```kubectl applogs``` that use resource relationship graphs to aggregate metrics and logs for service instances.
+
+### Consumer actions
+
+The consumer uses WordpressService CRD (Consumer API) to provision an instance of WordPress stack. Here is a YAML definition to create a WordpressService instance by consumer.
+
+<p align="center">
+<img src="./docs/wordpress-service-tenant1.png" width="650" height="250" class="center">
+</p>
 
 
 ## Components
@@ -43,7 +77,7 @@ KubePlus consists of an Operator and kubectl plugins.
 
 ### 1. KubePlus Operator
 
-The KubePlus Operator runs on the cluster and consists of a custom controller, a mutating webhook and the helmer module that handles Helm related actions.
+The KubePlus Operator runs on the cluster and consists of a custom controller, a mutating webhook and the helmer module that handles Helm related functions.
 
 <p align="center">
 <img src="./docs/crd-for-crds-2.jpg" width="700" height="300" class="center">
@@ -59,36 +93,9 @@ The mutating webook and helmer module support the custom controller in deliverin
 
 ### 2. KubePlus kubectl plugins
 
-KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot application instances. The primary plugin is: ```kubectl connections```. It tracks resource relationships through owner references, labels, annotations, and spec properties. These relationships enable providers to gain fine grained visibility into running application instances.
+KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot application instances. The primary plugin is: ```kubectl connections```. It tracks resource relationships through owner references, labels, annotations, and spec properties. These relationships enable providers to gain fine grained visibility into running application instances  through resource relationship graphs. Additional plugins offer the ability to get aggregated consumption metrics (for cpu/memory/storage/network) or logs at the application instance level. There are plugins to extract provider or consumer specific kubeconfigs as well.
 
 Details about these components are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/kubeplus-components.html).
-
-
-### Example
-
-To understand the working of KubePlus and provider/consumer APIs further, let us see how a multi-tenant platform service can be created from WordPress Helm chart. The Helm chart defines a Wordpress Pod and a MySQL managed by a third-party MySQL Operator.
-
-Here is a new consumer API named WordpressService that a Wordpress ISV or an internal platform team can create through ``ResourceComposition``.
-
-<p align="center">
-<img src="./docs/wordpress-service-crd.png" width="650" height="250" class="center">
-</p>
-
-The spec properties of the WordpressService Custom Resource are the attributes exposed via the WordPress Helm chart's values.yaml. Here is a YAML definition to create a WordpressService instance by consumer. 
-
-<p align="center">
-<img src="./docs/wordpress-service-tenant1.png" width="650" height="250" class="center">
-</p>
-
-
-Here is the resource relationship graph for WordpressService instance discovered using the ```kubectl connections``` command. 
-```kubectl connections WordpressService wp-service-tenant1```.
-
-<p align="center">
-<img src="./docs/wordpress-service-connections.png" class="center">
-</p>
-
-We have additional plugins such as ```kubectl metrics``` and ```kubectl applogs``` that use resource relationship graphs to aggregate metrics and logs for service instances.
 
 
 ## Try it
@@ -104,7 +111,7 @@ We have additional plugins such as ```kubectl metrics``` and ```kubectl applogs`
    $ kubectl kubeplus commands
 ```
 
-- Install Helm v3 and install KubePlus Operator using following command. KubePlus Operator can be installed in any Namespace.
+- Install Helm v3 and install KubePlus Operator using the following command. KubePlus Operator can be installed in any Namespace.
 
 ```
    $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
