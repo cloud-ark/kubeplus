@@ -1,0 +1,99 @@
+<html>
+<head>
+<style>
+.bodycenter {
+    margin: auto;
+    width: 60%;
+    padding: 10px;
+}
+
+.footer{
+    text-align: center;
+    border: 1px solid #73AD21;
+}
+</style>
+</head>
+<body>
+  <div> <a href="https://cloudark.io/"><img alt="" src="https://raw.githubusercontent.com/cloud-ark/kubeplus/master/docs/CloudARK-logo-transparent.png" width="117.5" height="31"></a><h2 style="text-align:center;">KubePlus Consumer UI</h2></div>
+  <hr>
+  <div class="bodycenter">
+ 
+    <form action="register_kubeconfig" method="post">
+      <label for="kubeconfig">1. Consumer Kubeconfig: {{ kubeconfig_received }}</label><br>
+      <textarea id="kubeconfig" name="kubeconfig" rows="10" cols="100">{{ kubeconfig }}</textarea>
+      <br><br>
+      <input type="submit" value="Upload">
+    </form>
+    <hr>
+    <p></p>
+    <p></p>
+    <p></p>
+    <p></p>
+
+
+    <form action="create_service_instance" method="post">
+      <label for="service_instance">2. Service YAML: {{ instance_creation_status }} </label><br>
+      <textarea id="service_instance" name="service_instance" rows="10" cols="100">{{ service_instance }}</textarea>
+      <br><br>
+      <input type="submit" value="Create service instance">
+    </form>
+    <hr>
+    <p></p>
+    <p></p>
+    <p></p>
+    <p></p>
+
+
+    <form action="get_all_service_instances" method="post">
+      3. Service:<input type="text" name="service">
+        {% if get_all_error_message != '' %}
+          <div>Error: {{ get_all_error_message }} </div>
+        {% endif %}
+        {% if table_header == 'true' %}
+        <br>
+        <table>
+        <tr><td><b>Name</b></td> <td></td>  <td><b>Namespace</b></td> <td></td>  <td><b>Status</b></td></tr>
+        {% endif %}
+        {% if no_data == 'true' %}
+        <div><p>Status: No instance found. </p></div>
+        {% endif %}
+        {% for entry in service_instance_list %}
+        <tr>
+          <div>
+            <td><div>{{ entry.name }}</div></td><td></td>
+            {% if 'namespace' in entry %}
+              <td><div>{{ entry.namespace }}</div></td><td></td>
+            {% else %}
+              <td><div>-</div></td>
+            {% endif %}
+            {% if 'running' in entry %}
+              <td><div>{{ entry.running }}</div></td>
+            {% else %}
+              <td><div>-</div></td>
+            {% endif %}
+          </div>
+        </tr>
+        {% endfor %}
+        {% if table_header == 'true' %}
+        </table>
+        {% endif %}
+      <input type="submit" value="Get all service instances">
+    </form>
+    <hr>
+
+    <form action="get_instance_status" method="post">
+      4. <br>
+      Service:<input type="text" name="service"><br>
+      Instance:<input type="text" name="instance"><br>
+      Namespace:<input type="text" name="namespace"><br>
+      <input type="submit" value="Get service instance status">
+    </form>
+    {% if instance_status != '' %}
+      {% for entry in instance_status %}
+        <div><p>{{ entry }} </p></div>
+      {% endfor %}
+    {% endif %}
+  </div>
+  <hr>
+</body>
+</html>
