@@ -57,6 +57,16 @@
 .form-container {
 }
 
+.loader {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
+}
+
   </style>
 
   <script src=../static/scripts/kubeplus.js></script>
@@ -142,6 +152,7 @@
                 <td id="total_nw_egress" class="centralize">{{ total_nw_egress }} <br> (bytes) </td>
             </tr>
             </table>
+            <div id="connections_op" style="display:none"></div>
           </div>
 
         </div>
