@@ -936,9 +936,11 @@ class CRMetrics(CRBase):
 			op['pods'] = str(num_of_pods)
 			op['containers'] = str(num_of_containers)
 			op['nodes'] = str(num_of_hosts)
-			op['cpu'] = str(cpu) + "m"
-			op['memory'] = str(memory) + "Mi"
-			op['storage'] = str(total_storage) + "Gi"
+			op['cpu'] = str(cpu) + " m"
+			op['memory'] = str(memory) + " Mi"
+			op['storage'] = str(total_storage) + " Gi"
+			op['networkReceiveBytes'] = str(networkReceiveBytesTotal) + " bytes"
+			op['networkTransmitBytes'] = str(networkTransmitBytesTotal) + " bytes"
 			json_op = json.dumps(op)
 			print(json_op)
 		elif opformat == 'prometheus':
