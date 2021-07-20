@@ -19,13 +19,65 @@ def run_command(cmd):
 	err = err.decode('utf-8')
 	return out, err
 
+def get_metrics(service, res, namespace):
+	cpu = 0
+	memory = 0
+	storage = 0
+	nwTransmitBytes = 0
+	nwReceiveBytes = 0
+	cmd = 'kubectl metrics ' + service + ' ' + res + ' ' + namespace + ' -o json'
+	out, err = run_command(cmd)
+	if out != '':
+		json_output = ''
+		try:
+			json_output = json.loads(out)
+		except Exception as e:
+			print(e)
+		print(json_output)
+
+		#{"networkReceiveBytes": "185065618.0 bytes", "accountidentity": "", "storage": "0 Gi", "networkTransmitBytes": "7157799.0 bytes", "subresources": "-", "memory": "75.5078125 Mi", "nodes": "1", "pods": "1", "cpu": "48.820286 m", "containers": "6"}
+		cpu = json_output["cpu"].split(" ")[0].strip()
+		memory = json_output["memory"].split(" ")[0].strip()
+		storage = json_output["storage"].split(" ")[0].strip()
+		nwTransmitBytes = json_output["networkTransmitBytes"].split(" ")[0].strip()
+		nwReceiveBytes = json_output["networkReceiveBytes"].split(" ")[0].strip()
+	return cpu, memory, storage, nwTransmitBytes, nwReceiveBytes
+
+def get_connections_op(resource, instance, namespace):
+	cmd = 'kubectl connections ' + resource + ' ' + instance + ' ' + namespace + ' -o html -i Namespace:default,ServiceAccount:default -n label,specproperty,envvariable,annotation'
+	out, err = run_command(cmd)
+	data = ''
+	if out != '' and err == '':
+		if 'Output available in:' in out:
+			parts = out.split(':')
+			filepath = parts[1].strip()
+			fp = open(filepath, "r")
+			data = fp.read()
+			fp.close()
+	return data
+
 def get_total_resources(service):
-	num_of_instances = 2
-	total_cpu = 31.8
-	total_memory = 4
-	total_storage = 12
-	total_nw_ingress = 999444
-	total_nw_egress = 999888
+	instance_dict = get_all_resources(service)
+	instance_list = instance_dict[service]
+	num_of_instances = len(instance_list)
+	total_cpu = 0
+	total_memory = 0
+	total_storage = 0
+	total_nw_ingress = 0
+	total_nw_egress = 0
+
+	for instance in instance_list:
+		res = instance['name']
+		namespace = instance['namespace']
+
+		cpu, memory, storage, nwTransmitBytes, nwReceiveBytes = get_metrics(service, res, namespace)
+
+		total_cpu = total_cpu + float(cpu)
+		total_memory = total_memory + float(memory)
+		total_storage = total_storage + float(storage)
+		total_nw_ingress = total_nw_ingress + float(nwReceiveBytes)
+		total_nw_egress = total_nw_egress + float(nwTransmitBytes)
+
 	return num_of_instances, total_cpu, total_memory, total_storage, total_nw_ingress, total_nw_egress
 
 def process_manpage_line(line):
@@ -101,7 +153,12 @@ def get_all_resources(resource):
 def get_field_names(service):
 	print(service)
 	kind, apiVersion, fields = get_input_fields(service)
-	fields.insert(0,"name") # the name of the resource needs to be input as well.
+
+	# the name of the resource and namespace needs to be input as well.
+	if 'namespace' not in fields:
+		fields.insert(0,"namespace")
+	if 'name' not in fields:
+		fields.insert(0,"name") 
 	fields_dict = {}
 	fields_dict["fields"] = fields
 	return fields_dict
@@ -147,8 +204,12 @@ def create_instance():
 	res["kind"] = serviceName
 	metadata = {}
 	resName = request.form["name"]
+	namespace = "default"
 	metadata["name"] = resName
 	res["metadata"] = metadata
+	if 'namespace' in fieldMap:
+		namespace = fieldMap["namespace"]
+	metadata["namespace"] = namespace
 	spec = {}
 	for k,v in fieldMap.items():
 		spec[k] = v
@@ -220,6 +281,26 @@ def get_all_service_instances():
 		return render_template('consumeruiack.html',get_all_error_message='',table_header='true',service_instance_list=service_instance_out_list)
 	else:
 		return render_template('consumeruiack.html',get_all_error_message='',table_header='false',no_data='true')
+
+@app.route("/service/instance_data", methods=['GET'])
+def get_instance_data():
+	resource = request.args.get('resource')
+	instance = request.args.get('instance')
+	namespace = request.args.get('namespace')
+
+	cpu, memory, storage, nwTransmitBytes, nwReceiveBytes = get_metrics(resource, instance, namespace)
+
+	instance_data = {}
+	instance_data['cpu'] = cpu
+	instance_data['memory'] = memory
+	instance_data['storage'] = storage
+	instance_data['nw_egress'] = nwTransmitBytes
+	instance_data['nw_ingress'] = nwReceiveBytes
+
+	connections_op = get_connections_op(resource, instance, namespace)
+	instance_data['connections_op'] = connections_op
+
+	return instance_data
 
 @app.route("/get_instance_status", methods=['POST'])
 def get_instance_status():

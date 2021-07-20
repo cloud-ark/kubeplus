@@ -6,6 +6,17 @@ function get_all_resources(resource){
   //alert("Hello World");
   displayString = "1. abc-org-tenant1 <br> 2. abc-org-tenant2"
 
+  num_of_instances = document.getElementById("num_of_instances");
+  num_of_instances.innerHTML = "Calculating...";
+  num_of_instances.setAttribute("style", "display:block;");
+
+  cpu = "-";
+  memory = "-";
+  storage = "-";
+  nw_ingress = "-";
+  nw_egress = "-";
+  set_metrics(cpu, memory, storage, nw_ingress, nw_egress);
+
   var xhttp;
   xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
@@ -76,44 +87,79 @@ function render_resource_api_doc(xmlhttp, resource)
 
 function get_resource(res_string) {
 
-  elementsToHide = ["input-form", "man-page", "num_of_instances","create-status"];
+  elementsToHide = ["input-form", "man-page","create-status"];
   hideElements(elementsToHide);
 
   document.getElementById("metrics-details").style.display = "block";
   document.getElementById("metrics-details").setAttribute("class","table table-condensed table-striped table-bordered");
   document.getElementById("metrics-details").setAttribute("width","100%");
 
+  cpu = "-";
+  memory = "-";
+  storage = "-";
+  nw_ingress = "-";
+  nw_egress = "-";
+  set_metrics(cpu, memory, storage, nw_ingress, nw_egress);
+
+  num_of_instances = document.getElementById("num_of_instances");
+  num_of_instances.innerHTML = "Calculating...";
+  num_of_instances.setAttribute("style", "display:block;");
+
   myArr = res_string.split(",")
 
   console.log("Name:" + myArr[0]);
-  resName = myArr[0];
+  instance = myArr[0];
   namespace = myArr[1];
-  service = myArr[2];
+  resource = myArr[2];
   element = document.getElementById("consumption_string_id");
-  element.innerHTML = "Consumption metrics for " + resName;
+  element.innerHTML = "Consumption metrics for " + instance;
   element.style.display = "block";
 
-  // TODO: Make Ajax call to get metrics for <resName, namespace, service>
-  cpu = 23;
-  memory = 50;
-  storage = 100;
-  nw_ingress = 888888;
-  nw_egress = 444444;
+  // TODO: Make Ajax call to get metrics for <instance, namespace, resource>
 
-  element = document.getElementById("total_cpu");
-  element.innerHTML = cpu + "<br> (millicores)";
+  url = "/service/instance_data?resource=" + resource + "&instance=" + instance + "&namespace=" + namespace;
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  xhr.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+        fieldData = this.responseText;
+        console.log(fieldData);
+        console.log("-------");
+        data1 = JSON.parse(fieldData)
 
-  element = document.getElementById("total_memory");
-  element.innerHTML = memory + "<br> (mebibytes)" ;
+        cpu = data1['cpu'];
+        memory = data1['memory'];
+        storage = data1['storage'];
+        nw_ingress = data1['nw_ingress'];
+        nw_egress = data1['nw_egress'];
+        set_metrics(cpu, memory, storage, nw_ingress, nw_egress);
 
-  element = document.getElementById("total_storage");
-  element.innerHTML = storage + "<br> (Giga bytes)" ;
+        connections_op = data1['connections_op'];
+        document.getElementById("connections_op").innerHTML = connections_op;
+        document.getElementById("connections_op").style.display = "block";
 
-  element = document.getElementById("total_nw_ingress");
-  element.innerHTML = nw_ingress + "<br> (bytes)" ;
+        elementsToHide = ["num_of_instances"];
+        hideElements(elementsToHide);
+      }
+    };
+  xhr.send();
+}
 
-  element = document.getElementById("total_nw_egress");
-  element.innerHTML = nw_egress + "<br> (bytes)" ;
+function set_metrics(cpu, memory, storage, ingress, egress) {
+  cpuelement = document.getElementById("total_cpu");
+  cpuelement.innerHTML = cpu + "<br> (millicores)";
+
+  memelement = document.getElementById("total_memory");
+  memelement.innerHTML = memory + "<br> (mebibytes)" ;
+
+  storageelement = document.getElementById("total_storage");
+  storageelement.innerHTML = storage + "<br> (Giga bytes)" ;
+
+  ingresselement = document.getElementById("total_nw_ingress");
+  ingresselement.innerHTML = nw_ingress + "<br> (bytes)" ;
+
+  egresselement = document.getElementById("total_nw_egress");
+  egresselement.innerHTML = nw_egress + "<br> (bytes)" ;
 }
 
 function create_resource(resource) {
