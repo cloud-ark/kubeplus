@@ -798,7 +798,6 @@ func registerManPage(kind, platformworkflow, namespace string) string {
 
 	if err1 != nil {
 		fmt.Printf("Error:%s\n", err1.Error())
-		return ""
 	} else {
 		fmt.Println("Usage Config Map created:")
 	}
