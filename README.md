@@ -115,7 +115,7 @@ Details about these components are available [here](https://cloud-ark.github.io/
 
 ```
    $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
-   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-0.2.2.tgz?raw=true" -n $KUBEPLUS_NS
+   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-0.2.3.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
 - Try following examples:

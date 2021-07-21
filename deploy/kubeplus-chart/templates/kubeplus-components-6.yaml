@@ -42,6 +42,19 @@ spec:
     port: 90
     targetPort: 8090
 ---
+kind: Service
+apiVersion: v1
+metadata:
+  name: kubeplus-consumerui
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: kubeplus
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -76,7 +89,7 @@ spec:
       initContainers:
       - name: webhook-cert-setup
         # This is a minimal kubectl image based on Alpine Linux that signs certificates using the k8s extension api server
-        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.10
+        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.11
         imagePullPolicy: Always
         env:
           - name: KUBEPLUS_NAMESPACE
@@ -93,7 +106,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.11
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.12
         imagePullPolicy: Always
         args:
           - -tlsCertFile=/etc/webhook/certs/cert.pem
@@ -112,6 +125,10 @@ spec:
         image: gcr.io/cloudark-kubeplus/platform-operator:0.0.10
         imagePullPolicy: Always
         command: [ "/platform-operator"]
+      - name: consumerui
+        image: gcr.io/cloudark-kubeplus/consumerui:0.0.1
+        imagePullPolicy: Always
+        command: [ "python3", "/root/consumerui.py"]
       - name: helmer
         image: gcr.io/cloudark-kubeplus/helm-pod:0.1.0
         imagePullPolicy: Always
