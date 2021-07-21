@@ -198,19 +198,30 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
       /$KUBEPLUS_HOME/plugins/kubediscovery-macos connections $canonicalKind $instance $namespace $outputString $kubeconfig $ignorelist
     fi
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    if [[ "$output" == "png" ]] || [[ "$output" == "html" ]]; then
-      check_docker
-      /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
-      docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
-      if [[ "$output" == "png" ]]; then
-        echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
-        show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
-      fi
-      if [[ "$output" == "html" ]]; then
-        gen_html connections-op.json.gv $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
-      fi
+    # check if running in consumerui container
+    consumerui_container=`hostname | grep kubeplus-deployment`
+    if [[ $consumerui_container =~ "kubeplus-deployment" ]]; then
+        echo "Running inside consumerui."
+        /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
+        # Invoke the grapher
+        python3  /root/grapher.py "connections-op.json" /plugins/ $hidedetails
+        # Generate html
+        gen_html connections-op.json.gv $KUBEPLUS_HOME/root/connections-op.json.gv.png
     else
-      /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o $outputString $kubeconfig $ignorelist
+      if [[ "$output" == "png" ]] || [[ "$output" == "html" ]]; then
+        check_docker
+        /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
+        docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
+        if [[ "$output" == "png" ]]; then
+          echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
+          show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+        fi
+        if [[ "$output" == "html" ]]; then
+          gen_html connections-op.json.gv $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+        fi
+      else
+        /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o $outputString $kubeconfig $ignorelist
+      fi
     fi
 else
     echo "$OSTYPE not supported."
