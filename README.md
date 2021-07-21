@@ -53,6 +53,7 @@ To understand the working of KubePlus and provider/consumer APIs further, let us
 The spec properties of the WordpressService Custom Resource are the attributes exposed via the WordPress Helm chart's values.yaml. 
 
 - Provider team uses kubeplus kubectl plugins to troubleshoot or monitor WordpressService instances. Here is an example of using ```kubectl metrics``` plugin that shows cpu, memory, storage, network ingress/egress for a Wordpress application.
+The metrics output is also available in promtheus format.
 
 <p align="center">
 <img src="./docs/wordpress-metrics-pretty.png" class="center">
@@ -63,13 +64,12 @@ We have additional plugins such as ```kubectl connections``` and ```kubectl appl
 ### Consumer action
 
 The consumer uses WordpressService CRD (Consumer API) to provision an instance of WordPress stack.
-Here is a YAML definition to create a WordpressService instance by consumer.
-
-<p align="center">
-<img src="./docs/wordpress-service-tenant1.png" class="center">
-</p>
-
-KubePlus includes a consumer UI through which the service instances can be created.
+KubePlus includes a web portal through which the service instances can be created.
+The portal runs on the cluster and is accessible through local proxy. We provide a script 
+to connect to this portal (deploy/open-consumer-ui.sh).
+The portal is specific to a service. It shows consumer API documentation, a form to provide
+inputs for creating a service instance, monitoring data for the created instance, and 
+its resource relationship graph.
 
 <p align="center">
 <img src="./docs/consumerui-apidoc1.png"  class="center">
