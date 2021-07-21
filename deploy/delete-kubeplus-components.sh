@@ -1,6 +1,9 @@
 #!/bin/bash
 
 KUBEPLUS_NS=`kubectl get deployments -A | grep kubeplus-deployment | awk '{print $1}'`
+if [[ $KUBEPLUS_NS == '' ]]; then
+   KUBEPLUS_NS=default
+fi
 kubectl delete deployments kubeplus-deployment -n $KUBEPLUS_NS
 kubectl delete mutatingwebhookconfigurations platform-as-code.crd-binding
 kubectl delete sa kubeplus -n $KUBEPLUS_NS
