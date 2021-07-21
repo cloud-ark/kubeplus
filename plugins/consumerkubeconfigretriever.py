@@ -53,6 +53,14 @@ class ConsumerKubeconfigRetriever(object):
 		ruleGroup2["resources"] = resourceGroup2
 		ruleGroup2["verbs"] = verbsGroup2
 
+		ruleGroup3 = {}
+		apiGroup3 = [""]
+		resourceGroup3 = ["*"]
+		verbsGroup3 = ["get","watch","list"]
+		ruleGroup3["apiGroups"] = apiGroup3
+		ruleGroup3["resources"] = resourceGroup3
+		ruleGroup3["verbs"] = verbsGroup3
+
 		ruleList = []
 		ruleList.append(ruleGroup1)
 		ruleList.append(ruleGroup2)
@@ -65,7 +73,7 @@ class ConsumerKubeconfigRetriever(object):
 		fp.write(role_json)
 		fp.close()
 
-		cmd = " kubectl create -f ./kubeplus-consumer-role.yaml --kubeconfig=" + providerkubeconfig
+		cmd = " kubectl apply -f ./kubeplus-consumer-role.yaml --kubeconfig=" + providerkubeconfig
 
 		cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
 		#print(cmdOut)
@@ -98,7 +106,7 @@ class ConsumerKubeconfigRetriever(object):
 		fp.write(rolebinding_json)
 		fp.close()
 
-		cmd = " kubectl create -f ./kubeplus-consumer-rolebinding.yaml --kubeconfig=" + providerkubeconfig
+		cmd = " kubectl apply -f ./kubeplus-consumer-rolebinding.yaml --kubeconfig=" + providerkubeconfig
 		cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]	
 
 

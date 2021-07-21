@@ -91,6 +91,65 @@ class KubeconfigGenerator(object):
 		cmd = " kubectl create -f " + filePath
 		self.run_command(cmd)
 
+	def _apply_consumer_rbac(self, sa, namespace):
+		role = {}
+		role["apiVersion"] = "rbac.authorization.k8s.io/v1"
+		role["kind"] = "ClusterRole"
+		metadata = {}
+		metadata["name"] = sa
+		role["metadata"] = metadata
+
+		# Read all resources
+		ruleGroup1 = {}
+		apiGroup1 = ["*",""]
+		resourceGroup1 = ["*"]
+		verbsGroup1 = ["get","watch","list"]
+		ruleGroup1["apiGroups"] = apiGroup1
+		ruleGroup1["resources"] = resourceGroup1
+		ruleGroup1["verbs"] = verbsGroup1
+
+		# Impersonate users, groups, serviceaccounts
+		ruleGroup9 = {}
+		apiGroup9 = [""]
+		resourceGroup9 = ["users","groups","serviceaccounts"]
+		verbsGroup9 = ["impersonate"]
+		ruleGroup9["apiGroups"] = apiGroup9
+		ruleGroup9["resources"] = resourceGroup9
+		ruleGroup9["verbs"] = verbsGroup9
+
+		ruleList = []
+		ruleList.append(ruleGroup1)
+		ruleList.append(ruleGroup9)
+		role["rules"] = ruleList
+
+		roleName = sa + "-role-impersonate.yaml"
+		self._create_role_rolebinding(role, roleName)
+
+		roleBinding = {}
+		roleBinding["apiVersion"] = "rbac.authorization.k8s.io/v1"
+		roleBinding["kind"] = "ClusterRoleBinding"
+		metadata = {}
+		metadata["name"] = sa
+		roleBinding["metadata"] = metadata
+
+		subject = {}
+		subject["kind"] = "ServiceAccount"
+		subject["name"] = sa
+		subject["apiGroup"] = ""
+		subject["namespace"] = namespace
+		subjectList = []
+		subjectList.append(subject)
+		roleBinding["subjects"] = subjectList
+
+		roleRef = {}
+		roleRef["kind"] = "ClusterRole"
+		roleRef["name"] = sa
+		roleRef["apiGroup"] = "rbac.authorization.k8s.io"
+		roleBinding["roleRef"] = roleRef
+
+		roleBindingName = sa + "-rolebinding-impersonate.yaml"
+		self._create_role_rolebinding(roleBinding, roleBindingName)
+
 	def _apply_provider_rbac(self, sa, namespace):
 		role = {}
 		role["apiVersion"] = "rbac.authorization.k8s.io/v1"
@@ -171,6 +230,15 @@ class KubeconfigGenerator(object):
 		ruleGroup8["resources"] = resourceGroup8
 		ruleGroup8["verbs"] = verbsGroup8
 
+		# Impersonate users, groups, serviceaccounts
+		ruleGroup9 = {}
+		apiGroup9 = [""]
+		resourceGroup9 = ["users","groups","serviceaccounts"]
+		verbsGroup9 = ["impersonate"]
+		ruleGroup9["apiGroups"] = apiGroup9
+		ruleGroup9["resources"] = resourceGroup9
+		ruleGroup9["verbs"] = verbsGroup9
+
 		ruleList = []
 		ruleList.append(ruleGroup1)
 		ruleList.append(ruleGroup2)
@@ -180,6 +248,7 @@ class KubeconfigGenerator(object):
 		ruleList.append(ruleGroup6)
 		ruleList.append(ruleGroup7)
 		ruleList.append(ruleGroup8)
+		ruleList.append(ruleGroup9)
 		role["rules"] = ruleList
 
 		roleName = sa + "-role.yaml"
@@ -276,4 +345,4 @@ if __name__ == '__main__':
 	# 2. Generate Consumer kubeconfig
 	sa = 'kubeplus-saas-consumer'
 	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
-#	kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')
+	kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')

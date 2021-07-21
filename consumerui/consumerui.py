@@ -2,6 +2,7 @@ import os
 import time
 import subprocess
 import json
+import re
 
 from flask import request
 from flask import Flask, render_template
@@ -377,6 +378,40 @@ def service_index(service):
 							resource_list=resource_list,
 							num_of_instances_string=num_of_instances_string)
 
+def get_kubeplus_namespace():
+	cmd = " kubectl get deployments -A "
+	#print(cmd)
+	out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+	#print(out)
+	out = out.decode('utf-8')
+	kubeplusNamespace = ''
+	for line in out.split("\n"):
+		line1 = re.sub(' +', ' ', line)
+		parts = line1.split()
+		if parts[1] == 'kubeplus-deployment':
+			kubeplusNamespace = parts[0]
+			break
+	return kubeplusNamespace
+
+def download_consumer_kubeconfig():
+	kubeplusNS = get_kubeplus_namespace()
+	print("KubePlus NS:" + kubeplusNS)
+	cmd = "kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n " + kubeplusNS + " -o jsonpath=\"{.data.kubeplus-saas-consumer\\.json}\""
+	out, err = run_command(cmd)
+	if err == '':
+		consumer_kubeconfig = out.strip()
+		print("Consumer kubeconfig")
+		print(consumer_kubeconfig)
+		kubeconfig_path = "/root/.kube/"
+		if os.path.exists(kubeconfig_path):
+			fp = open(kubeconfig_path + "/config","w")
+			fp.write(consumer_kubeconfig)
+			fp.close()
+
+
 if __name__ == "__main__":
     app.debug = True
+
+    download_consumer_kubeconfig()
+
     app.run(host='0.0.0.0')
