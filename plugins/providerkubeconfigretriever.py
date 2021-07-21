@@ -12,7 +12,12 @@ class ProviderKubeconfigRetriever(object):
 		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
 		#print(out)
 		out = out.decode('utf-8')
-		json_output = json.loads(out)
+		json_output = {}
+		try:
+			json_output = json.loads(out)
+		except Exception as e:
+			print(e)
+			print("KubePlus might not be ready yet. Try again once the KubePlus Pod is running.")
 		if serverURL != '-1':
 			parts = serverURL.split("=")
 			sURL = parts[1].strip()
