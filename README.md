@@ -55,7 +55,7 @@ The spec properties of the WordpressService Custom Resource are the attributes e
 - Provider team uses kubeplus kubectl plugins to troubleshoot or monitor WordpressService instances. Here is an example of using ```kubectl metrics``` plugin that shows cpu, memory, storage, network ingress/egress for a Wordpress application.
 
 <p align="center">
-<img src="./docs/wordpress-service-connections.png" class="center">
+<img src="./docs/wordpress-metrics-pretty.png" width="650" height="250" class="center">
 </p>
 
 We have additional plugins such as ```kubectl connections``` and ```kubectl applogs``` that are useful for tracking resource relationship graphs and obtaining logs for service instances.
@@ -72,15 +72,15 @@ Here is a YAML definition to create a WordpressService instance by consumer.
 KubePlus includes a consumer UI through which the service instances can be created.
 
 <p align="center">
-<img src="./docs/consumerui-apidoc.png" class="center">
+<img src="./docs/consumerui-apidoc.png" width="650" height="250" class="center">
 </p>
 
 <p align="center">
-<img src="./docs/consumerui-form.png" class="center">
+<img src="./docs/consumerui-form.png" width="650" height="250" class="center">
 </p>
 
 <p align="center">
-<img src="./docs/consumerui-instance-details.png" class="center">
+<img src="./docs/consumerui-instance-details.png" width="650" height="250" class="center">
 </p>
 
 
