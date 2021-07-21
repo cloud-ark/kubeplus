@@ -17,7 +17,7 @@ Once the cluster is ready, install KubePlus
 - cd ../
 
 Check KubePlus status:
-- kubectl get pods (verify if kubeplus Pod shows as 4/4 Running)
+- kubectl get pods (verify if kubeplus Pod shows as 5/5 Running)
 
 Once KubePlus is running open a proxy to connect to KubePlus
 - Open a new terminal and run:
@@ -34,14 +34,20 @@ Install KubePlus kubectl plugins:
 
 Create new API:
 ---------------
+Extrace provider kubeconfig:
+- kubectl retrieve kubeconfig provider default > gke-provider.json
+
 Create WordPressStack Custom Resource Definition (CRD)
 - cd examples/multitenancy/wordpress-mysqlcluster-stack
 - Check wordpress-service-composition.yaml
   - If required modify the Pod policies in the podconfig section (cpu/memory requests and limits) 
-  - kubectl create -f wordpress-service-composition.yaml
+  - kubectl create -f wordpress-service-composition.yaml --kubeconfig=gke-provider.json
 - Verify WordpressStack CRD registered
   - kubectl get crds | grep 'wordpress'
   - Wait till the CRD is not created (CRD name to look for: wordpressservices.platformapi.kubeplus)
+
+Grant permission on WordpressService to consumer
+- kubectl grantpermission consumer wordpressservices gke-provider.json default
 
 
 Create Tenant1 Wordpress stack: 
@@ -116,6 +122,23 @@ Visualize Topology:
 - kubectl connections WordpressService wp-service-tenant2 wp-stack-ns2 -o png -i ServiceAccount:default,Namespace:default
 
   - Check the generated png file. For reference check tenant2.png
+
+
+Create Tenant3 stack (use Consumer UI):
+----------------------------------------
+Open connection to Consumer UI
+- cd deploy
+- ./open-consumer-ui.sh
+
+Open Consumer UI:
+- Open url: http://localhost:5000/service/WordpressService
+
+Check API Doc
+
+Create Instance
+- fill the form details and submit
+- Once the instance is created you will see the metrics and relationship graph for that instance
+
 
 
 Cleanup

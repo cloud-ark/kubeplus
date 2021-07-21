@@ -52,22 +52,35 @@ To understand the working of KubePlus and provider/consumer APIs further, let us
 
 The spec properties of the WordpressService Custom Resource are the attributes exposed via the WordPress Helm chart's values.yaml. 
 
-- Provider team uses kubectl plugins to troubleshoot or monitor WordpressService instances. Here is an example of a plugin that shows the entire resource relationship graph of a WordpressService.
-
-```kubectl connections WordpressService wp-service-tenant1```.
+- Provider team uses kubeplus kubectl plugins to troubleshoot or monitor WordpressService instances. Here is an example of using ```kubectl metrics``` plugin that shows cpu, memory, storage, network ingress/egress for a Wordpress application.
 
 <p align="center">
 <img src="./docs/wordpress-service-connections.png" class="center">
 </p>
 
-We have additional plugins such as ```kubectl metrics``` and ```kubectl applogs``` that use resource relationship graphs to aggregate metrics and logs for service instances.
+We have additional plugins such as ```kubectl connections``` and ```kubectl applogs``` that are useful for tracking resource relationship graphs and obtaining logs for service instances.
 
 ### Consumer action
 
-The consumer uses WordpressService CRD (Consumer API) to provision an instance of WordPress stack. Here is a YAML definition to create a WordpressService instance by consumer.
+The consumer uses WordpressService CRD (Consumer API) to provision an instance of WordPress stack.
+Here is a YAML definition to create a WordpressService instance by consumer.
 
 <p align="center">
 <img src="./docs/wordpress-service-tenant1.png" width="650" height="250" class="center">
+</p>
+
+KubePlus includes a consumer UI through which the service instances can be created.
+
+<p align="center">
+<img src="./docs/consumerui-apidoc.png" class="center">
+</p>
+
+<p align="center">
+<img src="./docs/consumerui-form.png" class="center">
+</p>
+
+<p align="center">
+<img src="./docs/consumerui-instance-details.png" class="center">
 </p>
 
 
