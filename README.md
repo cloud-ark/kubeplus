@@ -1,11 +1,11 @@
 ## KubePlus - Kubernetes Operator to deliver Helm charts as-a-service
 
-As enterprise adoption of Kubernetes is growing, we see multiple teams collaborate on a Kubernetes cluster to realize the broader organizational goals. Typically, there is one team that is offering a service that the other team is looking to consume. It can be an ISV offering a service for their data & analytics software that their customer is looking to consume or it can be a platform team offering a service for an internal application that the product team is planning to use (e.g secret management, data processing etc.). Such teams can be thought of as providers and consumers in the context of delivering and consuming software on Kubernetes. The softwares that providers want to enable their consumers to use are typically available in the form of a Helm chart.
+As enterprise adoption of Kubernetes is growing, we see multiple teams collaborate on a Kubernetes cluster to realize the broader organizational goals. Typically, there is one team that is offering a service that the other team is looking to consume. It can be an ISV offering a service for their data & analytics software that their customer is looking to consume or it can be a platform team offering a service for an internal application that the product team is planning to use (e.g secret management, data processing etc.). Such teams can be thought of as providers and consumers in the context of delivering and consuming software on Kubernetes. The software for which providers are delivering a service is generally packaged as a Helm chart.
 
 KubePlus is a turn-key solution that enables provider teams to deliver any Helm chart as-a-service. KubePlus takes an application Helm chart and delivers it as a service by abstracting it under provider and consumer APIs.
 
 KubePlus brings following advantages to provider teams:
-- API-based access to Helm charts on a cluster for consumers.
+- Provider and Consumer APIs for role based access
 - Seamless support for Namespace-based multi-tenancy where each application instance (Helm release) can be deployed in a separate namespace.
 - Monitoring and governance of application instances. 
 - Tracking consumption metrics (cpu, memory, storage and network) at Helm release / application level. (Providers can use these metrics to define consumption-based chargeback model.)
@@ -19,7 +19,7 @@ KubePlus brings following advantages to provider teams:
 ## Overview
 
 At a high-level a provider is looking for:
-- Ability to create consumer APIs through which consumers can provision the software packaged as Helm charts. The API should expose only minimum set of parameters that they want consumers to control when provisioning the software instance.
+- A consumer API for provisioning of the software with the ability to expose only a set of parameters that consumers need to control. 
 - Ability to troubleshoot and monitor a deployed instance of the software.
 - Ability to track consumption of the software by different consumers.
 
@@ -53,7 +53,7 @@ To understand the working of KubePlus and provider/consumer APIs further, let us
 The spec properties of the WordpressService Custom Resource are the attributes exposed via the WordPress Helm chart's values.yaml. 
 
 - Provider team uses kubeplus kubectl plugins to troubleshoot or monitor WordpressService instances. Here is an example of using ```kubectl metrics``` plugin that shows cpu, memory, storage, network ingress/egress for a Wordpress application.
-The metrics output is also available in promtheus format.
+The metrics output is also available in prometheus format.
 
 <p align="center">
 <img src="./docs/wordpress-metrics-pretty.png" class="center">
@@ -61,15 +61,13 @@ The metrics output is also available in promtheus format.
 
 We have additional plugins such as ```kubectl connections``` and ```kubectl applogs``` that are useful for tracking resource relationship graphs and obtaining logs for service instances.
 
+Our [KubePlus SaaS Manager product](https://cloudark.io/kubeplus-saas-manager) uses these provider & consumer APIs and offers enterprise ready control center for providers to manage their SaaS across multiple Kubernetes clusters.
+
 ### Consumer action
 
 The consumer uses WordpressService CRD (Consumer API) to provision an instance of WordPress stack.
 KubePlus includes a web portal through which the service instances can be created.
-The portal runs on the cluster and is accessible through local proxy. We provide a script 
-to connect to this portal (deploy/open-consumer-ui.sh).
-The portal is specific to a service. It shows consumer API documentation, a form to provide
-inputs for creating a service instance, monitoring data for the created instance, and 
-its resource relationship graph.
+The portal runs on the cluster and is accessible through local proxy.
 
 <p align="center">
 <img src="./docs/consumerui-apidoc1.png"  class="center">
