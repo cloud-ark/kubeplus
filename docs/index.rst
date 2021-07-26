@@ -43,6 +43,7 @@ Next section provides details about KubePlus components.
    operators
    community
    comparison
+   compile-components
 
 ..   roadmap
 ..   examples
