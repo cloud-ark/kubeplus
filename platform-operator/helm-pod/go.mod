@@ -12,7 +12,7 @@ require (
 )
 
 replace (
-	github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20201027010238-8e4740bdc7ad => /Users/devdatta/go/src/github.com/cloud-ark/kubeplus/platform-operator
+	github.com/cloud-ark/kubeplus/platform-operator v0.0.0-20201027010238-8e4740bdc7ad => ../../platform-operator
 	k8s.io/api => k8s.io/api v0.0.0-20190620084959-7cf5895f2711
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20190620085554-14e95df34f1f
 	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20190612205821-1799e75a0719
