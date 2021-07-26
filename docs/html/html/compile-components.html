@@ -1,0 +1,133 @@
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Setting up development environment &#8212; KubePlus 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bizstyle.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Comparison" href="comparison.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="comparison.html" title="Comparison"
+             accesskey="P">previous</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">KubePlus 1.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Setting up development environment</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="setting-up-development-environment">
+<h1>Setting up development environment</h1>
+<p>Below instructions are given for setting up KubePlus development environment.
+These should work for Linux and Mac OS hosts.</p>
+<p>Install Go version 1.14.5</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget -c https://dl.google.com/go/go1.14.5.linux-amd64.tar.gz -O - <span class="p">|</span> sudo tar -xz -C /usr/local
+$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/local/go/bin
+$ ADD <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/local/go/bin to ~/.profile
+$ <span class="nb">source</span> ~/.profile
+$ go version
+</pre></div>
+</div>
+<div class="section" id="code-setup">
+<h2>Code setup</h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ mkdir -p go/src/github.com/cloud-ark
+$ <span class="nb">cd</span> go/src/github.com/cloud-ark/
+$ git clone --depth <span class="m">1</span> https://github.com/cloud-ark/kubeplus.git
+$ <span class="nb">cd</span> kubeplus
+</pre></div>
+</div>
+</div>
+<div class="section" id="platform-operator">
+<h2>Platform Operator</h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> platform-operator
+$ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>off
+$ go build .
+$ <span class="nb">cd</span> ..
+</pre></div>
+</div>
+</div>
+<div class="section" id="helm-pod">
+<h2>Helm Pod</h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> platform-operator/helm-pod
+$ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>on
+$ go get github.com/googleapis/gnostic@v0.4.0
+$ go build .
+$ <span class="nb">cd</span> ../../
+</pre></div>
+</div>
+</div>
+<div class="section" id="mutating-webhook">
+<h2>Mutating Webhook</h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> mutating-webhook
+$ go build .
+$ <span class="nb">cd</span> ..
+</pre></div>
+</div>
+</div>
+<div class="section" id="mutating-webhook-helper">
+<h2>Mutating Webhook Helper</h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> mutating-webhook-helper
+$ go build .
+$ <span class="nb">cd</span> ..
+</pre></div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="comparison.html" title="Comparison"
+             >previous</a></li>
+        <li class="nav-item nav-item-0"><a href="index.html">KubePlus 1.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Setting up development environment</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    </div>
+  </body>
+</html>
