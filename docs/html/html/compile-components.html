@@ -40,24 +40,68 @@
             
   <div class="section" id="setting-up-development-environment">
 <h1>Setting up development environment</h1>
-<p>Below instructions are given for setting up KubePlus development environment.
-These should work for Linux and Mac OS hosts.</p>
-<p>Install Go version 1.14.5</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget -c https://dl.google.com/go/go1.14.5.linux-amd64.tar.gz -O - <span class="p">|</span> sudo tar -xz -C /usr/local
+<p>In order to develop KubePlus you need following tools:
+<code class="docutils literal notranslate"><span class="pre">Golang</span> <span class="pre">(1.14.5),</span> <span class="pre">Python</span> <span class="pre">3,</span> <span class="pre">Docker</span> <span class="pre">(latest),</span> <span class="pre">Minikube</span> <span class="pre">(latest),</span> <span class="pre">kubectl</span> <span class="pre">(latest),</span> <span class="pre">helm</span> <span class="pre">(latest).</span></code></p>
+<p>We provide a Vagrantfile that installs all these tools as part of provisioning the Vagrant VM. Using Vagrant is not a requirement for setting up local development environment though. You can also install these tools locally if that is more convenient for you.</p>
+<div class="section" id="code-setup">
+<h2>Code setup</h2>
+<ul class="simple">
+<li><p>Install Vagrant (latest)</p></li>
+<li><p>Install VirtualBox (latest)</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git clone --depth <span class="m">1</span> https://github.com/cloud-ark/kubeplus.git
+$ <span class="nb">cd</span> kubeplus
+$ vagrant box add bento/ubuntu-18.04
+$ vagrant up
+</pre></div>
+</div>
+<p>Once Vagrant VM has started</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ vagrant ssh
+$ sudo usermod -aG docker <span class="nv">$USER</span>
+$ <span class="nb">exit</span>
+$ vagrant ssh
+$ docker ps
+$ docker version
+$ minikube version
+$ kubectl version
+$ helm version
 $ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/local/go/bin
-$ ADD <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/local/go/bin to ~/.profile
-$ <span class="nb">source</span> ~/.profile
 $ go version
 </pre></div>
 </div>
-<div class="section" id="code-setup">
-<h2>Code setup</h2>
+<p>ADD PATH=$PATH:/usr/local/go/bin to ~/.profile</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ vi ~/.profile
+    $ <span class="nb">source</span> ~/.profile
+</pre></div>
+</div>
+<p>In case any of the above commands fail, you can manually install the tools inside
+the Vagrant VM. Here is the command for installing Golang.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget -c https://dl.google.com/go/go1.14.5.linux-amd64.tar.gz -O - <span class="p">|</span> sudo tar -xz -C /usr/local
+</pre></div>
+</div>
+<p>Note that the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder on your host machine is mapped under <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code>
+directory inside the Vagrant VM. Any files that you want to copy back from the Vagrant VM to the host, place them in <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> folder. Then access them from your host machine in the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder.</p>
+</div>
+<div class="section" id="test-sample-examples">
+<h2>Test sample examples</h2>
+<p>Start the Minikube Kubernetes cluster.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ minikube start --driver<span class="o">=</span>docker
+$ kubectl get pods -A
+</pre></div>
+</div>
+<p>Once Kubernetes cluster is up, try the <code class="docutils literal notranslate"><span class="pre">hello-world</span></code> example by following steps from <a class="reference external" href="https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html">getting started guide</a>.</p>
+</div>
+<div class="section" id="work-on-the-code">
+<h2>Work on the code</h2>
+<p>In order to work on the code, you can clone a fresh copy of the code and place it in the path where Golang compiler expects it (which is, <code class="docutils literal notranslate"><span class="pre">~/go/src/github.com/cloud-ark</span></code>).</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ mkdir -p go/src/github.com/cloud-ark
 $ <span class="nb">cd</span> go/src/github.com/cloud-ark/
 $ git clone --depth <span class="m">1</span> https://github.com/cloud-ark/kubeplus.git
 $ <span class="nb">cd</span> kubeplus
 </pre></div>
 </div>
+<p>If you don’t want to re-clone kubeplus then create a symbolic link from <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> to
+<code class="docutils literal notranslate"><span class="pre">~/go/src/github.com/cloud-ark</span></code>. As noted above, the <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> folder from inside your Vagrant VM is the mapped <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder on the host.</p>
 </div>
 <div class="section" id="platform-operator">
 <h2>Platform Operator</h2>
@@ -93,36 +137,6 @@ $ go build .
 $ <span class="nb">cd</span> ..
 </pre></div>
 </div>
-</div>
-<div class="section" id="local-testing-using-vagrant">
-<h2>Local testing using Vagrant</h2>
-<ul class="simple">
-<li><p>Install Vagrant (latest)</p></li>
-<li><p>Install VirtualBox (latest)</p></li>
-</ul>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git clone --depth <span class="m">1</span> https://github.com/cloud-ark/kubeplus.git
-$ <span class="nb">cd</span> kubeplus
-$ vagrant box add bento/ubuntu-18.04
-$ vagrant up
-</pre></div>
-</div>
-<p>Once Vagrant VM has started</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ vagrant ssh
-$ sudo usermod -aG docker <span class="nv">$USER</span>
-$ <span class="nb">exit</span>
-$ vagrant ssh
-$ docker ps
-$ docker version
-$ minikube version
-$ kubectl version
-$ helm version
-$ minikube start --driver<span class="o">=</span>docker
-$ kubectl get pods -A
-</pre></div>
-</div>
-<p>Once Kubernetes cluster is up, follow steps from <a class="reference external" href="https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html">getting started guide</a></p>
-<p>Note that the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder on your host machine is mapped under <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code>
-directory inside the Vagrant VM. Any files that you want to copy back from the Vagrant VM to the host, place them in <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> folder. Then access them from your host machine in the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder.</p>
 </div>
 </div>
 
