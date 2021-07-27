@@ -144,7 +144,33 @@ Do following steps in consumer window:
 
 This should return without any errors.
 
-3. Create HelloWorldService instance. 
+3. Check the HellowWorldService API documentation
+
+.. code-block:: bash
+
+	kubectl man HelloWorldService
+
+You should see following output:
+
+.. code-block:: bash
+
+	KIND:	HelloWorldService
+	GROUP:	platformapi.kubeplus
+	VERSION:	v1alpha1
+
+	DESCRIPTION:
+	Here is the values.yaml for the underlying Helm chart representing this resource.
+	The attributes in values.yaml become the Spec properties of the resource.
+
+	::::::::::::::
+	/hello-world-chart/values.yaml
+	::::::::::::::
+	# Default value for namespace.
+
+	greeting: Hello World!
+
+
+4. Create HelloWorldService instance. 
 
    HelloWorldService instances can be created in any namespace.
 
@@ -171,7 +197,7 @@ or
 
 This will create hs1 instance in the default namespace.
 
-4. Check it has been created:
+5. Check it has been created:
 
 .. code-block:: bash
 
@@ -188,7 +214,7 @@ or
 Verify that the Status field is populated in hs1 instance.
 
 
-5. Verify that HelloWorldService has started
+6. Verify that HelloWorldService has started
 
 .. code-block:: bash
 
@@ -212,7 +238,7 @@ You should see following output:
 
 	Hello hello hello
 
-6. Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance.
+7. Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance.
 
 .. code-block:: bash
 
@@ -232,7 +258,7 @@ You should see following output:
    :height: 150px
    :width: 200px
 
-7. Check resource relationship graph for HelloWorldService instance:
+8. Check resource relationship graph for HelloWorldService instance:
 
 .. code-block:: bash
 
@@ -249,7 +275,7 @@ You should see following output:
 .. image:: hello-world-connections-flat.png
    :align: center
 
-8. (Only on Linux or MacOS) Visualize the relationship graph:
+9. (Only on Linux or MacOS) Visualize the relationship graph:
 
 .. code-block:: bash
 

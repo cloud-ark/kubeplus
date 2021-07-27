@@ -94,6 +94,36 @@ $ <span class="nb">cd</span> ..
 </pre></div>
 </div>
 </div>
+<div class="section" id="local-testing-using-vagrant">
+<h2>Local testing using Vagrant</h2>
+<ul class="simple">
+<li><p>Install Vagrant (latest)</p></li>
+<li><p>Install VirtualBox (latest)</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git clone --depth <span class="m">1</span> https://github.com/cloud-ark/kubeplus.git
+$ <span class="nb">cd</span> kubeplus
+$ vagrant box add bento/ubuntu-18.04
+$ vagrant up
+</pre></div>
+</div>
+<p>Once Vagrant VM has started</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ vagrant ssh
+$ sudo usermod -aG docker <span class="nv">$USER</span>
+$ <span class="nb">exit</span>
+$ vagrant ssh
+$ docker ps
+$ docker version
+$ minikube version
+$ kubectl version
+$ helm version
+$ minikube start --driver<span class="o">=</span>docker
+$ kubectl get pods -A
+</pre></div>
+</div>
+<p>Once Kubernetes cluster is up, follow steps from <a class="reference external" href="https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html">getting started guide</a></p>
+<p>Note that the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder on your host machine is mapped under <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code>
+directory inside the Vagrant VM. Any files that you want to copy back from the Vagrant VM to the host, place them in <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> folder. Then access them from your host machine in the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder.</p>
+</div>
 </div>
 
 

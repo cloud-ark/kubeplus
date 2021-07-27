@@ -12,7 +12,7 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "bento/ubuntu-16.04"
+  config.vm.box = "bento/ubuntu-18.04"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -49,13 +49,15 @@ Vagrant.configure("2") do |config|
   # backing providers for Vagrant. These expose provider-specific options.
   # Example for VirtualBox:
   #
-  # config.vm.provider "virtualbox" do |vb|
+  config.vm.provider "virtualbox" do |vb|
   #   # Display the VirtualBox GUI when booting the machine
   #   vb.gui = true
   #
   #   # Customize the amount of memory on the VM:
   #   vb.memory = "1024"
-  # end
+      vb.customize ["modifyvm", :id, "--cpus", 2]
+      vb.customize ["modifyvm", :id, "--memory", "3072"]
+  end
   #
   # View the documentation for the provider you are using for more
   # information on available options.
@@ -67,16 +69,28 @@ Vagrant.configure("2") do |config|
      apt-get update
      echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
      sudo apt-get install -y apt-transport-https ca-certificates gnupg
-     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+     sudo curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
      sudo apt-get update && sudo apt-get install -y google-cloud-sdk  apt-transport-https     ca-certificates     curl     gnupg     lsb-release
-     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
      echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
      sudo apt-get update
      sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-     sudo groupadd docker
+     #sudo groupadd docker
      sudo usermod -aG docker $USER
-     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+     sudo curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
      sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+     sudo curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+     sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+     sudo curl https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz
+     sudo tar -zxvf helm-v3.6.3-linux-amd64.tar.gz
+     sudo mv linux-amd64/helm /usr/local/bin/helm
+
+     sudo apt-get install -y python3-pip jq
+
+     pip3 install -r /vagrant/grapher/requirements.txt
+     
   SHELL
 end
 
