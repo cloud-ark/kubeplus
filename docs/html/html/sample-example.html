@@ -172,7 +172,30 @@ or
 </pre></div>
 </div>
 <p>This should return without any errors.</p>
-<ol class="arabic" start="3">
+<ol class="arabic simple" start="3">
+<li><p>Check the HellowWorldService API documentation</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl man HelloWorldService
+</pre></div>
+</div>
+<p>You should see following output:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>KIND:   HelloWorldService
+GROUP:  platformapi.kubeplus
+VERSION:        v1alpha1
+
+DESCRIPTION:
+Here is the values.yaml <span class="k">for</span> the underlying Helm chart representing this resource.
+The attributes <span class="k">in</span> values.yaml become the Spec properties of the resource.
+
+::::::::::::::
+/hello-world-chart/values.yaml
+::::::::::::::
+<span class="c1"># Default value for namespace.</span>
+
+greeting: Hello World!
+</pre></div>
+</div>
+<ol class="arabic" start="4">
 <li><p>Create HelloWorldService instance.</p>
 <p>HelloWorldService instances can be created in any namespace.</p>
 </li>
@@ -194,7 +217,7 @@ spec:
 </pre></div>
 </div>
 <p>This will create hs1 instance in the default namespace.</p>
-<ol class="arabic simple" start="4">
+<ol class="arabic simple" start="5">
 <li><p>Check it has been created:</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get helloworldservices
@@ -207,7 +230,7 @@ oc describe helloworldservices hs1
 </pre></div>
 </div>
 <p>Verify that the Status field is populated in hs1 instance.</p>
-<ol class="arabic simple" start="5">
+<ol class="arabic simple" start="6">
 <li><p>Verify that HelloWorldService has started</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_POD</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
@@ -227,7 +250,7 @@ curl localhost:8082
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Hello hello hello
 </pre></div>
 </div>
-<ol class="arabic simple" start="6">
+<ol class="arabic simple" start="7">
 <li><p>Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance.</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
@@ -239,7 +262,7 @@ curl localhost:8082
 </div>
 <p>You should see following output:</p>
 <a class="reference internal image-reference" href="_images/hello-world-resources.png"><img alt="_images/hello-world-resources.png" class="align-center" src="_images/hello-world-resources.png" style="width: 200px; height: 150px;" /></a>
-<ol class="arabic simple" start="7">
+<ol class="arabic simple" start="8">
 <li><p>Check resource relationship graph for HelloWorldService instance:</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span>
@@ -251,7 +274,7 @@ curl localhost:8082
 </div>
 <p>You should see following output:</p>
 <img alt="_images/hello-world-connections-flat.png" class="align-center" src="_images/hello-world-connections-flat.png" />
-<ol class="arabic simple" start="8">
+<ol class="arabic simple" start="9">
 <li><p>(Only on Linux or MacOS) Visualize the relationship graph:</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -o png
