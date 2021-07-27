@@ -196,7 +196,7 @@ greeting: Hello World!
 </pre></div>
 </div>
 <ol class="arabic" start="4">
-<li><p>Create HelloWorldService instance.</p>
+<li><p>Create HelloWorldService instance using cli:</p>
 <p>HelloWorldService instances can be created in any namespace.</p>
 </li>
 </ol>
@@ -217,8 +217,17 @@ spec:
 </pre></div>
 </div>
 <p>This will create hs1 instance in the default namespace.</p>
+<p>We also provide a consumer UI to create and obtain metrics for Service instances. The consumer UI is part of KubePlus and runs on the cluster. Access it as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/open-consumer-ui.sh
+$ ./open-consumer-ui.sh
+</pre></div>
+</div>
+<p>The HelloWorldService will be available at following URL:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ http://localhost:5000/service/HelloWorldService
+</pre></div>
+</div>
 <ol class="arabic simple" start="5">
-<li><p>Check it has been created:</p></li>
+<li><p>Check if the service instance has been created:</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get helloworldservices
 kubectl describe helloworldservices hs1
