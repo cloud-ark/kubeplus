@@ -5,10 +5,9 @@ Setting up development environment
 In order to develop KubePlus you need following tools:
 ``Golang (1.14.5), Python 3, Docker (latest), Minikube (latest), kubectl (latest), helm (latest).``
 
-We provide a Vagrantfile that installs all these tools as part of provisioning the Vagrant VM. Using Vagrant is not a requirement for setting up local development environment though. You can also install these tools locally if that is more convenient for you.
+We provide a Vagrantfile that installs all these tools as part of provisioning the Vagrant VM. You can also install these tools locally if that is more convenient for you.
 
-Code setup
-------------
+If you want to use Vagrant based environment, follow these steps.
 
 - Install Vagrant (latest)
 - Install VirtualBox (latest)
@@ -40,7 +39,7 @@ ADD PATH=$PATH:/usr/local/go/bin to ~/.profile
 
 .. code-block:: bash
 
-    $ vi ~/.profile
+	$ vi ~/.profile
 	$ source ~/.profile
 
 In case any of the above commands fail, you can manually install the tools inside
@@ -72,58 +71,112 @@ Once Kubernetes cluster is up, try the ``hello-world`` example by following step
 Work on the code
 -----------------
 
-In order to work on the code, you can clone a fresh copy of the code and place it in the path where Golang compiler expects it (which is, ``~/go/src/github.com/cloud-ark``).
+In order to work on the code, you can clone a fresh copy kubeplus and place it in the path where Golang compiler expects it (which is, ``~/go/src/github.com/cloud-ark``).
 
 .. code-block:: bash
 
+	$ cd ~/
 	$ mkdir -p go/src/github.com/cloud-ark
 	$ cd go/src/github.com/cloud-ark/
 	$ git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
 	$ cd kubeplus
+	$ export KUBEPLUS_HOME=/home/vagrant/go/src/github.com/cloud-ark/kubeplus/
 
 If you don't want to re-clone kubeplus then create a symbolic link from ``/vagrant`` to
 ``~/go/src/github.com/cloud-ark``. As noted above, the ``/vagrant`` folder from inside your Vagrant VM is the mapped ``kubeplus`` folder on the host.
 
+Download gnostic library separately. It is a dependency of one of the k8s projects, but it has been removed from the googleapis project. kubeplus build fails as it depends on several k8s projects. We go around this issue by downloading it separately.
 
-Platform Operator
-------------------
+.. code-block:: bash
+
+	$ go get github.com/googleapis/gnostic@v0.4.0
+
+Connect the Docker cli in the VM to the Docker daemon that is part of Minikube.
+We need to do this to use the locally built images when testing code changes.
+
+.. code-block:: bash
+
+	$ eval $(minikube docker-env)
+
+Now we are ready to work on the code.
+Use vi/emacs to modify any part of the code.
+In order to test the changes, you will need to build the code, deploy KubePlus, 
+and run some example (``hello-world`` is a good example for testing purposes).
+
+Build code
+-----------
+In each component folder a build script is provided (``./build-artifact.sh``).
+Use it as follows to build the code:
+
+.. code-block:: bash
+
+	$ ./build-artifact.sh latest
+
+Deploy KubePlus
+----------------
+
+.. code-block:: bash
+
+	$ cd $KUBEPLUS_HOME/deploy
+	$ kubectl create -f kubeplus-components-minikube.yaml
+
+Check Logs
+-----------
+
+.. code-block:: bash
+
+	$ cd $KUBEPLUS_HOME/deploy
+	$ ./kubeplus-logs.sh
+
+Delete KubePlus
+----------------
+
+.. code-block:: bash
+
+	$ cd $KUBEPLUS_HOME/deploy
+	$ ./delete-kubeplus-components.sh 
+
+
+Following components are written in Golang. If you run into any issues with building them then use the following commands to separately try the build steps to debug the issue. 
+
+
+**Platform Operator**
 
 .. code-block:: bash
 
 	$ cd platform-operator
+	$ ./build-artifact.sh latest
 	$ export GO111MODULE=off
 	$ go build .
 	$ cd ..
 
 
-Helm Pod
----------
+**Helm Pod**
 
 .. code-block:: bash
 
 	$ cd platform-operator/helm-pod
 	$ export GO111MODULE=on
-	$ go get github.com/googleapis/gnostic@v0.4.0
 	$ go build .
 	$ cd ../../
 
 
-Mutating Webhook
------------------
+**Mutating Webhook**
 
 .. code-block:: bash
 
 	$ cd mutating-webhook
+	$ export GO111MODULE=on
 	$ go build .
 	$ cd ..
 
 
-Mutating Webhook Helper
-------------------------
+**Mutating Webhook Helper**
 
 .. code-block:: bash
 
 	$ cd mutating-webhook-helper
+	$ export GO111MODULE=on
 	$ go build .
 	$ cd ..
 

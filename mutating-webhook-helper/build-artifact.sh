@@ -7,15 +7,14 @@ fi
 artifacttype=$1
 
 if [ "$artifacttype" = "latest" ]; then
-    export GOOS=linux; go build .
-    docker build -t lmecld/mutating-webhook-helper:latest .
-    docker push lmecld/mutating-webhook-helper:latest 
+    export GO111MODULE=on; export GOOS=linux; go build .
+    docker build -t gcr.io/cloudark-kubeplus/mutating-webhook-helper:latest .
 fi
 
 if [ "$artifacttype" = "versioned" ]; then
     version=`tail -1 versions.txt`
     echo "Building version $version"
-    export GOOS=linux; go build .
+    export GO111MODULE=on; export GOOS=linux; go build .
     #docker build -t lmecld/mutating-webhook-helper:$version .
     #docker push lmecld/mutating-webhook-helper:$version
     docker build --no-cache -t gcr.io/cloudark-kubeplus/mutating-webhook-helper:$version .

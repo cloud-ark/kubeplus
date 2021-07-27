@@ -1,10 +1,14 @@
 #!/bin/bash
 
 if (( $# < 1 )); then
-    echo "./build-webhook-tls-getter.sh versioned"
+    echo "./build-artifact.sh <latest | versioned>"
 fi
 
 artifacttype=$1
+
+if [ "$artifacttype" = "latest" ]; then
+    docker build -t gcr.io/cloudark-kubeplus/webhook-tls-getter:latest .
+fi
 
 if [ "$artifacttype" = "versioned" ]; then
     version=`tail -1 versions.txt`

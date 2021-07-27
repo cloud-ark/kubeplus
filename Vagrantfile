@@ -38,6 +38,7 @@ Vagrant.configure("2") do |config|
   # Bridged networks make the machine appear as another physical device on
   # your network.
   # config.vm.network "public_network"
+  config.vm.network "forwarded_port", guest: 5000, host: 5000
 
   # Share an additional folder to the guest VM. The first argument is
   # the path on the host to the actual folder. The second argument is

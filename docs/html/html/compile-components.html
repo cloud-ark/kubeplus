@@ -42,9 +42,8 @@
 <h1>Setting up development environment</h1>
 <p>In order to develop KubePlus you need following tools:
 <code class="docutils literal notranslate"><span class="pre">Golang</span> <span class="pre">(1.14.5),</span> <span class="pre">Python</span> <span class="pre">3,</span> <span class="pre">Docker</span> <span class="pre">(latest),</span> <span class="pre">Minikube</span> <span class="pre">(latest),</span> <span class="pre">kubectl</span> <span class="pre">(latest),</span> <span class="pre">helm</span> <span class="pre">(latest).</span></code></p>
-<p>We provide a Vagrantfile that installs all these tools as part of provisioning the Vagrant VM. Using Vagrant is not a requirement for setting up local development environment though. You can also install these tools locally if that is more convenient for you.</p>
-<div class="section" id="code-setup">
-<h2>Code setup</h2>
+<p>We provide a Vagrantfile that installs all these tools as part of provisioning the Vagrant VM. You can also install these tools locally if that is more convenient for you.</p>
+<p>If you want to use Vagrant based environment, follow these steps.</p>
 <ul class="simple">
 <li><p>Install Vagrant (latest)</p></li>
 <li><p>Install VirtualBox (latest)</p></li>
@@ -71,7 +70,7 @@ $ go version
 </div>
 <p>ADD PATH=$PATH:/usr/local/go/bin to ~/.profile</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ vi ~/.profile
-    $ <span class="nb">source</span> ~/.profile
+$ <span class="nb">source</span> ~/.profile
 </pre></div>
 </div>
 <p>In case any of the above commands fail, you can manually install the tools inside
@@ -81,7 +80,6 @@ the Vagrant VM. Here is the command for installing Golang.</p>
 </div>
 <p>Note that the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder on your host machine is mapped under <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code>
 directory inside the Vagrant VM. Any files that you want to copy back from the Vagrant VM to the host, place them in <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> folder. Then access them from your host machine in the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder.</p>
-</div>
 <div class="section" id="test-sample-examples">
 <h2>Test sample examples</h2>
 <p>Start the Minikube Kubernetes cluster.</p>
@@ -93,46 +91,85 @@ $ kubectl get pods -A
 </div>
 <div class="section" id="work-on-the-code">
 <h2>Work on the code</h2>
-<p>In order to work on the code, you can clone a fresh copy of the code and place it in the path where Golang compiler expects it (which is, <code class="docutils literal notranslate"><span class="pre">~/go/src/github.com/cloud-ark</span></code>).</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ mkdir -p go/src/github.com/cloud-ark
+<p>In order to work on the code, you can clone a fresh copy kubeplus and place it in the path where Golang compiler expects it (which is, <code class="docutils literal notranslate"><span class="pre">~/go/src/github.com/cloud-ark</span></code>).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> ~/
+$ mkdir -p go/src/github.com/cloud-ark
 $ <span class="nb">cd</span> go/src/github.com/cloud-ark/
 $ git clone --depth <span class="m">1</span> https://github.com/cloud-ark/kubeplus.git
 $ <span class="nb">cd</span> kubeplus
+$ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span>/home/vagrant/go/src/github.com/cloud-ark/kubeplus/
 </pre></div>
 </div>
 <p>If you don’t want to re-clone kubeplus then create a symbolic link from <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> to
 <code class="docutils literal notranslate"><span class="pre">~/go/src/github.com/cloud-ark</span></code>. As noted above, the <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> folder from inside your Vagrant VM is the mapped <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder on the host.</p>
+<p>Download gnostic library separately. It is a dependency of one of the k8s projects, but it has been removed from the googleapis project. kubeplus build fails as it depends on several k8s projects. We go around this issue by downloading it separately.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ go get github.com/googleapis/gnostic@v0.4.0
+</pre></div>
 </div>
-<div class="section" id="platform-operator">
-<h2>Platform Operator</h2>
+<p>Connect the Docker cli in the VM to the Docker daemon that is part of Minikube.
+We need to do this to use the locally built images when testing code changes.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">eval</span> <span class="k">$(</span>minikube docker-env<span class="k">)</span>
+</pre></div>
+</div>
+<p>Now we are ready to work on the code.
+Use vi/emacs to modify any part of the code.
+In order to test the changes, you will need to build the code, deploy KubePlus,
+and run some example (<code class="docutils literal notranslate"><span class="pre">hello-world</span></code> is a good example for testing purposes).</p>
+</div>
+<div class="section" id="build-code">
+<h2>Build code</h2>
+<p>In each component folder a build script is provided (<code class="docutils literal notranslate"><span class="pre">./build-artifact.sh</span></code>).
+Use it as follows to build the code:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ./build-artifact.sh latest
+</pre></div>
+</div>
+</div>
+<div class="section" id="deploy-kubeplus">
+<h2>Deploy KubePlus</h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="nv">$KUBEPLUS_HOME</span>/deploy
+$ kubectl create -f kubeplus-components-minikube.yaml
+</pre></div>
+</div>
+</div>
+<div class="section" id="check-logs">
+<h2>Check Logs</h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="nv">$KUBEPLUS_HOME</span>/deploy
+$ ./kubeplus-logs.sh
+</pre></div>
+</div>
+</div>
+<div class="section" id="delete-kubeplus">
+<h2>Delete KubePlus</h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="nv">$KUBEPLUS_HOME</span>/deploy
+$ ./delete-kubeplus-components.sh
+</pre></div>
+</div>
+<p>Following components are written in Golang. If you run into any issues with building them then use the following commands to separately try the build steps to debug the issue.</p>
+<p><strong>Platform Operator</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> platform-operator
+$ ./build-artifact.sh latest
 $ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>off
 $ go build .
 $ <span class="nb">cd</span> ..
 </pre></div>
 </div>
-</div>
-<div class="section" id="helm-pod">
-<h2>Helm Pod</h2>
+<p><strong>Helm Pod</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> platform-operator/helm-pod
 $ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>on
-$ go get github.com/googleapis/gnostic@v0.4.0
 $ go build .
 $ <span class="nb">cd</span> ../../
 </pre></div>
 </div>
-</div>
-<div class="section" id="mutating-webhook">
-<h2>Mutating Webhook</h2>
+<p><strong>Mutating Webhook</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> mutating-webhook
+$ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>on
 $ go build .
 $ <span class="nb">cd</span> ..
 </pre></div>
 </div>
-</div>
-<div class="section" id="mutating-webhook-helper">
-<h2>Mutating Webhook Helper</h2>
+<p><strong>Mutating Webhook Helper</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> mutating-webhook-helper
+$ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>on
 $ go build .
 $ <span class="nb">cd</span> ..
 </pre></div>

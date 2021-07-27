@@ -170,7 +170,7 @@ You should see following output:
 	greeting: Hello World!
 
 
-4. Create HelloWorldService instance. 
+4. Create HelloWorldService instance using cli:
 
    HelloWorldService instances can be created in any namespace.
 
@@ -197,7 +197,21 @@ or
 
 This will create hs1 instance in the default namespace.
 
-5. Check it has been created:
+We also provide a consumer UI to create and obtain metrics for Service instances. The consumer UI is part of KubePlus and runs on the cluster. Access it as follows:
+
+.. code-block:: bash
+
+	$ wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/open-consumer-ui.sh
+	$ ./open-consumer-ui.sh
+
+The HelloWorldService will be available at following URL:
+
+.. code-block:: bash
+
+	$ http://localhost:5000/service/HelloWorldService
+
+
+5. Check if the service instance has been created:
 
 .. code-block:: bash
 
