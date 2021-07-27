@@ -89,7 +89,9 @@ Vagrant.configure("2") do |config|
 
      sudo apt-get install -y python3-pip jq
 
-     pip3 install -r /vagrant/grapher/requirements.txt
+     sudo pip3 install -r /vagrant/grapher/requirements.txt
+
+     sudo wget -c https://dl.google.com/go/go1.14.5.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local
      
   SHELL
 end
