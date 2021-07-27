@@ -2,21 +2,14 @@
 
 ## Description
 
-Platform Workflow Operator enables publishing new Services in a cluster. Cluster Admins use this Operator to govern their cluster use by defining and registering opinionated Services with appropriate guard rails. The new Services are registered
+Platform Workflow Operator enables publishing new Services in a cluster. Cluster Admins use this Operator to govern their cluster usage by defining and registering opinionated Services with appropriate guard rails. The new Services are registered
 as new Custom Resources. Application development teams consume the Services by creating instances of these Custom Resources.
 
 ## Development steps
 
 1. Setup:
-   Use Golang version 1.13 (1.14 is also okay)
 
-   Turn off GOMODULES:
-   export GO111MODULE=off
-
-   See setgopath.sh
-   source setgopath.sh
-
-   export GOPATH=<Path to your Go src directory>
+   Follow [these steps](https://cloud-ark.github.io/kubeplus/docs/html/html/compile-components.html)
 
 2. Modify:
    - Making changes to Operator API (types.go)
