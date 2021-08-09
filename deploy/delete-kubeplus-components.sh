@@ -9,6 +9,7 @@ kubectl delete mutatingwebhookconfigurations platform-as-code.crd-binding
 kubectl delete sa kubeplus -n $KUBEPLUS_NS
 kubectl delete svc crd-hook-service -n $KUBEPLUS_NS
 kubectl delete svc kubeplus -n $KUBEPLUS_NS
+kubectl delete svc kubeplus-consumerui -n $KUBEPLUS_NS
 kubectl delete crds resourcecompositions.workflows.kubeplus
 kubectl delete crds resourcepolicies.workflows.kubeplus
 kubectl delete crds resourceevents.workflows.kubeplus
