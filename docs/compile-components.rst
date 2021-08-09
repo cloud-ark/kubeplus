@@ -100,6 +100,15 @@ We need to do this to use the locally built images when testing code changes.
 
 Now we are ready to work on the code.
 
+Vagrant VM access
+------------------
+
+- Vagrant VM IP: ``192.168.33.10``
+
+- Access consumer ui on Vagrant VM (example of HelloWorldService): ``http://192.168.33.10:5000/service/HelloWorldService#``
+
+- SSH into Vagrant VM: ``vagrant ssh``
+
 Code Organization
 ------------------
 

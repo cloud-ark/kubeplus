@@ -47,31 +47,37 @@
 <p>Here we demonstrate how a Provider can use KubePlus to deliver a “hello-world as-a-Service” using a Hello World Helm chart.
 The helm chart defines a Deployment and a Service. The Pod managed
 by the Deployment prints the messages that are provided as input.
-When registering the service, Provider defines the CPU and Memory requests and limits that should be provided to the HelloWorld Pod. KubePlus ensures that every HelloWorldService instances’ Pod is given the CPU and Memory requests and limits that are configured by the Provider when registering the HelloWorldService. Consumers create HelloWorldService instances
-and pass custom hello messages to print to the Pod.</p>
+When registering the service, Provider defines the CPU and Memory requests and limits that should be provided to the HelloWorld Pod. KubePlus ensures that every HelloWorldService instance Pod is given the CPU and Memory requests and limits that are configured by the Provider when registering the HelloWorldService. Consumers create HelloWorldService instances and pass custom hello messages to print to the Pod.</p>
 <div class="section" id="setup">
 <h2>Setup</h2>
 <p>In order to try this example you will need to install Kubernetes CLI (kubectl), or if you are using OpenShift, the OpenShift CLI (oc).
 Choose the CLI version that works with your Kubernetes version.
 Once the appropriate CLI is installed, follow these steps.</p>
-<p>Open three command terminal windows. Name them as:</p>
+<p>Open two command terminal windows. Name them as:</p>
 <ul class="simple">
-<li><p>Provider window 1</p></li>
-<li><p>Provider window 2</p></li>
+<li><p>Provider window</p></li>
 <li><p>Consumer window</p></li>
 </ul>
 </div>
-<div class="section" id="provider-window-1">
-<h2>Provider window 1</h2>
-<p>Do following steps in provider window 1:</p>
-<ol class="arabic simple">
-<li><p>Define the NAMESPACE in which you have installed KubePlus.
-For OpenShift users, the namespace needs to be ‘openshift-operators’.</p></li>
-</ol>
+<div class="section" id="kubeplus-namespace">
+<h2>KubePlus Namespace</h2>
+<p>Set KUBEPLUS_NS environment variable to the NAMESPACE in which you have installed KubePlus. For OpenShift users, the namespace needs to be ‘openshift-operators’.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">KUBEPLUS_NS</span><span class="o">=</span>&lt;Namespace&gt;
 </pre></div>
 </div>
-<ol class="arabic simple" start="2">
+</div>
+<div class="section" id="get-provider-and-consumer-kubeconfigs">
+<h2>Get provider and consumer kubeconfigs</h2>
+<p>KubePlus generates separate kubeconfig files for provider and consumers with appropriate permissions. Retrieve them as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl retrieve kubeconfig provider <span class="nv">$KUBEPLUS_NS</span> &gt; provider.conf
+$ kubectl retrieve kubeconfig consumer <span class="nv">$KUBEPLUS_NS</span> &gt; consumer.conf
+</pre></div>
+</div>
+<p>In the steps below, use the appropriate kubeconfig in the provider and consumer actions by passing the <code class="docutils literal notranslate"><span class="pre">--kubeconfig=&lt;provider/consumer&gt;.conf</span></code> flag.</p>
+</div>
+<div class="section" id="register-helloworldservice-provider-window">
+<h2>Register HelloWorldService (provider window)</h2>
+<ol class="arabic simple">
 <li><p>Create hello-world-resource-composition:</p></li>
 </ol>
 <p>Here is the hello-world-resource-composition.yaml file. Save it as hello-world-resource-composition.yaml.</p>
@@ -131,14 +137,14 @@ spec:
 </pre></div>
 </div>
 <p>Create hello-world-resource-composition as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span> --kubeconfig<span class="o">=</span>provider.conf
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span> --kubeconfig<span class="o">=</span>provider.conf
 </pre></div>
 </div>
-<ol class="arabic simple" start="3">
+<ol class="arabic simple" start="2">
 <li><p>Wait till HelloWorldService CRD is registered in the cluster.</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">until</span> kubectl get crds <span class="p">|</span> grep hello  <span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> <span class="s2">&quot;Waiting for HelloworldService CRD to be registered..&quot;</span><span class="p">;</span> sleep <span class="m">1</span><span class="p">;</span> <span class="k">done</span>
@@ -148,10 +154,32 @@ spec:
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">until</span> oc get crds <span class="p">|</span> grep hello  <span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> <span class="s2">&quot;Waiting for HelloworldService CRD to be registered..&quot;</span><span class="p">;</span> sleep <span class="m">1</span><span class="p">;</span> <span class="k">done</span>
 </pre></div>
 </div>
+<ol class="arabic simple" start="3">
+<li><p>Grant permission to the consumer to create service instances.</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl grantpermission consumer helloworldservices provider.conf <span class="nv">$KUBEPLUS_NS</span>
+</pre></div>
 </div>
-<div class="section" id="consumer-window">
-<h2>Consumer window</h2>
-<p>Do following steps in consumer window:</p>
+</div>
+<div class="section" id="create-helloworldservice-instance-consumer-window">
+<h2>Create HelloWorldService instance (consumer window)</h2>
+<p>HelloWorldService instances can be created using either kubectl or consumer ui that
+KubePlus provides.</p>
+<p><strong>Using Consumer UI</strong></p>
+<p>The consumer UI is part of KubePlus and runs on the cluster. Access it as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/open-consumer-ui.sh
+$ ./open-consumer-ui.sh
+</pre></div>
+</div>
+<p>The HelloWorldService will be available at following URL:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ http://localhost:5000/service/HelloWorldService
+</pre></div>
+</div>
+<p>If you are working with the KubePlus Vagrant VM access the service at:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ http://192.168.33.10:5000/service/HelloWorldService
+</pre></div>
+</div>
+<p><strong>Using CLI</strong></p>
 <ol class="arabic simple">
 <li><p>Install KubePlus kubectl plugins</p></li>
 </ol>
@@ -195,10 +223,8 @@ The attributes <span class="k">in</span> values.yaml become the Spec properties 
 greeting: Hello World!
 </pre></div>
 </div>
-<ol class="arabic" start="4">
-<li><p>Create HelloWorldService instance using cli:</p>
-<p>HelloWorldService instances can be created in any namespace.</p>
-</li>
+<ol class="arabic simple" start="4">
+<li><p>Create HelloWorldService instance:</p></li>
 </ol>
 <p>Copy below YAML and save it as hello-world-service.yaml</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apiVersion: platformapi.kubeplus/v1alpha1
@@ -209,38 +235,29 @@ spec:
   greeting: Hello hello hello
 </pre></div>
 </div>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-service.yaml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-service.yaml --kubeconfig<span class="o">=</span>consumer.conf
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f hello-world-service.yaml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f hello-world-service.yaml --kubeconfig<span class="o">=</span>consumer.conf
 </pre></div>
 </div>
 <p>This will create hs1 instance in the default namespace.</p>
-<p>We also provide a consumer UI to create and obtain metrics for Service instances. The consumer UI is part of KubePlus and runs on the cluster. Access it as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/open-consumer-ui.sh
-$ ./open-consumer-ui.sh
-</pre></div>
-</div>
-<p>The HelloWorldService will be available at following URL:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ http://localhost:5000/service/HelloWorldService
-</pre></div>
-</div>
 <ol class="arabic simple" start="5">
 <li><p>Check if the service instance has been created:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get helloworldservices
-kubectl describe helloworldservices hs1
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get helloworldservices --kubeconfig<span class="o">=</span>consumer.conf
+kubectl describe helloworldservices hs1 --kubeconfig<span class="o">=</span>consumer.conf
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc get helloworldservices
-oc describe helloworldservices hs1
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc get helloworldservices --kubeconfig<span class="o">=</span>consumer.conf
+oc describe helloworldservices hs1 --kubeconfig<span class="o">=</span>consumer.conf
 </pre></div>
 </div>
 <p>Verify that the Status field is populated in hs1 instance.</p>
 <ol class="arabic simple" start="6">
-<li><p>Verify that HelloWorldService has started</p></li>
+<li><p>Verify that HelloWorldService has been started</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_POD</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
 <span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
@@ -295,14 +312,14 @@ curl localhost:8082
 </div>
 <img alt="_images/hello-world-connections-png.png" class="align-center" src="_images/hello-world-connections-png.png" />
 </div>
-<div class="section" id="id1">
-<h2>Provider window 1</h2>
-<p>Back on the provider window 1, perform following steps:</p>
+<div class="section" id="get-helloworldservice-instance-metrics-provider-consumer-window">
+<h2>Get HelloWorldService instance metrics (provider/consumer window)</h2>
+<p>Back on the provider window, perform following steps:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">KUBEPLUS_POD</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
 
 <span class="nv">KUBEPLUS_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
 
-kubectl port-forward <span class="nv">$KUBEPLUS_POD</span> -n <span class="nv">$KUBEPLUS_NS</span> <span class="m">8081</span>:8090
+kubectl port-forward <span class="nv">$KUBEPLUS_POD</span> -n <span class="nv">$KUBEPLUS_NS</span> <span class="m">8081</span>:8090 <span class="p">&amp;</span>
 </pre></div>
 </div>
 <p>or</p>
@@ -310,13 +327,10 @@ kubectl port-forward <span class="nv">$KUBEPLUS_POD</span> -n <span class="nv">$
 
 <span class="nv">KUBEPLUS_NS</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
 
-oc port-forward <span class="nv">$KUBEPLUS_POD</span> -n <span class="nv">$KUBEPLUS_NS</span> <span class="m">8081</span>:8090
+oc port-forward <span class="nv">$KUBEPLUS_POD</span> -n <span class="nv">$KUBEPLUS_NS</span> <span class="m">8081</span>:8090 <span class="p">&amp;</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="provider-window-2">
-<h2>Provider window 2</h2>
-<p>In provider window 2, get CPU/Memory/Storage/Network metrics for HelloWorldService instance:</p>
+<p>Get CPU, Memory, Storage, Network metrics for HelloWorldService instance:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
 </pre></div>
 </div>

@@ -5,8 +5,7 @@ Sample Example - HelloWorldService
 Here we demonstrate how a Provider can use KubePlus to deliver a "hello-world as-a-Service" using a Hello World Helm chart.
 The helm chart defines a Deployment and a Service. The Pod managed
 by the Deployment prints the messages that are provided as input.
-When registering the service, Provider defines the CPU and Memory requests and limits that should be provided to the HelloWorld Pod. KubePlus ensures that every HelloWorldService instances' Pod is given the CPU and Memory requests and limits that are configured by the Provider when registering the HelloWorldService. Consumers create HelloWorldService instances 
-and pass custom hello messages to print to the Pod.
+When registering the service, Provider defines the CPU and Memory requests and limits that should be provided to the HelloWorld Pod. KubePlus ensures that every HelloWorldService instance Pod is given the CPU and Memory requests and limits that are configured by the Provider when registering the HelloWorldService. Consumers create HelloWorldService instances and pass custom hello messages to print to the Pod.
 
 Setup
 ------
@@ -15,25 +14,37 @@ In order to try this example you will need to install Kubernetes CLI (kubectl), 
 Choose the CLI version that works with your Kubernetes version.
 Once the appropriate CLI is installed, follow these steps.
 
-Open three command terminal windows. Name them as:
+Open two command terminal windows. Name them as:
 
-- Provider window 1
-- Provider window 2
+- Provider window
 - Consumer window 
 
-Provider window 1
-------------------
+KubePlus Namespace
+--------------------
 
-Do following steps in provider window 1:
-
-1. Define the NAMESPACE in which you have installed KubePlus.
-   For OpenShift users, the namespace needs to be 'openshift-operators'.
+Set KUBEPLUS_NS environment variable to the NAMESPACE in which you have installed KubePlus. For OpenShift users, the namespace needs to be 'openshift-operators'.
 
 .. code-block:: bash
 
     KUBEPLUS_NS=<Namespace>
 
-2. Create hello-world-resource-composition:
+Get provider and consumer kubeconfigs
+--------------------------------------
+
+KubePlus generates separate kubeconfig files for provider and consumers with appropriate permissions. Retrieve them as follows:
+
+.. code-block:: bash
+
+	$ kubectl retrieve kubeconfig provider $KUBEPLUS_NS > provider.conf
+	$ kubectl retrieve kubeconfig consumer $KUBEPLUS_NS > consumer.conf
+
+In the steps below, use the appropriate kubeconfig in the provider and consumer actions by passing the ``--kubeconfig=<provider/consumer>.conf`` flag.
+
+
+Register HelloWorldService (provider window)
+-------------------------------------------------
+
+1. Create hello-world-resource-composition:
 
 Here is the hello-world-resource-composition.yaml file. Save it as hello-world-resource-composition.yaml.
 
@@ -97,16 +108,16 @@ Create hello-world-resource-composition as follows:
 
 .. code-block:: bash
 
-    kubectl create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS
+    kubectl create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS --kubeconfig=provider.conf
 
 or
 
 .. code-block:: bash
 
-    oc create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS
+    oc create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS --kubeconfig=provider.conf
 
 
-3. Wait till HelloWorldService CRD is registered in the cluster.
+2. Wait till HelloWorldService CRD is registered in the cluster.
 
 .. code-block:: bash
 
@@ -118,10 +129,45 @@ or
 
     until oc get crds | grep hello  ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
 
-Consumer window
-----------------
 
-Do following steps in consumer window:
+3. Grant permission to the consumer to create service instances.
+
+.. code-block:: bash
+
+	kubectl grantpermission consumer helloworldservices provider.conf $KUBEPLUS_NS
+
+
+Create HelloWorldService instance (consumer window)
+----------------------------------------------------
+
+HelloWorldService instances can be created using either kubectl or consumer ui that
+KubePlus provides.
+
+
+**Using Consumer UI**
+
+The consumer UI is part of KubePlus and runs on the cluster. Access it as follows:
+
+.. code-block:: bash
+
+	$ wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/open-consumer-ui.sh
+	$ ./open-consumer-ui.sh
+
+The HelloWorldService will be available at following URL:
+
+.. code-block:: bash
+
+	$ http://localhost:5000/service/HelloWorldService
+
+If you are working with the KubePlus Vagrant VM access the service at:
+
+.. code-block:: bash
+
+	$ http://192.168.33.10:5000/service/HelloWorldService
+
+
+**Using CLI**
+
 
 1. Install KubePlus kubectl plugins
 
@@ -170,9 +216,7 @@ You should see following output:
 	greeting: Hello World!
 
 
-4. Create HelloWorldService instance using cli:
-
-   HelloWorldService instances can be created in any namespace.
+4. Create HelloWorldService instance:
 
 Copy below YAML and save it as hello-world-service.yaml
 
@@ -187,48 +231,35 @@ Copy below YAML and save it as hello-world-service.yaml
 
 .. code-block:: bash
 
-    kubectl create -f hello-world-service.yaml
+    kubectl create -f hello-world-service.yaml --kubeconfig=consumer.conf
 
 or
 
 .. code-block:: bash
 
-    oc create -f hello-world-service.yaml
+    oc create -f hello-world-service.yaml --kubeconfig=consumer.conf
 
 This will create hs1 instance in the default namespace.
-
-We also provide a consumer UI to create and obtain metrics for Service instances. The consumer UI is part of KubePlus and runs on the cluster. Access it as follows:
-
-.. code-block:: bash
-
-	$ wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/open-consumer-ui.sh
-	$ ./open-consumer-ui.sh
-
-The HelloWorldService will be available at following URL:
-
-.. code-block:: bash
-
-	$ http://localhost:5000/service/HelloWorldService
 
 
 5. Check if the service instance has been created:
 
 .. code-block:: bash
 
-     kubectl get helloworldservices
-     kubectl describe helloworldservices hs1
+    kubectl get helloworldservices --kubeconfig=consumer.conf
+    kubectl describe helloworldservices hs1 --kubeconfig=consumer.conf
 
 or
 
 .. code-block:: bash
 
-     oc get helloworldservices
-     oc describe helloworldservices hs1
+    oc get helloworldservices --kubeconfig=consumer.conf
+    oc describe helloworldservices hs1 --kubeconfig=consumer.conf
 
 Verify that the Status field is populated in hs1 instance.
 
 
-6. Verify that HelloWorldService has started
+6. Verify that HelloWorldService has been started
 
 .. code-block:: bash
 
@@ -241,10 +272,10 @@ or
 
 .. code-block:: bash
 
-     HELLOWORLD_POD=`oc get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $2}'`
-     HELLOWORLD_NS=`oc get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
-     oc port-forward $HELLOWORLD_POD -n $HELLOWORLD_NS 8082:5000 &
-     curl localhost:8082
+    HELLOWORLD_POD=`oc get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $2}'`
+    HELLOWORLD_NS=`oc get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
+    oc port-forward $HELLOWORLD_POD -n $HELLOWORLD_NS 8082:5000 &
+    curl localhost:8082
 
 You should see following output:
 
@@ -306,10 +337,10 @@ or
    :align: center
 
 
-Provider window 1
------------------
+Get HelloWorldService instance metrics (provider/consumer window)
+---------------------------------------------------------------------
 
-Back on the provider window 1, perform following steps:
+Back on the provider window, perform following steps:
 
 .. code-block:: bash
 
@@ -317,7 +348,7 @@ Back on the provider window 1, perform following steps:
 
     KUBEPLUS_NS=`kubectl get pods -A | grep kubeplus-deployment | awk '{print $1}'`
 
-    kubectl port-forward $KUBEPLUS_POD -n $KUBEPLUS_NS 8081:8090
+    kubectl port-forward $KUBEPLUS_POD -n $KUBEPLUS_NS 8081:8090 &
 
 or
 
@@ -327,13 +358,10 @@ or
 
     KUBEPLUS_NS=`oc get pods -A | grep kubeplus-deployment | awk '{print $1}'`
 
-    oc port-forward $KUBEPLUS_POD -n $KUBEPLUS_NS 8081:8090
+    oc port-forward $KUBEPLUS_POD -n $KUBEPLUS_NS 8081:8090 &
 
 
-Provider window 2
-------------------
-
-In provider window 2, get CPU/Memory/Storage/Network metrics for HelloWorldService instance:
+Get CPU, Memory, Storage, Network metrics for HelloWorldService instance:
 
 .. code-block:: bash
 
@@ -354,8 +382,3 @@ You should see output of the following form:
 
 .. image:: hello-world-metrics.png
    :align: center
-
-
-
-
-

@@ -11,6 +11,7 @@ print_help () {
     echo "        kubectl applogs"
     echo "        kubectl retrieve kubeconfig provider"
     echo "        kubectl retrieve kubeconfig consumer"
+    echo "        kubectl grantpermission consumer"
     echo ""
     echo "DESCRIPTION"
     echo "        KubePlus provides a suite of kubectl plugins to discover, monitor and troubleshoot Kubernetes applications."
@@ -27,6 +28,10 @@ print_help () {
     echo "        - kubectl retrieve kubeconfig provider"
     echo "        - kubectl retrieve kubeconfig consumer"
     echo "        These kubeconfig files are provided with limited RBAC permissions appropriate for the persona."
+    echo "        "
+    echo "        - kubectl grantpermission consumer "
+    echo "        This plugin enables provider to grant permission for the the created service to the consumer."
+    echo "        A consumer will be able to create service instances only after that."
     exit 0
 }
 
