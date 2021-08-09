@@ -99,6 +99,20 @@ We need to do this to use the locally built images when testing code changes.
 	$ eval $(minikube docker-env)
 
 Now we are ready to work on the code.
+
+Code Organization
+------------------
+
+KubePlus is made up of following components:
+
+- an init container that sets up required KubePlus artifacts such as ServiceAccounts, CRDs, etc. (available in ``$KUBEPLUS_HOME/deploy/`` folder)
+- the mutating webhook (available in ``$KUBEPLUS_HOME/mutating-webhook`` folder)
+- a mutating webhook helper (available in ``$KUBEPLUS_HOME/mutating-webhook-helper`` folder)
+- the platform operator (available in ``$KUBEPLUS_HOME/platform-operator`` folder)
+- the helmer container (available in ``$KUBEPLUS_HOME/platform-operator/helm-pod`` folder)
+- consumerui (available in ``$KUBEPLUS_HOME/consumerui`` folder)
+
+
 Use vi/emacs to modify any part of the code.
 In order to test the changes, you will need to build the code, deploy KubePlus, 
 and run some example (``hello-world`` is a good example for testing purposes).
@@ -119,6 +133,8 @@ Deploy KubePlus
 
 	$ cd $KUBEPLUS_HOME/deploy
 	$ kubectl create -f kubeplus-components-minikube.yaml
+
+The ``kubeplus-components-minikube.yaml`` refers to the latest tags for each of the components. Also, the ``imagePullPolicy`` is set to ``Never``. If you want to test a particular component tag available on CloudARK's public GCR then don't forget to change the imagePullPolicy to either ``IfNotPresent`` or ``Always``.
 
 Check Logs
 -----------

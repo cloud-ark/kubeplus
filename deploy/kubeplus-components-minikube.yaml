@@ -84,7 +84,7 @@ spec:
       initContainers:
       - name: webhook-cert-setup
         image: gcr.io/cloudark-kubeplus/webhook-tls-getter:latest
-        imagePullPolicy: Always
+        imagePullPolicy: Never 
         env:
           - name: KUBEPLUS_NAMESPACE
             valueFrom:
@@ -121,7 +121,7 @@ spec:
         command: [ "/platform-operator"]
       - name: consumerui
         image: gcr.io/cloudark-kubeplus/consumerui:latest
-        imagePullPolicy: Always
+        imagePullPolicy: Never
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
         image: gcr.io/cloudark-kubeplus/helm-pod:latest
