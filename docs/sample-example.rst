@@ -104,6 +104,8 @@ Here is the hello-world-resource-composition.yaml file. Save it as hello-world-r
 	      # as part of calculating the monitoring statistics.
 	      monitorRelationships: all
 
+The ``respolicy`` section in the resource composition defines the ``ResourcePolicy`` that the provider configures for this service. Here it defines the cpu and memory requests and limits that need to be configured for service instances of this service.  
+
 Create hello-world-resource-composition as follows:
 
 .. code-block:: bash
@@ -151,6 +153,7 @@ The consumer UI is part of KubePlus and runs on the cluster. Access it as follow
 .. code-block:: bash
 
 	$ wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/open-consumer-ui.sh
+	$ chmod +x open-consumer-ui.sh
 	$ ./open-consumer-ui.sh
 
 The HelloWorldService will be available at following URL:
@@ -159,12 +162,14 @@ The HelloWorldService will be available at following URL:
 
 	$ http://localhost:5000/service/HelloWorldService
 
-If you are working with the KubePlus Vagrant VM access the service at:
+If you are working with the KubePlus Vagrant VM, access the service at following URL:
 
 .. code-block:: bash
 
 	$ http://192.168.33.10:5000/service/HelloWorldService
 
+The UI provides a form to input values that need to be provided when creating a service instance. You can also check the API documentation for the service on the UI.
+Because the provider has granted permission to the consumer to create the HelloWorldService instances, you will be able to create an instance of HelloWorldService through the UI. Once a service instance has been created, the UI displays cpu, memory, storage, network metrics for the instance, and resource relationship graph which shows all the Kubernetes resources that are created as part of that instance and how they are related to one another.
 
 **Using CLI**
 
@@ -190,7 +195,7 @@ If you are working with the KubePlus Vagrant VM access the service at:
 
 This should return without any errors.
 
-3. Check the HellowWorldService API documentation
+3. Check the HelloWorldService API documentation
 
 .. code-block:: bash
 
@@ -340,7 +345,7 @@ or
 Get HelloWorldService instance metrics (provider/consumer window)
 ---------------------------------------------------------------------
 
-Back on the provider window, perform following steps:
+On the provider window or the consumer window, perform following steps:
 
 .. code-block:: bash
 
@@ -361,7 +366,7 @@ or
     oc port-forward $KUBEPLUS_POD -n $KUBEPLUS_NS 8081:8090 &
 
 
-Get CPU, Memory, Storage, Network metrics for HelloWorldService instance:
+Get cpu, memory, storage, network metrics for HelloWorldService instance:
 
 .. code-block:: bash
 

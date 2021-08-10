@@ -136,6 +136,7 @@ spec:
       monitorRelationships: all
 </pre></div>
 </div>
+<p>The <code class="docutils literal notranslate"><span class="pre">respolicy</span></code> section in the resource composition defines the <code class="docutils literal notranslate"><span class="pre">ResourcePolicy</span></code> that the provider configures for this service. Here it defines the cpu and memory requests and limits that need to be configured for service instances of this service.</p>
 <p>Create hello-world-resource-composition as follows:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span> --kubeconfig<span class="o">=</span>provider.conf
 </pre></div>
@@ -168,6 +169,7 @@ KubePlus provides.</p>
 <p><strong>Using Consumer UI</strong></p>
 <p>The consumer UI is part of KubePlus and runs on the cluster. Access it as follows:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/open-consumer-ui.sh
+$ chmod +x open-consumer-ui.sh
 $ ./open-consumer-ui.sh
 </pre></div>
 </div>
@@ -175,10 +177,12 @@ $ ./open-consumer-ui.sh
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ http://localhost:5000/service/HelloWorldService
 </pre></div>
 </div>
-<p>If you are working with the KubePlus Vagrant VM access the service at:</p>
+<p>If you are working with the KubePlus Vagrant VM, access the service at following URL:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ http://192.168.33.10:5000/service/HelloWorldService
 </pre></div>
 </div>
+<p>The UI provides a form to input values that need to be provided when creating a service instance. You can also check the API documentation for the service on the UI.
+Because the provider has granted permission to the consumer to create the HelloWorldService instances, you will be able to create an instance of HelloWorldService through the UI. Once a service instance has been created, the UI displays cpu, memory, storage, network metrics for the instance, and resource relationship graph which shows all the Kubernetes resources that are created as part of that instance and how they are related to one another.</p>
 <p><strong>Using CLI</strong></p>
 <ol class="arabic simple">
 <li><p>Install KubePlus kubectl plugins</p></li>
@@ -201,7 +205,7 @@ or
 </div>
 <p>This should return without any errors.</p>
 <ol class="arabic simple" start="3">
-<li><p>Check the HellowWorldService API documentation</p></li>
+<li><p>Check the HelloWorldService API documentation</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl man HelloWorldService
 </pre></div>
@@ -314,7 +318,7 @@ curl localhost:8082
 </div>
 <div class="section" id="get-helloworldservice-instance-metrics-provider-consumer-window">
 <h2>Get HelloWorldService instance metrics (provider/consumer window)</h2>
-<p>Back on the provider window, perform following steps:</p>
+<p>On the provider window or the consumer window, perform following steps:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">KUBEPLUS_POD</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
 
 <span class="nv">KUBEPLUS_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
@@ -330,7 +334,7 @@ kubectl port-forward <span class="nv">$KUBEPLUS_POD</span> -n <span class="nv">$
 oc port-forward <span class="nv">$KUBEPLUS_POD</span> -n <span class="nv">$KUBEPLUS_NS</span> <span class="m">8081</span>:8090 <span class="p">&amp;</span>
 </pre></div>
 </div>
-<p>Get CPU, Memory, Storage, Network metrics for HelloWorldService instance:</p>
+<p>Get cpu, memory, storage, network metrics for HelloWorldService instance:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
 </pre></div>
 </div>
