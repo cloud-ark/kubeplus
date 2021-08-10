@@ -59,12 +59,17 @@ Once the appropriate CLI is installed, follow these steps.</p>
 <li><p>Consumer window</p></li>
 </ul>
 </div>
-<div class="section" id="kubeplus-namespace">
-<h2>KubePlus Namespace</h2>
+<div class="section" id="kubeplus-installation">
+<h2>KubePlus Installation</h2>
 <p>Set KUBEPLUS_NS environment variable to the NAMESPACE in which you have installed KubePlus. For OpenShift users, the namespace needs to be ‘openshift-operators’.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">KUBEPLUS_NS</span><span class="o">=</span>&lt;Namespace&gt;
 </pre></div>
 </div>
+<p>Make sure KubePlus Pod is running (Status is ‘RUNNING’ and all 5 containers are ready).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get pods -n <span class="nv">$KUBEPLUS_NS</span>
+</pre></div>
+</div>
+<p>If KubePlus Pod is not running then <cite>install KubePlus first</cite>.</p>
 </div>
 <div class="section" id="get-provider-and-consumer-kubeconfigs">
 <h2>Get provider and consumer kubeconfigs</h2>
