@@ -1,4 +1,4 @@
-## KubePlus - Kubernetes Operator to deliver Helm charts as-a-service
+## KubePlus - Kubernetes SaaS Operator to deliver Helm charts as-a-service
 
 As enterprise adoption of Kubernetes is growing, we see multiple teams collaborate on a Kubernetes cluster to realize the broader organizational goals. Typically, there is one team that is offering a service that the other team is looking to consume. It can be an ISV offering a service for their data & analytics software that their customer is looking to consume or it can be a platform team offering a service for an internal application that the product team is planning to use (e.g secret management, data processing etc.). Such teams can be thought of as providers and consumers in the context of delivering and consuming software on Kubernetes. The software for which providers are delivering a service is generally packaged as a Helm chart.
 

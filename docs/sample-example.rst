@@ -19,14 +19,24 @@ Open two command terminal windows. Name them as:
 - Provider window
 - Consumer window 
 
-KubePlus Namespace
---------------------
+KubePlus Installation
+----------------------
 
 Set KUBEPLUS_NS environment variable to the NAMESPACE in which you have installed KubePlus. For OpenShift users, the namespace needs to be 'openshift-operators'.
 
 .. code-block:: bash
 
     KUBEPLUS_NS=<Namespace>
+
+Make sure KubePlus Pod is running (Status is 'RUNNING' and all 5 containers are ready).
+
+.. code-block::	bash
+
+	kubectl get pods -n $KUBEPLUS_NS
+
+If KubePlus Pod is not running then `install KubePlus first`.
+
+.. _install KubePlus first: https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html
 
 Get provider and consumer kubeconfigs
 --------------------------------------

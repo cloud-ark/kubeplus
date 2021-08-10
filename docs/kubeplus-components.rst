@@ -237,6 +237,10 @@ Here are examples of using above annotations on community Operators.
 
 **Moodle Operator**
 
+`Moodle Operator`_ defines and manages Moodle CRD.
+
+.. _Moodle Operator: https://github.com/cloud-ark/kubeplus-operators
+
 Annotations on Moodle Custom Resource Definition (CRD) are shown below:
 
 .. code-block:: yaml
