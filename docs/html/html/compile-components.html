@@ -47,7 +47,14 @@
 <ul class="simple">
 <li><p>Install Vagrant (latest)</p></li>
 <li><p>Install VirtualBox (latest)</p></li>
+<li><p>Install Git Bash (for Windows)</p></li>
 </ul>
+<p>If you are on Windows host then open a git bash terminal and perform
+the following steps through that terminal.
+Note that adding the box and spinning up the Vagrant VM can take some
+time for the first time. On Windows hosts we have noticed that the
+git bash terminal can become stuck. In such a case open another git bash
+terminal and ssh into the Vagrant VM.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ git clone --depth <span class="m">1</span> https://github.com/cloud-ark/kubeplus.git
 $ <span class="nb">cd</span> kubeplus
 $ vagrant box add bento/ubuntu-18.04
@@ -64,22 +71,10 @@ $ docker version
 $ minikube version
 $ kubectl version
 $ helm version
-$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/local/go/bin
-$ go version
 </pre></div>
 </div>
-<p>ADD PATH=$PATH:/usr/local/go/bin to ~/.profile</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ vi ~/.profile
-$ <span class="nb">source</span> ~/.profile
-</pre></div>
-</div>
-<p>In case any of the above commands fail, you can manually install the tools inside
-the Vagrant VM. Here is the command for installing Golang.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget -c https://dl.google.com/go/go1.14.5.linux-amd64.tar.gz -O - <span class="p">|</span> sudo tar -xz -C /usr/local
-</pre></div>
-</div>
-<p>Note that the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder on your host machine is mapped under <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code>
-directory inside the Vagrant VM. Any files that you want to copy back from the Vagrant VM to the host, place them in <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> folder. Then access them from your host machine in the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder.</p>
+<p>In case any of the above commands fail, manually install the tools inside the Vagrant VM.</p>
+<p>Note that the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder on your host machine is mapped under <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> directory inside the Vagrant VM. Any files that you want to copy back from the Vagrant VM to the host, place them in <code class="docutils literal notranslate"><span class="pre">/vagrant</span></code> folder. Then access them from your host machine in the <code class="docutils literal notranslate"><span class="pre">kubeplus</span></code> folder.</p>
 <div class="section" id="test-sample-examples">
 <h2>Test sample examples</h2>
 <p>Start the Minikube Kubernetes cluster.</p>
@@ -89,8 +84,38 @@ $ kubectl get pods -A
 </div>
 <p>Once Kubernetes cluster is up, try the <code class="docutils literal notranslate"><span class="pre">hello-world</span></code> example by following steps from <a class="reference external" href="https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html">getting started guide</a>.</p>
 </div>
+<div class="section" id="vagrant-vm-access">
+<h2>Vagrant VM access</h2>
+<ul class="simple">
+<li><p>Vagrant VM IP: <code class="docutils literal notranslate"><span class="pre">192.168.33.10</span></code></p></li>
+<li><p>Access consumer ui on Vagrant VM (example of HelloWorldService): <code class="docutils literal notranslate"><span class="pre">http://192.168.33.10:5000/service/HelloWorldService#</span></code></p></li>
+<li><p>SSH into Vagrant VM: <code class="docutils literal notranslate"><span class="pre">vagrant</span> <span class="pre">ssh</span></code></p></li>
+<li><p>Copy files from Vagrant VM to the Host. Example</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl connections Pod kubeplus-deployment-fddd-ddd default -o png
+$ Output available <span class="k">in</span>: /home/vagrant/plugins/connections-op.json.gv.png
+$ cp plugins/connections-op.json.gv.png /vagrant/.
+</pre></div>
+</div>
+<p>On the Host go to the directory where you have cloned kubeplus. The copied
+file will be available there.</p>
+</div>
 <div class="section" id="work-on-the-code">
 <h2>Work on the code</h2>
+<p>Make sure that Golang is installed correctly on the Vagrant VM.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/usr/local/go/bin
+$ go version
+</pre></div>
+</div>
+<p>ADD PATH=$PATH:/usr/local/go/bin to ~/.profile</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ vi ~/.profile
+$ <span class="nb">source</span> ~/.profile
+</pre></div>
+</div>
+<p>In case Golang is not properly installed, here is the command to install it.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget -c https://dl.google.com/go/go1.14.5.linux-amd64.tar.gz -O - <span class="p">|</span> sudo tar -xz -C /usr/local
+</pre></div>
+</div>
 <p>In order to work on the code, you can clone a fresh copy kubeplus and place it in the path where Golang compiler expects it (which is, <code class="docutils literal notranslate"><span class="pre">~/go/src/github.com/cloud-ark</span></code>).</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> ~/
 $ mkdir -p go/src/github.com/cloud-ark
@@ -112,14 +137,6 @@ We need to do this to use the locally built images when testing code changes.</p
 </pre></div>
 </div>
 <p>Now we are ready to work on the code.</p>
-</div>
-<div class="section" id="vagrant-vm-access">
-<h2>Vagrant VM access</h2>
-<ul class="simple">
-<li><p>Vagrant VM IP: <code class="docutils literal notranslate"><span class="pre">192.168.33.10</span></code></p></li>
-<li><p>Access consumer ui on Vagrant VM (example of HelloWorldService): <code class="docutils literal notranslate"><span class="pre">http://192.168.33.10:5000/service/HelloWorldService#</span></code></p></li>
-<li><p>SSH into Vagrant VM: <code class="docutils literal notranslate"><span class="pre">vagrant</span> <span class="pre">ssh</span></code></p></li>
-</ul>
 </div>
 <div class="section" id="code-organization">
 <h2>Code Organization</h2>
