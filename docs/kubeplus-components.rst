@@ -221,13 +221,12 @@ resource topologies. It does that by discovering Custom Resource relationship gr
    resource/specproperty-relationship
    resource/annotation-relationship
 
-The 'composition' annotation is used to identify the list of Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance.
-The three relationship annotations are used to declare label, spec-property, and annotation based relationships that instances of this Custom Resource can have with other Kubernetes resources.
+These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers.
 
-These annotations are general and can be used with any Operator/CRD.
-They need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers.
+The 'composition' annotation is used to specify the list of Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance.
+The three relationship annotations are used to declare label, spec-property, and annotation based relationships that instances of a Custom Resource can have with other Kubernetes resources.
 
-KubePlus adds the ``annotation-relationship`` annotation to the CRD of the new API that is registered via ``ResourceComposition``. For every resource that is defined in the underlying Helm chart, KubePlus adds  a ``created-by: kubeplus`` annotation. So in the ``annotation-relationship`` annotation on the new CRD it adds this name-value pair.
+KubePlus adds the ``annotation-relationship`` annotation to the CRD of the new API that is registered via ``ResourceComposition``. For every resource that is defined in the underlying Helm chart, KubePlus adds  a ``created-by: kubeplus`` annotation. So in the ``annotation-relationship`` annotation on the new CRD it adds this name-value pair as the value of this relationship.
 
 
 CRD annotations on community Operators
