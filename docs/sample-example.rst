@@ -34,7 +34,7 @@ Make sure KubePlus Pod is running (Status is 'RUNNING' and all 5 containers are 
 
 	kubectl get pods -n $KUBEPLUS_NS
 
-If KubePlus Pod is not running then `install KubePlus first`.
+If KubePlus Pod is not running then `install KubePlus first`_.
 
 .. _install KubePlus first: https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html
 
