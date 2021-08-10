@@ -11,6 +11,14 @@ If you want to use Vagrant based environment, follow these steps.
 
 - Install Vagrant (latest)
 - Install VirtualBox (latest)
+- Install Git Bash (for Windows)
+
+If you are on Windows host then open a git bash terminal and perform
+the following steps through that terminal.
+Note that adding the box and spinning up the Vagrant VM can take some
+time for the first time. On Windows hosts we have noticed that the
+git bash terminal can become stuck. In such a case open another git bash
+terminal and ssh into the Vagrant VM. 
 
 .. code-block:: bash
 
@@ -32,25 +40,10 @@ Once Vagrant VM has started
 	$ minikube version
 	$ kubectl version
 	$ helm version
-	$ export PATH=$PATH:/usr/local/go/bin
-	$ go version
 
-ADD PATH=$PATH:/usr/local/go/bin to ~/.profile
+In case any of the above commands fail, manually install the tools inside the Vagrant VM. 
 
-.. code-block:: bash
-
-	$ vi ~/.profile
-	$ source ~/.profile
-
-In case any of the above commands fail, you can manually install the tools inside
-the Vagrant VM. Here is the command for installing Golang.
-
-.. code-block:: bash
-
-	$ wget -c https://dl.google.com/go/go1.14.5.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local
-
-Note that the ``kubeplus`` folder on your host machine is mapped under ``/vagrant``
-directory inside the Vagrant VM. Any files that you want to copy back from the Vagrant VM to the host, place them in ``/vagrant`` folder. Then access them from your host machine in the ``kubeplus`` folder.
+Note that the ``kubeplus`` folder on your host machine is mapped under ``/vagrant`` directory inside the Vagrant VM. Any files that you want to copy back from the Vagrant VM to the host, place them in ``/vagrant`` folder. Then access them from your host machine in the ``kubeplus`` folder.
 
 
 Test sample examples
@@ -68,8 +61,49 @@ Once Kubernetes cluster is up, try the ``hello-world`` example by following step
 .. _getting started guide: https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html
 
 
+Vagrant VM access
+------------------
+
+- Vagrant VM IP: ``192.168.33.10``
+
+- Access consumer ui on Vagrant VM (example of HelloWorldService): ``http://192.168.33.10:5000/service/HelloWorldService#``
+
+- SSH into Vagrant VM: ``vagrant ssh``
+
+- Copy files from Vagrant VM to the Host. Example
+
+.. code-block:: bash
+
+	$ kubectl connections Pod kubeplus-deployment-fddd-ddd default -o png
+	$ Output available in: /home/vagrant/plugins/connections-op.json.gv.png
+	$ cp plugins/connections-op.json.gv.png /vagrant/.
+
+On the Host go to the directory where you have cloned kubeplus. The copied
+file will be available there.
+
+
 Work on the code
 -----------------
+
+Make sure that Golang is installed correctly on the Vagrant VM.
+
+.. code-block:: bash
+
+	$ export PATH=$PATH:/usr/local/go/bin
+	$ go version
+
+ADD PATH=$PATH:/usr/local/go/bin to ~/.profile
+
+.. code-block:: bash
+
+	$ vi ~/.profile
+	$ source ~/.profile
+
+In case Golang is not properly installed, here is the command to install it.
+
+.. code-block:: bash
+
+	$ wget -c https://dl.google.com/go/go1.14.5.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local
 
 In order to work on the code, you can clone a fresh copy kubeplus and place it in the path where Golang compiler expects it (which is, ``~/go/src/github.com/cloud-ark``).
 
@@ -100,14 +134,6 @@ We need to do this to use the locally built images when testing code changes.
 
 Now we are ready to work on the code.
 
-Vagrant VM access
-------------------
-
-- Vagrant VM IP: ``192.168.33.10``
-
-- Access consumer ui on Vagrant VM (example of HelloWorldService): ``http://192.168.33.10:5000/service/HelloWorldService#``
-
-- SSH into Vagrant VM: ``vagrant ssh``
 
 Code Organization
 ------------------
@@ -125,6 +151,7 @@ KubePlus is made up of following components:
 Use vi/emacs to modify any part of the code.
 In order to test the changes, you will need to build the code, deploy KubePlus, 
 and run some example (``hello-world`` is a good example for testing purposes).
+
 
 Build code
 -----------
