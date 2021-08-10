@@ -46,4 +46,8 @@ File an Issue with following information:
 
   * Sample YAMLs that you were using
 
-  * Image tags from deploy/rc.yaml, platform-operator/artifacts/deployment/deployment.yaml, mutating-webhook/deployment/deployment.yaml, mutating-webhook-helper/deployment.yaml
+  * KubePlus deployment details: 
+    - How was KubePlus deployed? (Helm chart or directly from KubePlus deployment manifests available in deploy folder)
+    - If using Helm then the Helm chart version used.
+    - If directly from KubePlus deployment manifests then Image tags for all the 
+      KubePlus components

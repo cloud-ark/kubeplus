@@ -137,7 +137,7 @@ The values for above fields can be statically defined, or they can be customized
 
 **ResourceMonitor**
 
-ResourcMonitor defines the monitoring requirements. The monitoring metrics that are collected consist of CPU, Memory, Storage and Network (coming soon) for all the Pods that are related to a resource instance. The ``monitorRelationships`` attribute defines what all relationships to track to build the monitoring metrics. The supported values for it are ``all`` and ``owner``. In Kubernetes resources are related to one another through four different relationships - ownerReferences, labels, spec properties, and annotations. 
+ResourcMonitor defines the monitoring requirements. The monitoring metrics that are collected consist of CPU, Memory, Storage and Network for all the Pods that are related to a resource instance. The ``monitorRelationships`` attribute defines what all relationships to track to build the monitoring metrics. The supported values for it are ``all`` and ``owner``. In Kubernetes resources are related to one another through four different relationships - ownerReferences, labels, spec properties, and annotations. 
 Attribute value ``all`` indicates that all these relationships be used to discover the Pods. Attribute value ``owner`` indicates that only ownerReference relationship be used to discover the Pods. When ``ResourceMonitor`` is used as part of ``ResourceComposition`` definition like above, ``monitorRelationships`` should be set to ``all`` so that we use all the Pods that are created as part of the underlying Helm chart when calculating the metrics.
 Collected metrics are output in Prometheus format. 
 
@@ -157,7 +157,7 @@ Here is the resource relationship graph for MysqlSevice created above discovered
 
 .. image:: mysqlservice-connections.png
    :height: 350px
-   :width: 800px
+   :width: 1000px
    :align: center
 
 Check the available KubePlus kubectl plugins by running: ``kubectl kubeplus commands``
@@ -177,6 +177,7 @@ Check the available KubePlus kubectl plugins by running: ``kubectl kubeplus comm
               kubectl applogs
               kubectl retrieve kubeconfig provider
               kubectl retrieve kubeconfig consumer
+              kubectl grantpermission consumer
 
       DESCRIPTION
               KubePlus provides a suite of kubectl plugins to discover, monitor and troubleshoot Kubernetes applications.
@@ -193,6 +194,9 @@ Check the available KubePlus kubectl plugins by running: ``kubectl kubeplus comm
               - kubectl retrieve kubeconfig provider
               - kubectl retrieve kubeconfig consumer
               These kubeconfig files are provided with limited RBAC permissions appropriate for the persona.
+              - kubectl grantpermission consumer 
+              This plugin enables provider to grant permission for the created service to the consumer. A consumer will be able to create service instances only after that.
+
 
 In order to use these plugins you need to add KubePlus folder to your PATH variable.
 
@@ -208,26 +212,28 @@ Resource relationship graphs
 -----------------------------
 
 For resource policy enforcement and monitoring, KubePlus needs to discover
-resource topologies. It does that building and maintaining Custom Resource relationship graphs. In order to do this, KubePlus depends on the following annotations: 
+resource topologies. It does that by discovering Custom Resource relationship graphs. In order to do this, KubePlus depends on the following annotations: 
 
 .. code-block:: bash
 
    resource/composition
-
-The 'composition' annotation is used to define Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance.
-
-
-.. code-block:: bash
-
-   resource/annotation-relationship
    resource/label-relationship
    resource/specproperty-relationship
+   resource/annotation-relationship
 
-The relationship annotations are used to declare annotation / label / spec-property based relationships that instances of this Custom Resource can have with other Resources.   
+The 'composition' annotation is used to identify the list of Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance.
+The three relationship annotations are used to declare label, spec-property, and annotation based relationships that instances of this Custom Resource can have with other Kubernetes resources.
 
-KubePlus adds these annotations to the CRD for the new API that is registered via ``ResourceComposition``. The annotations are general and can be used with any Operator/CRD.
-Above annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers.
-However, it is possible for KubePlus to build the resource relationship graph even if the annotations are not specified. In such a case KubePlus will discover only owner relationships though. Here are some examples of using these annotations on community Operators.
+These annotations are general and can be used with any Operator/CRD.
+They need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers.
+
+KubePlus adds the ``annotation-relationship`` annotation to the CRD of the new API that is registered via ``ResourceComposition``. For every resource that is defined in the underlying Helm chart, KubePlus adds  a ``created-by: kubeplus`` annotation. So in the ``annotation-relationship`` annotation on the new CRD it adds this name-value pair.
+
+
+CRD annotations on community Operators
+---------------------------------------
+
+Here are examples of using above annotations on community Operators.
 
 **Moodle Operator**
 
@@ -265,28 +271,37 @@ The composition annotation declares the set of Kubernetes resources that are cre
 
 **Multus Operator**
 
-Here are examples of defining the ``resource/label-relationship`` and ``resoure/annotation-relationship`` annotations.
+The `Multus Operator`_ defines and manages NetworkAttachmentDefinition CRD.
+
+.. _Multus Operator: https://github.com/k8snetworkplumbingwg/multus-cni
 
 .. code-block:: bash
 
   resource/annotation-relationship: on:Pod, key:k8s.v1.cni.cncf.io/networks, value:INSTANCE.metadata.name
 
-This annotation-relationship annotation is defined on NetworkAttachmentDefinition CRD available from the Multus Operator. It defines that the relationship between a Pod and an instance of NetworkAttachmentDefinition Custom Resource instance is through the ``k8s.v1.cni.cncf.io/networks`` annotation. This annotation needs to be defined on a Pod and the value of the annotation is the name of a NetworkAttachmentDefinition Custom resource instance.
+The annotation-relationship annotation is defined on the NetworkAttachmentDefinition CRD. It defines that the relationship between a Pod and an instance of NetworkAttachmentDefinition Custom Resource instance is through the ``k8s.v1.cni.cncf.io/networks`` annotation. This annotation needs to be defined on a Pod and the value of the annotation is the name of a NetworkAttachmentDefinition Custom resource instance.
 
-**Restic Operator**
+**Stash Operator**
+
+The `Stash Operator`_ defines and manages Restic CRD.
+
+.. _Stash Operator: https://github.com/stashed/stash
 
 .. code-block:: bash
 
   resource/specproperty-relationship: "on:INSTANCE.spec.volumeMounts, value:Deployment.spec.containers.volumemounts.mountpath"
   resource/label-relationship: "on:Deployment, value:INSTANCE.spec.selector"
 
-Above annotations are defined on the Restic Custom Resource available from the Stash Operator. Restic Custom Resource needs two things as input. First, the mount path of the Volume that needs to be backed up. Second, the Deployment in which the Volume is mounted needs to be given some label and that label needs to be specified in the Restic Custom Resource's selector.
+Above annotations are defined on the Restic CRD. Restic Custom Resource needs two things as input. First, the mount path of the Volume that needs to be backed up. Second, the Deployment in which the Volume is mounted needs to be given some label and that label needs to be specified in the Restic Custom Resource's selector.
 
-**CRD annotations for Community Operators**
+**Annotated Operators**
 
 We maintain a listing of annotated community Operators. Check it out `here`_.
 
 .. _here: https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md
+
+We will be happy to include your annotated Operator in this list.
+Just submit a PR to KubePlus repo with details about the CRDs that your Operator manages and all the relationships that it depends on when handling its custom resource instances.
 
 
 

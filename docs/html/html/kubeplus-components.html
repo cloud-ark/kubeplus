@@ -146,7 +146,7 @@ spec:
 </ul>
 <p>The values for above fields can be statically defined, or they can be customized per resource instance of the new API. If it is the latter then the value needs to be specified to be input from the underlying <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code>. In the above example, requests and limits are statically defined, whereas <code class="docutils literal notranslate"><span class="pre">nodeSelector</span></code> is defined to be different per resource instance of the new API. Hence its value is specified to be ingested from the <code class="docutils literal notranslate"><span class="pre">nodeName</span></code> field from the underlying <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code>. Note that if <code class="docutils literal notranslate"><span class="pre">nodeName</span></code> field is not defined in <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code> then this mutation will be a noop.</p>
 <p><strong>ResourceMonitor</strong></p>
-<p>ResourcMonitor defines the monitoring requirements. The monitoring metrics that are collected consist of CPU, Memory, Storage and Network (coming soon) for all the Pods that are related to a resource instance. The <code class="docutils literal notranslate"><span class="pre">monitorRelationships</span></code> attribute defines what all relationships to track to build the monitoring metrics. The supported values for it are <code class="docutils literal notranslate"><span class="pre">all</span></code> and <code class="docutils literal notranslate"><span class="pre">owner</span></code>. In Kubernetes resources are related to one another through four different relationships - ownerReferences, labels, spec properties, and annotations.
+<p>ResourcMonitor defines the monitoring requirements. The monitoring metrics that are collected consist of CPU, Memory, Storage and Network for all the Pods that are related to a resource instance. The <code class="docutils literal notranslate"><span class="pre">monitorRelationships</span></code> attribute defines what all relationships to track to build the monitoring metrics. The supported values for it are <code class="docutils literal notranslate"><span class="pre">all</span></code> and <code class="docutils literal notranslate"><span class="pre">owner</span></code>. In Kubernetes resources are related to one another through four different relationships - ownerReferences, labels, spec properties, and annotations.
 Attribute value <code class="docutils literal notranslate"><span class="pre">all</span></code> indicates that all these relationships be used to discover the Pods. Attribute value <code class="docutils literal notranslate"><span class="pre">owner</span></code> indicates that only ownerReference relationship be used to discover the Pods. When <code class="docutils literal notranslate"><span class="pre">ResourceMonitor</span></code> is used as part of <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code> definition like above, <code class="docutils literal notranslate"><span class="pre">monitorRelationships</span></code> should be set to <code class="docutils literal notranslate"><span class="pre">all</span></code> so that we use all the Pods that are created as part of the underlying Helm chart when calculating the metrics.
 Collected metrics are output in Prometheus format.</p>
 <p>The resource section in both <code class="docutils literal notranslate"><span class="pre">ResourcePolicy</span></code> and <code class="docutils literal notranslate"><span class="pre">ResourceMonitor</span></code> specifies the GVK (group, version, kind) of the resource for which policy needs to be enforced or that needs to be monitored. Set these to be the same as resource that is defined as part of <code class="docutils literal notranslate"><span class="pre">ResourceComposition.newResource.resource</span></code> section.
@@ -157,7 +157,7 @@ In the future we plan to support creation of <code class="docutils literal notra
 <p>KubePlus kubectl plugins enable users to discover, monitor and troubleshoot service instances. The primary plugin is: <code class="docutils literal notranslate"><span class="pre">`kubectl</span> <span class="pre">connections`</span></code>. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus constructs Kubernetes Resource relationship graphs at runtime providing it the ability to build resource topologies and offer fine grained visibility and control over the application service.</p>
 <p>Here is the resource relationship graph for MysqlSevice created above discovered using the kubectl connections command.</p>
 <p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">connections</span> <span class="pre">MysqlService</span> <span class="pre">mysql1</span></code></p>
-<a class="reference internal image-reference" href="_images/mysqlservice-connections.png"><img alt="_images/mysqlservice-connections.png" class="align-center" src="_images/mysqlservice-connections.png" style="width: 800px; height: 350px;" /></a>
+<a class="reference internal image-reference" href="_images/mysqlservice-connections.png"><img alt="_images/mysqlservice-connections.png" class="align-center" src="_images/mysqlservice-connections.png" style="width: 1000px; height: 350px;" /></a>
 <p>Check the available KubePlus kubectl plugins by running: <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">kubeplus</span> <span class="pre">commands</span></code></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$  kubectl kubeplus commands
 
@@ -172,6 +172,7 @@ In the future we plan to support creation of <code class="docutils literal notra
            kubectl applogs
            kubectl retrieve kubeconfig provider
            kubectl retrieve kubeconfig consumer
+           kubectl grantpermission consumer
 
    DESCRIPTION
            KubePlus provides a suite of kubectl plugins to discover, monitor and troubleshoot Kubernetes applications.
@@ -188,6 +189,8 @@ In the future we plan to support creation of <code class="docutils literal notra
            - kubectl retrieve kubeconfig provider
            - kubectl retrieve kubeconfig consumer
            These kubeconfig files are provided with limited RBAC permissions appropriate <span class="k">for</span> the persona.
+           - kubectl grantpermission consumer
+           This plugin enables provider to grant permission <span class="k">for</span> the created service to the consumer. A consumer will be able to create service instances only after that.
 </pre></div>
 </div>
 <p>In order to use these plugins you need to add KubePlus folder to your PATH variable.</p>
@@ -200,20 +203,22 @@ $ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</
 <div class="section" id="resource-relationship-graphs">
 <h2>Resource relationship graphs</h2>
 <p>For resource policy enforcement and monitoring, KubePlus needs to discover
-resource topologies. It does that building and maintaining Custom Resource relationship graphs. In order to do this, KubePlus depends on the following annotations:</p>
+resource topologies. It does that by discovering Custom Resource relationship graphs. In order to do this, KubePlus depends on the following annotations:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>resource/composition
-</pre></div>
-</div>
-<p>The ‘composition’ annotation is used to define Kubernetes’s built-in resources that are created as part of instantiating a Custom Resource instance.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>resource/annotation-relationship
 resource/label-relationship
 resource/specproperty-relationship
+resource/annotation-relationship
 </pre></div>
 </div>
-<p>The relationship annotations are used to declare annotation / label / spec-property based relationships that instances of this Custom Resource can have with other Resources.</p>
-<p>KubePlus adds these annotations to the CRD for the new API that is registered via <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code>. The annotations are general and can be used with any Operator/CRD.
-Above annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers.
-However, it is possible for KubePlus to build the resource relationship graph even if the annotations are not specified. In such a case KubePlus will discover only owner relationships though. Here are some examples of using these annotations on community Operators.</p>
+<p>The ‘composition’ annotation is used to identify the list of Kubernetes’s built-in resources that are created as part of instantiating a Custom Resource instance.
+The three relationship annotations are used to declare label, spec-property, and annotation based relationships that instances of this Custom Resource can have with other Kubernetes resources.</p>
+<p>These annotations are general and can be used with any Operator/CRD.
+They need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers.</p>
+<p>KubePlus adds the <code class="docutils literal notranslate"><span class="pre">annotation-relationship</span></code> annotation to the CRD of the new API that is registered via <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code>. For every resource that is defined in the underlying Helm chart, KubePlus adds  a <code class="docutils literal notranslate"><span class="pre">created-by:</span> <span class="pre">kubeplus</span></code> annotation. So in the <code class="docutils literal notranslate"><span class="pre">annotation-relationship</span></code> annotation on the new CRD it adds this name-value pair.</p>
+</div>
+<div class="section" id="crd-annotations-on-community-operators">
+<h2>CRD annotations on community Operators</h2>
+<p>Here are examples of using above annotations on community Operators.</p>
 <p><strong>Moodle Operator</strong></p>
 <p>Annotations on Moodle Custom Resource Definition (CRD) are shown below:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apiextensions.k8s.io/v1beta1</span>
@@ -244,19 +249,22 @@ Level:3 kind:Service name:moodle1 Owner:Moodle/moodle1
 </pre></div>
 </div>
 <p><strong>Multus Operator</strong></p>
-<p>Here are examples of defining the <code class="docutils literal notranslate"><span class="pre">resource/label-relationship</span></code> and <code class="docutils literal notranslate"><span class="pre">resoure/annotation-relationship</span></code> annotations.</p>
+<p>The <a class="reference external" href="https://github.com/k8snetworkplumbingwg/multus-cni">Multus Operator</a> defines and manages NetworkAttachmentDefinition CRD.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>resource/annotation-relationship: on:Pod, key:k8s.v1.cni.cncf.io/networks, value:INSTANCE.metadata.name
 </pre></div>
 </div>
-<p>This annotation-relationship annotation is defined on NetworkAttachmentDefinition CRD available from the Multus Operator. It defines that the relationship between a Pod and an instance of NetworkAttachmentDefinition Custom Resource instance is through the <code class="docutils literal notranslate"><span class="pre">k8s.v1.cni.cncf.io/networks</span></code> annotation. This annotation needs to be defined on a Pod and the value of the annotation is the name of a NetworkAttachmentDefinition Custom resource instance.</p>
-<p><strong>Restic Operator</strong></p>
+<p>The annotation-relationship annotation is defined on the NetworkAttachmentDefinition CRD. It defines that the relationship between a Pod and an instance of NetworkAttachmentDefinition Custom Resource instance is through the <code class="docutils literal notranslate"><span class="pre">k8s.v1.cni.cncf.io/networks</span></code> annotation. This annotation needs to be defined on a Pod and the value of the annotation is the name of a NetworkAttachmentDefinition Custom resource instance.</p>
+<p><strong>Stash Operator</strong></p>
+<p>The <a class="reference external" href="https://github.com/stashed/stash">Stash Operator</a> defines and manages Restic CRD.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>resource/specproperty-relationship: <span class="s2">&quot;on:INSTANCE.spec.volumeMounts, value:Deployment.spec.containers.volumemounts.mountpath&quot;</span>
 resource/label-relationship: <span class="s2">&quot;on:Deployment, value:INSTANCE.spec.selector&quot;</span>
 </pre></div>
 </div>
-<p>Above annotations are defined on the Restic Custom Resource available from the Stash Operator. Restic Custom Resource needs two things as input. First, the mount path of the Volume that needs to be backed up. Second, the Deployment in which the Volume is mounted needs to be given some label and that label needs to be specified in the Restic Custom Resource’s selector.</p>
-<p><strong>CRD annotations for Community Operators</strong></p>
+<p>Above annotations are defined on the Restic CRD. Restic Custom Resource needs two things as input. First, the mount path of the Volume that needs to be backed up. Second, the Deployment in which the Volume is mounted needs to be given some label and that label needs to be specified in the Restic Custom Resource’s selector.</p>
+<p><strong>Annotated Operators</strong></p>
 <p>We maintain a listing of annotated community Operators. Check it out <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md">here</a>.</p>
+<p>We will be happy to include your annotated Operator in this list.
+Just submit a PR to KubePlus repo with details about the CRDs that your Operator manages and all the relationships that it depends on when handling its custom resource instances.</p>
 </div>
 </div>
 
