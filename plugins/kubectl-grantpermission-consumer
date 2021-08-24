@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if (( $# < 3 )); then
+    echo "kubectl grantpermission consumer <resourceplural>  <providerKubeconfig> <Namespace in which KubePlus is deployed>"
+    exit 0
+fi
+
+kubeplusNS=$3
+resPlural=$1
+providerKubeconfig=$2
+
+pythonPath=`which python`
+if [[ $? == 0 ]]; then
+	`$pythonPath /$KUBEPLUS_HOME/plugins/consumerkubeconfigretriever.py $kubeplusNS $resPlural $providerKubeconfig`
+fi
+
+if [[ $? == 0 ]]; then
+	echo "Consumer granted permission on $resPlural."
+fi
