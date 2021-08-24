@@ -155,8 +155,7 @@ and run some example (``hello-world`` is a good example for testing purposes).
 
 Build code
 -----------
-In each component folder a build script is provided (``./build-artifact.sh``).
-Use it as follows to build the code:
+In each of the above component folders a build script is provided (``./build-artifact.sh``). Use it as follows to build the code:
 
 .. code-block:: bash
 
@@ -171,6 +170,12 @@ Deploy KubePlus
 	$ kubectl create -f kubeplus-components-minikube.yaml
 
 The ``kubeplus-components-minikube.yaml`` refers to the latest tags for each of the components. Also, the ``imagePullPolicy`` is set to ``Never``. If you want to test a particular component tag available on CloudARK's public GCR then don't forget to change the imagePullPolicy to either ``IfNotPresent`` or ``Always``.
+
+Build Failure
+--------------
+
+If you see ``ErrImageNeverPull`` or ``CrashLoopBackOff`` then it means that you have not compiled all the components mentioned above. Go to each component directory and compile each component. Then delete KubePlus deployment and try again.
+
 
 Check Logs
 -----------
