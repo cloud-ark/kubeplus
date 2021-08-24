@@ -155,8 +155,7 @@ and run some example (<code class="docutils literal notranslate"><span class="pr
 </div>
 <div class="section" id="build-code">
 <h2>Build code</h2>
-<p>In each component folder a build script is provided (<code class="docutils literal notranslate"><span class="pre">./build-artifact.sh</span></code>).
-Use it as follows to build the code:</p>
+<p>In each of the above component folders a build script is provided (<code class="docutils literal notranslate"><span class="pre">./build-artifact.sh</span></code>). Use it as follows to build the code:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ./build-artifact.sh latest
 </pre></div>
 </div>
@@ -168,6 +167,10 @@ $ kubectl create -f kubeplus-components-minikube.yaml
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">kubeplus-components-minikube.yaml</span></code> refers to the latest tags for each of the components. Also, the <code class="docutils literal notranslate"><span class="pre">imagePullPolicy</span></code> is set to <code class="docutils literal notranslate"><span class="pre">Never</span></code>. If you want to test a particular component tag available on CloudARK’s public GCR then don’t forget to change the imagePullPolicy to either <code class="docutils literal notranslate"><span class="pre">IfNotPresent</span></code> or <code class="docutils literal notranslate"><span class="pre">Always</span></code>.</p>
+</div>
+<div class="section" id="build-failure">
+<h2>Build Failure</h2>
+<p>If you see <code class="docutils literal notranslate"><span class="pre">ErrImageNeverPull</span></code> or <code class="docutils literal notranslate"><span class="pre">CrashLoopBackOff</span></code> then it means that you have not compiled all the components mentioned above. Go to each component directory and compile each component. Then delete KubePlus deployment and try again.</p>
 </div>
 <div class="section" id="check-logs">
 <h2>Check Logs</h2>

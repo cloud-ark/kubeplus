@@ -8,7 +8,7 @@ artifacttype=$1
 
 if [ "$artifacttype" = "latest" ]; then
     export GO111MODULE=on; export GOOS=linux; go build .
-    docker build -t gcr.io/cloudark-kubeplus/mutating-webhook-helper:latest .
+    docker build --no-cache -t gcr.io/cloudark-kubeplus/mutating-webhook-helper:latest .
 fi
 
 if [ "$artifacttype" = "versioned" ]; then

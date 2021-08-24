@@ -25,7 +25,7 @@ KUBEPLUS_POD=`kubectl get pods -n $namespace | grep kubeplus | awk '{print $1}'`
   kubectl logs $KUBEPLUS_POD -n $namespace -c consumerui
   echo "     "
   echo "================== Mutating Webhook Helper ===================================="
-  kubectl logs $KUBEPLUS_POD -n $namespace -c mutating-webhook-helmer
+  kubectl logs $KUBEPLUS_POD -n $namespace -c mutating-webhook-helper
   echo "     "
 #  sleep 3
 #done
