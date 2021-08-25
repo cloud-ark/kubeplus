@@ -137,6 +137,17 @@ spec:
 <li><p>ResourceMonitoring section (defined under <cite>resmonitor</cite>)</p></li>
 </ul>
 <p>Creating an instance of ResourceComposition registers the specified new API in the cluster. When users create resources of this new API, the Helm chart that was defined as part of the registration of the new API gets deployed as a Helm release. The spec properties of this new API are all the values that are defined in <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code> of the registered Helm chart.</p>
+<p><em>Helm chart requirements</em></p>
+<p>Make sure that the underlying service Helm chart adheres to following restrictions:
+- The Helm chart should not contain Namespace definition. This
+is because all the Helm chart resources are going to be created in the new
+Namespace that KubePlus creates for that instance.
+The Namespace defined in the Helm chart will get created just as an object
+in the NS that KubePlus creates. But it won’t contain any of the actual service instance resources. They will be present in the NS that KubePlus has created.
+So defining NS in the Helm chart is superfluous and will lead to confusion.
+- The Helm chart should not take Namespace field as input through
+values.yaml. This is because the Namespace name so entered will
+be overridden by the NS that KubePlus creates.</p>
 <p><strong>ResourcePolicy</strong></p>
 <p>ResourcePolicy definition consists of specification of <em>Pod-level mutations</em> which will be applied to the Pods that are created when the Helm chart corresponding to the new API is deployed. Note that the Helm chart may or may not define Pods directly. There might be higher-level resources defined in the chart, such as Deployments, StatefulSets, or custom resources such as MysqlCluster, which internally create Pods. KubePlus is able to discover all the Pods for a particular Helm release and perform the mutations by modifying such Pods’ spec. The mutations are done before the Pods are actually created to ensure that there are no Pod restarts.</p>
 <p>Currently two mutations are supported as part of <code class="docutils literal notranslate"><span class="pre">podconfig</span></code> spec attribute:</p>
