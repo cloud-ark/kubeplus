@@ -69,7 +69,8 @@ def get_total_resources(service):
 
 	for instance in instance_list:
 		res = instance['name']
-		namespace = instance['namespace']
+		namespace = res # Each instance of CRD is installed in its own Namespace
+		#namespace = instance['namespace']
 
 		cpu, memory, storage, nwTransmitBytes, nwReceiveBytes = get_metrics(service, res, namespace)
 
@@ -95,6 +96,7 @@ def get_input_fields(serviceName):
 	version = ""
 	apiVersion = ""
 	fieldList = []
+        # invariant we want to maintain - fieldList should not contain namespace
 	if out != "":
 		lines = out.split("\n")
 		specFields = False
@@ -155,9 +157,11 @@ def get_field_names(service):
 	print(service)
 	kind, apiVersion, fields = get_input_fields(service)
 
-	# the name of the resource and namespace needs to be input as well.
-	if 'namespace' not in fields:
-		fields.insert(0,"namespace")
+	# the name of the resource needs to be input as well.
+        # We are not requiring namespace to be input since the consumer
+        # does not really know what value should be provided to the namespace value.
+	#if 'namespace' not in fields:
+	#	fields.insert(0,"namespace")
 	if 'name' not in fields:
 		fields.insert(0,"name") 
 	fields_dict = {}
@@ -208,8 +212,8 @@ def create_instance():
 	namespace = "default"
 	metadata["name"] = resName
 	res["metadata"] = metadata
-	if 'namespace' in fieldMap:
-		namespace = fieldMap["namespace"]
+	#if 'namespace' in fieldMap:
+	#	namespace = fieldMap["namespace"]
 	metadata["namespace"] = namespace
 	spec = {}
 	for k,v in fieldMap.items():
