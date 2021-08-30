@@ -2,7 +2,6 @@ apiVersion: mysql.presslabs.org/v1alpha1
 kind: MysqlCluster
 metadata:
   name: {{ .Values.tenantName }}
-  namespace: {{ .Values.namespace }}
 spec:
   replicas: 1 
   secretName: {{ .Values.tenantName }}-secret

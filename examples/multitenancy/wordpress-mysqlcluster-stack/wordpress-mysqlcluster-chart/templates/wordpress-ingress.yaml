@@ -5,7 +5,6 @@ metadata:
     # add an annotation indicating the issuer to use.
     cert-manager.io/cluster-issuer: wordpress-stack
   name: wordpress-ingress
-  namespace: {{ .Values.namespace }} 
 spec:
   rules:
   - host: myingress.com
