@@ -88,8 +88,7 @@ spec:
       serviceAccount: kubeplus
       initContainers:
       - name: webhook-cert-setup
-        # This is a minimal kubectl image based on Alpine Linux that signs certificates using the k8s extension api server
-        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.11
+        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.12
         imagePullPolicy: Always
         env:
           - name: KUBEPLUS_NAMESPACE
@@ -119,18 +118,18 @@ spec:
           mountPath: /etc/webhook/certs
           readOnly: true
       - name: mutating-webhook-helper
-        image: gcr.io/cloudark-kubeplus/mutating-webhook-helper:0.2.0 
+        image: gcr.io/cloudark-kubeplus/mutating-webhook-helper:0.2.1
         imagePullPolicy: Always
       - name: platform-operator
         image: gcr.io/cloudark-kubeplus/platform-operator:0.0.10
         imagePullPolicy: Always
         command: [ "/platform-operator"]
       - name: consumerui
-        image: gcr.io/cloudark-kubeplus/consumerui:0.0.1
+        image: gcr.io/cloudark-kubeplus/consumerui:0.0.2
         imagePullPolicy: Always
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
-        image: gcr.io/cloudark-kubeplus/helm-pod:0.1.0
+        image: gcr.io/cloudark-kubeplus/helm-pod:0.1.1
         imagePullPolicy: Always
         command: ["/root/helm-pod"]
         volumeMounts:
