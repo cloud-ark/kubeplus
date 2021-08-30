@@ -4,6 +4,5 @@ metadata:
   name: wp-service-tenant2
   namespace: wp-stack-ns2
 spec:
-  namespace: wp-stack-ns2
   tenantName: tenant2
   nodeName: gke-cluster-1-default-pool-b0ecddac-bqs2 

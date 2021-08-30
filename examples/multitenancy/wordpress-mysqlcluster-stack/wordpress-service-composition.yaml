@@ -11,7 +11,7 @@ spec:
       version: v1alpha1
       plural: wordpressservices 
     # URL of the Helm chart that contains Kubernetes resources that represent a workflow.
-    chartURL: https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/wordpress-mysqlcluster-stack/wordpress-mysqlcluster-chart-0.0.8.tgz?raw=true
+    chartURL: https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/wordpress-mysqlcluster-stack/wordpress-mysqlcluster-chart-0.0.9.tgz?raw=true
     chartName: wordpress-mysqlcluster-chart
   # respolicy defines the resource policy to be applied to instances of the specified custom resource.
   respolicy:
