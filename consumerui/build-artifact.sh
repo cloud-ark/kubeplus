@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if (( $# < 1 )); then
-    echo "./build-consumerui.sh <latest | versioned>"
+    echo "./build-artifact.sh <latest | versioned>"
 fi
 
 artifacttype=$1
