@@ -10,5 +10,5 @@ spec:
   selector:
     app: wordpress
     tier: frontend
-  type: LoadBalancer
+  type: NodePort
 
