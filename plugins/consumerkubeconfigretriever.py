@@ -61,9 +61,30 @@ class ConsumerKubeconfigRetriever(object):
 		ruleGroup3["resources"] = resourceGroup3
 		ruleGroup3["verbs"] = verbsGroup3
 
+		# Impersonate users, groups, serviceaccounts
+		ruleGroup9 = {}
+		apiGroup9 = [""]
+		resourceGroup9 = ["users","groups","serviceaccounts"]
+		verbsGroup9 = ["impersonate"]
+		ruleGroup9["apiGroups"] = apiGroup9
+		ruleGroup9["resources"] = resourceGroup9
+		ruleGroup9["verbs"] = verbsGroup9
+
+		# Pod/portforward to open consumerui
+		ruleGroup10 = {}
+		apiGroup10 = [""]
+		resourceGroup10 = ["pods/portforward"]
+		verbsGroup10 = ["create","get"]
+		ruleGroup10["apiGroups"] = apiGroup10
+		ruleGroup10["resources"] = resourceGroup10
+		ruleGroup10["verbs"] = verbsGroup10
+
 		ruleList = []
 		ruleList.append(ruleGroup1)
 		ruleList.append(ruleGroup2)
+		ruleList.append(ruleGroup3)
+		ruleList.append(ruleGroup9)
+		ruleList.append(ruleGroup10)
 		role["rules"] = ruleList
 
 		fp = open("./kubeplus-consumer-role.yaml", "w")
