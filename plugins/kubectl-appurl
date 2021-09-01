@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 source utils.sh
 
@@ -47,13 +47,15 @@ fi
 
 check_namespace $namespace $kubeconfig
 
-appPort=`python /$KUBEPLUS_HOME/plugins/appurl.py connections $kind $instance $namespace $kubeconfig`
+python3 /$KUBEPLUS_HOME/plugins/appurl.py connections $kind $instance $namespace $kubeconfig
 
-context=`kubectl config current-context $kubeconfig`
-if [[ $context == 'minikube' ]]; then
-  appIP=`minikube ip`
-  appURL="http://$appIP:$appPort"
-  echo "$appURL"
-fi
+#appPort=`python /$KUBEPLUS_HOME/plugins/appurl.py connections $kind $instance $namespace $kubeconfig`
+
+#context=`kubectl config current-context $kubeconfig`
+#if [[ $context == 'minikube' ]]; then
+#  appIP=`minikube ip`
+#  appURL="http://$appIP:$appPort"
+#  echo "$appURL"
+#fi
 
 
