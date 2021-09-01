@@ -25,7 +25,7 @@ class AppURLFinder(CRBase):
 	def get_svc_port(self, svcs, namespace, kubeconfig):
 		nodePort = -1
 		for svc in svcs:
-			cmd = 'kubectl get service ' + svc['Name'] + ' -n ' + namespace + ' -o json ' + kubeconfig
+			cmd = 'kubectl get service ' + svc['Name'] + ' -n ' + svc['Namespace'] + ' -o json ' + kubeconfig
 			#print(cmd)
 			try:
 				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
@@ -73,5 +73,6 @@ if __name__ == '__main__':
 	svcPort = appURLFinder.get_svc_port(svcs, namespace, kubeconfig)
 	appIP = appURLFinder.get_server_ip()
 	appURL = "http:" + appIP + ":" + str(svcPort)
+	appURL = appURL.strip()
 	#print("App port:" + str(svcPort))
-	print(appURL, file=sys.stderr)
+	print(appURL)

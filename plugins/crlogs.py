@@ -41,37 +41,6 @@ class CRLogs(CRBase):
 		except Exception as e:
 			print(e)
 
-	def get_resources_connections(self, kind, instance, namespace, kubeconfig):
-		platf = platform.system()
-		kubeplus_home = os.getenv('KUBEPLUS_HOME')
-		cmd = ''
-		json_output = {}
-		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' 
-		elif platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections '
-		else:
-			print("OS not supported:" + platf)
-			return json_output
-		kb_ns = self._get_kubeplus_namespace()
-		cmd = cmd + kind + ' ' + instance + ' ' + namespace + ' --output=json ' + kubeconfig + ' --ignore=ServiceAccount:default,Namespace:' + kb_ns
-		#print(cmd)
-		out = ''
-		try:
-			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-								   stderr=subprocess.PIPE, shell=True).communicate()[0]
-			out = out.decode('utf-8').strip()
-		except Exception as e:
-			print(e)
-		if out:
-			print(out)
-			try:
-				json_output = json.loads(out)
-			except Exception as e:
-				#print(e)
-				pass
-		return json_output
-
 	def get_resources_composition(self, kind, instance, namespace, kubeconfig):
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME')

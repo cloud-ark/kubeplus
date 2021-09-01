@@ -9,6 +9,7 @@ print_help () {
     echo "        kubectl connections"
     echo "        kubectl metrics"
     echo "        kubectl applogs"
+    echo "        kubectl appurl"
     echo "        kubectl retrieve kubeconfig provider"
     echo "        kubectl retrieve kubeconfig consumer"
     echo "        kubectl grantpermission consumer"
@@ -32,6 +33,11 @@ print_help () {
     echo "        - kubectl grantpermission consumer "
     echo "        This plugin enables provider to grant permission for the the created service to the consumer."
     echo "        A consumer will be able to create service instances only after that."
+    echo "        - kubectl appurl "
+    echo "        This plugin retrieves application url by searching for Service object of type NodePort in an application's"
+    echo "        resource relationship graph and constructing the url."
+    echo "        A consumer will be able to create service instances only after that."
+
     exit 0
 }
 
