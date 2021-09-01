@@ -5,7 +5,7 @@ import platform
 import os
 from crmetrics import CRBase
 
-class AppPortFinder(CRBase):
+class AppURLFinder(CRBase):
 
 	def get_svc(self, resources):
 		svc_list = []
@@ -42,8 +42,21 @@ class AppPortFinder(CRBase):
 				print(e)
 		return nodePort
 
+	def get_server_ip(self):
+		server_ip = ''
+		fp = open("/root/.kube/config", "r")
+		contents = fp.read()
+		json_content = json.loads(contents)
+		server_url = json_content['clusters'][0]['cluster']['server']
+		#print(server_url)
+		server_url = server_url.strip()
+		parts = server_url.split(":")
+		server_ip = parts[1].strip()
+		#print(server_ip)
+		return server_ip
+
 if __name__ == '__main__':
-	appPortFinder = AppPortFinder()
+	appURLFinder = AppURLFinder()
 	#crLogs.get_logs(sys.argv[1], sys.argv[2])
 	#resources = sys.argv[1]
 	relation = sys.argv[1]
@@ -54,9 +67,11 @@ if __name__ == '__main__':
 	#print(kind + " " + instance + " " + namespace + " " + kubeconfig)
 	resources = {}
 	if relation == 'connections':
-		resources = appPortFinder.get_resources_connections(kind, instance, namespace, kubeconfig)
+		resources = appURLFinder.get_resources_connections(kind, instance, namespace, kubeconfig)
 		#print(resources)
-	svcs = appPortFinder.get_svc(resources)
-	svcPort = appPortFinder.get_svc_port(svcs, namespace, kubeconfig)
+	svcs = appURLFinder.get_svc(resources)
+	svcPort = appURLFinder.get_svc_port(svcs, namespace, kubeconfig)
+	appIP = appURLFinder.get_server_ip()
+	appURL = "http:" + appIP + ":" + str(svcPort)
 	#print("App port:" + str(svcPort))
-	print(svcPort)
+	print(appURL, file=sys.stderr)
