@@ -134,12 +134,48 @@ function get_resource(res_string) {
         nw_egress = data1['nw_egress'];
         set_metrics(cpu, memory, storage, nw_ingress, nw_egress);
 
+        app_url = data1['app_url']
+        console.log("App URL:" + app_url)
+        /*
+        // Connections O/P is not relevant for Consumer so no need to display it.
         connections_op = data1['connections_op'];
         document.getElementById("connections_op").innerHTML = connections_op;
         document.getElementById("connections_op").style.display = "block";
+        */
+
+        app_url1 = "<hr><a href=\"" + app_url + "\">Application URL</a><hr><br>"
+        document.getElementById("app_url").innerHTML = app_url1;
+        document.getElementById("app_url").style.display = "block";
+
+        logs_url = "<a href=\"" + "\">Application Logs</a><hr>"
+        document.getElementById("app_logs_url").innerHTML = logs_url;
+        document.getElementById("app_logs_url").style.display = "block";
+        document.getElementById("app_logs_url").onclick = get_logs(resource, instance, namespace)
 
         elementsToHide = ["num_of_instances"];
         hideElements(elementsToHide);
+      }
+    };
+  xhr.send();
+}
+
+function get_logs(resource, instance, namespace) {
+
+  url = "/service/instance_logs?resource=" + resource + "&instance=" + instance + "&namespace=" + namespace;
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  xhr.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+        fieldData = this.responseText;
+        console.log(fieldData);
+        console.log("-------");
+        data1 = JSON.parse(fieldData);
+        log_data = data1['log'];
+        console.log(log_data)
+
+        textarea = "<textarea style=\"overflow:scroll;width:150px;height:200px\">" + log_data + "</textarea>";
+        document.getElementById("app_logs_data").innerHTML = textarea;
+        document.getElementById("app_logs_data").style.display = "block";
       }
     };
   xhr.send();
