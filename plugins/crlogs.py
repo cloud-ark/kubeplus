@@ -106,6 +106,7 @@ if __name__ == '__main__':
 	pods = crLogs.get_pods(resources)
 	for pod in pods:
 		pod_name = pod['Name']
+		pod_namespace = pod['Namespace']
 		#print(pod_name)
-		crLogs.get_logs(pod_name, namespace, kubeconfig)
+		crLogs.get_logs(pod_name, pod_namespace, kubeconfig)
 		print("---------------------------------------")

@@ -57,6 +57,24 @@ def get_connections_op(resource, instance, namespace):
 			fp.close()
 	return data
 
+def get_app_url(resource, instance, namespace):
+	cmd = 'kubectl appurl ' + resource + ' ' + instance + ' ' + namespace 
+	out, err = run_command(cmd)
+	data = ''
+	if out != '' and err == '':
+		print(out)
+		out = out.strip()
+	return out
+
+def get_logs(resource, instance, namespace):
+	cmd = 'kubectl applogs ' + resource + ' ' + instance + ' ' + namespace 
+	out, err = run_command(cmd)
+	data = ''
+	if out != '' and err == '':
+		print(out)
+		out = out.strip()
+	return out
+
 def get_total_resources(service):
 	instance_dict = get_all_resources(service)
 	instance_list = instance_dict[service]
@@ -69,8 +87,7 @@ def get_total_resources(service):
 
 	for instance in instance_list:
 		res = instance['name']
-		namespace = res # Each instance of CRD is installed in its own Namespace
-		#namespace = instance['namespace']
+		namespace = instance['namespace']
 
 		cpu, memory, storage, nwTransmitBytes, nwReceiveBytes = get_metrics(service, res, namespace)
 
@@ -287,6 +304,18 @@ def get_all_service_instances():
 	else:
 		return render_template('consumeruiack.html',get_all_error_message='',table_header='false',no_data='true')
 
+
+@app.route("/service/instance_logs", methods=['GET'])
+def get_instance_logs():
+	resource = request.args.get('resource').strip()
+	instance = request.args.get('instance').strip()
+	namespace = request.args.get('namespace').strip()
+
+	logs = get_logs(resource, instance, namespace)
+	instance_logs = {}
+	instance_logs['logs'] = logs
+	return instance_logs
+
 @app.route("/service/instance_data", methods=['GET'])
 def get_instance_data():
 	resource = request.args.get('resource')
@@ -302,8 +331,12 @@ def get_instance_data():
 	instance_data['nw_egress'] = nwTransmitBytes
 	instance_data['nw_ingress'] = nwReceiveBytes
 
-	connections_op = get_connections_op(resource, instance, namespace)
-	instance_data['connections_op'] = connections_op
+	#connections_op = get_connections_op(resource, instance, namespace)
+	#instance_data['connections_op'] = connections_op
+
+	app_url = get_app_url(resource, instance, namespace)
+	print("APP URL:" + app_url)
+	instance_data['app_url'] = app_url.strip()
 
 	return instance_data
 
