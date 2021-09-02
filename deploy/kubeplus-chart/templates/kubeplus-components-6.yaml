@@ -125,7 +125,7 @@ spec:
         imagePullPolicy: Always
         command: [ "/platform-operator"]
       - name: consumerui
-        image: gcr.io/cloudark-kubeplus/consumerui:0.0.2
+        image: gcr.io/cloudark-kubeplus/consumerui:0.0.3
         imagePullPolicy: Always
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer

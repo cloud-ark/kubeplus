@@ -318,9 +318,9 @@ def get_instance_logs():
 
 @app.route("/service/instance_data", methods=['GET'])
 def get_instance_data():
-	resource = request.args.get('resource')
-	instance = request.args.get('instance')
-	namespace = request.args.get('namespace')
+	resource = request.args.get('resource').strip()
+	instance = request.args.get('instance').strip()
+	namespace = request.args.get('namespace').strip()
 
 	cpu, memory, storage, nwTransmitBytes, nwReceiveBytes = get_metrics(resource, instance, namespace)
 
@@ -338,6 +338,8 @@ def get_instance_data():
 	print("APP URL:" + app_url)
 	instance_data['app_url'] = app_url.strip()
 
+	logs = get_logs(resource, instance, namespace)
+	instance_data['logs'] = logs
 	return instance_data
 
 @app.route("/get_instance_status", methods=['POST'])
