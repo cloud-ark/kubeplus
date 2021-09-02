@@ -11,7 +11,7 @@ KubePlus can be installed in any Namespace.
 .. code-block:: bash
 
     $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
-    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.1.tgz?raw=true" -n $KUBEPLUS_NS
+    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.2.tgz?raw=true" -n $KUBEPLUS_NS
 
 Examples
 ---------

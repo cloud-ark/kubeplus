@@ -143,14 +143,23 @@ function get_resource(res_string) {
         document.getElementById("connections_op").style.display = "block";
         */
 
-        app_url1 = "<hr><a href=\"" + app_url + "\">Application URL</a><hr><br>"
+        app_url1 = "<hr><a href=\"" + app_url + "\">Application URL</a><hr>"
         document.getElementById("app_url").innerHTML = app_url1;
         document.getElementById("app_url").style.display = "block";
 
-        logs_url = "<a href=\"" + "\">Application Logs</a><hr>"
+        log_data = data1['logs'];
+        console.log(log_data)
+
+        textarea = "<label style=\"font-size:large;\">Application Logs</label><br><p><textarea style=\"overflow:scroll;width:600px;height:200px\">" + log_data + "</p></textarea>";
+        document.getElementById("app_logs_data").innerHTML = textarea;
+        document.getElementById("app_logs_data").style.display = "block";
+
+        /*
+        logs_url = "<a href=\"" + "\">Application Logs</a><hr><br></br>"
         document.getElementById("app_logs_url").innerHTML = logs_url;
         document.getElementById("app_logs_url").style.display = "block";
         document.getElementById("app_logs_url").onclick = get_logs(resource, instance, namespace)
+        */
 
         elementsToHide = ["num_of_instances"];
         hideElements(elementsToHide);
@@ -170,10 +179,10 @@ function get_logs(resource, instance, namespace) {
         console.log(fieldData);
         console.log("-------");
         data1 = JSON.parse(fieldData);
-        log_data = data1['log'];
+        log_data = data1['logs'];
         console.log(log_data)
 
-        textarea = "<textarea style=\"overflow:scroll;width:150px;height:200px\">" + log_data + "</textarea>";
+        textarea = "<textarea style=\"overflow:scroll;width:300px;height:200px\">" + log_data + "</textarea>";
         document.getElementById("app_logs_data").innerHTML = textarea;
         document.getElementById("app_logs_data").style.display = "block";
       }
