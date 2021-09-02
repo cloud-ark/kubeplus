@@ -16,11 +16,14 @@ Once the appropriate CLI is installed, follow these steps.
 
 Open two command terminal windows. Name them as:
 
+- Cluster admin window
 - Provider window
 - Consumer window 
 
-KubePlus Installation
-----------------------
+KubePlus Installation (cluster admin)
+--------------------------------------
+
+1. Install KubePlus 
 
 Set KUBEPLUS_NS environment variable to the NAMESPACE in which you have installed KubePlus. For OpenShift users, the namespace needs to be 'openshift-operators'.
 
@@ -38,8 +41,31 @@ If KubePlus Pod is not running then `install KubePlus first`_.
 
 .. _install KubePlus first: https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html
 
-Get provider and consumer kubeconfigs
---------------------------------------
+
+2. Install KubePlus kubectl plugins
+
+.. code-block:: bash
+
+    curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
+    gunzip kubeplus-kubectl-plugins.tar.gz
+    tar -xvf kubeplus-kubectl-plugins.tar
+    export KUBEPLUS_HOME=`pwd`
+    export PATH=$KUBEPLUS_HOME/plugins/:$PATH
+    kubectl kubeplus commands
+  or
+    oc kubeplus commands
+
+3. Verify that you are able to run docker commands without requiring sudo.
+
+.. code-block:: bash
+
+	docker ps
+
+This should return without any errors.
+
+
+Get provider and consumer kubeconfigs (cluster admin)
+------------------------------------------------------
 
 KubePlus generates separate kubeconfig files for provider and consumers with appropriate permissions. Retrieve them as follows:
 
@@ -51,8 +77,8 @@ KubePlus generates separate kubeconfig files for provider and consumers with app
 In the steps below, use the appropriate kubeconfig in the provider and consumer actions by passing the ``--kubeconfig=<provider/consumer>.conf`` flag.
 
 
-Register HelloWorldService (provider window)
--------------------------------------------------
+Register HelloWorldService (cluster admin)
+------------------------------------------
 
 1. Create hello-world-resource-composition:
 
@@ -178,34 +204,11 @@ If you are working with the KubePlus Vagrant VM, access the service at following
 
 	$ http://192.168.33.10:5000/service/HelloWorldService
 
-The UI provides a form to input values that need to be provided when creating a service instance. You can also check the API documentation for the service on the UI.
-Because the provider has granted permission to the consumer to create the HelloWorldService instances, you will be able to create an instance of HelloWorldService through the UI. Once a service instance has been created, the UI displays cpu, memory, storage, network metrics for the instance, and resource relationship graph which shows all the Kubernetes resources that are created as part of that instance and how they are related to one another.
+The UI provides a form to input values that need to be provided when creating a service instance. You can also check the API documentation for the service on the UI. Because the cluster admin has granted permission to the consumer to create the HelloWorldService instances, you will be able to create an instance of HelloWorldService through the UI.
 
 **Using CLI**
 
-
-1. Install KubePlus kubectl plugins
-
-.. code-block:: bash
-
-    curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
-    gunzip kubeplus-kubectl-plugins.tar.gz
-    tar -xvf kubeplus-kubectl-plugins.tar
-    export KUBEPLUS_HOME=`pwd`
-    export PATH=$KUBEPLUS_HOME/plugins/:$PATH
-    kubectl kubeplus commands
-  or
-    oc kubeplus commands
-
-2. Install Docker and verify that you are able to run docker commands without requiring sudo.
-
-.. code-block:: bash
-
-	docker ps
-
-This should return without any errors.
-
-3. Check the HelloWorldService API documentation
+1. Check the HelloWorldService API documentation
 
 .. code-block:: bash
 
@@ -231,7 +234,7 @@ You should see following output:
 	greeting: Hello World!
 
 
-4. Create HelloWorldService instance:
+2. Create HelloWorldService instance:
 
 Copy below YAML and save it as hello-world-service.yaml
 
@@ -257,7 +260,7 @@ or
 This will create hs1 instance in the default namespace.
 
 
-5. Check if the service instance has been created:
+3. Check if the service instance has been created:
 
 .. code-block:: bash
 
@@ -274,7 +277,7 @@ or
 Verify that the Status field is populated in hs1 instance.
 
 
-6. Verify that HelloWorldService has been started
+4. Verify that HelloWorldService has been started
 
 .. code-block:: bash
 
@@ -298,7 +301,35 @@ You should see following output:
 
 	Hello hello hello
 
-7. Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance.
+
+Monitor HelloWorldService instance (provider window)
+----------------------------------------------------------
+
+On the provider window, perform following steps:
+
+.. code-block:: bash
+
+    HELLOWORLD_NS=`kubectl get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
+
+or
+
+.. code-block:: bash
+
+    HELLOWORLD_NS=`oc get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
+
+1. Get cpu, memory, storage, network metrics for HelloWorldService instance:
+
+.. code-block:: bash
+
+	kubectl metrics HelloWorldService hs1 $HELLOWORLD_NS -k provider.conf
+
+You should see output of the following form:
+
+.. image:: hello-world-metrics-prometheus.png
+   :align: center
+
+
+2. Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance.
 
 .. code-block:: bash
 
@@ -318,11 +349,11 @@ You should see following output:
    :height: 150px
    :width: 200px
 
-8. Check resource relationship graph for HelloWorldService instance:
+3. Check resource relationship graph for HelloWorldService instance:
 
 .. code-block:: bash
 
-    kubectl connections HelloWorldService hs1 $HELLOWORLD_NS
+    kubectl connections HelloWorldService hs1 $HELLOWORLD_NS -k provider.conf
 
 or
 
@@ -339,7 +370,7 @@ You should see following output:
 
 .. code-block:: bash
 
-    kubectl connections HelloWorldService hs1 $HELLOWORLD_NS -o png
+    kubectl connections HelloWorldService hs1 $HELLOWORLD_NS -o png -k provider.conf
 
 or
 
@@ -349,51 +380,4 @@ or
 
 
 .. image:: hello-world-connections-png.png
-   :align: center
-
-
-Get HelloWorldService instance metrics (provider/consumer window)
----------------------------------------------------------------------
-
-On the provider window or the consumer window, perform following steps:
-
-.. code-block:: bash
-
-    KUBEPLUS_POD=`kubectl get pods -A | grep kubeplus-deployment | awk '{print $2}'`
-
-    KUBEPLUS_NS=`kubectl get pods -A | grep kubeplus-deployment | awk '{print $1}'`
-
-    kubectl port-forward $KUBEPLUS_POD -n $KUBEPLUS_NS 8081:8090 &
-
-or
-
-.. code-block:: bash
-
-    KUBEPLUS_POD=`oc get pods -A | grep kubeplus-deployment | awk '{print $2}'`
-
-    KUBEPLUS_NS=`oc get pods -A | grep kubeplus-deployment | awk '{print $1}'`
-
-    oc port-forward $KUBEPLUS_POD -n $KUBEPLUS_NS 8081:8090 &
-
-
-Get cpu, memory, storage, network metrics for HelloWorldService instance:
-
-.. code-block:: bash
-
-    HELLOWORLD_NS=`kubectl get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
-
-or
-
-.. code-block:: bash
-
-    HELLOWORLD_NS=`oc get pods -A | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
-
-
-.. code-block:: bash
-
-    curl -kv "http://127.0.0.1:8081/apis/kubeplus/metrics?kind=HelloWorldService&instance=hs1&namespace=$HELLOWORLD_NS"
-
-You should see output of the following form:
-
-.. image:: hello-world-metrics.png
    :align: center

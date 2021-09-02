@@ -55,12 +55,16 @@ Choose the CLI version that works with your Kubernetes version.
 Once the appropriate CLI is installed, follow these steps.</p>
 <p>Open two command terminal windows. Name them as:</p>
 <ul class="simple">
+<li><p>Cluster admin window</p></li>
 <li><p>Provider window</p></li>
 <li><p>Consumer window</p></li>
 </ul>
 </div>
-<div class="section" id="kubeplus-installation">
-<h2>KubePlus Installation</h2>
+<div class="section" id="kubeplus-installation-cluster-admin">
+<h2>KubePlus Installation (cluster admin)</h2>
+<ol class="arabic simple">
+<li><p>Install KubePlus</p></li>
+</ol>
 <p>Set KUBEPLUS_NS environment variable to the NAMESPACE in which you have installed KubePlus. For OpenShift users, the namespace needs to be ‘openshift-operators’.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">KUBEPLUS_NS</span><span class="o">=</span>&lt;Namespace&gt;
 </pre></div>
@@ -70,9 +74,29 @@ Once the appropriate CLI is installed, follow these steps.</p>
 </pre></div>
 </div>
 <p>If KubePlus Pod is not running then <a class="reference external" href="https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html">install KubePlus first</a>.</p>
+<ol class="arabic simple" start="2">
+<li><p>Install KubePlus kubectl plugins</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>  curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
+  gunzip kubeplus-kubectl-plugins.tar.gz
+  tar -xvf kubeplus-kubectl-plugins.tar
+  <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
+  <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
+  kubectl kubeplus commands
+or
+  oc kubeplus commands
+</pre></div>
 </div>
-<div class="section" id="get-provider-and-consumer-kubeconfigs">
-<h2>Get provider and consumer kubeconfigs</h2>
+<ol class="arabic simple" start="3">
+<li><p>Verify that you are able to run docker commands without requiring sudo.</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker ps
+</pre></div>
+</div>
+<p>This should return without any errors.</p>
+</div>
+<div class="section" id="get-provider-and-consumer-kubeconfigs-cluster-admin">
+<h2>Get provider and consumer kubeconfigs (cluster admin)</h2>
 <p>KubePlus generates separate kubeconfig files for provider and consumers with appropriate permissions. Retrieve them as follows:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl retrieve kubeconfig provider <span class="nv">$KUBEPLUS_NS</span> &gt; provider.conf
 $ kubectl retrieve kubeconfig consumer <span class="nv">$KUBEPLUS_NS</span> &gt; consumer.conf
@@ -80,8 +104,8 @@ $ kubectl retrieve kubeconfig consumer <span class="nv">$KUBEPLUS_NS</span> &gt;
 </div>
 <p>In the steps below, use the appropriate kubeconfig in the provider and consumer actions by passing the <code class="docutils literal notranslate"><span class="pre">--kubeconfig=&lt;provider/consumer&gt;.conf</span></code> flag.</p>
 </div>
-<div class="section" id="register-helloworldservice-provider-window">
-<h2>Register HelloWorldService (provider window)</h2>
+<div class="section" id="register-helloworldservice-cluster-admin">
+<h2>Register HelloWorldService (cluster admin)</h2>
 <ol class="arabic simple">
 <li><p>Create hello-world-resource-composition:</p></li>
 </ol>
@@ -186,30 +210,9 @@ $ ./open-consumer-ui.sh
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ http://192.168.33.10:5000/service/HelloWorldService
 </pre></div>
 </div>
-<p>The UI provides a form to input values that need to be provided when creating a service instance. You can also check the API documentation for the service on the UI.
-Because the provider has granted permission to the consumer to create the HelloWorldService instances, you will be able to create an instance of HelloWorldService through the UI. Once a service instance has been created, the UI displays cpu, memory, storage, network metrics for the instance, and resource relationship graph which shows all the Kubernetes resources that are created as part of that instance and how they are related to one another.</p>
+<p>The UI provides a form to input values that need to be provided when creating a service instance. You can also check the API documentation for the service on the UI. Because the cluster admin has granted permission to the consumer to create the HelloWorldService instances, you will be able to create an instance of HelloWorldService through the UI.</p>
 <p><strong>Using CLI</strong></p>
 <ol class="arabic simple">
-<li><p>Install KubePlus kubectl plugins</p></li>
-</ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>  curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
-  gunzip kubeplus-kubectl-plugins.tar.gz
-  tar -xvf kubeplus-kubectl-plugins.tar
-  <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
-  <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
-  kubectl kubeplus commands
-or
-  oc kubeplus commands
-</pre></div>
-</div>
-<ol class="arabic simple" start="2">
-<li><p>Install Docker and verify that you are able to run docker commands without requiring sudo.</p></li>
-</ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker ps
-</pre></div>
-</div>
-<p>This should return without any errors.</p>
-<ol class="arabic simple" start="3">
 <li><p>Check the HelloWorldService API documentation</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl man HelloWorldService
@@ -232,7 +235,7 @@ The attributes <span class="k">in</span> values.yaml become the Spec properties 
 greeting: Hello World!
 </pre></div>
 </div>
-<ol class="arabic simple" start="4">
+<ol class="arabic simple" start="2">
 <li><p>Create HelloWorldService instance:</p></li>
 </ol>
 <p>Copy below YAML and save it as hello-world-service.yaml</p>
@@ -252,7 +255,7 @@ spec:
 </pre></div>
 </div>
 <p>This will create hs1 instance in the default namespace.</p>
-<ol class="arabic simple" start="5">
+<ol class="arabic simple" start="3">
 <li><p>Check if the service instance has been created:</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get helloworldservices --kubeconfig<span class="o">=</span>consumer.conf
@@ -265,7 +268,7 @@ oc describe helloworldservices hs1 --kubeconfig<span class="o">=</span>consumer.
 </pre></div>
 </div>
 <p>Verify that the Status field is populated in hs1 instance.</p>
-<ol class="arabic simple" start="6">
+<ol class="arabic simple" start="4">
 <li><p>Verify that HelloWorldService has been started</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_POD</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
@@ -285,7 +288,26 @@ curl localhost:8082
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Hello hello hello
 </pre></div>
 </div>
-<ol class="arabic simple" start="7">
+</div>
+<div class="section" id="monitor-helloworldservice-instance-provider-window">
+<h2>Monitor HelloWorldService instance (provider window)</h2>
+<p>On the provider window, perform following steps:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
+</pre></div>
+</div>
+<ol class="arabic simple">
+<li><p>Get cpu, memory, storage, network metrics for HelloWorldService instance:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl metrics HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -k provider.conf
+</pre></div>
+</div>
+<p>You should see output of the following form:</p>
+<img alt="_images/hello-world-metrics-prometheus.png" class="align-center" src="_images/hello-world-metrics-prometheus.png" />
+<ol class="arabic simple" start="2">
 <li><p>Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance.</p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
@@ -297,10 +319,10 @@ curl localhost:8082
 </div>
 <p>You should see following output:</p>
 <a class="reference internal image-reference" href="_images/hello-world-resources.png"><img alt="_images/hello-world-resources.png" class="align-center" src="_images/hello-world-resources.png" style="width: 200px; height: 150px;" /></a>
-<ol class="arabic simple" start="8">
+<ol class="arabic simple" start="3">
 <li><p>Check resource relationship graph for HelloWorldService instance:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -k provider.conf
 </pre></div>
 </div>
 <p>or</p>
@@ -312,7 +334,7 @@ curl localhost:8082
 <ol class="arabic simple" start="9">
 <li><p>(Only on Linux or MacOS) Visualize the relationship graph:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -o png
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -o png -k provider.conf
 </pre></div>
 </div>
 <p>or</p>
@@ -320,38 +342,6 @@ curl localhost:8082
 </pre></div>
 </div>
 <img alt="_images/hello-world-connections-png.png" class="align-center" src="_images/hello-world-connections-png.png" />
-</div>
-<div class="section" id="get-helloworldservice-instance-metrics-provider-consumer-window">
-<h2>Get HelloWorldService instance metrics (provider/consumer window)</h2>
-<p>On the provider window or the consumer window, perform following steps:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">KUBEPLUS_POD</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
-
-<span class="nv">KUBEPLUS_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
-
-kubectl port-forward <span class="nv">$KUBEPLUS_POD</span> -n <span class="nv">$KUBEPLUS_NS</span> <span class="m">8081</span>:8090 <span class="p">&amp;</span>
-</pre></div>
-</div>
-<p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">KUBEPLUS_POD</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
-
-<span class="nv">KUBEPLUS_NS</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep kubeplus-deployment <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
-
-oc port-forward <span class="nv">$KUBEPLUS_POD</span> -n <span class="nv">$KUBEPLUS_NS</span> <span class="m">8081</span>:8090 <span class="p">&amp;</span>
-</pre></div>
-</div>
-<p>Get cpu, memory, storage, network metrics for HelloWorldService instance:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
-</pre></div>
-</div>
-<p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
-</pre></div>
-</div>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl -kv <span class="s2">&quot;http://127.0.0.1:8081/apis/kubeplus/metrics?kind=HelloWorldService&amp;instance=hs1&amp;namespace=</span><span class="nv">$HELLOWORLD_NS</span><span class="s2">&quot;</span>
-</pre></div>
-</div>
-<p>You should see output of the following form:</p>
-<img alt="_images/hello-world-metrics.png" class="align-center" src="_images/hello-world-metrics.png" />
 </div>
 </div>
 
