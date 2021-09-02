@@ -17,21 +17,21 @@ KubePlus offers following benefits towards deploying a Kubernetes-native applica
 
 ## Overview
 
-In a service-based delivery model, cluster admins are looking to:
-- Enable application consumers to use a self-service model to provision application instances
+In a service-based delivery of applications, cluster admins are looking to:
+- Enable application consumers to use a self-service model to provision application instances.
 - Enable application providers to troubleshoot and monitor deployed instances of the application.
-- Equip providers to track consumption metrics of application instances provisioned by different consumers.
+- Equip application providers to track consumption metrics for application instances provisioned by different consumers.
 
 KubePlus achieves these goals as follows. KubePlus defines a ```provider API``` to create application-specific ```consumer APIs```.
-The ```provider API``` in KubePlus is a CRD (Custom Resource Definition) that enables registering application Helm chart by 
-defining new Kubernetes APIs (CRDs) representing the chart. These new CRDs are essentially the ```consumer API``` which the application consumers use to instantiate the registered Helm chart in a self-service manner. As part of consumer API creation step, application providers can define application-level policies which KubePlus applies to every instantiation of the registered chart.
+The ```provider API``` is a KubePlus CRD (Custom Resource Definition) that enables registering an application Helm chart in the cluster by 
+defining new Kubernetes API (CRD) representing the chart. These new CRD is essentially the ```consumer API``` which the application consumers use to instantiate the registered Helm chart in a self-service manner. As part of consumer API creation, application providers can define application-level policies which KubePlus applies to every instance of the registered chart.
 
 <p align="center">
 <img src="./docs/provider-consumer.png" width="600" height="200" class="center">
 </p>
 
-KubePlus functions:
-- Create: Create a Kubernetes-native API/service to represent an application packaged as a Helm chart.
+KubePlus offers following functions:
+- Create: Create a Kubernetes-native API to represent an application packaged as a Helm chart.
 - Govern: Tenant level policies for isolation and resource utilization per application instance.
 - Monitor: Tenant level consumption metrics for cpu, memory, storage, network.
 - Troubleshoot: Application-level insights through fine-grained Kubernetes resource relationship graphs.
@@ -44,38 +44,38 @@ To understand the working of KubePlus, let us see how a cluster admin can create
 
 ### Cluster admin actions
 
-*Install KubePlus*
+*1. Install KubePlus*
 
-Cluster administrator first installs KubePlus on their cluster.
+Cluster administrator installs KubePlus on their cluster.
 
 ```
 $ KUBEPLUS_NS=default
 $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.2.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
-*Create consumer API*
+*2. Create consumer API*
 
-Next, working alongside the provider team, the cluster admin defines the consumer API named WordpressService using the ```ResourceComposition``` CRD/provider API. The Wordpress Helm chart that underlies this service is created by the provider team. As part of registering the consumer API, the provider team can define policies such as the cpu and memory resources that should be allocated to each instance of the Wordpress stack, specific worker nodes on which to deploy instances of the Wordpress stack, etc. KubePlus will apply these policies to the Helm releases when creating the underlying Helm chart.
+Next, working alongside the Wordpress provider team, the cluster admin defines the consumer API named ```WordpressService``` using the ```ResourceComposition``` CRD (the provider API). The Wordpress Helm chart that underlies this service is created by the provider team. The spec properties of the ```WordpressService Custom Resource``` are the attributes defined via the Wordpress Helm chart's values.yaml.
+
+As part of creating the consumer API, the provider team can define policies such as the cpu and memory that should be allocated to each instance of the Wordpress stack, specific worker nodes on which to deploy instances of the Wordpress stack, etc. KubePlus will apply these policies to the Helm releases when creating the instantiating the underlying Helm chart.
 
 <p align="center">
 <img src="./docs/wordpress-service-crd.png" width="650" height="250" class="center">
-</p>
+</p> 
 
-The spec properties of the WordpressService Custom Resource are the attributes exposed via the Wordpress Helm chart's values.yaml. 
+*3. Retrieve Provider and Consumer kubeconfig files*
 
-*Retrieve Provider and Consumer kubeconfig files*
-
-KubePlus generates kubeconfig files for providers and consumers with appropriate RBAC policies for each persona.
+KubePlus creates kubeconfig files for providers and consumers with appropriate RBAC policies for each persona.
 
 ```
 $ kubectl retrieve kubeconfig provider $KUBEPLUS_NS > provider.conf
 $ kubectl retrieve kubeconfig consumer $KUBEPLUS_NS > consumer.conf
 ```
-Cluster admin needs to then distribute these kubeconfig files to provider and consumer teams.
+Cluster admin needs to distribute these kubeconfig files to provider and consumer teams so that they can access the WordpressService resources.
 
-*Grant permission to the consumer to create instances of WordpressService*
+*4. Grant permission to the consumer to create instances of WordpressService*
 
-Before consumers can instantiate WordpressService instances, the consumer needs to be granted permission for that resource. The provider's kubeconfig needs to be provided as input to this command.
+Before consumers can instantiate WordpressService instances, the cluster admin needs to grant permission to the consumer for that resource. The provider's kubeconfig needs to be provided as input to the ``kubectl grantpermission`` command.
 
 ```
 kubectl grantpermission consumer wordpressservices provider.conf $KUBEPLUS_NS
@@ -83,7 +83,7 @@ kubectl grantpermission consumer wordpressservices provider.conf $KUBEPLUS_NS
 
 ### Consumer action
 
-The consumer uses WordpressService CRD (the consumer API) to provision an instance of Wordpress stack. KubePlus includes a web portal through which the service instances can be created. The portal runs on the cluster and is accessible through local proxy. Here is consumerui for WordpressService showing the created instance.
+The consumer uses WordpressService Custom Resource (the consumer API) to provision an instance of Wordpress stack. KubePlus includes a web portal through which the service instances can be created. The portal runs on the cluster and is accessible through local proxy. Here is consumer portal for WordpressService showing the created ```tenant1``` instance.
 
 <p align="center">
 <img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1-consumerui.png" class="center">
@@ -92,7 +92,7 @@ The consumer uses WordpressService CRD (the consumer API) to provision an instan
 
 ### Provider actions
 
-Provider team uses kubeplus kubectl plugins to troubleshoot and monitor WordpressService instances. With the ``kubectl connections`` plugin, provider can check if all the K8s resources have been created as expected. The graphical output makes it easy to check the connectivity between different resources.
+Provider team uses kubeplus kubectl plugins to troubleshoot and monitor WordpressService instances. With the ``kubectl connections`` plugin provider can check whether all Kubernetes resources have been created as expected. The graphical output makes it easy to check the connectivity between different resources.
 
 ```
 kubectl connections WordpressService tenant1 default -k provider.conf -o png -i Namespace:default,ServiceAccount:default -n label,specproperty,envvariable,annotation 
@@ -101,8 +101,8 @@ kubectl connections WordpressService tenant1 default -k provider.conf -o png -i 
 <img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1.png" class="center">
 </p>
 
-Using ```kubectl metrics``` plugin, provider can check cpu, memory, storage, network ingress/egress for a WordpressService instance.
-The metrics output is also available in prometheus format.
+Using ```kubectl metrics``` plugin provider can check cpu, memory, storage, network ingress/egress for a WordpressService instance.
+The metrics output is available in pretty, json and prometheus formats.
 
 ```
 kubectl metrics WordpressService tenant1 default -o pretty -k provider.conf 
@@ -112,7 +112,7 @@ kubectl metrics WordpressService tenant1 default -o pretty -k provider.conf
 <img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1-metrics-pretty.png" class="center">
 </p>
 
-Our [KubePlus SaaS Manager product](https://cloudark.io/kubeplus-saas-manager) offers enterprise ready control center for providers to manage their SaaS across multiple Kubernetes clusters.
+Our [KubePlus SaaS Manager product](https://cloudark.io/kubeplus-saas-manager) offers enterprise-ready control center for providers to manage their SaaS across multiple Kubernetes clusters.
 
 ## Components
 
@@ -120,15 +120,15 @@ KubePlus consists of an Operator and kubectl plugins.
 
 ### 1. KubePlus Operator
 
-The KubePlus Operator runs on the cluster and consists of a custom controller, a mutating webhook and the helmer module that handles Helm related functions.
+The KubePlus Operator consists of a custom controller, a mutating webhook and the helmer module.
 
 <p align="center">
 <img src="./docs/crd-for-crds-2.jpg" width="700" height="300" class="center">
 </p>
 
 The custom controller handles KubePlus CRDs. The primary CRD is ```ResourceComposition```. It is used to:
-- Define new CRDs (consumer APIs) wrapping Helm charts
-- Define policies (e.g. cpu/memory limits, node selection, etc.) for managing resources of the service instances
+- Define new CRDs (consumer APIs) wrapping Helm charts.
+- Define policies (e.g. cpu/memory limits, node selection, etc.) for managing resources of the service instances.
 
 The mutating webook and helmer module support the custom controller in delivering the KubePlus experience.
 
@@ -142,7 +142,7 @@ Details about these components are available [here](https://cloud-ark.github.io/
 
 ## Try it
 
-- Install KubePlus Operator using the following command. KubePlus Operator can be installed in any Namespace. (Note that you will need Helm v3).
+- Install KubePlus Operator. KubePlus Operator can be installed in any Namespace. (Note that you will need Helm v3).
 
 ```
    $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
@@ -175,6 +175,7 @@ Try the `kubectl connections` plugin. It can be used with any Kubernetes resourc
   - kubectl logs kubeplus $KUBEPLUS_NS -c helmer
   - kubectl logs kubeplus $KUBEPLUS_NS -c platform-operator
   - kubectl logs kubeplus $KUBEPLUS_NS -c webhook-cert-setup
+  - kubectl logs kubeplus $KUBEPLUS_NS -c consumerui
   ```
 
 - Cleanup:
