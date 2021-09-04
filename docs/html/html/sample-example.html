@@ -53,30 +53,26 @@ When registering the service, Provider defines the CPU and Memory requests and l
 <p>In order to try this example you will need to install Kubernetes CLI (kubectl), or if you are using OpenShift, the OpenShift CLI (oc).
 Choose the CLI version that works with your Kubernetes version.
 Once the appropriate CLI is installed, follow these steps.</p>
-<p>Open two command terminal windows. Name them as:</p>
+<p>Open three command terminal windows. Name them as:</p>
 <ul class="simple">
 <li><p>Cluster admin window</p></li>
 <li><p>Provider window</p></li>
 <li><p>Consumer window</p></li>
 </ul>
 </div>
-<div class="section" id="kubeplus-installation-cluster-admin">
-<h2>KubePlus Installation (cluster admin)</h2>
-<ol class="arabic simple">
-<li><p>Install KubePlus</p></li>
-</ol>
+<div class="section" id="cluster-admin-actions">
+<h2>Cluster Admin actions</h2>
+<p><em>1. Install KubePlus</em></p>
 <p>Set KUBEPLUS_NS environment variable to the NAMESPACE in which you have installed KubePlus. For OpenShift users, the namespace needs to be ‘openshift-operators’.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">KUBEPLUS_NS</span><span class="o">=</span>&lt;Namespace&gt;
 </pre></div>
 </div>
-<p>Make sure KubePlus Pod is running (Status is ‘RUNNING’ and all 5 containers are ready).</p>
+<p>Make sure KubePlus Pod is running (Status should be ‘RUNNING’ and all 5 containers).</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get pods -n <span class="nv">$KUBEPLUS_NS</span>
 </pre></div>
 </div>
 <p>If KubePlus Pod is not running then <a class="reference external" href="https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html">install KubePlus first</a>.</p>
-<ol class="arabic simple" start="2">
-<li><p>Install KubePlus kubectl plugins</p></li>
-</ol>
+<p><em>2. Install KubePlus kubectl plugins</em></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>  curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
   gunzip kubeplus-kubectl-plugins.tar.gz
   tar -xvf kubeplus-kubectl-plugins.tar
@@ -87,28 +83,18 @@ or
   oc kubeplus commands
 </pre></div>
 </div>
-<ol class="arabic simple" start="3">
-<li><p>Verify that you are able to run docker commands without requiring sudo.</p></li>
-</ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker ps
-</pre></div>
-</div>
-<p>This should return without any errors.</p>
-</div>
-<div class="section" id="get-provider-and-consumer-kubeconfigs-cluster-admin">
-<h2>Get provider and consumer kubeconfigs (cluster admin)</h2>
+<p><em>3. Get provider and consumer kubeconfigs</em></p>
 <p>KubePlus generates separate kubeconfig files for provider and consumers with appropriate permissions. Retrieve them as follows:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl retrieve kubeconfig provider <span class="nv">$KUBEPLUS_NS</span> &gt; provider.conf
 $ kubectl retrieve kubeconfig consumer <span class="nv">$KUBEPLUS_NS</span> &gt; consumer.conf
 </pre></div>
 </div>
+<p>Distribute the kubeconfig files to providers and consumers.</p>
 <p>In the steps below, use the appropriate kubeconfig in the provider and consumer actions by passing the <code class="docutils literal notranslate"><span class="pre">--kubeconfig=&lt;provider/consumer&gt;.conf</span></code> flag.</p>
-</div>
-<div class="section" id="register-helloworldservice-cluster-admin">
-<h2>Register HelloWorldService (cluster admin)</h2>
-<ol class="arabic simple">
+<p><em>4. Register HelloWorldService</em></p>
+<ul class="simple">
 <li><p>Create hello-world-resource-composition:</p></li>
-</ol>
+</ul>
 <p>Here is the hello-world-resource-composition.yaml file. Save it as hello-world-resource-composition.yaml.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apiVersion: workflows.kubeplus/v1alpha1
 kind: ResourceComposition
@@ -167,16 +153,16 @@ spec:
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">respolicy</span></code> section in the resource composition defines the <code class="docutils literal notranslate"><span class="pre">ResourcePolicy</span></code> that the provider configures for this service. Here it defines the cpu and memory requests and limits that need to be configured for service instances of this service.</p>
 <p>Create hello-world-resource-composition as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span> --kubeconfig<span class="o">=</span>provider.conf
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span>
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span> --kubeconfig<span class="o">=</span>provider.conf
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span>
 </pre></div>
 </div>
-<ol class="arabic simple" start="2">
+<ul class="simple">
 <li><p>Wait till HelloWorldService CRD is registered in the cluster.</p></li>
-</ol>
+</ul>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">until</span> kubectl get crds <span class="p">|</span> grep hello  <span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> <span class="s2">&quot;Waiting for HelloworldService CRD to be registered..&quot;</span><span class="p">;</span> sleep <span class="m">1</span><span class="p">;</span> <span class="k">done</span>
 </pre></div>
 </div>
@@ -184,22 +170,23 @@ spec:
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">until</span> oc get crds <span class="p">|</span> grep hello  <span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> <span class="s2">&quot;Waiting for HelloworldService CRD to be registered..&quot;</span><span class="p">;</span> sleep <span class="m">1</span><span class="p">;</span> <span class="k">done</span>
 </pre></div>
 </div>
-<ol class="arabic simple" start="3">
+<ul class="simple">
 <li><p>Grant permission to the consumer to create service instances.</p></li>
-</ol>
+</ul>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl grantpermission consumer helloworldservices provider.conf <span class="nv">$KUBEPLUS_NS</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="create-helloworldservice-instance-consumer-window">
-<h2>Create HelloWorldService instance (consumer window)</h2>
+<div class="section" id="consumer-actions">
+<h2>Consumer actions</h2>
+<p><em>1. Create HelloWorldService instance</em></p>
 <p>HelloWorldService instances can be created using either kubectl or consumer ui that
 KubePlus provides.</p>
 <p><strong>Using Consumer UI</strong></p>
 <p>The consumer UI is part of KubePlus and runs on the cluster. Access it as follows:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/open-consumer-ui.sh
 $ chmod +x open-consumer-ui.sh
-$ ./open-consumer-ui.sh
+$ ./open-consumer-ui.sh consumer.conf
 </pre></div>
 </div>
 <p>The HelloWorldService will be available at following URL:</p>
@@ -212,9 +199,9 @@ $ ./open-consumer-ui.sh
 </div>
 <p>The UI provides a form to input values that need to be provided when creating a service instance. You can also check the API documentation for the service on the UI. Because the cluster admin has granted permission to the consumer to create the HelloWorldService instances, you will be able to create an instance of HelloWorldService through the UI.</p>
 <p><strong>Using CLI</strong></p>
-<ol class="arabic simple">
+<ul class="simple">
 <li><p>Check the HelloWorldService API documentation</p></li>
-</ol>
+</ul>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl man HelloWorldService
 </pre></div>
 </div>
@@ -235,9 +222,9 @@ The attributes <span class="k">in</span> values.yaml become the Spec properties 
 greeting: Hello World!
 </pre></div>
 </div>
-<ol class="arabic simple" start="2">
+<ul class="simple">
 <li><p>Create HelloWorldService instance:</p></li>
-</ol>
+</ul>
 <p>Copy below YAML and save it as hello-world-service.yaml</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apiVersion: platformapi.kubeplus/v1alpha1
 kind: HelloWorldService
@@ -255,9 +242,9 @@ spec:
 </pre></div>
 </div>
 <p>This will create hs1 instance in the default namespace.</p>
-<ol class="arabic simple" start="3">
+<ul class="simple">
 <li><p>Check if the service instance has been created:</p></li>
-</ol>
+</ul>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get helloworldservices --kubeconfig<span class="o">=</span>consumer.conf
 kubectl describe helloworldservices hs1 --kubeconfig<span class="o">=</span>consumer.conf
 </pre></div>
@@ -268,9 +255,9 @@ oc describe helloworldservices hs1 --kubeconfig<span class="o">=</span>consumer.
 </pre></div>
 </div>
 <p>Verify that the Status field is populated in hs1 instance.</p>
-<ol class="arabic simple" start="4">
+<ul class="simple">
 <li><p>Verify that HelloWorldService has been started</p></li>
-</ol>
+</ul>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_POD</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
 <span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
 kubectl port-forward <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> <span class="m">8082</span>:5000 <span class="p">&amp;</span>
@@ -289,39 +276,39 @@ curl localhost:8082
 </pre></div>
 </div>
 </div>
-<div class="section" id="monitor-helloworldservice-instance-provider-window">
-<h2>Monitor HelloWorldService instance (provider window)</h2>
+<div class="section" id="provider-actions">
+<h2>Provider actions</h2>
+<p>Install Docker and verify that you are able to run docker commands without requiring sudo.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker ps
+</pre></div>
+</div>
+<p>This should return without any errors.</p>
+<p><em>1. Monitor HelloWorldService instance</em></p>
 <p>On the provider window, perform following steps:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A --kubeconfig<span class="o">=</span>provider.conf <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>oc get pods -A <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>oc get pods -A --kubeconfig<span class="o">=</span>provider.conf <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
 </pre></div>
 </div>
-<ol class="arabic simple">
-<li><p>Get cpu, memory, storage, network metrics for HelloWorldService instance:</p></li>
-</ol>
+<p><em>2. Get cpu, memory, storage, network metrics for HelloWorldService instance</em></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl metrics HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -k provider.conf
 </pre></div>
 </div>
 <p>You should see output of the following form:</p>
 <img alt="_images/hello-world-metrics-prometheus.png" class="align-center" src="_images/hello-world-metrics-prometheus.png" />
-<ol class="arabic simple" start="2">
-<li><p>Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance.</p></li>
-</ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
+<p><em>3. Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json --kubeconfig<span class="o">=</span>provider.conf <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json --kubeconfig<span class="o">=</span>provider.conf <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
 </pre></div>
 </div>
 <p>You should see following output:</p>
 <a class="reference internal image-reference" href="_images/hello-world-resources.png"><img alt="_images/hello-world-resources.png" class="align-center" src="_images/hello-world-resources.png" style="width: 200px; height: 150px;" /></a>
-<ol class="arabic simple" start="3">
-<li><p>Check resource relationship graph for HelloWorldService instance:</p></li>
-</ol>
+<p><em>4. Check resource relationship graph for HelloWorldService instance</em></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -k provider.conf
 </pre></div>
 </div>
@@ -331,9 +318,7 @@ curl localhost:8082
 </div>
 <p>You should see following output:</p>
 <img alt="_images/hello-world-connections-flat.png" class="align-center" src="_images/hello-world-connections-flat.png" />
-<ol class="arabic simple" start="9">
-<li><p>(Only on Linux or MacOS) Visualize the relationship graph:</p></li>
-</ol>
+<p><em>5. Visualize the relationship graph</em></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -o png -k provider.conf
 </pre></div>
 </div>
