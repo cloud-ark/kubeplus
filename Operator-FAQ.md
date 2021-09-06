@@ -2,7 +2,7 @@
 
 **Q. What is a Kubernetes Operator?**
 
-A. An [Operator](https://coreos.com/operators/) is essentially a new REST API that is added to a Kubernetes cluster's control plane. Like traditional REST APIs, it has a resource definition and code that knows how to perform CRUD operations on that resource. In Kubernetes nomenclature, the resource definition is called as the Custom Resource and the code that performs CRUD operations is called Custom Controller. The official definition of an Operator is being debated and discussed
+A. A [Kubernetes Operator](https://coreos.com/operators/) is essentially a new REST API that is added to a Kubernetes cluster's control plane. Like traditional REST APIs, it has a resource definition and code that knows how to perform CRUD operations on that resource. In Kubernetes nomenclature, the resource definition is called as the Custom Resource and the code that performs CRUD operations is called Custom Controller. The official definition of an Operator is being debated and discussed
 in the [CNCF sig-app-delivery group currently](https://lists.cncf.io/g/cncf-sig-app-delivery/topic/operator_definition/44377945). 
 
 **Q. Why are Operators useful?**
@@ -61,16 +61,16 @@ A. It depends on how the Operator’s code is written. You can choose from multi
 
 **Q. What are all the personas involved in developing, installing, using Operators? What tools exist for each?**
 
-A. The three personas involved are - Operator developers/Operator curators, Cluster Admins/DevOps Engineers, Application/Microservice developers. The tools available for each persona are listed in following table:
+A. The three personas involved are - Operator developers/Operator curators, Cluster Admins, Application developers. The tools available for each persona are listed in following table:
 
 - Operator developer/Curator (Developing/Customizing Operators)
   - [sample-controller](https://github.com/kubernetes/sample-controller), [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder), [Operator SDK](https://github.com/operator-framework/operator-sdk), [Helm](https://helm.sh/)
-  - [Operator guidelines](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) to enable Platform-as-Code (Bringing consistency across Operators)
-- Cluster Admin/ DevOps engineer (Installing Operator)
+  - [Operator guidelines](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) to bring consistency across Operators
+- Cluster Admin (Installing Operator)
   - kubectl, Helm, [Operator Lifecycle Manager(OLM)](https://github.com/operator-framework/operator-lifecycle-manager)
 - Application developer (Using Custom Resources introduced by Operators)
-  - [KubePlus Custom Resource Discovery and Binding Add-on](https://github.com/cloud-ark/kubeplus) (Language and New endpoints for consuming Custom Resources introduced by Operators)
-  - [Application CRD](https://github.com/kubernetes-sigs/application) (Abstracting application)
+  - [KubePlus Consumer APIs](https://github.com/cloud-ark/kubeplus)
+  - [Application CRD](https://github.com/kubernetes-sigs/application)
 
 **Q. In what language are Operators written? Is there a preferred language?**
 
@@ -79,7 +79,7 @@ A. Operators can be written in any language. Currently there are [officially sup
 
 **Q. Are there situations where one needs multiple Operators?**
 
-A. Often. We are seeing enterprises use multiple Operators to build their platform workflows on Kubernetes. At CloudARK, we have pioneered Platform-as-Code approach for creating multi Operator platform workflows.
+A. Often. We are seeing enterprises use multiple Operators to build custom PaaS on Kubernetes. At CloudARK, we have developed the [Kubernetes Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) for creating multi-Operator environments.
 
 **Q. What are the advantages of using multiple Operators?**
 
@@ -87,12 +87,12 @@ A. Development and maintenance of in-house platform automation is reduced. This 
 
 **Q. What are the challenges when using multiple Operators together?**
 
-A. Primary challenge is interoperability and binding between various Custom Resources supported by Operators. We have developed KubePlus API Add-on for Custom Resource Discovery and Binding that helps with this process.
+A. Primary challenge is interoperability and binding between various Custom Resources supported by Operators. As part of KubePlus, we have developed kubectl
+plugins that help with tracking resource relationships of application stacks involving Custom Resources.
 
 **Q. We are interested in building our Kubernetes platform using Open source Operators. What should we look for when choosing an Operator?**
 
-A. There are Operator listing and repositories such as following: https://operatorhub.io/, https://chartmuseum.com/, https://github.com/operator-framework/awesome-operators, https://kubedex.com/operators/. You can pick an Operator from any of these places. Then use the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) that we have developed to evaluate whether the Operator that you have selected has some of the attributes mentioned in the 
-Operator Maturity Model.
+A. There are Operator listing and repositories such as following: https://operatorhub.io/, https://chartmuseum.com/, https://github.com/operator-framework/awesome-operators, https://kubedex.com/operators/. You can pick an Operator from any of these places. Then use the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) that we have developed to evaluate whether the Operator(s) that you have selected has some of the attributes mentioned in the Operator Maturity Model.
 
 **Q. Are Operators production ready? Is there any analysis of open source Operators?**
 
@@ -100,5 +100,4 @@ A. We have done analysis of open source Operators. You can find it [here](https:
 
 **Q. Are there situations where Operator pattern cannot be used? Or, what is an Operator anti-pattern?**
 
-A. Operator pattern is not suitable if there is no need for monitoring and reconciling the cluster state based on some declarative input leveraging Custom Resource abstraction. 
-Operator pattern is also not suitable if actions that need to be performed on the cluster can not be translated into declarative input and instead are imperative in nature by design. For handling such a requirement, you can either create a separate Pod and run it in the cluster, or if you need the functionality through kubectl then consider using Kubernetes Aggregated API Server.
+A. Operator pattern is not suitable if there is no need for monitoring and reconciling the cluster state based on some declarative input leveraging Custom Resource abstraction. Operator pattern is also not suitable if actions that need to be performed on the cluster can not be translated into declarative input and instead are imperative in nature by design. For handling such a requirement, you can either create a separate Pod and run it in the cluster, or if you need the functionality through kubectl then consider using Kubernetes Aggregated API Server.
