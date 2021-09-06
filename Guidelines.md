@@ -1,6 +1,7 @@
 # Kubernetes Operator Maturity Model:  Operator readiness for multi-tenant and multi-Operator environments
 
-Kubernetes Operators extend Kubernetes Resource set (APIs) and enable adding application-specific platform workflow automation in Kubernetes native manner e.g. Operators for softwares like databases, key-value stores, API gateways etc. While Kubernetes Operators have become popular to package stateful applications in Kubernetes native manner, enterprise DevOps teams are using Kubernetes Operator pattern to create custom PaaSes. A PaaS requires an Operator’s readiness for multi-tenant and multi-Operator environment. We have developed a set of guidelines under Operator Maturity Model to enable this.
+Kubernetes Operators extend Kubernetes Resource set (APIs) for managing softwares like databases, key-value stores, API gateways, etc. in Kubernetes native manner. Today enterprise DevOps teams are using multiple Kubernetes Operators on their clusters to create custom PaaSes. A PaaS requires an Operator’s readiness for multi-tenant and multi-Operator environments. In such PaaSes, application stacks are typically made up of Kubernetes Custom resources from different Operators. 
+Towards this we have developed following set of Operator Maturity Model guidelines.
 
 The model is divided into four categories with a set of guidelines in each category. 
 
@@ -25,7 +26,7 @@ Consumability guidelines focus on design of Custom Resources.
 
 ## Security
 
-Security guidelines help in applying authorization controls and building multi-tenant application stacks using Kubernetes resources (built-in and custom).
+Security guidelines help in identifying authorization controls required in building multi-tenant application stacks using Kubernetes resources (built-in and custom).
 
 [6. Define Service Account for Operator Pod](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md#define-service-account-for-operator-pod)
 
@@ -81,11 +82,11 @@ Portability guidelines focus on Operator and Custom Resource properties that ena
 
 ## Consumability
 
-Consumability guidelines focus on design of Custom Resources (APIs) to simplify their use in building application stacks using them.
+Consumability guidelines focus on design of Custom Resources (APIs) to simplify their use in building application stacks.
 
 ### Design Custom Resource as a declarative API and avoid inputs as imperative actions
 
-A declarative API is one in which you specify the desired state of the software that your Operator is managing using the Custom Resource Spec definition. Prefer declarative specification over any imperative actions in Custom Resource Spec definition. In multi-Operator setups this requirement ensures correct composability of workflows created from multiple Custom resources. Also, having all the Custom Resource Spec inputs as declarative values provides easy way to determine the state of the overall application stack.
+A declarative API is one in which you specify the desired state of the software that your Operator is managing using the Custom Resource Spec definition. Prefer declarative specification over any imperative actions in Custom Resource Spec definition. In multi-Operator setups having all the Custom Resource Spec inputs as declarative values provides easy way to determine the state of the overall application stack.
 
 ### Make Custom Resource Type definitions compliant with Kube OpenAPI
 
@@ -112,24 +113,21 @@ Before introducing new CLI for your Operator, validate if you can use Kubernetes
 
 Custom Resources introduced by your Operator will naturally work with kubectl.
 However, there might be operations that you want to support for which the declarative nature of Custom Resources
-is not appropriate. An example of such an action is historical record of how Postgres Custom Resource has evolved over time
-that might be supported by the Postgres Operator. Such an action does not fit naturally into the declarative
-format of Custom Resource Definition. For such actions, we encourage you to consider using Kubernetes
-extension mechanisms of Aggregated API servers and Custom Sub-resources. These mechanisms 
-will allow you to continue using kubectl as the primary interaction point for your Operator. 
+is not appropriate. An example of such an action is the historical record of how Postgres Custom Resource has evolved over time. Such an action does not fit naturally into the declarative format of Custom Resource Definition. For such actions, we encourage you to consider using Kubernetes
+extension mechanisms of Aggregated API servers and Custom Sub-resources. These mechanisms will allow you to continue using kubectl as the primary interaction point for your Operator. 
 
 Refer to [this blog post](https://medium.com/@cloudark/comparing-kubernetes-api-extension-mechanisms-of-custom-resource-definition-and-aggregated-api-64f4ca6d0966) to learn more about various Kubernetes extension mechanisms.
 
 ### Expose Operator developer’s assumptions and requirements about Custom Resources
 
-Application developers will need to know details about how to use Custom Resources of your Operator. This information goes beyond what is available through Custom Resource Spec properties. Here are some of the Operator developer assumptions that are not captured in your Spec definition: 
-- what sub resources will be created by the Custom Resource
-- your Custom Resources may need certain labels or annotations to be added on Kubernetes resources for its operation. 
-- it may also depend on spec property of another resource. 
-- service account and RBAC needs of your Operator, service account and RBAC needs of your Custom Resource's Pods
-- any hard-coded values such as those for resource requests/limits, Pod disruption budgets, taints and tolerations, etc. 
+Application developers will need to know details about how to use Custom Resources of your Operator. This information goes beyond what is available through Custom Resource Spec properties. Here are some of the Operator developer assumptions that are not captured in your Custom Resource spec definition:
+- what sub-resources will be created by the Operator as part of handling the Custom Resource.
+- your Custom Resources may need certain labels or annotations to be added on other Kubernetes resources for the Operator's operation.
+- your Custom Resource may also depend on spec property of another Kubernetes resource.
+- service account and RBAC needs of your Operator, service account and RBAC needs of your Custom Resource's Pods.
+- any hard-coded values such as those for resource requests/limits, Pod disruption budgets, taints and tolerations, etc. that are defined for your Custom Resource.
 
-As part of our Platform-as-Code practice we have devised an easy way to capture these assumptions as CRD annotations. We currently offer following CRD annotations in KubePlus. 
+We have devised an easy way to capture these assumptions as CRD annotations. We currently offer following CRD annotations for this purposel
 ```
 resource/usage
 resource/composition
@@ -137,62 +135,55 @@ resource/annotation-relationship
 resource/label-relationship
 resource/specproperty-relationship
 ```
-Once these annotations are given on the required CRDs, KubePlus offers kubectl plugins such as ```kubectl composition```, ```kubectl connections```, ```kubectl man``` etc. to explore resource topology involving the concerned Custom Resource.
+Once these annotations are defined on your Operator's CRDs, application developers can find out fine-grained information about your Custom Resources by using 
+[our KubePlus kubectl plugins](https://github.com/cloud-ark/kubeplus#2-kubeplus-kubectl-plugins). [Here](https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md) you can find annotations that we maintain for community Operators.
 
 
 ### Use ConfigMap or Custom Resource Annotation or Custom Resource Spec definition as an input mechanism for configuring the underlying software
 
-An Operator generally needs to take configuration parameter as inputs for the underlying resource that it is managing.
-We have seen three different approaches being used towards this in the community: using ConfigMaps, using Annotations, or using Custom Resource Spec definition itself. There are pros and cons of each of these approaches.
-An advantage of using Spec properties is that it is possible to define validation rules for them.
-This is not possible with annotations or ConfigMaps. An advantage of using ConfigMaps is that it supports
-providing larger inputs (such as entire configuration files). This is not possible with Spec properties or annotations. An advantage of annotations is that adding/updating new fields does not require changes to the Spec.
-Any of these approaches should be fine based on your Operator design. 
-It is also possible that you may end up using multiple approaches, such as a ConfigMap with its name specified in the 
-Custom Resource Spec definition.
+An Operator generally needs to take configuration parameter as inputs for the underlying resource that it is managing. We have seen three different approaches being used towards this in the community: using ConfigMaps, using Annotations, or using Custom Resource Spec definition itself. There are pros and cons of each of these approaches. An advantage of using Spec properties is that it is possible to define validation rules for them. This is not possible with annotations or ConfigMaps. An advantage of using ConfigMaps is that it supports providing larger inputs (such as entire configuration files). This is not possible with Spec properties or annotations. An advantage of annotations is that adding/updating new fields does not require changes to the Spec. Any of these approaches should be fine based on your Operator design. It is also possible that you may end up using multiple approaches, such as a ConfigMap with its name specified in the Custom Resource Spec definition.
 
 [Nginx Custom Controller](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/customization) supports both ConfigMap and Annotation.
 [Oracle MySQL Operator](https://github.com/oracle/mysql-operator/blob/master/docs/user/clusters.md) uses ConfigMap.
 [PressLabs MySQL Operator](https://github.com/presslabs/mysql-operator) uses Custom Resource [Spec definition](https://github.com/presslabs/mysql-operator/blob/master/examples/example-cluster.yaml#L22). DataStax's [Cassandra Operator](https://github.com/datastax/cass-operator) uses Spec definition.
 
-Choosing one of these three mechanisms is better than other approaches, such as using a initContainer to download config file/data from remote storage (s3, github, etc.), or using Pod environment variables for passing in configuration data for the underlying resource. The problem with these approaches is that at the workflow level they can lead to inconsistency of providing inputs to different Custom Resources. This in turn can make it difficult to redeploy/reproduce the workflows on different clusters.
+Choosing one of these three mechanisms is better than other approaches, such as using a initContainer to download config file/data from remote storage (s3, github, etc.), or using Pod environment variables for passing in configuration data for the underlying resource. The problem with these approaches is that at the application stack level they can lead to inconsistency of providing inputs to different Custom Resources. This in turn can make it difficult to redeploy/reproduce the stacks on different clusters.
 
 
 ## Security
 
-Security guidelines help in applying authorization controls and building multi-tenant stacks.
+Security guidelines help in applying authorization controls in building multi-tenant application stacks.
 
 ### Define Service Account for Operator Pod
 
-Your Operator may be need to use a specific service account with specific permissions. Clearly document the service account needs of your Operator Pod. Include this information in the ConfigMap that you will add for the 'resource/usage' annotation on the CRD. In multi-Operator stacks, knowing the service accounts and their RBAC permissions enables users to know the security posture of the stack. Be explicit in defining only the required permissions and nothing more. This ensures that the cluster is safe against unintended actions by any of the Operators (malicious/byzantine actions of compromised Operators or benign faults appearing in the Operators).
+Your Operator may be need to use a specific service account with specific permissions. Clearly document the service account needs of your Operator Pod. Include this information in the ConfigMap that you will add for the 'resource/usage' annotation on the CRD. In multi-Operator setups, knowing the service accounts and their RBAC permissions enables users to know the security posture of their environment. Be explicit in defining only the required permissions and nothing more. This ensures that the cluster is safe against unintended actions by any of the Operators (malicious/byzantine actions of compromised Operators or benign faults appearing in the Operators).
 
 
 ### Define Service Account for Custom Resources
 
-Your Custom Resource's Pods may need to run with specific service account permissions. If that is the case, one of the decisions you will need to make is whether that service account should be provided by DevOps engineers. If so, provide an attribute in Custom Resource Spec definition to define the service account. Alternatively, if the Custom Controller is hard coding the service account name in the underlying Pod's Spec, then expose this information as Operator’s assumption using 'resource/usage' CRD annotation discussed above. 
-If all the Custom Resources have service accounts defined, it enables users to understand the complete security posture of the workflows.
+Your Custom Resource's Pods may need to run with specific service account permissions. If that is the case, one of the decisions you will need to make is whether that service account should be provided by DevOps engineers. If so, provide an attribute in Custom Resource Spec definition to define the service account. Alternatively, if the Custom Controller is hard coding the service account name in the underlying Pod's Spec, then expose this information as Operator’s assumption using ``resource/usage`` CRD annotation discussed above. 
+If all the Custom Resources have service accounts defined, it enables users to understand the complete security posture of their application stack.
 
 
 ### Define SecurityContext and PodSecurityPolicies for Custom Resources
 
 Kubernetes provides mechanism of [SecurityContext](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) that can be used to define the security attributes of a Pod's containers (userID, groupID, Linux capabilities, etc.). In your Operator implementation, you may decide to create Custom Resource Pods using
-certain settings for the securityContext. Surface these settings through the Custom Resource ``man page``. By surfacing the security context information in this way, it will be possible for the DevOps engineers and
+certain settings for the securityContext. Surface these settings through the Custom Resource the ``resource/usage`` CRD annotation. By surfacing the security context information in this way, it will be possible for the DevOps engineers and
 Application developers to find out the security context with which Custom Resource Pods will run in the cluster.
 
 Kubernetes [Pod Security Policies](https://kubernetes.io/docs/concepts/policy/pod-security-policy/) provide a way to define policies related to creating privileged Pods in a cluster.
 As part of handling Custom Resources, if your Operator is creating privileged Pods then make sure
-to surface this information as part of the Custom Resource man page. If you want
-to provide the control of creating privileged Pods to Custom Resource user then define a Spec attribute
-for this purpose in your Custom Resource Spec definition.
+to surface this information through ``resource/usage`` CRD annotation. If you want
+to provide the control of creating privileged Pods to Custom Resource user then define a Spec attribute for this purpose in your Custom Resource Spec definition.
 
 If every Operator and Custom Resource is implemented to take SecurityContext and PodSecurityPolicies (PSPs) as input
-through Spec definition, then it will be possible to define a uniform security context and PSP for the entire workflow.
+through Spec definition, then it will be possible to define a uniform security context and PSP for the application stack.
 
 
 ### Make Custom Controllers namespace aware
 
 To support multi-tenant use-cases, your Operator should support creating resources within different namespaces rather than just in the namespace
-in which it is deployed (or the default namespace). This will allow your Operator to support multi-tenancy through namespaces. When all the Custom Resources and Operators support namespaces, it is possible to create multi-tenant stacks in different namespaces.
+in which it is deployed (or the default namespace). This will allow your Operator to support multi-tenancy through namespaces. When all the Custom Resources and Operators support namespaces, it is possible to create multi-tenant application stacks in different namespaces.
 
 Moreover, document whether your Operator is able to create/manage resources in the same namespace in which it is deployed, or can it handle resource creation in other namespaces. If it does support cross-namespace resource management, document how to provide the Operator with necessary privileges on such other namespaces (if this means that the Operator Pod needs to be deployed with cluster-admin privileges, document that.)
 
@@ -206,7 +197,7 @@ with the labels on the nodes when making scheduling decision.
 If your Custom Resource Pods need to be
 subject to this scheduling constraint then you will need to define the Custom Resource Spec to allow input of 
 such labels. The Custom Controller will need to be implemented to pass these labels to the underlying Custom Resource Pod Spec.
-In multi-Operator stacks if every Custom Resource supports node affinity rules, it will enable co-locating entire application stacks on specific nodes.
+In multi-Operator setups if every Custom Resource supports node affinity rules, it will enable co-locating entire application stacks on specific nodes.
 
 
 ### Define Custom Resource Pod Affinity rules
@@ -215,7 +206,7 @@ Kubernetes provides mechanism of [Pod Affinity](https://kubernetes.io/docs/conce
 Consider if your Custom Resource Pods need to be provided with such affinity rules corresponding
 to other Custom Resource Pods from same or other Operator. If so, provide an attribute in your Custom Resource
 Spec definition where such rules can be specified. The Custom Controller will need to be implemented to pass these 
-rules to the Custom Resource Pod Spec. In multi-Operator stacks if every Custom Resource supports pod affinity rules, it will enable co-locating entire application stacks together on a node.
+rules to the Custom Resource Pod Spec. In multi-Operator setups if every Custom Resource supports pod affinity rules, it will enable co-locating entire application stacks together on a node.
 
 
 ### Define NetworkPolicy for Custom Resources
@@ -225,7 +216,7 @@ a mechanism to define firewall rules to control network traffic for Pods. In cas
 to your Custom Resource's Pods then define a Spec attribute in your Custom Resource Spec definition to
 specify labels to be applied to the Custom Resource's underlying Pods. 
 Implement your Operator to apply this label to the underlying Pods that will be created by the Operator as part of handling a Custom Resource. Then it will be possible for users to specify NetworkPolicies for your Custom Resource Pods.
-In multi-Operator stacks if every Custom Resource supports NetworkPolicy labels then it will enable enforcing traffic restriction for entire application stack. 
+In multi-Operator setups if every Custom Resource supports NetworkPolicy labels then it will enable enforcing traffic restriction for entire application stack. 
 
 ## Robustness
 
@@ -245,8 +236,7 @@ extended for the entire application stack consisting of Custom Resources.
 Kubernetes provides mechanism of [requests and limits](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#resource-types) for specifying the cpu and memory resource needs of a Pod's containers. When specified, Kubernetes scheduler ensures that the Pod is scheduled on a Node that has enough capacity 
 for these resources. A Pod with request and limits specified for every container is given ``guaranteed`` Quality-of-Service (QoS) by the Kubernetes scheduler. A Pod in which only resource requests are specified for at least one container is given ``burstable`` QoS. A Pod with no requests/limits specified is given ``best effort`` QoS.
 It is important to define resource requests and limits for your Custom Resources.
-This helps with ensuring ``atomicity`` for deploying workflows of Custom Resources.
-Atomicity in this context means that either all the Custom Resources in a application stack are deployed or none are. There is no intermediate state where some of the Custom Resources are deployed and others are not. The atomicity property is only achievable if Kubernetes is able to provide ``guaranteed`` QoS to all the Custom Resources in a workflow. This is only possible if each Custom Resource defines resource requests and limits and the corresponding Operator is implemented to propagate these values to the Custom Resource's underlying Pod's containers.
+This helps with ensuring ``atomicity`` for deploying application stacks of Custom Resources. Atomicity in this context means that either all the Custom Resources in a application stack are deployed or none are. There is no intermediate state where some of the Custom Resources are deployed and others are not. The atomicity property is only achievable if Kubernetes is able to provide ``guaranteed`` QoS to all the Custom Resources in an application stack. This is only possible if each Custom Resource defines resource requests and limits and the corresponding Operator is implemented to propagate these values to the Custom Resource's underlying Pod's containers. In KubePlus, we support defining cpu/memory requests and limits at the Helm chart level. KubePlus will add these policies to all the Pods that are generated as part of the registered chart's release.
 
 
 ### Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML
@@ -307,7 +297,7 @@ Kubernetes provides mechanism of [Pod Anti-Affinity](https://kubernetes.io/docs/
 Consider if your Custom Resource Pods need to be provided with such anti-affinity rules corresponding to 
 other Custom Resoures from other Operators. If so, provide an attribute in your Custom Resource
 Spec definition where such rules can be specified. Implement the Custom Controller to pass these 
-rules to the Custom Resource Pod Spec. These rules will be useful in deploying different Custom Resource stacks on separate nodes.
+rules to the Custom Resource Pod Spec. These rules will be useful in deploying different application stacks on separate nodes.
 
 
 ### Define Custom Resource Taint Toleration rules
@@ -329,9 +319,8 @@ the disruption budget should be set by DevOps engineers.
 If yes, then ensure that the Custom Resource Spec definition has a field to specify a disruption budget.
 Implement the Custom Controller to pass this value to the Pod Spec.
 If on the other hand you decide to hard code this choice in your Custom Controller implementation then
-surface it to Custom Resource users throught its ``man page``.
-In multi-Operator stacks, if each Custom Resource contains PDB in its Spec it provides guarantee of stability
-of Custom Resource workflows as a whole. Without PDBs, it may happen that one Custom Resource gets disrupted if the Kubernetes scheduler comes under resource pressure causing entire application stack to fail.
+surface it to Custom Resource users throught its the ``resource/usage`` annotation.
+In multi-Operator setups, if each Custom Resource contains PDB in its Spec it provides guarantee of stability of the application stack as a whole. Without PDBs, it may happen that one Custom Resource gets disrupted if the Kubernetes scheduler comes under resource pressure causing entire application stack to fail.
 
 ### Enable Audit logs for Custom Resources
 
@@ -354,7 +343,7 @@ to build the required metrics. Once metrics are collected, you should consider e
 
 ## Portability
 
-Portability guidelines focus on Operator and Custom Resource properties that enable deploying the Operators and workflows on any Kubernetes distribution, on-prem or on cloud.
+Portability guidelines focus on Operator and Custom Resource properties that enable deploying the Operators and application stacks on any Kubernetes distribution - on-prem or public cloud.
 
 ### Package Operator as Helm Chart
 
@@ -366,15 +355,12 @@ CloudARK [sample Postgres Operator](https://github.com/cloud-ark/kubeplus/blob/m
 
   * ConfigMaps corresponding to 'resource/usage' annotation that you have added on your Custom Resource Definition (CRD).
 
-Use Helm chart's Values.yaml for Operator customization. 
-By defining Helm charts, multi-Operator stacks and Custom Resource workflows can be created on any cloud or Kubernetes distribution.
+Use Helm chart's Values.yaml for Operator customization.
 
 
 ### Register CRDs as YAML Spec in Helm chart rather than in Operator code
 
-Installing CRD requires Cluster-scope permission. If the CRD registration is done as YAML manifest, then it is possible to separate CRD registration from the Operator Pod deployment. CRD registration
-can be done by cluster administrator while Operator Pod deployment can be done by a non-admin user. 
-It is then possible to deploy the Operator in different namespaces with different customizations.
+Installing CRD requires Cluster-scope permission. If the CRD registration is done as YAML manifest, then it is possible to separate CRD registration from the Operator Pod deployment. CRD registration can be done by cluster administrator while Operator Pod deployment can be done by a non-admin user. It is then possible to deploy the Operator in different namespaces with different customizations.
 On the other hand, if CRD registration is done as part of your Operator code then the deployment of the Operator Pod will need Cluster-scope permissions. This will tie together installation of CRD with that of the Operator, which
 may not be the best setup in certain situations. Another reason to register CRD as YAML is because kube-openapi validation can be defined as part of it.
 
@@ -397,4 +383,4 @@ In Helm 3.0 the crd-install annotation is no longer supported. Instead, a separa
 named ``crds`` needs to be created as part of the Helm chart directory in which all the CRDs
 are to be specified. By defining CRDs inside this directory, Helm 3.0 guarantees to install
 the CRDs before installing other templates, which may consist of Custom Resources introduced by that CRD.
-Installing CRDs first is important -- otherwise creation of Custom Resource workflows will fail as the Kubernetes cluster control plane won't be able to recognize the Custom Resources used in your stack.
+Installing CRDs first is important -- otherwise creation of application stacks consisting of Custom Resources will fail as the Kubernetes cluster control plane won't be able to recognize the Custom Resources used in your stack.
