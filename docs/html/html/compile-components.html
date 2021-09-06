@@ -159,6 +159,43 @@ and run some example (<code class="docutils literal notranslate"><span class="pr
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ./build-artifact.sh latest
 </pre></div>
 </div>
+<p>Following components are written in Golang. If you run into any issues with building them then use the following commands to separately try the build steps to debug the issue.</p>
+<p><em>Init container</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> deploy
+$ ./build-artifact.sh latest
+$ go build .
+$ <span class="nb">cd</span> ..
+</pre></div>
+</div>
+<p><em>Platform Operator</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> platform-operator
+$ ./build-artifact.sh latest
+$ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>off
+$ go build .
+$ <span class="nb">cd</span> ..
+</pre></div>
+</div>
+<p><em>Helm Pod</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> platform-operator/helm-pod
+$ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>on
+$ go build .
+$ <span class="nb">cd</span> ../../
+</pre></div>
+</div>
+<p><em>Mutating Webhook</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> mutating-webhook
+$ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>on
+$ go build .
+$ <span class="nb">cd</span> ..
+</pre></div>
+</div>
+<p><em>Mutating Webhook Helper</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> mutating-webhook-helper
+$ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>on
+$ go build .
+$ <span class="nb">cd</span> ..
+</pre></div>
+</div>
 </div>
 <div class="section" id="deploy-kubeplus">
 <h2>Deploy KubePlus</h2>
@@ -175,7 +212,7 @@ $ kubectl create -f kubeplus-components-minikube.yaml
 <div class="section" id="check-logs">
 <h2>Check Logs</h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="nv">$KUBEPLUS_HOME</span>/deploy
-$ ./kubeplus-logs.sh
+$ ./kubeplus-logs.sh &lt;namespace <span class="k">in</span> which KubePlus is deployed&gt;
 </pre></div>
 </div>
 </div>
@@ -183,36 +220,6 @@ $ ./kubeplus-logs.sh
 <h2>Delete KubePlus</h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="nv">$KUBEPLUS_HOME</span>/deploy
 $ ./delete-kubeplus-components.sh
-</pre></div>
-</div>
-<p>Following components are written in Golang. If you run into any issues with building them then use the following commands to separately try the build steps to debug the issue.</p>
-<p><strong>Platform Operator</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> platform-operator
-$ ./build-artifact.sh latest
-$ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>off
-$ go build .
-$ <span class="nb">cd</span> ..
-</pre></div>
-</div>
-<p><strong>Helm Pod</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> platform-operator/helm-pod
-$ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>on
-$ go build .
-$ <span class="nb">cd</span> ../../
-</pre></div>
-</div>
-<p><strong>Mutating Webhook</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> mutating-webhook
-$ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>on
-$ go build .
-$ <span class="nb">cd</span> ..
-</pre></div>
-</div>
-<p><strong>Mutating Webhook Helper</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> mutating-webhook-helper
-$ <span class="nb">export</span> <span class="nv">GO111MODULE</span><span class="o">=</span>on
-$ go build .
-$ <span class="nb">cd</span> ..
 </pre></div>
 </div>
 </div>

@@ -147,7 +147,6 @@ KubePlus is made up of following components:
 - the helmer container (available in ``$KUBEPLUS_HOME/platform-operator/helm-pod`` folder)
 - consumerui (available in ``$KUBEPLUS_HOME/consumerui`` folder)
 
-
 Use vi/emacs to modify any part of the code.
 In order to test the changes, you will need to build the code, deploy KubePlus, 
 and run some example (``hello-world`` is a good example for testing purposes).
@@ -160,6 +159,58 @@ In each of the above component folders a build script is provided (``./build-art
 .. code-block:: bash
 
 	$ ./build-artifact.sh latest
+
+
+Following components are written in Golang. If you run into any issues with building them then use the following commands to separately try the build steps to debug the issue. 
+
+*Init container*
+
+.. code-block:: bash
+
+	$ cd deploy
+	$ ./build-artifact.sh latest
+	$ go build .
+	$ cd ..
+
+*Platform Operator*
+
+.. code-block:: bash
+
+	$ cd platform-operator
+	$ ./build-artifact.sh latest
+	$ export GO111MODULE=off
+	$ go build .
+	$ cd ..
+
+*Helm Pod*
+
+.. code-block:: bash
+
+	$ cd platform-operator/helm-pod
+	$ export GO111MODULE=on
+	$ go build .
+	$ cd ../../
+
+
+*Mutating Webhook*
+
+.. code-block:: bash
+
+	$ cd mutating-webhook
+	$ export GO111MODULE=on
+	$ go build .
+	$ cd ..
+
+
+*Mutating Webhook Helper*
+
+.. code-block:: bash
+
+	$ cd mutating-webhook-helper
+	$ export GO111MODULE=on
+	$ go build .
+	$ cd ..
+
 
 Deploy KubePlus
 ----------------
@@ -183,7 +234,7 @@ Check Logs
 .. code-block:: bash
 
 	$ cd $KUBEPLUS_HOME/deploy
-	$ ./kubeplus-logs.sh
+	$ ./kubeplus-logs.sh <namespace in which KubePlus is deployed>
 
 Delete KubePlus
 ----------------
@@ -192,50 +243,4 @@ Delete KubePlus
 
 	$ cd $KUBEPLUS_HOME/deploy
 	$ ./delete-kubeplus-components.sh 
-
-
-Following components are written in Golang. If you run into any issues with building them then use the following commands to separately try the build steps to debug the issue. 
-
-
-**Platform Operator**
-
-.. code-block:: bash
-
-	$ cd platform-operator
-	$ ./build-artifact.sh latest
-	$ export GO111MODULE=off
-	$ go build .
-	$ cd ..
-
-
-**Helm Pod**
-
-.. code-block:: bash
-
-	$ cd platform-operator/helm-pod
-	$ export GO111MODULE=on
-	$ go build .
-	$ cd ../../
-
-
-**Mutating Webhook**
-
-.. code-block:: bash
-
-	$ cd mutating-webhook
-	$ export GO111MODULE=on
-	$ go build .
-	$ cd ..
-
-
-**Mutating Webhook Helper**
-
-.. code-block:: bash
-
-	$ cd mutating-webhook-helper
-	$ export GO111MODULE=on
-	$ go build .
-	$ cd ..
-
-
 

@@ -46,7 +46,7 @@
 <div class="section" id="overview">
 <h2>Overview</h2>
 <p>KubePlus takes an application Helm chart and delivers it as-a-service by automating multi-tenancy management and day2 operations. KubePlus consists of a CRD that enables creating new Kubernetes APIs (CRDs) to realize such services. Provider of the service has privileged access to the cluster and is able to create these services from Helm charts. Consumer of the service has limited access to the cluster and is able to use newly created service API / CRD and create an instance of the application. Behind the scene the provider is able to upgrade, monitor or govern this service.</p>
-<a class="reference internal image-reference" href="_images/kubeplus-provider-consumer.png"><img alt="_images/kubeplus-provider-consumer.png" class="align-center" src="_images/kubeplus-provider-consumer.png" style="width: 650px; height: 350px;" /></a>
+<a class="reference internal image-reference" href="_images/kubeplus-provider-consumer.png"><img alt="_images/kubeplus-provider-consumer.png" class="align-center" src="_images/kubeplus-provider-consumer.png" style="width: 650px; height: 275px;" /></a>
 <ul class="simple">
 <li><p>Create: Create SaaS for any application packaged as Helm chart.</p></li>
 <li><p>Govern: Tenant level policies for isolation and resource utilization.</p></li>
@@ -58,8 +58,8 @@
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="kubeplus-components.html">KubePlus Components</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="kubeplus-components.html#in-cluster-component-crd-for-crds-to-design-your-services-from-helm-charts">In cluster component - CRD for CRDs to design your services from Helm charts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="kubeplus-components.html#client-side-kubectl-plugins-for-monitoring-and-troubleshooting">Client side Kubectl plugins for monitoring and troubleshooting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kubeplus-components.html#kubeplus-kubernetes-operator">KubePlus Kubernetes Operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kubeplus-components.html#kubeplus-kubectl-plugins-for-monitoring-and-troubleshooting">KubePlus kubectl plugins for monitoring and troubleshooting</a></li>
 <li class="toctree-l2"><a class="reference internal" href="kubeplus-components.html#resource-relationship-graphs">Resource relationship graphs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="kubeplus-components.html#crd-annotations-on-community-operators">CRD annotations on community Operators</a></li>
 </ul>
