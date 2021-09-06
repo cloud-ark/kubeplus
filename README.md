@@ -38,7 +38,7 @@ KubePlus offers following functions:
 
 ## Example
 
-To understand the working of KubePlus, let us see how a cluster admin can offer multi-tenant Wordpress service.
+To understand the working of KubePlus, let us see how a cluster admin can offer multi-tenant Wordpress service on their cluster collaborating with the Wordpress application provider team.
 
 
 ### Cluster admin actions
@@ -110,7 +110,7 @@ kubectl metrics WordpressService tenant1 default -o pretty -k provider.conf
 <img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1-metrics-pretty.png" class="center">
 </p>
 
-Our [KubePlus SaaS Manager product](https://cloudark.io/kubeplus-saas-manager) offers enterprise-ready control center for providers to manage their SaaS across multiple Kubernetes clusters.
+Our [KubePlus SaaS Manager product](https://cloudark.io/kubeplus-saas-manager) offers enterprise-ready control center with embedded Prometheus integration for providers to manage their SaaS across multiple Kubernetes clusters.
 
 ## Components
 
@@ -191,7 +191,7 @@ KubePlus is part of CNCF landscape's [Application Definition section](https://la
 As enterprise teams build their custom platforms using community or in house developed Operators, they need a set of guidelines for Operator readiness in multi-Operator and multi-tenant environments. We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) for this purpose. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators for curating community Operators towards building their custom platforms.
 
 
-## Presentations/Talks
+## Presentations
 
 1. [Being a good citizen of the Multi-Operator world, Kubecon NA 2020](https://www.youtube.com/watch?v=NEGs0GMJbCw&t=2s)
 
@@ -203,9 +203,3 @@ As enterprise teams build their custom platforms using community or in house dev
 ## Contact
 
 Submit issues on this repository or reach out to our team on [Slack](https://join.slack.com/t/cloudark/shared_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw).
-
-
-## Status
-
-Actively under development
-
