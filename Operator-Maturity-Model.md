@@ -7,14 +7,3 @@ This model has emerged from our experience of working alongside Operator authors
 ![](./docs/maturity-model-4.png)
 
 If you are an Operator author, use this model as a guiding framework when developing your Operator to fit real-life multi-Operator environments. If you are a Platform Engineer/DevOps Engineer, use this model for evaluating Operators for your platform needs. 
-
-
-## Platform as Code
-
-The Operator Maturity Model is developed as a part of CloudARK's Platform-as-Code practice. Kubernetes Operators enable extending Kubernetes for application specific workflows. They add Custom Resources and offer foundation for creating application stacks as Code declaratively. Our Platform-as-Code practice offers tools and techniques enabling DevOps teams to build custom PaaSes using Kubernetes Operators.
-
-Platform-as-Code practice primarily consists of:
-- Operator Maturity Model: Operator readiness guidelines for multi-tenant and multi-Operator environment
-- KubePlus: Generic tooling to simplify inventory and charge-back for application stacks created using Operators.   
-
-
