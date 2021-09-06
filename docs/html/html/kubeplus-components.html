@@ -44,16 +44,15 @@
             
   <div class="section" id="kubeplus-components">
 <h1>KubePlus Components</h1>
-<p>KubePlus consists of a in-cluster component and a component that you install outside the cluster. The in-cluster component is deployed as a Kubernetes Pod.
-It consists of a Kubernetes Controller, a MutatingWebHook, and a container that knows how to deploy Helm charts. KubePlus requires that the Helm charts be defined using Helm 3.0.</p>
-<a class="reference internal image-reference" href="_images/KubePlus-components2.jpg"><img alt="_images/KubePlus-components2.jpg" class="align-center" src="_images/KubePlus-components2.jpg" style="width: 800px; height: 350px;" /></a>
-<div class="section" id="in-cluster-component-crd-for-crds-to-design-your-services-from-helm-charts">
-<h2>In cluster component - CRD for CRDs to design your services from Helm charts</h2>
+<p>KubePlus consists of a Kubernetes Operator and a set of kubectl plugins. The KubePlus Kubernetes Operator consists of a Kubernetes Controller, a MutatingWebHook, and a module that knows how to deploy Helm charts. KubePlus requires that the Helm charts be defined using Helm 3.0.</p>
+<a class="reference internal image-reference" href="_images/KubePlus-components2.jpg"><img alt="_images/KubePlus-components2.jpg" class="align-center" src="_images/KubePlus-components2.jpg" style="width: 800px; height: 300px;" /></a>
+<div class="section" id="kubeplus-kubernetes-operator">
+<h2>KubePlus Kubernetes Operator</h2>
 <p>KubePlus offers a CRD named ResourceComposition to</p>
 <ul class="simple">
 <li><p>Create new CRDs (Custom Resource Definition) to publish platform services from Helm charts</p></li>
 <li><p>Define policies (e.g. CPU/Memory limits, Node selection, etc.) for managing resources of the platform services</p></li>
-<li><p>Get aggregated CPU/Memory/Storage/Network Prometheus metrics for the platform services</p></li>
+<li><p>Get aggregated cpu, memory, storage, and network metrics for the platform services in Prometheus format</p></li>
 </ul>
 <p>Here is the high-level structure of ResourceComposition CRD:</p>
 <a class="reference internal image-reference" href="_images/crd-for-crds-1.png"><img alt="_images/crd-for-crds-1.png" class="align-center" src="_images/crd-for-crds-1.png" style="width: 550px; height: 250px;" /></a>
@@ -62,15 +61,18 @@ It consists of a Kubernetes Controller, a MutatingWebHook, and a container that 
 <p>The platform workflow requirements are:</p>
 <ul class="simple">
 <li><p>Create a PersistentVolume of required type for MySQL instance.</p></li>
-<li><p>Create Secret objects for MySQL instance and AWS backup.</p></li>
-<li><p>Setup a policy in such a way that Pods created under this service will have specified Resource Request and Limits.</p></li>
-<li><p>Get aggregated CPU/Memory metrics for the overall workflow.</p></li>
+<li><p>Create Secret objects for MySQL instance and for storing backups of a MySQL instance on AWS.</p></li>
+<li><p>Setup a policy to provide specified resource requests and limits to all the</p></li>
 </ul>
+<p>Pods that are created under this service.
+- Get aggregated cpu, memory, storage and network metrics for all the Pods that are
+part of a MySQL instance.</p>
+<p>Platform team defines a Helm chart that defines the required resources to be created (MySQL Custom Resource, PersistentVolume object, Secret objects).</p>
 <p>Here is a new platform service named MysqlService created using
 <code class="code docutils literal notranslate"><span class="pre">ResourceComposition</span></code>.</p>
 <p>A new CRD named MysqlService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources.
 When defining the new <code class="code docutils literal notranslate"><span class="pre">Kind</span></code>, make sure that you define the group as <code class="code docutils literal notranslate"><span class="pre">platformapi.kubeplus</span></code> and version as <code class="code docutils literal notranslate"><span class="pre">v1alpha1</span></code>.
-Additionally provide any policy and monitoring inputs for the workflow as part of <code class="code docutils literal notranslate"><span class="pre">ResourceComposition</span></code> definition. The Spec Properties of MysqlService come from values.yaml of the Helm chart. Product teams can use this service to get MySQL database for their application and all the required setups will be performed transparently by this service.</p>
+Additionally provide any policy and monitoring inputs for the workflow as part of <code class="code docutils literal notranslate"><span class="pre">ResourceComposition</span></code> definition. The Spec Properties of MysqlService come from values.yaml of the Helm chart. Product teams can use this service to get MySQL database for their application.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apiVersion: workflows.kubeplus/v1alpha1
 kind: ResourceComposition
 metadata:
@@ -136,18 +138,13 @@ spec:
 <li><p>ResourcePolicy section (defined under <cite>respolicy</cite>)</p></li>
 <li><p>ResourceMonitoring section (defined under <cite>resmonitor</cite>)</p></li>
 </ul>
-<p>Creating an instance of ResourceComposition registers the specified new API in the cluster. When users create resources of this new API, the Helm chart that was defined as part of the registration of the new API gets deployed as a Helm release. The spec properties of this new API are all the values that are defined in <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code> of the registered Helm chart.</p>
+<p>Creating an instance of ResourceComposition registers the specified new API in the cluster. When users create resources of this new API, the Helm chart that was defined as part of the registration of the new API gets deployed as a Helm release in a new namespace. The spec properties of this new API are all the values that are defined in <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code> of the registered Helm chart.</p>
 <p><em>Helm chart requirements</em></p>
-<p>Make sure that the underlying service Helm chart adheres to following restrictions:
-- The Helm chart should not contain Namespace definition. This
-is because all the Helm chart resources are going to be created in the new
-Namespace that KubePlus creates for that instance.
-The Namespace defined in the Helm chart will get created just as an object
-in the NS that KubePlus creates. But it won’t contain any of the actual service instance resources. They will be present in the NS that KubePlus has created.
-So defining NS in the Helm chart is superfluous and will lead to confusion.
-- The Helm chart should not take Namespace field as input through
-values.yaml. This is because the Namespace name so entered will
-be overridden by the NS that KubePlus creates.</p>
+<p>Make sure that the underlying service Helm chart adheres to following restrictions:</p>
+<ul class="simple">
+<li><p>The Helm chart should not contain Namespace definition. This is because all the Helm chart resources are created in the new Namespace that KubePlus creates for that resource instance (Helm release). The Namespace defined in the Helm chart will get created just as an object in the NS that KubePlus creates. But it won’t contain any of the actual service instance resources. They will be present in the NS that KubePlus has created. So defining NS in the Helm chart is superfluous and will lead to confusion.</p></li>
+<li><p>The Helm chart should not take Namespace field as input through values.yaml. This is because the Namespace name so entered will be overridden by the NS that KubePlus creates.</p></li>
+</ul>
 <p><strong>ResourcePolicy</strong></p>
 <p>ResourcePolicy definition consists of specification of <em>Pod-level mutations</em> which will be applied to the Pods that are created when the Helm chart corresponding to the new API is deployed. Note that the Helm chart may or may not define Pods directly. There might be higher-level resources defined in the chart, such as Deployments, StatefulSets, or custom resources such as MysqlCluster, which internally create Pods. KubePlus is able to discover all the Pods for a particular Helm release and perform the mutations by modifying such Pods’ spec. The mutations are done before the Pods are actually created to ensure that there are no Pod restarts.</p>
 <p>Currently two mutations are supported as part of <code class="docutils literal notranslate"><span class="pre">podconfig</span></code> spec attribute:</p>
@@ -157,18 +154,27 @@ be overridden by the NS that KubePlus creates.</p>
 </ul>
 <p>The values for above fields can be statically defined, or they can be customized per resource instance of the new API. If it is the latter then the value needs to be specified to be input from the underlying <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code>. In the above example, requests and limits are statically defined, whereas <code class="docutils literal notranslate"><span class="pre">nodeSelector</span></code> is defined to be different per resource instance of the new API. Hence its value is specified to be ingested from the <code class="docutils literal notranslate"><span class="pre">nodeName</span></code> field from the underlying <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code>. Note that if <code class="docutils literal notranslate"><span class="pre">nodeName</span></code> field is not defined in <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code> then this mutation will be a noop.</p>
 <p><strong>ResourceMonitor</strong></p>
-<p>ResourcMonitor defines the monitoring requirements. The monitoring metrics that are collected consist of CPU, Memory, Storage and Network for all the Pods that are related to a resource instance. The <code class="docutils literal notranslate"><span class="pre">monitorRelationships</span></code> attribute defines what all relationships to track to build the monitoring metrics. The supported values for it are <code class="docutils literal notranslate"><span class="pre">all</span></code> and <code class="docutils literal notranslate"><span class="pre">owner</span></code>. In Kubernetes resources are related to one another through four different relationships - ownerReferences, labels, spec properties, and annotations.
+<p>ResourcMonitor defines the monitoring requirements. The monitoring metrics that are collected consist of cpu, memory, storage and network (ingress/egress) for all the Pods that are related to a resource instance. The <code class="docutils literal notranslate"><span class="pre">monitorRelationships</span></code> attribute defines what all relationships to track to build the monitoring metrics. The supported values for it are <code class="docutils literal notranslate"><span class="pre">all</span></code> and <code class="docutils literal notranslate"><span class="pre">owner</span></code>. In Kubernetes, resources are related to one another through four different relationships - ownerReferences, labels, spec properties, and annotations.
 Attribute value <code class="docutils literal notranslate"><span class="pre">all</span></code> indicates that all these relationships be used to discover the Pods. Attribute value <code class="docutils literal notranslate"><span class="pre">owner</span></code> indicates that only ownerReference relationship be used to discover the Pods. When <code class="docutils literal notranslate"><span class="pre">ResourceMonitor</span></code> is used as part of <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code> definition like above, <code class="docutils literal notranslate"><span class="pre">monitorRelationships</span></code> should be set to <code class="docutils literal notranslate"><span class="pre">all</span></code> so that we use all the Pods that are created as part of the underlying Helm chart when calculating the metrics.
 Collected metrics are output in Prometheus format.</p>
 <p>The resource section in both <code class="docutils literal notranslate"><span class="pre">ResourcePolicy</span></code> and <code class="docutils literal notranslate"><span class="pre">ResourceMonitor</span></code> specifies the GVK (group, version, kind) of the resource for which policy needs to be enforced or that needs to be monitored. Set these to be the same as resource that is defined as part of <code class="docutils literal notranslate"><span class="pre">ResourceComposition.newResource.resource</span></code> section.
 In the future we plan to support creation of <code class="docutils literal notranslate"><span class="pre">ResourcePolicy</span></code> and <code class="docutils literal notranslate"><span class="pre">ResourceMonitor</span></code> separately from <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code> for general purpose policy and monitoring. At that time the resource section can contain the coordinates (GVK) for any resource present in a cluster.</p>
 </div>
-<div class="section" id="client-side-kubectl-plugins-for-monitoring-and-troubleshooting">
-<h2>Client side Kubectl plugins for monitoring and troubleshooting</h2>
-<p>KubePlus kubectl plugins enable users to discover, monitor and troubleshoot service instances. The primary plugin is: <code class="docutils literal notranslate"><span class="pre">`kubectl</span> <span class="pre">connections`</span></code>. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus constructs Kubernetes Resource relationship graphs at runtime providing it the ability to build resource topologies and offer fine grained visibility and control over the application service.</p>
-<p>Here is the resource relationship graph for MysqlSevice created above discovered using the kubectl connections command.</p>
-<p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">connections</span> <span class="pre">MysqlService</span> <span class="pre">mysql1</span></code></p>
-<a class="reference internal image-reference" href="_images/mysqlservice-connections.png"><img alt="_images/mysqlservice-connections.png" class="align-center" src="_images/mysqlservice-connections.png" style="width: 1000px; height: 350px;" /></a>
+<div class="section" id="kubeplus-kubectl-plugins-for-monitoring-and-troubleshooting">
+<h2>KubePlus kubectl plugins for monitoring and troubleshooting</h2>
+<p>KubePlus kubectl plugins enable users to discover, monitor and troubleshoot service instances. In order to use these plugins you need to add KubePlus folder to your PATH variable.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span>&lt;Full path where kubeplus is cloned&gt;
+$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins:<span class="nv">$PATH</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
+gunzip kubeplus-kubectl-plugins.tar.gz
+tar -xvf kubeplus-kubectl-plugins.tar
+<span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
+<span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
+</pre></div>
+</div>
 <p>Check the available KubePlus kubectl plugins by running: <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">kubeplus</span> <span class="pre">commands</span></code></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$  kubectl kubeplus commands
 
@@ -204,31 +210,34 @@ In the future we plan to support creation of <code class="docutils literal notra
            This plugin enables provider to grant permission <span class="k">for</span> the created service to the consumer. A consumer will be able to create service instances only after that.
 </pre></div>
 </div>
-<p>In order to use these plugins you need to add KubePlus folder to your PATH variable.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span>&lt;Full path where kubeplus is cloned&gt;
-$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins:<span class="nv">$PATH</span>
-</pre></div>
-</div>
-<p>KubePlus cluster-side component bundles these plugins as part of the <code class="docutils literal notranslate"><span class="pre">Helmer</span></code> container.</p>
+<p>The primary plugin is: <code class="docutils literal notranslate"><span class="pre">`kubectl</span> <span class="pre">connections`</span></code>. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus constructs Kubernetes Resource relationship graphs at runtime providing it the ability to offer fine grained visibility and control over the application service instances.</p>
+<p>Here is the resource relationship graph for MysqlSevice created above discovered using the kubectl connections command.</p>
+<p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">connections</span> <span class="pre">MysqlService</span> <span class="pre">mysql1</span></code></p>
+<a class="reference internal image-reference" href="_images/mysqlservice-connections.png"><img alt="_images/mysqlservice-connections.png" class="align-center" src="_images/mysqlservice-connections.png" style="width: 1000px; height: 350px;" /></a>
+<p>KubePlus Operator bundles these plugins as part of the <code class="docutils literal notranslate"><span class="pre">Helmer</span></code> module.</p>
 </div>
 <div class="section" id="resource-relationship-graphs">
 <h2>Resource relationship graphs</h2>
 <p>For resource policy enforcement and monitoring, KubePlus needs to discover
-resource topologies. It does that by discovering Custom Resource relationship graphs. In order to do this, KubePlus depends on the following annotations:</p>
+resource topologies. It does that by discovering Kubernetes Resource relationship graphs. In order to do this, KubePlus depends on the following annotations:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>resource/composition
 resource/label-relationship
 resource/specproperty-relationship
 resource/annotation-relationship
 </pre></div>
 </div>
-<p>These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable and usable by Platform engineers.</p>
+<p>These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable.</p>
 <p>The ‘composition’ annotation is used to specify the list of Kubernetes’s built-in resources that are created as part of instantiating a Custom Resource instance.
 The three relationship annotations are used to declare label, spec-property, and annotation based relationships that instances of a Custom Resource can have with other Kubernetes resources.</p>
-<p>KubePlus adds the <code class="docutils literal notranslate"><span class="pre">annotation-relationship</span></code> annotation to the CRD of the new API that is registered via <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code>. For every resource that is defined in the underlying Helm chart, KubePlus adds  a <code class="docutils literal notranslate"><span class="pre">created-by:</span> <span class="pre">kubeplus</span></code> annotation. So in the <code class="docutils literal notranslate"><span class="pre">annotation-relationship</span></code> annotation on the new CRD it adds this name-value pair as the value of this relationship.</p>
+<p>KubePlus adds the <code class="docutils literal notranslate"><span class="pre">annotation-relationship</span></code> annotation to the CRD of the new API that is registered via <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code>. Here is an example of this annotation added by KubePlus on WordpressService CRD.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">resource/annotation-relationship</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">on:Secret;PersistentVolumeClaim;Role;RoleBinding;ServiceAccount;Service;Pod;MysqlCluster;Namespace, key:meta.helm.sh/release-name, value:wordpressservice-INSTANCE.metadata.name</span>
+</pre></div>
+</div>
+<p>This annotation relationship definition indicates that an instance of WordpressService is related to instances of Secret, PersistentVolumeClaim, Role, RoleBinding, ServiceAccount, Service, Pod, MysqlCluster, and Namespace resources through the <code class="docutils literal notranslate"><span class="pre">meta.helm.sh/release-name</span></code> annotation. The value of the annotation will have the following structure <code class="docutils literal notranslate"><span class="pre">wordpresservice-&lt;name</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">WordpressService</span> <span class="pre">instance&gt;</span></code>. When deploying Helm charts, KubePlus creates the Helm releases with following naming scheme <code class="docutils literal notranslate"><span class="pre">&lt;service-name&gt;-&lt;resource-name&gt;</span></code>. The value of the annotation is based on this naming scheme. The list of resources listed in the <code class="docutils literal notranslate"><span class="pre">on</span></code> section of the resource/annotation-relationship annotation are discovered by KubePlus by performing a dry-run on the registered Helm chart.</p>
 </div>
 <div class="section" id="crd-annotations-on-community-operators">
 <h2>CRD annotations on community Operators</h2>
-<p>Here are examples of using above annotations on community Operators.</p>
+<p>KubePlus kubectl plugins are general purpose and can be used with any other Operator as long as the CRDs managed by that Operator are annotated with above annotations. Here are some examples of community Operators annotated with above annotations.</p>
 <p><strong>Moodle Operator</strong></p>
 <p><a class="reference external" href="https://github.com/cloud-ark/kubeplus-operators">Moodle Operator</a> defines and manages Moodle CRD.</p>
 <p>Annotations on Moodle Custom Resource Definition (CRD) are shown below:</p>
@@ -248,7 +257,7 @@ The three relationship annotations are used to declare label, spec-property, and
   <span class="nt">scope</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Namespaced</span>
 </pre></div>
 </div>
-<p>The composition annotation declares the set of Kubernetes resources that are created by the Moodle Operator when instantiating a Moodle Custom Resource instance. The specproperty relationship defines that an instance of Moodle Custom Resource is connected through it’s mySQLServiceName spec attribute to an instance of a Service resource through that resource’s name (metadata.name). Below is an example of a Kubernetes platform workflow in which a Moodle Custom Resource instance is bound to a MysqlCluster Custom Resource instance through the Service resource that is created by the MysqlCluster Operator. The specproperty relationship helps discover this relationship as seen below:</p>
+<p>The composition annotation declares the set of Kubernetes resources that are created by the Moodle Operator when instantiating a Moodle Custom Resource instance. The specproperty relationship defines that an instance of Moodle Custom Resource is connected through it’s mySQLServiceName spec attribute to an instance of a Service resource through that resource’s name (metadata.name). Once this relationship is defined, here is how kubectl connections plugin helps discover the resource relationship graph for a Moodle Custom resource instance named moodle1.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> Devs-MacBook:kubeplus devdatta$ kubectl connections Moodle moodle1 namespace1
 Level:0 kind:Moodle name:moodle1 Owner:/
 Level:1 kind:Service name:cluster1-mysql-master Owner:MysqlCluster/cluster1
@@ -275,7 +284,7 @@ resource/label-relationship: <span class="s2">&quot;on:Deployment, value:INSTANC
 <p><strong>Annotated Operators</strong></p>
 <p>We maintain a listing of annotated community Operators. Check it out <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md">here</a>.</p>
 <p>We will be happy to include your annotated Operator in this list.
-Just submit a PR to KubePlus repo with details about the CRDs that your Operator manages and all the relationships that it depends on when handling its custom resource instances.</p>
+Just submit a PR to KubePlus repo with details about the CRDs that your Operator manages and all the relationships that it depends on when handling its custom resource instances. We will help you define these relationships on your CRDs.</p>
 </div>
 </div>
 

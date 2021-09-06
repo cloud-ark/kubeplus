@@ -58,6 +58,7 @@ Try `hello world service`_
   $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c helmer
   $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c platform-operator
   $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c webhook-cert-setup
+  $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c consumerui
 
 
 7. Cleanup:
