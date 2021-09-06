@@ -16,38 +16,31 @@ File an Issue with following information:
 
 File an Issue with following information:
 
-  * Kubernetes version
+  * KubePlus Helm chart version.
 
-    * kubectl version
+  * Sample YAMLs that you were using:
+    - ResourceComposition YAML definition
+    - Service YAMLs
 
-  * Helm version
+  * KubePlus logs
 
-    * helm version
+  ```
+    - export KUBEPLUS_NAMESPACE=<Namespace in which KubePlus is deployed>
+    - kubectl logs $KUBEPLUS_NAMESPACE -c crd-hook
+    - kubectl logs $KUBEPLUS_NAMESPACE -c helmer
+    - kubectl logs $KUBEPLUS_NAMESAPCE -c platform-operator
+    - kubectl logs $KUBEPLUS_NAMESAPCE -c webhook-cert-setup
+    - kubectl logs $KUBEPLUS_NAMESAPCE -c consumerui
+  ```
 
-  * Host details
+  * Cluster details
+
+    * Kubernetes version
 
     * If using minikube
     
       * minikube version
 
-    * If using Cloud VM
+    * If using Cloud K8S:
   
       * Cloud provider, VM configuration (OS, CPU, RAM, Disk)
-
-  * Error log output
-
-    * Include container logs:
-  ```
-    - kubectl logs kubeplus -c crd-hook
-    - kubectl logs kubeplus -c helmer
-    - kubectl logs kubeplus -c platform-operator
-    - kubectl logs kubeplus -c webhook-cert-setup
-  ```
-
-  * Sample YAMLs that you were using
-
-  * KubePlus deployment details: 
-    - How was KubePlus deployed? (Helm chart or directly from KubePlus deployment manifests available in deploy folder)
-    - If using Helm then the Helm chart version used.
-    - If directly from KubePlus deployment manifests then Image tags for all the 
-      KubePlus components
