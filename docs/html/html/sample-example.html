@@ -95,7 +95,8 @@ $ kubectl retrieve kubeconfig consumer <span class="nv">$KUBEPLUS_NS</span> &gt;
 <ul class="simple">
 <li><p>Create hello-world-resource-composition:</p></li>
 </ul>
-<p>Here is the hello-world-resource-composition.yaml file. Save it as hello-world-resource-composition.yaml.</p>
+<p>Working with the provider, create HelloWorldService consumer API.
+Here is the hello-world-resource-composition.yaml file. Save it as hello-world-resource-composition.yaml.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apiVersion: workflows.kubeplus/v1alpha1
 kind: ResourceComposition
 metadata:
@@ -292,13 +293,12 @@ curl localhost:8082
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>oc get pods -A --kubeconfig<span class="o">=</span>provider.conf <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
 </pre></div>
 </div>
-<p><em>2. Get cpu, memory, storage, network metrics for HelloWorldService instance</em></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl metrics HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -k provider.conf
 </pre></div>
 </div>
 <p>You should see output of the following form:</p>
 <img alt="_images/hello-world-metrics-prometheus.png" class="align-center" src="_images/hello-world-metrics-prometheus.png" />
-<p><em>3. Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance</em></p>
+<p><em>2. Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance</em></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl get pods <span class="nv">$HELLOWORLD_POD</span> -n <span class="nv">$HELLOWORLD_NS</span> -o json --kubeconfig<span class="o">=</span>provider.conf <span class="p">|</span> jq -r <span class="s1">&#39;.spec.containers[0].resources&#39;</span>
 </pre></div>
 </div>
@@ -308,7 +308,7 @@ curl localhost:8082
 </div>
 <p>You should see following output:</p>
 <a class="reference internal image-reference" href="_images/hello-world-resources.png"><img alt="_images/hello-world-resources.png" class="align-center" src="_images/hello-world-resources.png" style="width: 200px; height: 150px;" /></a>
-<p><em>4. Check resource relationship graph for HelloWorldService instance</em></p>
+<p><em>3. Check resource relationship graph for HelloWorldService instance</em></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -k provider.conf
 </pre></div>
 </div>
@@ -318,7 +318,7 @@ curl localhost:8082
 </div>
 <p>You should see following output:</p>
 <img alt="_images/hello-world-connections-flat.png" class="align-center" src="_images/hello-world-connections-flat.png" />
-<p><em>5. Visualize the relationship graph</em></p>
+<p><em>4. Visualize the relationship graph</em></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl connections HelloWorldService hs1 <span class="nv">$HELLOWORLD_NS</span> -o png -k provider.conf
 </pre></div>
 </div>
