@@ -18,7 +18,23 @@ Open three command terminal windows. Name them as:
 
 - Cluster admin window
 - Provider window
-- Consumer window 
+- Consumer window
+
+Both cluster admin and provider will need to use KubePlus kubectl plugins.
+
+*Install KubePlus kubectl plugins*
+
+.. code-block:: bash
+
+    curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
+    gunzip kubeplus-kubectl-plugins.tar.gz
+    tar -xvf kubeplus-kubectl-plugins.tar
+    export KUBEPLUS_HOME=`pwd`
+    export PATH=$KUBEPLUS_HOME/plugins/:$PATH
+    kubectl kubeplus commands
+  or
+    oc kubeplus commands
+
 
 Cluster Admin actions
 ----------------------
@@ -42,21 +58,7 @@ If KubePlus Pod is not running then `install KubePlus first`_.
 .. _install KubePlus first: https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html
 
 
-*2. Install KubePlus kubectl plugins*
-
-.. code-block:: bash
-
-    curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
-    gunzip kubeplus-kubectl-plugins.tar.gz
-    tar -xvf kubeplus-kubectl-plugins.tar
-    export KUBEPLUS_HOME=`pwd`
-    export PATH=$KUBEPLUS_HOME/plugins/:$PATH
-    kubectl kubeplus commands
-  or
-    oc kubeplus commands
-
-
-*3. Get provider and consumer kubeconfigs*
+*2. Get provider and consumer kubeconfigs*
 
 KubePlus generates separate kubeconfig files for provider and consumers with appropriate permissions. Retrieve them as follows:
 
@@ -70,12 +72,14 @@ Distribute the kubeconfig files to providers and consumers.
 In the steps below, use the appropriate kubeconfig in the provider and consumer actions by passing the ``--kubeconfig=<provider/consumer>.conf`` flag.
 
 
-*4. Register HelloWorldService*
+Provider action
+----------------
+
+*1. Register HelloWorldService*
 
 - Create hello-world-resource-composition:
 
-Working with the provider, create HelloWorldService consumer API.
-Here is the hello-world-resource-composition.yaml file. Save it as hello-world-resource-composition.yaml.
+Create HelloWorldService consumer API. Here is the hello-world-resource-composition.yaml file. Save it as hello-world-resource-composition.yaml.
 
 .. code-block:: bash
 
@@ -139,26 +143,26 @@ Create hello-world-resource-composition as follows:
 
 .. code-block:: bash
 
-    kubectl create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS
+    kubectl create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS --kubeconfig=provider.conf
 
 or
 
 .. code-block:: bash
 
-    oc create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS
+    oc create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS --kubeconfig=provider.conf
 
 
 - Wait till HelloWorldService CRD is registered in the cluster.
 
 .. code-block:: bash
 
-    until kubectl get crds | grep hello  ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
+    until kubectl get crds --kubeconfig=provider.conf | grep hello  ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
 
 or
 
 .. code-block:: bash
 
-    until oc get crds | grep hello  ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
+    until oc get crds --kubeconfig=provider.conf | grep hello  ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
 
 
 - Grant permission to the consumer to create service instances.
@@ -166,8 +170,6 @@ or
 .. code-block:: bash
 
 	kubectl grantpermission consumer helloworldservices provider.conf $KUBEPLUS_NS
-
-
 
 
 
@@ -300,8 +302,10 @@ You should see following output:
 	Hello hello hello
 
 
-Provider actions
-------------------
+Provider actions (cont.)
+------------------------
+
+On the provider window, perform following steps:
 
 Install Docker and verify that you are able to run docker commands without requiring sudo.
 
@@ -313,8 +317,6 @@ This should return without any errors.
 
 
 *1. Monitor HelloWorldService instance*
-
-On the provider window, perform following steps:
 
 .. code-block:: bash
 

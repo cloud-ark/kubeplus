@@ -59,6 +59,18 @@ Once the appropriate CLI is installed, follow these steps.</p>
 <li><p>Provider window</p></li>
 <li><p>Consumer window</p></li>
 </ul>
+<p>Both cluster admin and provider will need to use KubePlus kubectl plugins.</p>
+<p><em>Install KubePlus kubectl plugins</em></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>  curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
+  gunzip kubeplus-kubectl-plugins.tar.gz
+  tar -xvf kubeplus-kubectl-plugins.tar
+  <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
+  <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
+  kubectl kubeplus commands
+or
+  oc kubeplus commands
+</pre></div>
+</div>
 </div>
 <div class="section" id="cluster-admin-actions">
 <h2>Cluster Admin actions</h2>
@@ -72,18 +84,7 @@ Once the appropriate CLI is installed, follow these steps.</p>
 </pre></div>
 </div>
 <p>If KubePlus Pod is not running then <a class="reference external" href="https://cloud-ark.github.io/kubeplus/docs/html/html/getting-started.html">install KubePlus first</a>.</p>
-<p><em>2. Install KubePlus kubectl plugins</em></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>  curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
-  gunzip kubeplus-kubectl-plugins.tar.gz
-  tar -xvf kubeplus-kubectl-plugins.tar
-  <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
-  <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
-  kubectl kubeplus commands
-or
-  oc kubeplus commands
-</pre></div>
-</div>
-<p><em>3. Get provider and consumer kubeconfigs</em></p>
+<p><em>2. Get provider and consumer kubeconfigs</em></p>
 <p>KubePlus generates separate kubeconfig files for provider and consumers with appropriate permissions. Retrieve them as follows:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl retrieve kubeconfig provider <span class="nv">$KUBEPLUS_NS</span> &gt; provider.conf
 $ kubectl retrieve kubeconfig consumer <span class="nv">$KUBEPLUS_NS</span> &gt; consumer.conf
@@ -91,12 +92,14 @@ $ kubectl retrieve kubeconfig consumer <span class="nv">$KUBEPLUS_NS</span> &gt;
 </div>
 <p>Distribute the kubeconfig files to providers and consumers.</p>
 <p>In the steps below, use the appropriate kubeconfig in the provider and consumer actions by passing the <code class="docutils literal notranslate"><span class="pre">--kubeconfig=&lt;provider/consumer&gt;.conf</span></code> flag.</p>
-<p><em>4. Register HelloWorldService</em></p>
+</div>
+<div class="section" id="provider-action">
+<h2>Provider action</h2>
+<p><em>1. Register HelloWorldService</em></p>
 <ul class="simple">
 <li><p>Create hello-world-resource-composition:</p></li>
 </ul>
-<p>Working with the provider, create HelloWorldService consumer API.
-Here is the hello-world-resource-composition.yaml file. Save it as hello-world-resource-composition.yaml.</p>
+<p>Create HelloWorldService consumer API. Here is the hello-world-resource-composition.yaml file. Save it as hello-world-resource-composition.yaml.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apiVersion: workflows.kubeplus/v1alpha1
 kind: ResourceComposition
 metadata:
@@ -154,21 +157,21 @@ spec:
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">respolicy</span></code> section in the resource composition defines the <code class="docutils literal notranslate"><span class="pre">ResourcePolicy</span></code> that the provider configures for this service. Here it defines the cpu and memory requests and limits that need to be configured for service instances of this service.</p>
 <p>Create hello-world-resource-composition as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span> --kubeconfig<span class="o">=</span>provider.conf
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f hello-world-resource-composition.yaml -n <span class="nv">$KUBEPLUS_NS</span> --kubeconfig<span class="o">=</span>provider.conf
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>Wait till HelloWorldService CRD is registered in the cluster.</p></li>
 </ul>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">until</span> kubectl get crds <span class="p">|</span> grep hello  <span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> <span class="s2">&quot;Waiting for HelloworldService CRD to be registered..&quot;</span><span class="p">;</span> sleep <span class="m">1</span><span class="p">;</span> <span class="k">done</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">until</span> kubectl get crds --kubeconfig<span class="o">=</span>provider.conf <span class="p">|</span> grep hello  <span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> <span class="s2">&quot;Waiting for HelloworldService CRD to be registered..&quot;</span><span class="p">;</span> sleep <span class="m">1</span><span class="p">;</span> <span class="k">done</span>
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">until</span> oc get crds <span class="p">|</span> grep hello  <span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> <span class="s2">&quot;Waiting for HelloworldService CRD to be registered..&quot;</span><span class="p">;</span> sleep <span class="m">1</span><span class="p">;</span> <span class="k">done</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">until</span> oc get crds --kubeconfig<span class="o">=</span>provider.conf <span class="p">|</span> grep hello  <span class="p">;</span> <span class="k">do</span> <span class="nb">echo</span> <span class="s2">&quot;Waiting for HelloworldService CRD to be registered..&quot;</span><span class="p">;</span> sleep <span class="m">1</span><span class="p">;</span> <span class="k">done</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -277,15 +280,15 @@ curl localhost:8082
 </pre></div>
 </div>
 </div>
-<div class="section" id="provider-actions">
-<h2>Provider actions</h2>
+<div class="section" id="provider-actions-cont">
+<h2>Provider actions (cont.)</h2>
+<p>On the provider window, perform following steps:</p>
 <p>Install Docker and verify that you are able to run docker commands without requiring sudo.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker ps
 </pre></div>
 </div>
 <p>This should return without any errors.</p>
 <p><em>1. Monitor HelloWorldService instance</em></p>
-<p>On the provider window, perform following steps:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HELLOWORLD_NS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A --kubeconfig<span class="o">=</span>provider.conf <span class="p">|</span> grep hello-world-deployment-helloworldservice <span class="p">|</span> awk <span class="s1">&#39;{print $1}&#39;</span><span class="sb">`</span>
 </pre></div>
 </div>
