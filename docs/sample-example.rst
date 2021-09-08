@@ -74,6 +74,7 @@ In the steps below, use the appropriate kubeconfig in the provider and consumer 
 
 - Create hello-world-resource-composition:
 
+Working with the provider, create HelloWorldService consumer API.
 Here is the hello-world-resource-composition.yaml file. Save it as hello-world-resource-composition.yaml.
 
 .. code-block:: bash
@@ -165,6 +166,9 @@ or
 .. code-block:: bash
 
 	kubectl grantpermission consumer helloworldservices provider.conf $KUBEPLUS_NS
+
+
+
 
 
 Consumer actions
@@ -322,8 +326,6 @@ or
 
     HELLOWORLD_NS=`oc get pods -A --kubeconfig=provider.conf | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
 
-*2. Get cpu, memory, storage, network metrics for HelloWorldService instance*
-
 .. code-block:: bash
 
 	kubectl metrics HelloWorldService hs1 $HELLOWORLD_NS -k provider.conf
@@ -334,7 +336,7 @@ You should see output of the following form:
    :align: center
 
 
-*3. Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance*
+*2. Verify resource requests and limits have been set on the Pod that belongs to HelloWorldService instance*
 
 .. code-block:: bash
 
@@ -354,7 +356,7 @@ You should see following output:
    :height: 150px
    :width: 200px
 
-*4. Check resource relationship graph for HelloWorldService instance*
+*3. Check resource relationship graph for HelloWorldService instance*
 
 .. code-block:: bash
 
@@ -371,7 +373,7 @@ You should see following output:
 .. image:: hello-world-connections-flat.png
    :align: center
 
-*5. Visualize the relationship graph*
+*4. Visualize the relationship graph*
 
 .. code-block:: bash
 
