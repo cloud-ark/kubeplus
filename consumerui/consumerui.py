@@ -427,8 +427,11 @@ def get_kubeplus_namespace():
 	for line in out.split("\n"):
 		line1 = re.sub(' +', ' ', line)
 		parts = line1.split()
-		if parts[1] == 'kubeplus-deployment':
+		print("Parts:")
+		print(parts)
+		if len(parts) > 1 and parts[1] == 'kubeplus-deployment':
 			kubeplusNamespace = parts[0]
+			print("KubePlus NS:" + kubeplusNamespace)
 			break
 	return kubeplusNamespace
 

@@ -105,7 +105,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.12
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.13
         imagePullPolicy: Always
         args:
           - -tlsCertFile=/etc/webhook/certs/cert.pem
@@ -125,7 +125,7 @@ spec:
         imagePullPolicy: Always
         command: [ "/platform-operator"]
       - name: consumerui
-        image: gcr.io/cloudark-kubeplus/consumerui:0.0.3
+        image: gcr.io/cloudark-kubeplus/consumerui:0.0.4
         imagePullPolicy: Always
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
