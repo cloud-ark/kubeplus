@@ -1209,6 +1209,7 @@ func searchAnnotation(entries []Entry, instanceName, namespace, key string) (str
 
 // Serve method for webhook server
 func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("## Received request ##")
 	var body []byte
 	if r.Body != nil {
 		if data, err := ioutil.ReadAll(r.Body); err == nil {
@@ -1239,9 +1240,9 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 	} else {
-		//fmt.Printf("%v\n", ar.Request)
-		//fmt.Printf("####### METHOD:%s #######\n", ar.Request.Operation)
-		//fmt.Println(r.URL.Path)
+		fmt.Printf("%v\n", ar.Request)
+		fmt.Printf("####### METHOD:%s #######\n", ar.Request.Operation)
+		fmt.Println(r.URL.Path)
 		if r.URL.Path == "/mutate" {
 			method := string(ar.Request.Operation)
 			admissionResponse = whsvr.mutate(&ar, method)

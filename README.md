@@ -50,7 +50,7 @@ Cluster administrator installs KubePlus on their cluster.
 
 ```
 $ KUBEPLUS_NS=default
-$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.2.tgz?raw=true" -n $KUBEPLUS_NS
+$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.3.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
 *2. Retrieve Provider kubeconfig file*
@@ -73,6 +73,7 @@ As part of creating the consumer API, the provider team can define policies such
 <img src="./docs/wordpress-service-crd.png" width="650" height="250" class="center">
 </p> 
 
+[Here](https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/wordpress-mysqlcluster-stack/wordpress-service-composition.yaml) is the ResourceComposition definition for the WordpressService.
 
 *2. Grant permission to the consumer to create instances of WordpressService*
 
