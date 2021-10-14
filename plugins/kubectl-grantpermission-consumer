@@ -9,11 +9,10 @@ kubeplusNS=$3
 resPlural=$1
 providerKubeconfig=$2
 
-pythonPath=`which python`
+pythonPath=`which python3`
 if [[ $? == 0 ]]; then
 	`$pythonPath /$KUBEPLUS_HOME/plugins/consumerkubeconfigretriever.py $kubeplusNS $resPlural $providerKubeconfig`
-fi
-
-if [[ $? == 0 ]]; then
 	echo "Consumer granted permission on $resPlural."
+else
+	echo "Encountered error in granting permission to consumer on $resPlural"
 fi
