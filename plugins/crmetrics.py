@@ -174,6 +174,15 @@ class CRMetrics(CRBase):
 				num_of_containers = num_of_containers + len(init_containers)
 		return num_of_containers
 
+	def _num_of_not_running_pods(self, pod_list):
+		num_of_not_running_pods = 0
+		for pod in pod_list:
+			json_output = self._get_pod(pod)
+			if json_output['status']['phase'] != 'Running':
+				num_of_not_running_pods = num_of_not_running_pods + 1
+
+		return num_of_not_running_pods
+
 	def _parse_persistentvolumeclaims(self, pod_list):
 		total_storage = 0
 		pvc_list = []
@@ -252,6 +261,7 @@ class CRMetrics(CRBase):
 			#print("NodeName:" + nodeName)
 			#print("PodNS:" + podNS)
 			podMetricsCmd = cmd + " " + nodeName
+			#print(podMetricsCmd)
 			try:
 				output = subprocess.Popen(podMetricsCmd, stdout=subprocess.PIPE,
 										  stderr=subprocess.PIPE, shell=True).communicate()[0]
@@ -954,6 +964,7 @@ class CRMetrics(CRBase):
 		cpu_conn, memory_conn = self._get_cpu_memory_usage_kubelet(pod_list)
 		networkReceiveBytesTotal, networkTransmitBytesTotal = self._get_network_usage(pod_list)
 
+		num_of_not_running_pods = self._num_of_not_running_pods(pod_list)
 		num_of_pods = len(pod_list)
 		num_of_containers = num_of_containers_conn
 		num_of_hosts = num_of_hosts_conn
@@ -973,19 +984,22 @@ class CRMetrics(CRBase):
 			op['storage'] = str(total_storage) + " Gi"
 			op['networkReceiveBytes'] = str(networkReceiveBytesTotal) + " bytes"
 			op['networkTransmitBytes'] = str(networkTransmitBytesTotal) + " bytes"
+			op['notRunningPods'] = str(num_of_not_running_pods)
 			json_op = json.dumps(op)
 			print(json_op)
 		elif opformat == 'prometheus':
 			millis = int(round(time.time() * 1000))
+			timeInMillis = str(millis)
 			metricsToReturn = ''
-			cpuMetrics = 'cpu{custom_resource="'+custom_res_instance+'"} ' + str(cpu) + ' ' + str(millis)
-			memoryMetrics = 'memory{custom_resource="'+custom_res_instance+'"} ' + str(memory) + ' ' + str(millis)
-			storageMetrics = 'storage{custom_resource="'+custom_res_instance+'"} ' + str(total_storage) + ' ' + str(millis)
-			networkReceiveBytes = 'network_receive_bytes_total{custom_resource="'+custom_res_instance+'"} ' + str(networkReceiveBytesTotal) + ' ' + str(millis)
-			networkTransmitBytes = 'network_transmit_bytes_total{custom_resource="'+custom_res_instance+'"} ' + str(networkTransmitBytesTotal) + ' ' + str(millis)
-			numOfPods = 'pods{custom_resource="'+custom_res_instance+'"} ' + str(num_of_pods) + ' ' + str(millis)
-			numOfContainers = 'containers{custom_resource="'+custom_res_instance+'"} ' + str(num_of_containers) + ' ' + str(millis)
-			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers + "\n" + networkReceiveBytes + "\n" + networkTransmitBytes
+			cpuMetrics = 'cpu{custom_resource="'+custom_res_instance+'"} ' + str(cpu) + ' ' + timeInMillis
+			memoryMetrics = 'memory{custom_resource="'+custom_res_instance+'"} ' + str(memory) + ' ' + timeInMillis
+			storageMetrics = 'storage{custom_resource="'+custom_res_instance+'"} ' + str(total_storage) + ' ' + timeInMillis
+			networkReceiveBytes = 'network_receive_bytes_total{custom_resource="'+custom_res_instance+'"} ' + str(networkReceiveBytesTotal) + ' ' + timeInMillis
+			networkTransmitBytes = 'network_transmit_bytes_total{custom_resource="'+custom_res_instance+'"} ' + str(networkTransmitBytesTotal) + ' ' + timeInMillis
+			numOfPods = 'pods{custom_resource="'+custom_res_instance+'"} ' + str(num_of_pods) + ' ' + timeInMillis
+			numOfContainers = 'containers{custom_resource="'+custom_res_instance+'"} ' + str(num_of_containers) + ' ' + timeInMillis
+			numOfNotRunningPods = 'not_running_pods{custom_resource="'+custom_res_instance+'"} ' + str(num_of_not_running_pods) + ' ' + timeInMillis
+			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers + "\n" + networkReceiveBytes + "\n" + networkTransmitBytes + "\n" + numOfNotRunningPods
 			print(metricsToReturn)
 		elif opformat == 'pretty':
 			#print("---------------------------------------------------------- ")
@@ -997,6 +1011,7 @@ class CRMetrics(CRBase):
 			print("    Number of Pods: " + str(num_of_pods))
 			print("        Number of Containers: " + str(num_of_containers))
 			print("        Number of Nodes: " + str(num_of_hosts))
+			print("        Number of Not Running Pods: " + str(num_of_not_running_pods))
 			print("Underlying Physical Resoures consumed:")
 			print("    Total CPU(cores): " + str(cpu) + "m")
 			print("    Total MEMORY(bytes): " + str(memory) + "Mi")
