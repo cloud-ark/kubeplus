@@ -50,7 +50,7 @@ Cluster administrator installs KubePlus on their cluster.
 
 ```
 $ KUBEPLUS_NS=default
-$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.3.tgz?raw=true" -n $KUBEPLUS_NS
+$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.4.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
 *2. Retrieve Provider kubeconfig file*
