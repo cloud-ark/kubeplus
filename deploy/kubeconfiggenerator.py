@@ -249,6 +249,15 @@ class KubeconfigGenerator(object):
 		ruleGroup9["resources"] = resourceGroup9
 		ruleGroup9["verbs"] = verbsGroup9
 
+		# Exec into the Pods
+		ruleGroup10 = {}
+		apiGroup10 = [""]
+		resourceGroup10 = ["pods/exec"]
+		verbsGroup10 = ["get","create"]
+		ruleGroup10["apiGroups"] = apiGroup10
+		ruleGroup10["resources"] = resourceGroup10
+		ruleGroup10["verbs"] = verbsGroup10
+
 		ruleList = []
 		ruleList.append(ruleGroup1)
 		ruleList.append(ruleGroup2)
@@ -259,6 +268,7 @@ class KubeconfigGenerator(object):
 		ruleList.append(ruleGroup7)
 		ruleList.append(ruleGroup8)
 		ruleList.append(ruleGroup9)
+		ruleList.append(ruleGroup10)
 		role["rules"] = ruleList
 
 		roleName = sa + "-role.yaml"
