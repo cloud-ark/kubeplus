@@ -88,7 +88,7 @@ spec:
       serviceAccount: kubeplus
       initContainers:
       - name: webhook-cert-setup
-        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.0.12
+        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.1.0
         imagePullPolicy: Always
         env:
           - name: KUBEPLUS_NAMESPACE
