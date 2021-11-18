@@ -50,7 +50,7 @@ Cluster administrator installs KubePlus on their cluster.
 
 ```
 $ KUBEPLUS_NS=default
-$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.5.tgz?raw=true" -n $KUBEPLUS_NS
+$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.6.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
 *2. Retrieve Provider kubeconfig file*
@@ -144,11 +144,11 @@ KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot 
 
 ## Try
 
-- Install KubePlus Operator. (Note that you will need Helm v3).
+- Install KubePlus Operator. (Note that you will need Helm v3, and Kubernetes version < 1.20).
 
 ```
    $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
-   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.2.tgz?raw=true" -n $KUBEPLUS_NS
+   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.6.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
 - Install KubePlus kubectl plugins.

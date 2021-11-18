@@ -172,16 +172,13 @@ func getChartValues(request *restful.Request, response *restful.Response) {
  				fmt.Printf("Command runner Pod name could not be determined.. cannot continue.")
  				valuesToReturn = ""
  			}
- 			if chartURL != "" {
- 				// 1. Download the chart
- 				downloadChart(chartURL, cmdRunnerPod, namespace)
- 				chartValuesPath := "/" + chartName + "/values.yaml"
- 				fmt.Printf("Chart Values Path:%s\n",chartValuesPath)
- 				readCmd := "more " + chartValuesPath
- 				fmt.Printf("More cmd:%s\n", readCmd)
- 				_, valuesToReturn = executeExecCall(cmdRunnerPod, namespace, readCmd)
- 				fmt.Printf("valuesToReturn:%v\n",valuesToReturn)
-			}
+ 			parsedChartName := downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace)
+ 			chartValuesPath := "/" + parsedChartName + "/values.yaml"
+ 			fmt.Printf("Chart Values Path:%s\n",chartValuesPath)
+ 			readCmd := "more " + chartValuesPath
+ 			fmt.Printf("More cmd:%s\n", readCmd)
+ 			_, valuesToReturn = executeExecCall(cmdRunnerPod, namespace, readCmd)
+ 			fmt.Printf("valuesToReturn:%v\n",valuesToReturn)
 		}
 
 	response.Write([]byte(valuesToReturn))
@@ -606,6 +603,23 @@ func getHelmReleaseName(object interface{}) (string, string) {
 	return helmreleaseNS, helmreleaseName
 }
 
+func downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace string) string {
+	fmt.Printf("Inside downloadUntarChartandGetName\n")
+
+	parsedChartName := ""
+ 	if !strings.Contains(chartURL, "file:///") {
+ 		// Download and untar the chart
+ 		parsedChartName = downloadChart(chartURL, cmdRunnerPod, namespace)
+	} else {
+		// Untar the chart
+		parts := strings.Split(chartURL, "file:///")
+		charttgz := strings.TrimSpace(parts[1])
+		fmt.Printf("Chart tgz:%s\n",charttgz)
+		parsedChartName = untarChart(charttgz, cmdRunnerPod, namespace)
+	}
+	return parsedChartName
+}
+
 // ./kubectl exec helmer-677f87c67f-xvzz6 -- ./root/helm install moodle-operator-chart
 // curl -v "10.0.9.208/kubeplus/deploy?platformworkflow=moodle1-workflow&customresource=mystack1&namespace=default"
 // curl -v "10.0.2.202/kubeplus/deploy?platformworkflow=mysqlcluster&customresource=stack1&namespace=default"
@@ -672,12 +686,20 @@ func deployChart(request *restful.Request, response *restful.Response) {
 
  			cmdRunnerPod := getKubePlusPod()
  			if chartURL != "" {
+
+ 			parsedChartName := downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace)
+
  				// 1. Download the chart
- 				downloadChart(chartURL, cmdRunnerPod, namespace)
+ 				//parsedChartName := downloadChart(chartURL, cmdRunnerPod, namespace)
 
 	 			// 5. Create overrides.yaml
 	 			//overrides := getOverrides(kind, group, version, plural, customresource, namespace)
-	 			f, errf := os.Create("/chart/overrides.yaml")
+	 			chartDir := "/chart/" + parsedChartName
+	 			fmt.Printf("Chart dir:%s\n", chartDir)
+	 			overRidesFile := chartDir + "/overrides.yaml"
+	 			fmt.Printf("Overrides file:%s\n", overRidesFile)
+	 			os.Mkdir(chartDir, 0755)
+	 			f, errf := os.Create(overRidesFile)
 	 			if errf != nil {
 	 				fmt.Errorf("Error:%s\n", errf)
 	 			}
@@ -702,9 +724,9 @@ func deployChart(request *restful.Request, response *restful.Response) {
 				}
 
 				// Install the Helm chart in the namespace that is created for that instance
-	 			helmInstallCmd := "./root/helm install " + releaseName + " ./" + chartName  + " -f /chart/overrides.yaml " + " -n " + customresource
+	 			helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + customresource
 	 			if dryrun != "" {
-		 			helmInstallCmd = "./root/helm install " + releaseName + " ./" + chartName  + " -f /chart/overrides.yaml " + " -n " + namespace + " --dry-run" 		
+		 			helmInstallCmd = "./root/helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + namespace + " --dry-run" 		
 	 			}
 	  			fmt.Printf("ABC helm install cmd:%s\n", helmInstallCmd)
 	 			ok, execOutput = executeExecCall(cmdRunnerPod, namespace, helmInstallCmd)
@@ -768,15 +790,17 @@ func testChartDeployment(request *restful.Request, response *restful.Response) {
 
 	namespace := request.QueryParameter("namespace")
 	kind := request.QueryParameter("kind")
-	chartName := request.QueryParameter("chartName")
+	//chartName := request.QueryParameter("chartName")
 	encodedChartURL := request.QueryParameter("chartURL")
 	chartURL, _ := url.QueryUnescape(encodedChartURL)
 
  	cmdRunnerPod := getKubePlusPod()
- 	downloadChart(chartURL, cmdRunnerPod, namespace)
- 	releaseName := kind + "-" + chartName
 
-	helmInstallCmd := "./root/helm install " + releaseName + " ./" + chartName  + " -n " + namespace + " --dry-run" 
+  	//parsedChartName := downloadChart(chartURL, cmdRunnerPod, namespace)
+ 	parsedChartName := downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace)
+ 	releaseName := kind + "-" + parsedChartName
+
+	helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -n " + namespace + " --dry-run" 
 	fmt.Printf("helm install cmd:%s\n", helmInstallCmd)
 	_, execOutput := executeExecCall(cmdRunnerPod, namespace, helmInstallCmd)
 	fmt.Printf("DRY RUN - DEF:%s\n", execOutput)
@@ -812,12 +836,29 @@ func downloadChart(chartURL, cmdRunnerPod, namespace string) string {
 	 			executeExecCall(cmdRunnerPod, namespace, mvCmd)
 	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
 
+	 			chartName := untarChart(chartName2, cmdRunnerPod, namespace)
+
+	 			return chartName
+}
+
+func untarChart(chartName2, cmdRunnerPod, namespace string) string {
+				fmt.Printf("Inside untarChart.")
+
 	 			// 4. Untar the Chart file
 	 			untarCmd := "tar -xvzf " + chartName2
 	  			fmt.Printf("untar cmd:%s\n", untarCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, untarCmd)
+	 			_, op := executeExecCall(cmdRunnerPod, namespace, untarCmd)
+	 			fmt.Printf("Untar output:%s",op)
+	 			lines := strings.Split(op, "\n")
+	 			chartName := ""
+	 			parts := strings.Split(lines[0],"/")
+	 			fmt.Printf("ABC:%v",parts)
+	 			chartName = strings.TrimSpace(parts[0])
+	 			fmt.Printf("Chart Name:%s\n", chartName)
+
+	 			lsCmd := "ls -l "
 	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
-	 			return chartName2
+	 			return chartName
 }
 
 func updateStatus(kind, group, version, plural, instance, namespace, releaseName string) {
