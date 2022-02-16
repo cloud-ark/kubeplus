@@ -12,3 +12,20 @@ check_namespace() {
      exit 0
   fi
 }
+
+check_kind() {
+  local kind=$1
+  local kubeconfig=$2
+
+  canonicalKindPresent=`kubectl api-resources $kubeconfig | grep -w $kind`
+  OLDIFS=$IFS
+  IFS=' '
+  read -a canonicalKindPresentArr <<< "$canonicalKindPresent"
+  IFS=$OLDIFS
+
+  if [[ "${#canonicalKindPresentArr}" == 0 ]]; then
+    echo "Unknown Kind $kind"
+    exit 0
+  fi
+
+}
