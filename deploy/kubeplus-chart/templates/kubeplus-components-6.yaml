@@ -129,8 +129,8 @@ spec:
         imagePullPolicy: Always
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
-        image: gcr.io/cloudark-kubeplus/helm-pod:0.1.3
-        imagePullPolicy: Always 
+        image: gcr.io/cloudark-kubeplus/helm-pod:0.1.4
+        imagePullPolicy: Always
         command: ["/root/helm-pod"]
         volumeMounts:
         - mountPath: /chart

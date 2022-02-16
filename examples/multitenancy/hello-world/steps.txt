@@ -11,7 +11,7 @@ Provider steps:
 ----------------
 1. Create HelloWorldService
    - kubectl create -f hello-world-service-composition.yaml
-2. kubectl get crds | grep helloworldservices.platformapi.kubeplus
+2. until kubectl get crds | grep helloworldservices.platformapi.kubeplus ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
    - Wait till the HelloWorldService CRD is registered
 
 
@@ -25,9 +25,10 @@ Consumer steps:
 
 2. Verify that resource requests and limits for cpu and memory, and nodeSelector, have been set
    on the hello world Pod.
-   - HELLOWORLD_POD=`kubectl get pods | grep hello | awk '{print $1}'`
-   - kubectl get pods $HELLOWORLD_POD -o json | jq -r '.spec.containers[0].resources'
-   - kubectl get pods $HELLOWORLD_POD -o json | jq -r '.spec.nodeName'
+   - HELLOWORLD_POD=`kubectl get pods -A | grep hello | awk '{print $2}'`
+   - HELLOWORLD_NS=`kubectl get pods -A | grep hello | awk '{print $1}'`
+   - kubectl get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json | jq -r '.spec.containers[0].resources'
+   - kubectl get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json | jq -r '.spec.nodeName'
 
 3. Try to deploy second instance of of hello world tenant:
    - kubectl create -f tenant2.yaml
