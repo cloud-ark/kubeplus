@@ -12,11 +12,7 @@ fi
 
 kind=$1
 
-kubeconfig1="$HOME/.kube/config" #default value
-
-kubeconfig="--kubeconfig="$kubeconfig1
-
-check_kind $kind $kubeconfig
+check_kind $kind
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	/$KUBEPLUS_HOME/plugins/kubediscovery-macos man $kind
