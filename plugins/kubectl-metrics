@@ -65,6 +65,8 @@ done
 kubeconfig="--kubeconfig="$kubeconfig1
 check_namespace $namespace $kubeconfig
 
+check_kind $customres $kubeconfig
+
 #if [ $# == 5 ]; then
 #    output=$5
 #fi
