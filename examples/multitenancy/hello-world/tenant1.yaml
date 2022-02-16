@@ -4,4 +4,5 @@ metadata:
   name: hello-world-tenant1
 spec:
   # Change this value appropriately for your setup
-  nodeName: gke-cluster-1-default-pool-cd58e87e-5nmr
+  #nodeName: gke-cluster-1-default-pool-cd58e87e-5nmr
+  nodeName: minikube

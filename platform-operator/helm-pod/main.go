@@ -177,7 +177,7 @@ func getChartValues(request *restful.Request, response *restful.Response) {
  			fmt.Printf("Chart Values Path:%s\n",chartValuesPath)
  			readCmd := "more " + chartValuesPath
  			fmt.Printf("More cmd:%s\n", readCmd)
- 			_, valuesToReturn = executeExecCall(cmdRunnerPod, namespace, readCmd)
+ 			_, valuesToReturn = executeExecCall(cmdRunnerPod, readCmd)
  			fmt.Printf("valuesToReturn:%v\n",valuesToReturn)
 		}
 
@@ -295,7 +295,7 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 					// needs to be deleted.
 					namespaceDeleteCmd := "./root/kubectl delete ns " + helmreleaseNS
 					cmdRunnerPod := getKubePlusPod()
-					_, execOutput := executeExecCall(cmdRunnerPod, KUBEPLUS_NAMESPACE, namespaceDeleteCmd)
+					_, execOutput := executeExecCall(cmdRunnerPod, namespaceDeleteCmd)
                                 	fmt.Printf("Output of Delete NS Cmd:%v\n", execOutput)
 
 					if crName == "" {
@@ -322,10 +322,9 @@ func deleteHelmRelease(helmreleaseNS, helmrelease string) bool {
 	fmt.Printf("Helm release:%s\n", helmrelease)
 	cmd := "./root/helm delete " + helmrelease + " -n " + helmreleaseNS
 	fmt.Printf("Helm delete cmd:%s\n", cmd)
-	var output string 
-	namespace := KUBEPLUS_NAMESPACE // NAMEspace for the KubePlus Pod
+	var output string
 	cmdRunnerPod := getKubePlusPod()
-	ok, output := executeExecCall(cmdRunnerPod, namespace, cmd)
+	ok, output := executeExecCall(cmdRunnerPod, cmd)
 	fmt.Printf("Helm delete o/p:%v\n", output)
 	return ok
 }
@@ -344,8 +343,6 @@ func annotateCRD(request *restful.Request, response *restful.Response) {
 
  	cmdRunnerPod := getKubePlusPod()
 
- 	namespace := KUBEPLUS_NAMESPACE
-
 	//kubectl annotate crd mysqlservices.platformapi.kubeplus resource/annotation-relationship="on:MysqlCluster; Secret, key:meta.helm.sh/release-name, value:INSTANCE.metadata.name"
 
  	fqcrd := plural + "." + group
@@ -360,7 +357,7 @@ func annotateCRD(request *restful.Request, response *restful.Response) {
 	var ok bool
 	var output string 
 	for {
-		ok, output = executeExecCall(cmdRunnerPod, namespace, cmd)
+		ok, output = executeExecCall(cmdRunnerPod, cmd)
 		fmt.Printf("CRD annotate o/p:%v\n", output)
 		if !ok {
 			time.Sleep(1 * time.Second)
@@ -378,11 +375,9 @@ func checkResource(request *restful.Request, response *restful.Response) {
 
  	cmdRunnerPod := getKubePlusPod()
 
- 	namespace := KUBEPLUS_NAMESPACE
-
 	cmd := "./root/kubectl api-resources " //| grep " + kind + " | grep " + group + " | awk '{print $1}' " 
 	fmt.Printf("API resources cmd:%s\n", cmd)
-	_, output := executeExecCall(cmdRunnerPod, namespace, cmd)
+	_, output := executeExecCall(cmdRunnerPod, cmd)
 
 	failed := ""
 	lines := strings.Split(output, "\n")
@@ -426,11 +421,9 @@ func getPlural(request *restful.Request, response *restful.Response) {
 
  	cmdRunnerPod := getKubePlusPod()
 
- 	namespace := KUBEPLUS_NAMESPACE
-
 	cmd := "./root/kubectl api-resources " //| grep " + kind + " | grep " + group + " | awk '{print $1}' " 
 	fmt.Printf("API resources cmd:%s\n", cmd)
-	_, output := executeExecCall(cmdRunnerPod, namespace, cmd)
+	_, output := executeExecCall(cmdRunnerPod, cmd)
 
 	pluralToReturn := ""
 	lines := strings.Split(output, "\n")
@@ -476,7 +469,7 @@ func getMetrics(request *restful.Request, response *restful.Response) {
 	if helmrelease != "" {
 		metricsCmd := "./root/kubectl metrics helmrelease " + helmrelease + " -o prometheus " 
 		fmt.Printf("metrics cmd:%s\n", metricsCmd)
-		_, metricsToReturn = executeExecCall(cmdRunnerPod, namespace, metricsCmd)
+		_, metricsToReturn = executeExecCall(cmdRunnerPod, metricsCmd)
 	} else {*/
 		config, _ := rest.InClusterConfig()
 		var sampleclientset platformworkflowclientset.Interface
@@ -512,11 +505,11 @@ func getMetrics(request *restful.Request, response *restful.Response) {
 		}
 		metricsCmd := "./root/kubectl metrics " + kind + " " + customresource + " " + namespace + " -o prometheus " //+ followConnections
 		fmt.Printf("metrics cmd:%s\n", metricsCmd)
-		_, metricsToReturn = executeExecCall(cmdRunnerPod, namespace, metricsCmd)
+		_, metricsToReturn = executeExecCall(cmdRunnerPod, metricsCmd)
 	//}
  	/*cpPluginsCmd := "cp /plugins/* bin/"
 	fmt.Printf("cp plugins cmd:%s\n", cpPluginsCmd)
-	executeExecCall(cmdRunnerPod, namespace, cpPluginsCmd)
+	executeExecCall(cmdRunnerPod, cpPluginsCmd)
 	*/
 	/*if ok {
 		fmt.Printf("%v\n", helmreleaseMetrics)
@@ -713,12 +706,12 @@ func deployChart(request *restful.Request, response *restful.Response) {
 
 				if dryrun == "" {
 					createNSCmd := "./root/kubectl create ns " + customresource
-					_, execOutput = executeExecCall(cmdRunnerPod, namespace, createNSCmd)
+					_, execOutput = executeExecCall(cmdRunnerPod, createNSCmd)
 					fmt.Printf("Output of Create NS Cmd:%v\n", execOutput)
 
 					annotateNSCmd := "./root/kubectl annotate namespace " + customresource + " meta.helm.sh/release-name=\"" + releaseName + "\""
 					fmt.Printf("Annotation NS Cmd:%v\n", annotateNSCmd)
-					_, execOutput = executeExecCall(cmdRunnerPod, namespace, annotateNSCmd)
+					_, execOutput = executeExecCall(cmdRunnerPod, annotateNSCmd)
 					fmt.Printf("Output of Annotate NS Cmd:%v\n", execOutput)
 
 				}
@@ -729,7 +722,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 		 			helmInstallCmd = "./root/helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + namespace + " --dry-run" 		
 	 			}
 	  			fmt.Printf("ABC helm install cmd:%s\n", helmInstallCmd)
-	 			ok, execOutput = executeExecCall(cmdRunnerPod, namespace, helmInstallCmd)
+	 			ok, execOutput = executeExecCall(cmdRunnerPod, helmInstallCmd)
 	 			if ok {
 	 				helmReleaseOP := execOutput
 	 				lines := strings.Split(helmReleaseOP, "\n")
@@ -802,7 +795,7 @@ func testChartDeployment(request *restful.Request, response *restful.Response) {
 
 	helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -n " + namespace + " --dry-run" 
 	fmt.Printf("helm install cmd:%s\n", helmInstallCmd)
-	_, execOutput := executeExecCall(cmdRunnerPod, namespace, helmInstallCmd)
+	_, execOutput := executeExecCall(cmdRunnerPod, helmInstallCmd)
 	fmt.Printf("DRY RUN - DEF:%s\n", execOutput)
 	response.Write([]byte(execOutput))
 }
@@ -821,20 +814,20 @@ func downloadChart(chartURL, cmdRunnerPod, namespace string) string {
                 // 1. Remove previous instance of chart
                 rmCmd := "rm -rf /" + chartName2
 	 			fmt.Printf("rm cmd:%s\n", rmCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, rmCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
+	 			executeExecCall(cmdRunnerPod, rmCmd)
+	 			executeExecCall(cmdRunnerPod, lsCmd)
 
 	 			// 2. Download the Chart
 	 			wgetCmd := "wget --no-check-certificate " + chartURL
 	 			fmt.Printf("wget cmd:%s\n", wgetCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, wgetCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
+	 			executeExecCall(cmdRunnerPod, wgetCmd)
+	 			executeExecCall(cmdRunnerPod, lsCmd)
 
 	 			// 3. Rename the Chart to a friendlier name
 	 			mvCmd := "mv /" + chartName1 + " /" + chartName2
 	 			fmt.Printf("mv cmd:%s\n", mvCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, mvCmd)
-	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
+	 			executeExecCall(cmdRunnerPod, mvCmd)
+	 			executeExecCall(cmdRunnerPod, lsCmd)
 
 	 			chartName := untarChart(chartName2, cmdRunnerPod, namespace)
 
@@ -847,7 +840,7 @@ func untarChart(chartName2, cmdRunnerPod, namespace string) string {
 	 			// 4. Untar the Chart file
 	 			untarCmd := "tar -xvzf " + chartName2
 	  			fmt.Printf("untar cmd:%s\n", untarCmd)
-	 			_, op := executeExecCall(cmdRunnerPod, namespace, untarCmd)
+	 			_, op := executeExecCall(cmdRunnerPod, untarCmd)
 	 			fmt.Printf("Untar output:%s",op)
 	 			lines := strings.Split(op, "\n")
 	 			chartName := ""
@@ -857,7 +850,7 @@ func untarChart(chartName2, cmdRunnerPod, namespace string) string {
 	 			fmt.Printf("Chart Name:%s\n", chartName)
 
 	 			lsCmd := "ls -l "
-	 			executeExecCall(cmdRunnerPod, namespace, lsCmd)
+	 			executeExecCall(cmdRunnerPod, lsCmd)
 	 			return chartName
 }
 
@@ -918,7 +911,7 @@ func getOverrides(kind, group, version, plural, instance, namespace string) stri
 	return overrides
 }
 
-func executeExecCall(runner, namespace, command string) (bool, string) {
+func executeExecCall(runner, command string) (bool, string) {
 	//fmt.Println("Inside ExecuteExecCall")
 	req := kubeClient.CoreV1().RESTClient().Post().
 		Resource("pods").
