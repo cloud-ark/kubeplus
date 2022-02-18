@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import json
+import yaml
 import platform
 import os
 from crmetrics import CRBase
@@ -42,17 +43,31 @@ class AppURLFinder(CRBase):
 				print(e)
 		return nodePort
 
-	def get_server_ip(self):
+	def get_server_ip(self, kubeconfig):
 		server_ip = ''
-		fp = open("/root/.kube/config", "r")
+		parts = kubeconfig.split("=")
+		kcfg = parts[1].strip()
+		#print(parts)
+		fp = open(kcfg, "r")
+		#fp = open("/root/.kube/config", "r")
 		contents = fp.read()
-		json_content = json.loads(contents)
-		server_url = json_content['clusters'][0]['cluster']['server']
-		#print(server_url)
-		server_url = server_url.strip()
-		parts = server_url.split(":")
-		server_ip = parts[1].strip()
-		#print(server_ip)
+		content = ''
+		try:
+			content = json.loads(contents)
+		except:
+			content = yaml.safe_load(contents)
+
+		cluster_list = content['clusters']
+		for cluster in cluster_list:
+			cluster_name = cluster['name']
+			#print("Cluster name:" + cluster_name)
+			if cluster_name == 'kubeplus-saas-consumer':
+				server_url = cluster['cluster']['server']
+				#print(server_url)
+				server_url = server_url.strip()
+				parts = server_url.split(":")
+				server_ip = parts[1].strip()
+				#print(server_ip)
 		return server_ip
 
 if __name__ == '__main__':
@@ -69,10 +84,18 @@ if __name__ == '__main__':
 	if relation == 'connections':
 		resources = appURLFinder.get_resources_connections(kind, instance, namespace, kubeconfig)
 		#print(resources)
-	svcs = appURLFinder.get_svc(resources)
-	svcPort = appURLFinder.get_svc_port(svcs, namespace, kubeconfig)
-	appIP = appURLFinder.get_server_ip()
-	appURL = "http:" + appIP + ":" + str(svcPort)
-	appURL = appURL.strip()
-	#print("App port:" + str(svcPort))
-	print(appURL)
+	try:
+		svcs = appURLFinder.get_svc(resources)
+		svcPort = appURLFinder.get_svc_port(svcs, namespace, kubeconfig)
+		appIP = appURLFinder.get_server_ip(kubeconfig)
+		if appIP == '':
+			print("KubePlus SaaS Consumer context not found in the kubeconfig.")
+			print("Cannot form app url.")
+			exit()
+		else:
+			appURL = "http:" + appIP + ":" + str(svcPort)
+			appURL = appURL.strip()
+			#print("App port:" + str(svcPort))
+			print(appURL)
+	except Exception as e:
+		print(e)
