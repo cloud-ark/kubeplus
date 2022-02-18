@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 source utils.sh
 
@@ -7,7 +7,7 @@ print_help () {
     echo "        kubectl metrics"
     echo ""
     echo "SYNOPSIS"
-    echo "        kubectl metrics <Kind> <Instance> <Namespace> [-o pretty|prometheus|json]"
+    echo "        kubectl metrics <Kind> <Instance> <Namespace> [-k <Absolute path to kubeconfig>] [-o pretty|prometheus|json]"
  #   echo "        kubectl metrics account <Account name>"
     echo ""
     echo "DESCRIPTION"

@@ -28,15 +28,15 @@ shift;
 shift;
 shift;
 
-while getopts ":k" opt; do
-  case ${opt} in
-    k )
-      kubeconfig1=$OPTARG
-      if [ ! -f $kubeconfig1 ]; then
-        echo "Kubeconfig $kubeconfig1 does not exist."
-        exit 0
-      fi;;
-  esac
+while getopts ":k:" opt; do
+ case ${opt} in
+   k )
+     kubeconfig1=$OPTARG
+     if [ ! -f $kubeconfig1 ]; then
+       echo "Kubeconfig $kubeconfig1 does not exist."
+       exit 0
+     fi;;
+ esac
 done
 
 kubeconfig="--kubeconfig="$kubeconfig1
