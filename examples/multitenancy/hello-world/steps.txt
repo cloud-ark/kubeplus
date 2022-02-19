@@ -9,31 +9,57 @@ defined as part of this Service creation. The consumer creates instances of Hell
 
 Provider steps:
 ----------------
-1. Create HelloWorldService
+1. KUBEPLUS_NS=<Namespace in which KubePlus is installed>
+
+2. Register HelloWorldService API
    - kubectl create -f hello-world-service-composition.yaml
-2. until kubectl get crds | grep helloworldservices.platformapi.kubeplus ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
+
+3. until kubectl get crds | grep helloworldservices.platformapi.kubeplus ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
    - Wait till the HelloWorldService CRD is registered
 
+5. Retrieve provider kubeconfig 
+   - kubectl retrieve kubeconfig provider $KUBEPLUS_NS > provider.conf
+
+6. Retrieve consumer kubeconfig and share that with the consumer team
+   - kubectl retrieve kubeconfig consumer $KUBEPLUS_NS > consumer.conf
+
+7. Grant permission to consumer kubeconfig to create HelloWorldService resources
+  - kubectl grantpermission consumer helloworldservices provider.conf $KUBEPLUS_NS
 
 Consumer steps:
 ----------------
-1. Create a hello world tenant
+1. Check HelloWorldService man page
+   - kubectl man HelloWorldService
+
+2. Create a hello world tenant
    - Modify spec.nodeName in tenant1.yaml to refer to some node in your cluster
    - kubectl get nodes
    - Update tenant1.yaml
-   - kubectl create -f tenant1.yaml
+   - kubectl create -f tenant1.yaml --kubeconfig=consumer.conf
 
-2. Verify that resource requests and limits for cpu and memory, and nodeSelector, have been set
+3. Verify that resource requests and limits for cpu and memory, and nodeSelector, have been set
    on the hello world Pod.
    - HELLOWORLD_POD=`kubectl get pods -A | grep hello | awk '{print $2}'`
    - HELLOWORLD_NS=`kubectl get pods -A | grep hello | awk '{print $1}'`
    - kubectl get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json | jq -r '.spec.containers[0].resources'
    - kubectl get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json | jq -r '.spec.nodeName'
 
-3. Try to deploy second instance of of hello world tenant:
+4. Retrievel application url
+   - kubectl appurl HelloWorldService hello-world-tenant1 default -k consumer.conf
+
+5. Retrievel application logs
+   - kubectl applogs HelloWorldService hello-world-tenant1 default -k consumer.conf
+
+6. Retrievel application metrics
+   - kubectl metrics HelloWorldService hello-world-tenant1 default -k consumer.conf
+
+7. Check resource connectivity graph
+   - kubectl connections HelloWorldService hello-world-tenant1 default -k consumer.conf -o png
+
+7. Try to deploy second instance of of hello world tenant:
    - kubectl create -f tenant2.yaml
 
-4. Check any errors
+8. Check any errors
    - kubectl describe helloworldservices hello-world-tenant2
 
 
