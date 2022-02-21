@@ -226,3 +226,8 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
 else
     echo "$OSTYPE not supported."
 fi
+
+host=`hostname`
+if [[ "$OSTYPE" == "linux-gnu"* ]] && [[ "$output" == "png" ]]; then
+  echo "PNG output is available on host in kubeplus plugins folder (...kubeplus/plugins/connections-op.json.gv.png)"
+fi

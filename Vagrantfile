@@ -41,6 +41,10 @@ Vagrant.configure("2") do |config|
   config.vm.network "forwarded_port", guest: 5000, host: 5000
   config.vm.network "forwarded_port", guest: 9090, host: 9090
 
+  # Enable X11 forwarding
+  config.ssh.forward_agent = true
+  config.ssh.forward_x11 = true
+
   # Share an additional folder to the guest VM. The first argument is
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
@@ -76,8 +80,11 @@ Vagrant.configure("2") do |config|
      sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
      echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
      sudo apt-get update
-     sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+     sudo apt-get install -y docker-ce docker-ce-cli containerd.io xauth libjpeg8-dev zlib1g-dev
      #sudo groupadd docker
+     sudo pip3 install PIL
+     sudo pip3 install image
+     sudo pip3 install --ignore-installed pillow
      sudo usermod -aG docker $USER
      sudo curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
      sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
