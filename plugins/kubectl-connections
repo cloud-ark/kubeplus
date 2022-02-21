@@ -220,7 +220,7 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
           gen_html connections-op.json.gv $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
         fi
       else
-        /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace -o $outputString $kubeconfig $ignorelist
+        /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $canonicalKind $instance $namespace $outputString $kubeconfig $ignorelist
       fi
     fi
 else

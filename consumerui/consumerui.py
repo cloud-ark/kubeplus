@@ -58,7 +58,7 @@ def get_connections_op(resource, instance, namespace):
 	return data
 
 def get_app_url(resource, instance, namespace):
-	cmd = 'kubectl appurl ' + resource + ' ' + instance + ' ' + namespace + ' /root/.kube/config '
+	cmd = 'kubectl appurl ' + resource + ' ' + instance + ' ' + namespace + ' -k /root/.kube/config '
 	out, err = run_command(cmd)
 	data = ''
 	if out != '' and err == '':
