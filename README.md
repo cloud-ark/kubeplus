@@ -1,12 +1,11 @@
 ## KubePlus - Kubernetes SaaS Operator to deliver Helm charts as-a-service
 
-As enterprise adoption of Kubernetes is growing, multiple teams collaborate on a Kubernetes cluster to realize the broader organizational goals. Typically, there is one team that is offering a service that the other team is looking to consume. It can be an ISV offering a service for their data & analytics software that their customer is looking to consume, or it can be a platform team offering a service for an internal application that the product team is planning to use (e.g secret management, data processing, etc.). Such teams can be thought of as providers and consumers in the context of delivering and consuming software on Kubernetes.
+KubePlus is a turn-key solution to transform any containerized application into a SaaS. It takes an application Helm chart and delivers it as-a-service by automating multi-tenancy management and day2 operations such as monitoring, troubleshooting and application upgrades. KubePlus consists of a CRD that enables creating new Kubernetes APIs (CRDs) to realize such services. The new CRDs enable creation of a Helm release per tenant with tenant level isolation, monitoring and consumption tracking.
 
-KubePlus is a turn-key solution that enables provider teams to deliver any application packaged as a Helm chart as-a-service to its consumers. It does this by abstracting the application Helm chart under provider and consumer APIs.
 
 KubePlus offers following benefits towards deploying a Kubernetes-native application (Helm chart) in SaaS form:
-- Application-specific provider and consumer APIs for role based access to the clusters.
 - Seamless support for Namespace-based multi-tenancy where each application instance (Helm release) is created in a separate namespace.
+- Application-specific provider and consumer APIs for role based access to the clusters.
 - Monitoring and governance of application instances.
 - Tracking consumption metrics (cpu, memory, storage and network) at Helm release level. Application providers can use these metrics to define consumption-based chargeback models.
 
@@ -55,7 +54,7 @@ $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master
 
 *2. Retrieve Provider kubeconfig file*
 
-Provider registers the application Helm chart in the cluster under a consumer API.
+Provider registers the application Helm chart in the cluster.
 For this the provider needs a kubeconfig file.
 KubePlus creates this kubeconfig file. It has appropriate RBAC policies that enable a provider to register application helm charts under consumer APIs. Cluster admin needs to distribute this kubeconfig file to the provider. 
 
@@ -69,7 +68,7 @@ $ kubectl retrieve kubeconfig provider $KUBEPLUS_NS > provider.conf
 
 The provider team defines the consumer API named ```WordpressService``` using the ```ResourceComposition``` CRD (the provider API). The Wordpress Helm chart that underlies this service is created by the provider team. The spec properties of the ```WordpressService Custom Resource``` are the attributes defined in the Wordpress Helm chart's values.yaml.
 
-As part of creating the consumer API, the provider team can define policies such as the cpu and memory that should be allocated to each Wordpress stack or the specific worker node on which to deploy a Wordpress stack, etc. KubePlus will apply these policies to the Helm releases when instantiating the underlying Helm chart.
+As part of registering the consumer API, the provider team can define policies such as the cpu and memory that should be allocated to each Wordpress stack or the specific worker node on which to deploy a Wordpress stack, etc. KubePlus will apply these policies to the Helm releases when instantiating the underlying Helm chart.
 
 <p align="center">
 <img src="./docs/wordpress-service-crd.png" width="650" height="250" class="center">
@@ -102,7 +101,7 @@ kubectl connections WordpressService tenant1 default -k provider.conf -o png -i 
 <img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1.png" class="center">
 </p>
 
-Using ```kubectl metrics``` plugin provider can check cpu, memory, storage, network ingress/egress for a WordpressService instance. The metrics output is available in pretty, json and prometheus formats.
+Using ```kubectl metrics``` plugin, provider can check cpu, memory, storage, network ingress/egress for a WordpressService instance. The metrics output is available in pretty, json and Prometheus formats.
 
 ```
 kubectl metrics WordpressService tenant1 default -o pretty -k provider.conf 
@@ -114,7 +113,7 @@ kubectl metrics WordpressService tenant1 default -o pretty -k provider.conf
 
 ### Consumer action
 
-The consumer uses WordpressService Custom Resource (the consumer API) to provision an instance of Wordpress stack. The instances can be created using command-line (kubectl) or through a web portal. The portal is one of the KubePlus components running on the cluster and it is accessible through local proxy. Here is consumer portal for WordpressService showing the created ```tenant1``` instance.
+The consumer uses WordpressService Custom Resource (the consumer API) to provision an instance of Wordpress stack. The instances can be created using command-line (kubectl) or through a web portal. The portal is part of KubePlus Operator and runs on the cluster. It is accessible through local proxy. Here is consumer portal for WordpressService showing the created ```tenant1``` instance.
 
 <p align="center">
 <img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1-consumerui.png" class="center">
@@ -137,7 +136,7 @@ The KubePlus Operator consists of a custom controller, a mutating webhook and th
 </p>
 
 The custom controller handles KubePlus CRDs. The primary CRD is ```ResourceComposition```. It is used to:
-- Define new CRDs (consumer APIs) wrapping Helm charts.
+- Define new CRDs representing Helm charts (consumer APIs).
 - Define policies (e.g. cpu/memory limits, node selection, etc.) for service instances.
 
 The mutating webook and helmer modules support the custom controller in delivering the KubePlus experience.
