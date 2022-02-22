@@ -80,10 +80,8 @@ Vagrant.configure("2") do |config|
      sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
      echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
      sudo apt-get update
-     sudo apt-get install -y docker-ce docker-ce-cli containerd.io xauth libjpeg8-dev zlib1g-dev
+     sudo apt-get install -y docker-ce docker-ce-cli containerd.io xauth libjpeg8-dev zlib1g-dev python3-pip jq
      #sudo groupadd docker
-     sudo pip3 install PIL
-     sudo pip3 install image
      sudo pip3 install --ignore-installed pillow
      sudo usermod -aG docker $USER
      sudo curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -95,8 +93,6 @@ Vagrant.configure("2") do |config|
      sudo curl https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz
      sudo tar -zxvf helm-v3.6.3-linux-amd64.tar.gz
      sudo mv linux-amd64/helm /usr/local/bin/helm
-
-     sudo apt-get install -y python3-pip jq
 
      sudo pip3 install -r /vagrant/grapher/requirements.txt
 
