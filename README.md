@@ -149,7 +149,12 @@ KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot 
 
 ## Try
 
-- Install KubePlus Operator. (Note that you will need Helm v3, and Kubernetes version < 1.20).
+- Use Kubernetes version < 1.20 and Helm version 3+. With minikube, you can create a cluster with a specific version like so:
+```
+    $ minikube start --kubernetes-version=v1.20.0
+```
+
+- Install KubePlus Operator.
 
 ```
    $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
@@ -204,11 +209,13 @@ As enterprise teams build their custom platforms using community or in house dev
 
 ## Presentations
 
-1. [Being a good citizen of the Multi-Operator world, Kubecon NA 2020](https://www.youtube.com/watch?v=NEGs0GMJbCw&t=2s)
+1. [Webinar: Deliver your Kubernetes Applications as-a-Service](https://webinars.devops.com/deliver-your-kubernetes-applications-as-a-service)
 
-2. [Operators and Helm: It takes two to Tango, Helm Summit 2019](https://youtu.be/F_Dgz1V5Q2g)
+2. [Being a good citizen of the Multi-Operator world, Kubecon NA 2020](https://www.youtube.com/watch?v=NEGs0GMJbCw&t=2s)
 
-3. [KubePlus presentation at community meetings (CNCF sig-app-delivery, Kubernetes sig-apps, Helm)](https://github.com/cloud-ark/kubeplus/blob/master/KubePlus-presentation.pdf)
+3. [Operators and Helm: It takes two to Tango, Helm Summit 2019](https://youtu.be/F_Dgz1V5Q2g)
+
+4. [KubePlus presentation at community meetings (CNCF sig-app-delivery, Kubernetes sig-apps, Helm)](https://github.com/cloud-ark/kubeplus/blob/master/KubePlus-presentation.pdf)
 
 
 ## Contact
