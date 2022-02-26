@@ -4,7 +4,9 @@ Kubernetes Resource Relationships
 The Kubernetes resource relationship graphs available in this folder are generated
 using KubePlus ``kubectl connections`` plugin.
 
-KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of a Kubernetes cluster. You can install them following these steps:
+KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of a Kubernetes cluster. You can install them following these steps
+
+Note: Make sure that your Kubernetes version is <= v1.20.0.
 
 ```
    $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
