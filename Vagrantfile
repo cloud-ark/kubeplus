@@ -90,7 +90,7 @@ Vagrant.configure("2") do |config|
      sudo curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
      sudo install minikube-linux-amd64 /usr/local/bin/minikube
 
-     sudo curl https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz
+     sudo curl https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz --output helm-v3.6.3-linux-amd64.tar.gz
      sudo tar -zxvf helm-v3.6.3-linux-amd64.tar.gz
      sudo mv linux-amd64/helm /usr/local/bin/helm
 
