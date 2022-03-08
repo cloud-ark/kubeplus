@@ -189,6 +189,54 @@ to surface this information through ``resource/usage`` CRD annotation. If you wa
 to provide the control of creating privileged Pods to Custom Resource user then define a Spec attribute for this purpose in your Custom Resource Spec definition.
 
 
+### Set OwnerReferences for underlying resources owned by your Custom Resource
+
+An Operator will typically create one or more native Kubernetes resources as part of instantiating a Custom Resource instance. Set the OwnerReference attribute of such underlying resources to the Custom Resource instance that is
+being created. OwnerReference setting is essential for correct garbage collection of Custom Resources. 
+It also helps with finding runtime composition tree of your Custom Resource instances.
+If all the Operators are correctly handling OwnerReferences, then the garbage collection benefit will get
+extended for the entire application stack consisting of Custom Resources.
+
+
+### Define Custom Resource Spec Validation rules as part of Custom Resource Definition YAML
+
+Your Custom Resource Spec definitions will contain different properties and they may have some domain-specific validation requirements. Kubernetes 1.13 onwards you will be able to use OpenAPI v3 schema to define validation requirements for your Custom Resource Spec. For instance, below is an example of adding validation rules for our sample Postgres CRD. The rules define that the Postgres Custom Resource Spec properties of 'databases' and 'users' should be of type Array and that every element of this array should be of type String. Once such validation rules are defined, Kubernetes will reject any Custom Resource Specs that do not satisfy these requirements.
+
+```
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: postgreses.postgrescontroller.kubeplus
+  annotations:
+    helm.sh/hook: crd-install
+    resource/composition: Deployment, Service
+spec:
+  group: postgrescontroller.kubeplus
+  version: v1
+  names:
+    kind: Postgres
+    plural: postgreses
+  scope: Namespaced
+validation:
+   # openAPIV3Schema is the schema for validating custom objects.
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            databases:
+              type: array
+              items:
+                type: string
+            users:
+              type: array
+              items:
+                type: string 
+```
+
+In the context of application stacks, this requirement ensures that the entire  stack can be validated for correctness.
+
+
+
 ## SaaS multi-tenancy
 
 
