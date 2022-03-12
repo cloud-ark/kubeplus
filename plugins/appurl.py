@@ -61,7 +61,7 @@ class AppURLFinder(CRBase):
 		for cluster in cluster_list:
 			cluster_name = cluster['name']
 			#print("Cluster name:" + cluster_name)
-			if cluster_name == 'kubeplus-saas-consumer':
+			if cluster_name == 'kubeplus-saas-consumer' or cluster_name == 'kubeplus-saas-provider':
 				server_url = cluster['cluster']['server']
 				#print(server_url)
 				server_url = server_url.strip()

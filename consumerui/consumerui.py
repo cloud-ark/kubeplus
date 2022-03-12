@@ -265,6 +265,7 @@ def create_instance():
 
 	return template
 
+# not used
 @app.route("/getAll", methods=['GET'])
 def getAllResources():
 	print("Received request.")
@@ -342,6 +343,8 @@ def get_instance_data():
 	instance_data['logs'] = logs
 	return instance_data
 
+#### Not used
+
 @app.route("/get_instance_status", methods=['POST'])
 def get_instance_status():
 	print("Received request.")
@@ -393,6 +396,8 @@ def index1():
 def get_resource_info(service, namespace, instance):
 	cmd = ''
 	pass
+
+#### Not used
 
 @app.route("/")
 def index():
