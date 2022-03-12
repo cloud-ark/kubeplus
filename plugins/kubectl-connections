@@ -64,7 +64,7 @@ gen_html() {
   echo "<head></head>" >> ~/.kubeplus/$fileName.html
   echo "<body>" >> ~/.kubeplus/$fileName.html
   fcontents=`cat $fileName.txt`
-  echo "<img src=\"data:image/png;base64,$fcontents\">" >> ~/.kubeplus/$fileName.html
+  echo "<img src=\"data:image/png;base64,$fcontents\" style=\"width:800px;height:250px;\">" >> ~/.kubeplus/$fileName.html
 
   echo "</body>" >> ~/.kubeplus/$fileName.html
   echo "</html>" >> ~/.kubeplus/$fileName.html
@@ -150,29 +150,7 @@ done
 kubeconfig="--kubeconfig="$kubeconfig1
 check_namespace $namespace $kubeconfig
 
-#canonicalKindPresent=`kubectl api-resources $kubeconfig | grep -w $kind | awk '{print $4}'`
-canonicalKindPresent=`kubectl api-resources $kubeconfig | grep -w $kind`
-OLDIFS=$IFS
-IFS=' '
-read -a canonicalKindPresentArr <<< "$canonicalKindPresent"
-IFS=$OLDIFS
-
-if [[ "${#canonicalKindPresentArr}" == 0 ]]; then
-  echo "Unknown Kind $kind."
-  exit 0
-fi
-
-# For Kinds in empty API group (like Pods)
-a="${canonicalKindPresentArr[2]}" 
-if [[ $a == 'true' ]]; then
-  canonicalKind="${canonicalKindPresentArr[3]}"
-fi
-
-# For Kinds in non-empty API group (like Ingress)
-b="${canonicalKindPresentArr[3]}" 
-if [[ $b == 'true' ]]; then
-  canonicalKind="${canonicalKindPresentArr[4]}"
-fi
+canonicalKind=$(get_canonical_kind $kind)
 
 # Check if the resource was deployed without errors
 resStatus=`kubectl $kubeconfig get $kind $instance -n $namespace -o json | grep helmrelease | grep -v "f:helmrelease"`

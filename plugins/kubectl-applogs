@@ -48,7 +48,9 @@ check_namespace $namespace $kubeconfig
 
 #echo "$kind $instance $namespace"
 
-python /$KUBEPLUS_HOME/plugins/crlogs.py connections $kind $instance $namespace $kubeconfig
+canonicalKind=$(get_canonical_kind $kind)
+
+python /$KUBEPLUS_HOME/plugins/crlogs.py connections $canonicalKind $instance $namespace $kubeconfig
 
 
 #echo "kubectl grouplogs cr connections"
