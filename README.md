@@ -54,9 +54,9 @@ $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master
 
 *2. Retrieve Provider kubeconfig file*
 
-Provider registers the application Helm chart in the cluster.
-For this the provider needs a kubeconfig file.
-KubePlus creates this kubeconfig file. It has appropriate RBAC policies that enable a provider to register application helm charts under consumer APIs. Cluster admin needs to distribute this kubeconfig file to the provider. 
+KubePlus creates provider and consumer kubeconfig files with appropriately scoped
+RBAC policies. Cluster admin needs to distribute them to application providers and consumers. KubePlus comes with kubectl plugins to retrieve these files.
+The provider kubeconfig file has permissions to register application helm charts under consumer APIs in the cluster. The consumer kubeconfig file has permissions to perform CRUD operations on the registered consumer APIs.
 
 ```
 $ kubectl retrieve kubeconfig provider $KUBEPLUS_NS > provider.conf
@@ -68,7 +68,7 @@ $ kubectl retrieve kubeconfig provider $KUBEPLUS_NS > provider.conf
 
 The provider team defines the consumer API named ```WordpressService``` using the ```ResourceComposition``` CRD (the provider API). The Wordpress Helm chart that underlies this service is created by the provider team. The spec properties of the ```WordpressService Custom Resource``` are the attributes defined in the Wordpress Helm chart's values.yaml.
 
-As part of registering the consumer API, the provider team can define policies such as the cpu and memory that should be allocated to each Wordpress stack or the specific worker node on which to deploy a Wordpress stack, etc. KubePlus will apply these policies to the Helm releases when instantiating the underlying Helm chart.
+As part of registering the consumer API, the provider team can define policies such as the cpu and memory that should be allocated to each Wordpress stack, or the specific worker node on which to deploy a Wordpress stack, etc. KubePlus will apply these policies to the Helm releases when instantiating the underlying Helm chart.
 
 <p align="center">
 <img src="./docs/wordpress-service-crd.png" width="650" height="250" class="center">
@@ -83,9 +83,6 @@ Before consumers can instantiate WordpressService resources, the provider needs 
 ```
 kubectl grantpermission consumer wordpressservices provider.conf $KUBEPLUS_NS
 ```
-
-The provider's kubeconfig needs to be provided as input to the ``kubectl grantpermission`` command.
-
 
 *3. Provider team uses kubeplus kubectl plugins to troubleshoot and monitor WordpressService instances*.
 
@@ -135,7 +132,7 @@ The KubePlus Operator consists of a custom controller, a mutating webhook and th
 <img src="./docs/crd-for-crds-2.jpg" width="700" height="300" class="center">
 </p>
 
-The custom controller handles KubePlus CRDs. The primary CRD is ```ResourceComposition```. It is used to:
+The custom controller handles the ```ResourceComposition```. It is used to:
 - Define new CRDs representing Helm charts (consumer APIs).
 - Define policies (e.g. cpu/memory limits, node selection, etc.) for service instances.
 
@@ -144,12 +141,12 @@ The mutating webook and helmer modules support the custom controller in deliveri
 
 ### 2. KubePlus kubectl plugins
 
-KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot application instances. The primary plugin is: ```kubectl connections```. It tracks resource relationships through owner references, labels, annotations, and spec properties. These relationships enable providers to gain fine grained visibility into running application instances through resource relationship graphs. Additional plugins offer the ability to get aggregated consumption metrics (for cpu, memory, storage, network) and logs at the application instance level.
+KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot application instances. The primary plugin is: ```kubectl connections```. It tracks resource relationships through owner references, labels, annotations, and spec properties. These relationships enable providers to gain fine grained visibility into running application instances through resource relationship graphs. Additional plugins offer the ability to get aggregated consumption metrics (for cpu, memory, storage, network), and logs at the application instance level.
 
 
 ## Try
 
-- Use Kubernetes version < 1.20 and Helm version 3+. With minikube, you can create a cluster with a specific version like so:
+- Use Kubernetes version <= 1.20 and Helm version 3+. With minikube, you can create a cluster with a specific version like so:
 ```
     $ minikube start --kubernetes-version=v1.20.0
 ```
@@ -158,7 +155,7 @@ KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot 
 
 ```
    $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
-   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.6.tgz?raw=true" -n $KUBEPLUS_NS
+   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.8.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
 - Install KubePlus kubectl plugins (see below)
@@ -225,7 +222,7 @@ OPTIONS
             You can specify multiple values as comma separated list.
 ```
 
-We maintain resource relationship graphs for resources in different Kubernetes distributions and different Operator custom resources [here](./examples/graphs).
+[Here](./examples/graphs) are some resource relationship graphs generated using the connections plugin.
 
 
 ## CNCF Landscape
@@ -240,7 +237,7 @@ As enterprise teams build their custom platforms using community or in house dev
 
 ## Presentations
 
-1. [Webinar: Deliver your Kubernetes Applications as-a-Service](https://webinars.devops.com/deliver-your-kubernetes-applications-as-a-service)
+1. [DevOps.com Webinar: Deliver your Kubernetes Applications as-a-Service](https://webinars.devops.com/deliver-your-kubernetes-applications-as-a-service)
 
 2. [Being a good citizen of the Multi-Operator world, Kubecon NA 2020](https://www.youtube.com/watch?v=NEGs0GMJbCw&t=2s)
 
