@@ -19,11 +19,11 @@ KubePlus offers following benefits towards deploying a Kubernetes-native applica
 The typical requirements in a service-based delivery model of Kubernetes applications are as follows:
 - From cluster admin's perspective it is important to isolate different application instances from one another on the cluster.
 - Application consumers need a self-service model to provision application instances.
-- Application providers need to be able to troubleshoot and monitor deployed instances of the application.
-- Application providers should also be able to track consumption metrics for application instances provisioned on the cluster.
+- Application providers need to be able to troubleshoot application instances, monitor them, and track their resource consumption.
 
 KubePlus achieves these goals as follows. KubePlus defines a ```provider API``` to create application-specific ```consumer APIs```.
-The ```provider API``` is a KubePlus CRD (Custom Resource Definition) named ``ResourceComposition`` that enables registering an application Helm chart in the cluster by defining a new Kubernetes API (CRD) representing the chart. As part of this, application providers can define application-level policies which KubePlus applies when instantiating the registered chart. The new CRD is essentially the ```consumer API``` which the application consumers use to instantiate the registered Helm chart in a self-service manner.
+The ```provider API``` is a KubePlus CRD (Custom Resource Definition) named ``ResourceComposition`` that enables registering an application Helm chart in the cluster by defining a new Kubernetes API (CRD) representing the chart. The new CRD is essentially the ```consumer API``` which the application consumers use to instantiate the registered Helm chart in a self-service manner. Through ``ResourceComposition``application providers can define application-level policies which KubePlus applies when instantiating the registered chart as part of handling the consumer APIs.
+
 
 <p align="center">
 <img src="./docs/provider-consumer.png" width="600" height="200" class="center">
@@ -32,7 +32,7 @@ The ```provider API``` is a KubePlus CRD (Custom Resource Definition) named ``Re
 KubePlus offers following functions:
 - Create: Create a Kubernetes-native API to represent an application packaged as a Helm chart.
 - Govern: Tenant level policies for isolation and resource utilization per application instance.
-- Monitor: Tenant level consumption metrics for cpu, memory, storage, network.
+- Monitor: Tenant level consumption metrics tracking for cpu, memory, storage, network.
 - Troubleshoot: Application-level insights through fine-grained Kubernetes resource relationship graphs.
 
 
@@ -110,7 +110,7 @@ kubectl metrics WordpressService tenant1 default -o pretty -k provider.conf
 
 ### Consumer action
 
-The consumer uses WordpressService Custom Resource (the consumer API) to provision an instance of Wordpress stack. The instances can be created using command-line (kubectl) or through a web portal. The portal is part of KubePlus Operator and runs on the cluster. It is accessible through local proxy. Here is consumer portal for WordpressService showing the created ```tenant1``` instance.
+The consumer uses WordpressService Custom Resource (the consumer API) to provision an instance of Wordpress stack. The instances can be created using ``kubectl`` or through a web portal. The portal is part of KubePlus Operator and runs on the cluster. It is accessible through local proxy. Here is consumer portal for WordpressService showing the created ```tenant1``` instance.
 
 <p align="center">
 <img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1-consumerui.png" class="center">
@@ -185,7 +185,7 @@ KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot 
 
 ## Kubectl plugins for discovery, monitoring and troubleshooting
 
-KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of a Kubernetes cluster. You can install them following these steps:
+KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of Kubernetes applications. You can install them following these steps:
 
 ```
    $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
@@ -196,7 +196,7 @@ KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of a K
    $ kubectl kubeplus commands
 ```
 
-KubePlus's ``kubectl connections`` plugin enables discovering Kubernetes resource relationship graphs. You can use it with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster, Jenkins, etc.).
+KubePlus's ``kubectl connections`` plugin enables discovering Kubernetes application topologies. You can use it with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster, Jenkins, etc.).
 Here is how you can use the ``kubectl connections`` plugin:
 
 ```
@@ -232,7 +232,7 @@ KubePlus is part of CNCF landscape's [Application Definition section](https://la
 
 ## Operator Maturity Model
 
-As enterprise teams build their custom platforms using community or in house developed Operators, they need a set of guidelines for Operator readiness in multi-Operator and multi-tenant environments. We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) for this purpose. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators for curating community Operators towards building their custom platforms.
+As enterprise teams build their custom Kubernetes platforms using community or in house developed Operators, they need a set of guidelines for Operator readiness in multi-Operator and multi-tenant environments. We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) for this purpose. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators for curating community Operators towards building their custom platforms.
 
 
 ## Presentations
