@@ -152,7 +152,7 @@ The ``Consumer UI`` runs on the cluster and is accessible through proxy. Consume
 
 The KubePlus components that run outside the cluster are: the KubePlus SaaS Manager control center and kubectl plugins.
 
-The KubePlus SaaS Manager control center consists of ``Provider portal`` through which providers can manage their SaaS across different clusters. It comes with integrated Prometheus that enables tracking resource metrics for service instances.
+The KubePlus SaaS Manager control center consists of ``Provider portal`` through which providers can manage their SaaS across different clusters. It comes with integrated Prometheus that enables tracking resource metrics for service instances, as seen below.
 
 <p align="center">
 <img src="./docs/jenkins-cpu-graph.jpg" width="700" height="300" class="center">
