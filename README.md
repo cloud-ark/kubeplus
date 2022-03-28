@@ -155,7 +155,7 @@ The KubePlus components that run outside the cluster are: the KubePlus SaaS Mana
 The KubePlus SaaS Manager control center consists of ``Provider portal`` through which providers can manage their SaaS across different clusters. It comes with integrated Prometheus that enables tracking resource metrics for service instances, as seen below.
 
 <p align="center">
-<img src="./docs/jenkins-cpu-graph.jpg" width="700" height="300" class="center">
+<img src="./docs/jenkins-cpu-graph.png" width="500" height="150" class="center">
 </p>
 
 
