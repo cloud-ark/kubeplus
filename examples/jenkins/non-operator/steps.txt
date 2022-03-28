@@ -1,0 +1,20 @@
+Jenkins Service 
+----------------
+
+1. Install KubePlus SaaS Manager control center by following steps in the [README](../../README.md).
+
+2. Install KubePlus Operator and generate provider kubeconfig.
+
+3. In the control center, register a Jenkins Service (give it any name).
+   Upload the jenkins-chart-0.0.1.tgz while registering the service.
+
+4. Register the cluster using the provider kubeconfig from step 2.
+
+5. Add the Jenkins Service to the cluster by navigating to the cluster link.
+
+6. Create the Service instance from the cluster link.
+
+7. Access the Service instance by clicking the instance link. This can take
+   some time.
+
+8. Access the Service metrics in Prometheus by navigating to the Service link.
