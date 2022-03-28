@@ -22,23 +22,29 @@ The typical requirements in a service-based delivery model of Kubernetes applica
 - Application providers need to be able to troubleshoot application instances, monitor them, and track their resource consumption.
 
 KubePlus achieves these goals as follows. KubePlus defines a ```provider API``` to create application-specific ```consumer APIs```.
-The ```provider API``` is a KubePlus CRD (Custom Resource Definition) named ``ResourceComposition`` that enables registering an application Helm chart in the cluster by defining a new Kubernetes API (CRD) representing the chart. The new CRD is essentially the ```consumer API``` which the application consumers use to instantiate the registered Helm chart in a self-service manner. Through ``ResourceComposition``application providers can define application-level policies which KubePlus applies when instantiating the registered chart as part of handling the consumer APIs.
+The ```provider API``` is a KubePlus CRD (Custom Resource Definition) named ``ResourceComposition`` that enables registering an application Helm chart in the cluster by defining a new Kubernetes API (CRD) representing the chart. The new CRD is essentially the ```consumer API``` which the application consumers use to instantiate the registered Helm chart in a self-service manner. Through ``ResourceComposition``application providers can define application-level policies, which KubePlus applies when instantiating the registered chart as part of handling the consumer APIs.
 
 
 <p align="center">
 <img src="./docs/provider-consumer.png" width="600" height="200" class="center">
 </p>
 
-KubePlus offers following functions:
+KubePlus offers following functions to application providers:
 - Create: Create a Kubernetes-native API to represent an application packaged as a Helm chart.
-- Govern: Tenant level policies for isolation and resource utilization per application instance.
-- Monitor: Tenant level consumption metrics tracking for cpu, memory, storage, network.
-- Troubleshoot: Application-level insights through fine-grained Kubernetes resource relationship graphs.
+- Govern: Define policies for isolation and resource utilization per application instance.
+- Monitor: Track application-specific consumption metrics for cpu, memory, storage, network.
+- Troubleshoot: Gain application-level insights through fine-grained Kubernetes resource relationship graphs.
 
 
-## Example
+## Demo
 
-To understand the working of KubePlus, let us see how a Wordpress provider can offer a multi-tenant Wordpress service.
+KubePlus comes with a control center with embedded Prometheus integration for providers to manage their SaaS across multiple Kubernetes clusters.
+See the control center in [action](https://youtu.be/aIVnC4GKIV4).
+
+
+## Under the hood of Provider/Consumer APIs
+
+To understand the working of KubePlus, let us see how a Wordpress provider can offer a multi-tenant Wordpress service using KubePlus.
 
 
 ### Cluster admin actions
@@ -110,21 +116,22 @@ kubectl metrics WordpressService tenant1 default -o pretty -k provider.conf
 
 ### Consumer action
 
-The consumer uses WordpressService Custom Resource (the consumer API) to provision an instance of Wordpress stack. The instances can be created using ``kubectl`` or through a web portal. The portal is part of KubePlus Operator and runs on the cluster. It is accessible through local proxy. Here is consumer portal for WordpressService showing the created ```tenant1``` instance.
+The consumer uses WordpressService Custom Resource (the consumer API) to provision an instance of Wordpress stack. The instances can be created using ``kubectl`` or through a web portal.  Here is consumer portal for WordpressService showing the created ```tenant1``` instance.
 
 <p align="center">
 <img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1-consumerui.png" class="center">
 </p>
 
 
-Our [KubePlus SaaS Manager product](https://cloudark.io/kubeplus-saas-manager) offers enterprise-ready control center with embedded Prometheus integration for providers to manage their SaaS across multiple Kubernetes clusters.
-
 
 ## Components
 
-KubePlus consists of an Operator and kubectl plugins.
+KubePlus consists of in-cluster components and components that run outside the cluster.
 
-### 1. KubePlus Operator
+### 1. In-cluster components
+
+The in-cluster components of KubePlus are the ``KubePlus Operator`` and the
+``Consumer UI``.
 
 The KubePlus Operator consists of a custom controller, a mutating webhook and the helmer module. Here is a brief summary of these components. Details about them are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/kubeplus-components.html).
 
@@ -138,10 +145,21 @@ The custom controller handles the ```ResourceComposition```. It is used to:
 
 The mutating webook and helmer modules support the custom controller in delivering the KubePlus experience.
 
+The ``Consumer UI`` runs on the cluster and is accessible through proxy. Consumer UI is service specific and can be used to create service instances by consumers.
 
-### 2. KubePlus kubectl plugins
 
-KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot application instances. The primary plugin is: ```kubectl connections```. It tracks resource relationships through owner references, labels, annotations, and spec properties. These relationships enable providers to gain fine grained visibility into running application instances through resource relationship graphs. Additional plugins offer the ability to get aggregated consumption metrics (for cpu, memory, storage, network), and logs at the application instance level.
+### 2. KubePlus components outside the cluster
+
+The KubePlus components that run outside the cluster are: the KubePlus SaaS Manager control center and kubectl plugins.
+
+The KubePlus SaaS Manager control center consists of ``Provider portal`` through which providers can manage their SaaS across different clusters. It comes with integrated Prometheus that enables tracking resource metrics for service instances.
+
+<p align="center">
+<img src="./docs/jenkins-cpu-graph.jpg" width="700" height="300" class="center">
+</p>
+
+
+KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot application instances. The plugins track resource relationships through owner references, labels, annotations, and spec properties. These relationships enable providers to get aggregated consumption metrics (for cpu, memory, storage, network), and logs at the application instance level. The plugins are integrated within the Provider portal.
 
 
 ## Try
@@ -158,14 +176,23 @@ KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot 
    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.8.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
-- Install KubePlus kubectl plugins (see below)
+- Install KubePlus SaaS Manager control center
+
+Unzip, untar kubeplus-saas-manager-control-center bundle and then follow the steps in the README.md therein. KubePlus SaaS Manager control center is currently supported for MacOS and Ubuntu.
+
+```
+   $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-saas-manager-control-center.tar.gz
+   $ gunzip kubeplus-saas-manager-control-center.tar.gz
+   $ tar -xvf kubeplus-saas-manager-control-center.tar
+   $ cd kubeplus-saas-manager-control-center
+   $ . ./install-kubeplus-control-center.sh
+   $ ./start-control-center.sh
+```
 
 - Try following examples:
+  - [Jenkins service](./examples/jenkins/non-operator/steps.txt)
   - [Hello World service](./examples/multitenancy/hello-world/steps.txt)
   - [Wordpress service](./examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt)
-  - [Mysql service](./examples/multitenancy/stacks/steps.txt)
-  - [MongoDB service](./examples/multitenancy/mongodb-as-a-service/steps.md)
-  - [Multiple teams](./examples/multitenancy/team/steps.txt) with applications deployed later
 
 - Debug:
   ```
@@ -181,6 +208,8 @@ KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot 
   - helm delete kubeplus -n $KUBEPLUS_NS
   - wget https://github.com/cloud-ark/kubeplus/raw/master/deploy/delete-kubeplus-components.sh
   - ./delete-kubeplus-components.sh
+  - cd kubeplus-saas-manager-control-center
+  - ./stop-control-center.sh
   ```
 
 ## Kubectl plugins for discovery, monitoring and troubleshooting
@@ -195,34 +224,6 @@ KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of Kub
    $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
    $ kubectl kubeplus commands
 ```
-
-KubePlus's ``kubectl connections`` plugin enables discovering Kubernetes application topologies. You can use it with any Kubernetes resource (built-in resources like Pod, Deployment, or custom resources like MysqlCluster, Jenkins, etc.).
-Here is how you can use the ``kubectl connections`` plugin:
-
-```
-NAME
-        kubectl connections
-
-SYNOPSIS
-        kubectl connections <Kind> <Instance> <Namespace> [-k <Absolute path to kubeconfig>] [-o json|png|flat|html] [-i <Kind1:Instance1,Kind1:Instance1>] [-n <label|specproperty|envvariable|annotation>]
-
-DESCRIPTION
-        kubectl connections shows how the input resource is connected to other Kubernetes resources through one of the following 
-        types of relationships: ownerReference, labels, annotations, spec property.
-OPTIONS
-        kubectl connections takes following optional flags as input.
-        -k <Absolute path to kubeconfig file>
-        -o <json|png|flat>
-            This flag controls what type of output to generate.
-        -i <Kind1:Instance1,Kind2:Instance2>
-            This flag defines which Kinds and instances to ignore when traversing the resource graph.
-            kubectl connections will not discover the sub-graphs starting at such nodes.
-        -n <label|specproperty|envvariable|annotation>
-            This flag defines the relationship types whose details should not be displayed in the graphical output (png).
-            You can specify multiple values as comma separated list.
-```
-
-[Here](./examples/graphs) are some resource relationship graphs generated using the connections plugin.
 
 
 ## CNCF Landscape
@@ -248,4 +249,4 @@ As enterprise teams build their custom Kubernetes platforms using community or i
 
 ## Contact
 
-Submit issues on this repository or reach out to our team on [Slack](https://join.slack.com/t/cloudark/shared_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw).
+For support and new features [reach out to us](https://cloudark.io/kubeplus-saas-manager) or contact our team on [Slack](https://join.slack.com/t/cloudark/shared_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw).
