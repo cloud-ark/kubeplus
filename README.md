@@ -2,15 +2,18 @@
 
 KubePlus is a turn-key solution to transform any containerized application into a SaaS. It takes an application Helm chart and delivers it as-a-service by automating multi-tenancy management and day2 operations such as monitoring, troubleshooting and application upgrades. KubePlus consists of a CRD that enables creating new Kubernetes APIs (CRDs) to realize such services. The new CRDs enable creation of a Helm release per tenant with tenant level isolation, monitoring and consumption tracking.
 
+<p align="center">
+<img src="./docs/application-stacks-1.png" width="700" height="150" class="center">
+</p>
 
 KubePlus offers following benefits towards deploying a Kubernetes-native application (Helm chart) in SaaS form:
 - Seamless support for Namespace-based multi-tenancy where each application instance (Helm release) is created in a separate namespace.
 - Application-specific provider and consumer APIs for role based access to the clusters.
-- Monitoring and governance of application instances.
-- Tracking consumption metrics (cpu, memory, storage and network) at Helm release level. Application providers can use these metrics to define consumption-based chargeback models.
+- Troubleshooting and governance of application instances.
+- Tracking consumption metrics (cpu, memory, storage and network) at Helm release level in Prometheus. Application providers can use these metrics to define consumption-based chargeback models.
 
 <p align="center">
-<img src="./docs/application-stacks-1.png" width="700" height="150" class="center">
+<img src="./docs/jenkins-cpu-graph.png" class="center">
 </p>
 
 
@@ -152,12 +155,7 @@ The ``Consumer UI`` runs on the cluster and is accessible through proxy. Consume
 
 The KubePlus components that run outside the cluster are: the KubePlus SaaS Manager control center and kubectl plugins.
 
-The KubePlus SaaS Manager control center consists of ``Provider portal`` through which providers can manage their SaaS across different clusters. It comes with integrated Prometheus that enables tracking resource metrics for service instances, as seen below.
-
-<p align="center">
-<img src="./docs/jenkins-cpu-graph.png" class="center">
-</p>
-
+The KubePlus SaaS Manager control center consists of ``Provider portal`` through which providers can manage their SaaS across different clusters. It comes with integrated Prometheus that enables tracking resource metrics for service instances.
 
 KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot application instances. The plugins track resource relationships through owner references, labels, annotations, and spec properties. These relationships enable providers to get aggregated consumption metrics (for cpu, memory, storage, network), and logs at the application instance level. The plugins are integrated within the Provider portal.
 
