@@ -174,12 +174,11 @@ KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot 
    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.8.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
-- Install KubePlus SaaS Manager control center
+- Download and Install KubePlus SaaS Manager control center from [here](https://cloudark.io/download)
 
 Unzip, untar kubeplus-saas-manager-control-center bundle and then follow the steps in the README.md therein. KubePlus SaaS Manager control center is currently supported for MacOS and Ubuntu.
 
 ```
-   $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-saas-manager-control-center.tar.gz
    $ gunzip kubeplus-saas-manager-control-center.tar.gz
    $ tar -xvf kubeplus-saas-manager-control-center.tar
    $ cd kubeplus-saas-manager-control-center
