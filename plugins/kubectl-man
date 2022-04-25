@@ -1,23 +1,21 @@
 #!/bin/bash
 
-# kubectl man uses the default kubeconfig. Do we need to support passing
-# in a custom kubeconfig file? For now, we will skip this.
-
 source utils.sh
 
 if (( $# < 1 )); then
-    echo "kubectl man <Custom Resource Kind>"
+    echo "kubectl man <Custom Resource Kind> [-k <Full path to kubeconfig file>]"
     exit 0
 fi
 
 kind=$1
+kubeconfig=$3
 
-check_kind $kind
+check_kind $kind $kubeconfig
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-	/$KUBEPLUS_HOME/plugins/kubediscovery-macos man $kind
+	/$KUBEPLUS_HOME/plugins/kubediscovery-macos man $kind --kubeconfig=$kubeconfig
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-	/$KUBEPLUS_HOME/plugins/kubediscovery-linux man $kind
+	/$KUBEPLUS_HOME/plugins/kubediscovery-linux man $kind --kubeconfig=$kubeconfig
 else 
 	echo "$OSTYPE not supported."
 fi
