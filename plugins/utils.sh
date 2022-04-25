@@ -15,8 +15,9 @@ check_namespace() {
 
 check_kind() {
   local kind=$1
+  local kubeconfg=$2
 
-  canonicalKindPresent=`kubectl api-resources | grep -w $kind`
+  canonicalKindPresent=`kubectl api-resources --kubeconfig=$kubeconfig | grep -w $kind`
   OLDIFS=$IFS
   IFS=' '
   read -a canonicalKindPresentArr <<< "$canonicalKindPresent"

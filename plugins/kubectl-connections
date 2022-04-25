@@ -74,7 +74,7 @@ gen_html() {
   if [ -f /sys/hypervisor/uuid ]; then
     if [ `head -c 3 /sys/hypervisor/uuid` == "ec2" ]; then
       ec2ip=`curl http://checkip.amazonaws.com`
-      echo "Output available in: http://$ec2ip:9090/consoles/$fileName.html"
+      echo "Output available in: http://$ec2ip:65500/consoles/$fileName.html"
     fi
   else
       echo "Output available in: $HOME/.kubeplus/$fileName.html"
@@ -180,7 +180,7 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     consumerui_container=`hostname | grep kubeplus-deployment`
     if [[ $consumerui_container =~ "kubeplus-deployment" ]]; then
         echo "Running inside consumerui."
-        /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
+        /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $canonicalKind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
         # Invoke the grapher
         python3  /root/grapher.py "connections-op.json" /plugins/ $hidedetails
         # Generate html
@@ -188,7 +188,7 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     else
       if [[ "$output" == "png" ]] || [[ "$output" == "html" ]]; then
         check_docker
-        /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $kind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
+        /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $canonicalKind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
         docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
         if [[ "$output" == "png" ]]; then
           echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
