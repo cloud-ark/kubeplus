@@ -174,17 +174,9 @@ KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot 
    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.8.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
-- Download and Install KubePlus SaaS Manager control center from [here](https://cloudark.io/download)
+- Install KubePlus kubectl plugins (see below)
 
-Unzip, untar kubeplus-saas-manager-control-center bundle and then follow the steps in the README.md therein. KubePlus SaaS Manager control center is currently supported for MacOS and Ubuntu.
-
-```
-   $ gunzip kubeplus-saas-manager-control-center.tar.gz
-   $ tar -xvf kubeplus-saas-manager-control-center.tar
-   $ cd kubeplus-saas-manager-control-center
-   $ . ./install-kubeplus-control-center.sh
-   $ ./start-control-center.sh
-```
+- Download and Install KubePlus SaaS Manager control center from [here](https://cloudark.io/download). Follow the steps in the README.md therein.
 
 - Try following examples:
   - [Jenkins service](./examples/jenkins/non-operator/steps.txt)
@@ -205,11 +197,10 @@ Unzip, untar kubeplus-saas-manager-control-center bundle and then follow the ste
   - helm delete kubeplus -n $KUBEPLUS_NS
   - wget https://github.com/cloud-ark/kubeplus/raw/master/deploy/delete-kubeplus-components.sh
   - ./delete-kubeplus-components.sh
-  - cd kubeplus-saas-manager-control-center
-  - ./stop-control-center.sh
+  - ./kubeplus-control-center stop
   ```
 
-## Kubectl plugins for discovery, monitoring and troubleshooting
+## KubePlus kubectl plugins
 
 KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of Kubernetes applications. You can install them following these steps:
 
