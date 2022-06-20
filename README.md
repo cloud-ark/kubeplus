@@ -68,7 +68,7 @@ RBAC policies. Cluster admin needs to distribute them to application providers a
 The provider kubeconfig file has permissions to register application helm charts under consumer APIs in the cluster. The consumer kubeconfig file has permissions to perform CRUD operations on the registered consumer APIs.
 
 ```
-$ kubectl retrieve kubeconfig provider $KUBEPLUS_NS > provider.conf
+$ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider.conf
 ```
 
 ### Provider actions
@@ -211,6 +211,11 @@ KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of Kub
    $ export KUBEPLUS_HOME=`pwd`
    $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
    $ kubectl kubeplus commands
+```
+
+You can retrieve provider kubeconfig using following command:
+```
+   $ kubectl retrieve kubeconfig provider $KUBEPLUS_NS > provider.conf
 ```
 
 
