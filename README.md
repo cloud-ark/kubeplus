@@ -7,7 +7,7 @@ KubePlus is a turn-key solution to transform any containerized application into 
 </p>
 
 KubePlus offers following benefits towards deploying a Kubernetes-native application (Helm chart) in SaaS form:
-- Seamless support for Namespace-based multi-tenancy where each application instance (Helm release) is created in a separate namespace.
+- Seamless support for [Namespace-based multi-tenancy](https://kubernetes.io/docs/concepts/security/multi-tenancy/) where each application instance (Helm release) is created in a separate namespace.
 - Application-specific provider and consumer APIs for role based access to the clusters.
 - Troubleshooting and governance of application instances.
 - Tracking consumption metrics (cpu, memory, storage and network) at Helm release level in Prometheus. Application providers can use these metrics to define consumption-based chargeback models.
