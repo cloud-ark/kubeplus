@@ -57,6 +57,7 @@ class KubeconfigGenerator(object):
 		context_details = {}
 		context_details["cluster"] = sa
 		context_details["user"] = sa
+		context_details["namespace"] = namespace
 		contextInfo = {}
 		contextInfo["context"] = context_details
 		contextInfo["name"] = contextName
@@ -307,9 +308,9 @@ class KubeconfigGenerator(object):
 
 	def _generate_kubeconfig(self, sa, namespace):
 		cmdprefix = ""
-		cmd = " kubectl create sa " + sa + " -n " + namespace
-		cmdToRun = cmdprefix + " " + cmd
-		self.run_command(cmdToRun)
+		#cmd = " kubectl create sa " + sa + " -n " + namespace
+		#cmdToRun = cmdprefix + " " + cmd
+		#self.run_command(cmdToRun)
 
 		cmd = " kubectl get sa " + sa + " -n " + namespace + " -o json "
 		cmdToRun = cmdprefix + " " + cmd
@@ -360,9 +361,9 @@ if __name__ == '__main__':
 	# 1. Generate Provider kubeconfig
 	sa = 'kubeplus-saas-provider'
 	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
-	kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider')
+	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider')
 
 	# 2. Generate Consumer kubeconfig
 	sa = 'kubeplus-saas-consumer'
 	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
-	kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')
+	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')

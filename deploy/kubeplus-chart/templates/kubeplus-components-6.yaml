@@ -9,23 +9,273 @@ data:
   password: MWYyZDFlMmU2N2Rm
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
-  name: kubeplus:cluster-admin
+  name: kubeplus:namespace-admin
+  namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-admin
+  name: admin
 subjects:
 - kind: ServiceAccount
   name: kubeplus 
   namespace: {{ .Release.Namespace }}
   apiGroup: ""
 ---
+{{- if eq .Release.Namespace "default" }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubeplus:namespaceperms
+rules:
+- apiGroups: [""]
+  resources: ["namespaces","secrets","services","configmaps","endpoints","persistentvolumeclaims","pods","pods/attach","pods/exec","pods/portforward","pods/proxy","replicationcontrollers","replicationcontrollers/scale","serviceaccounts","services/proxy"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
+- apiGroups: ["apps"]
+  resources: ["daemonsets","deployments","deployments/rollback","deployments/scale","replicasets","replicasets/scale","statefulsets","statefulsets/scale"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
+- apiGroups: ["extensions"]
+  resources: ["daemonsets","deployments","deployments/rollback","deployments/scale","ingresses","networkpolicies","replicasets","replicasets/scale","replicationcontrollers/scale"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses","networkpolicies"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["rolebindings","roles"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubeplus:namespaceperms-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeplus:namespaceperms
+subjects:
+- kind: ServiceAccount
+  name: kubeplus 
+  namespace: {{ .Release.Namespace }}
+  apiGroup: ""
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubeplus:clusterperms
+rules:
+- apiGroups: ["certificates.k8s.io"]
+  resources: ["certificatesigningrequests","certificatesigningrequests/approval"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
+- apiGroups: ["certificates.k8s.io"]
+  resources: ["signers"]
+  resourceNames: ["kubernetes.io/legacy-unknown"]
+  verbs: ["approve"]
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get","list","watch"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["mutatingwebhookconfigurations"]
+  verbs: ["get","list","create","delete"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["clusterroles"]
+  verbs: ["get","list","create","delete"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["clusterrolebindings"]
+  verbs: ["get","list","create","delete"]
+- apiGroups: ["","*","rbac.authorization.k8s.io","platformapi.kubeplus","networking.k8s.io","autoscaling"]
+  resources: ["*","groups","pods/portforward","serviceaccounts","users","pods/exec","horizontalpodautoscalers","networkpolicies","clusterrolebindings","clusterroles"]
+  verbs: ["get","list","watch","impersonate","create","delete","update","patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubeplus:allperms
+rules:
+        #- apiGroups: ["*"]
+        #  resources: ["*"]
+        #  verbs: ["get","list","create","update","delete","watch","patch","impersonate"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["patch"]
+- apiGroups: ["certificates.k8s.io"]
+  resources: ["certificatesigningrequests","certificatesigningrequests/approval"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
+- apiGroups: ["certificates.k8s.io"]
+  resources: ["signers"]
+  resourceNames: ["kubernetes.io/legacy-unknown"]
+  verbs: ["approve"]
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get","list","watch"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["mutatingwebhookconfigurations"]
+  verbs: ["get","list","create","delete"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["clusterroles"]
+  verbs: ["get","list","create","delete"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["clusterrolebindings"]
+  verbs: ["get","list","create","delete"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["roles"]
+  verbs: ["get","list","update","delete","create"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["rolebindings"]
+  verbs: ["get","list","create","delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubeplus:allperms-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeplus:allperms
+subjects:
+- kind: ServiceAccount
+  name: kubeplus 
+  namespace: {{ .Release.Namespace }}
+  apiGroup: ""
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubeplus:readallperms
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get","list","watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubeplus:readallperms-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeplus:readallperms
+subjects:
+- kind: ServiceAccount
+  name: kubeplus 
+  namespace: {{ .Release.Namespace }}
+  apiGroup: ""
+- kind: ServiceAccount
+  name: kubeplus-saas-provider
+  namespace: {{ .Release.Namespace }}
+  apiGroup: ""
+- kind: ServiceAccount
+  name: kubeplus-saas-consumer 
+  namespace: {{ .Release.Namespace }}
+  apiGroup: ""
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubeplus:providerapiperms
+rules:
+- apiGroups: ["workflows.kubeplus"]
+  resources: ["resourcecompositions","resourceevents","resourcemonitors","resourcepolicies"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubeplus:providerapiperms-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeplus:providerapiperms
+subjects:
+- kind: ServiceAccount
+  name: kubeplus 
+  namespace: {{ .Release.Namespace }}
+  apiGroup: ""
+- kind: ServiceAccount
+  name: kubeplus-saas-provider
+  namespace: {{ .Release.Namespace }}
+  apiGroup: ""
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubeplus-saas-provider-consumer
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups: ["platformapi.kubeplus"]
+  resources: ["*"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubeplus-saas-provider-consumer-rolebinding
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubeplus-saas-provider-consumer
+subjects:
+- kind: ServiceAccount
+  name: kubeplus-saas-provider 
+  namespace: {{ .Release.Namespace }}
+- kind: ServiceAccount
+  name: kubeplus-saas-consumer 
+  namespace: {{ .Release.Namespace }}
+- kind: ServiceAccount
+  name: kubeplus 
+  namespace: {{ .Release.Namespace }}
+---
+#apiVersion: rbac.authorization.k8s.io/v1
+#kind: Role
+#metadata:
+#  name: kubeplus-saas-consumer
+#  namespace: {{ .Release.Namespace }}
+#rules:
+#- apiGroups: ["platformapi.kubeplus"]
+#  resources: [""]
+#  verbs: ["get","list","create","update","delete","watch","patch"]
+#---
+#apiVersion: rbac.authorization.k8s.io/v1
+#kind: RoleBinding
+#metadata:
+#  name: kubeplus-saas-consumer-rolebinding
+#  namespace: {{ .Release.Namespace }}
+#roleRef:
+#  apiGroup: rbac.authorization.k8s.io
+#  kind: Role
+#  name: kubeplus-saas-consumer
+#subjects:
+#- kind: ServiceAccount
+#  name: kubeplus-saas-consumer 
+#  namespace: {{ .Release.Namespace }}
+#---
 kind: ServiceAccount
 apiVersion: v1
 metadata:
   name: kubeplus
+  namespace: {{ .Release.Namespace }}
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: kubeplus-saas-provider
+  namespace: {{ .Release.Namespace }}
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: kubeplus-saas-consumer
   namespace: {{ .Release.Namespace }}
 ---
 kind: Service
@@ -88,8 +338,8 @@ spec:
       serviceAccount: kubeplus
       initContainers:
       - name: webhook-cert-setup
-        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.1.0
-        imagePullPolicy: Always
+        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:0.1.1
+        imagePullPolicy: IfNotPresent 
         env:
           - name: KUBEPLUS_NAMESPACE
             valueFrom:
@@ -105,8 +355,9 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.13
-        imagePullPolicy: Always
+        #image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.13
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.14
+        imagePullPolicy: IfNotPresent 
         args:
           - -tlsCertFile=/etc/webhook/certs/cert.pem
           - -tlsKeyFile=/etc/webhook/certs/key.pem
@@ -129,8 +380,9 @@ spec:
         imagePullPolicy: Always
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
-        image: gcr.io/cloudark-kubeplus/helm-pod:0.1.4
-        imagePullPolicy: Always
+        #image: gcr.io/cloudark-kubeplus/helm-pod:0.1.4
+        image: gcr.io/cloudark-kubeplus/helm-pod:0.1.5
+        imagePullPolicy: IfNotPresent
         command: ["/root/helm-pod"]
         volumeMounts:
         - mountPath: /chart
@@ -141,3 +393,38 @@ spec:
         - name: webhook-certs
           secret:
             secretName: webhook-tls-certificates
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cleanup-kubeplus-components
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: "{{ .Release.Name }}"
+      labels:
+        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    spec:
+      restartPolicy: Never
+      serviceAccountName: kubeplus
+      containers:
+      - name: cleanup-kubeplus-components
+        env:
+          - name: KUBEPLUS_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        image: gcr.io/cloudark-kubeplus/delete-kubeplus-resources:0.1.1
+        imagePullPolicy: IfNotPresent
+        command: ["./root/delete-kubeplus-components.sh"]
+        args:
+          - "$(KUBEPLUS_NAMESPACE)"
+

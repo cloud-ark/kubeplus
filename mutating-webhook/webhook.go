@@ -103,7 +103,7 @@ func init() {
 func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod string) *v1beta1.AdmissionResponse {
 	req := ar.Request
 
-	/*fmt.Println("=== Request ===")
+	fmt.Println("=== Request ===")
 	fmt.Println(req.Kind.Kind)
 	fmt.Println(req.Name)
 	fmt.Println(req.Namespace)
@@ -113,14 +113,15 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 	fmt.Println("=== User ===")
 	fmt.Println(req.UserInfo.Username)
 	fmt.Println("=== User ===")
-	*/
+
+	user := req.UserInfo.Username
 
 	var patchOperations []patchOperation
 	patchOperations = make([]patchOperation, 0)
 
 	if httpMethod == http.MethodDelete {
-		handleDelete(ar)
-		return nil
+		resp := handleDelete(ar)
+		return resp
 	}
 
 	saveResource(ar)
@@ -129,13 +130,20 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 		saveResourcePolicy(ar)
 	}
 
-	if req.Kind.Kind == "ResourceComposition" {
-		errResponse := trackCustomAPIs(ar)
-		if errResponse != nil {
-			return errResponse
+	if req.Kind.Kind == "ResourceComposition"  {
+		if strings.Contains(user, "kubeplus-saas-provider") {
+			errResponse := trackCustomAPIs(ar)
+			if errResponse != nil {
+				return errResponse
+			}
+		} else {
+			return &v1beta1.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: "ResourceComposition instance can only be created by Provider.",
+				},
+			}
 		}
 	}
-
 	var pacAnnotationMap map[string]string
 	if req.Kind.Kind == "CustomResourceDefinition" {
 		pacAnnotationMap = getPaCAnnotation(ar)
@@ -155,8 +163,26 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 	if req.Kind.Kind == "Pod" {
 		customAPI, rootKind, rootName, rootNamespace := checkServiceLevelPolicyApplicability(ar)
 		var podResourcePatches []patchOperation
-		if customAPI != "" {
+		if customAPI != "" && strings.Contains(customAPI, "platformapi.kubeplus") {
 			podResourcePatches = applyPolicies(ar, customAPI, rootKind, rootName, rootNamespace)
+
+                        // Add label if the Pod belongs to custom resource
+                        labels := make(map[string]string, 0)
+                        allLabels, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "labels")
+                        if err == nil {
+                                json.Unmarshal(allLabels, &labels)
+                                fmt.Printf("Pod all labels:%v\n", labels)
+                        }
+                        labels["partof"] = strings.ToLower(rootKind + "-" + rootName)
+                        fmt.Printf("All labels:%v\n", labels)
+
+                        podLabelPatch := patchOperation{
+                                Op:    "add",
+                                Path:  "/metadata/labels",
+                                Value: labels,
+                        }
+                        patchOperations = append(patchOperations, podLabelPatch)
+
 		} else {
 			// Check if Namespace-level policy is applicable.
 			podResourcePatches = checkAndApplyNSPolicies(ar)
@@ -168,6 +194,23 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 	}
 
 	if req.Kind.Kind == "Namespace" {
+
+		if strings.Contains(user, "kubeplus-saas-provider") || strings.Contains(user, "kubeplus-saas-consumer") {
+			return &v1beta1.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: "Permission denied: Namespace cannot be created.",
+				},
+			}
+		}
+
+		if !strings.Contains(webhook_namespace, "default") {
+			return &v1beta1.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: "Permission denied: Namespace can be created only if KubePlus is deployed in default Namespace.",
+				},
+			}
+		}
+
 		fmt.Printf("Recording Namespace...\n")
 		releaseName := getReleaseName(ar)
 		fmt.Printf("DEF Release name:%s\n", releaseName)
@@ -177,7 +220,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 		}
 	}
 
-	//fmt.Printf("PatchOperations:%v\n", patchOperations)
+	fmt.Printf("PatchOperations:%v\n", patchOperations)
 	patchBytes, _ := json.Marshal(patchOperations)
 	//fmt.Printf("---------------------------------\n")
 	// marshal the struct into bytes to pass into AdmissionResponse
@@ -191,7 +234,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 	}
 }
 
-func handleDelete(ar *v1beta1.AdmissionReview) {
+func handleDelete(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	fmt.Println("Inside handleDelete...")
 	req := ar.Request
 	//fmt.Printf("%v\n---",req)
@@ -212,17 +255,40 @@ func handleDelete(ar *v1beta1.AdmissionReview) {
 	plural := string(GetPlural(kind, group))
 	apiVersion := group + "/" + version
 
-	fmt.Printf("NS:%s, Kind:%s, apiVersion:%s, group:%s, version:%s plural:%s resName:%s\n", 
+	fmt.Printf("NS:%s, Kind:%s, apiVersion:%s, group:%s, version:%s plural:%s resName:%s\n",
 		namespace, kind, apiVersion, group, version, plural, resName)
+
+	fmt.Println("=== User ===")
+	fmt.Println(req.UserInfo.Username)
+	fmt.Println("=== User ===")
+
+	user := req.UserInfo.Username
+
+	if kind == "ResourceComposition" {
+		if !strings.Contains(user, "kubeplus-saas-provider") {
+			return &v1beta1.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: "ResourceComposition instance can only be deleted by Provider.",
+				},
+			}
+		}
+	}
+
+	if req.Kind.Kind == "Namespace" {
+
+		if (strings.Contains(user, "kubeplus-saas-provider") || strings.Contains(user, "kubeplus-saas-consumer")) {
+			return &v1beta1.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: "Permission denied: Namespace cannot be deleted.",
+				},
+			}
+		}
+	}
 
 	fmt.Printf("Calling DeleteCRDInstances...")
 	DeleteCRDInstances(kind, group, version, plural, namespace, resName)
 	fmt.Println("After calling DeleteCRDInstances...")
-
-	if kind == "ResourceComposition" {
-		
-	}
-
+	return nil
 }
 
 func checkAndApplyNSPolicies(ar *v1beta1.AdmissionReview) []patchOperation {
