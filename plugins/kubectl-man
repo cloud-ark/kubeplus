@@ -9,13 +9,14 @@ fi
 
 kind=$1
 kubeconfig=$3
+namespace=`more $kubeconfig | python -m json.tool | grep namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`
 
 check_kind $kind $kubeconfig
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-	/$KUBEPLUS_HOME/plugins/kubediscovery-macos man $kind --kubeconfig=$kubeconfig
+	/$KUBEPLUS_HOME/plugins/kubediscovery-macos man $kind $namespace --kubeconfig=$kubeconfig
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-	/$KUBEPLUS_HOME/plugins/kubediscovery-linux man $kind --kubeconfig=$kubeconfig
+	/$KUBEPLUS_HOME/plugins/kubediscovery-linux man $kind $namespace --kubeconfig=$kubeconfig
 else 
 	echo "$OSTYPE not supported."
 fi

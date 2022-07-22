@@ -2,7 +2,7 @@ check_namespace() {
   local ns=$1
   local kubeconfg=$2
 #  ns_output=`kubectl get ns $ns $kubeconfig 2>&1 | awk '{print $1}'`
-  ns_output=`kubectl get ns $ns $kubeconfig 2>&1`
+  ns_output=`kubectl get ns $ns $kubeconfg 2>&1`
   if [[ $ns_output =~ 'Error' ]]; then
      echo "Namespace $ns not found."
      exit 0
@@ -17,7 +17,7 @@ check_kind() {
   local kind=$1
   local kubeconfg=$2
 
-  canonicalKindPresent=`kubectl api-resources --kubeconfig=$kubeconfig | grep -w $kind`
+  canonicalKindPresent=`kubectl api-resources --kubeconfig=$kubeconfg | grep -w $kind`
   OLDIFS=$IFS
   IFS=' '
   read -a canonicalKindPresentArr <<< "$canonicalKindPresent"
