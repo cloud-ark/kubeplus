@@ -11,9 +11,36 @@ import utils
 
 class CRBase(object):
 
+	def get_pods(self, kind, instance, kubeconfig):
+		pod_list = []
+		labelSelector = "partof=" + kind + "-" + instance
+		labelSelector = labelSelector.lower()
+		cmd = "kubectl get pods -A -l " + labelSelector + " " + kubeconfig
+		#print(cmd)
+		out = ''
+		try:
+			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE, shell=True).communicate()[0]
+			out = out.decode('utf-8')
+		except Exception as e:
+			print(e)
+
+		#print(out)
+		pod_list = []
+		for line in out.split("\n"):
+			if 'NAME' not in line and line != '':
+				line1 = ' '.join(line.split())
+				parts = line1.split(" ")
+				pod_info = {}
+				pod_info['Name'] = parts[1]
+				pod_info['Namespace'] = parts[0]
+				pod_list.append(pod_info)
+
+		#print(pod_list)
+		return pod_list
+
 	def _get_kubeplus_namespace(self):
 		kb_namespace = 'default'
-		cmd = "kubectl get pods -A | grep kubeplus | awk '{print $1}'"
+		cmd = "kubectl get pods -A | grep kubeplus-deployment | awk '{print $1}'"
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									stderr=subprocess.PIPE, shell=True).communicate()[0]
@@ -51,8 +78,7 @@ class CRBase(object):
 			try:
 				json_output = json.loads(out)
 			except Exception as e:
-				#print(e)
-				pass
+				print(e)
 		return json_output
 
 
@@ -230,7 +256,7 @@ class CRMetrics(CRBase):
 								total_storage = total_storage + storage_nums[0]
 		return total_storage
 
-	def _get_cpu_memory_usage_kubelet(self, pod_list):
+	def _get_cpu_memory_usage_kubelet(self, pod_list, kubeconfig):
 		total_cpu = 0
 		total_mem = 0
 
@@ -260,7 +286,7 @@ class CRMetrics(CRBase):
 			#print("PodName:" + podName)
 			#print("NodeName:" + nodeName)
 			#print("PodNS:" + podNS)
-			podMetricsCmd = cmd + " " + nodeName
+			podMetricsCmd = cmd + " " + nodeName + " " + kubeconfig
 			#print(podMetricsCmd)
 			try:
 				output = subprocess.Popen(podMetricsCmd, stdout=subprocess.PIPE,
@@ -507,7 +533,7 @@ class CRMetrics(CRBase):
 
 		return total_cpu, total_mem, total_count
 
-	def _get_pods_for_cr_connections(self, cr, cr_instance, namespace, conn_op_format="flat"):
+	def _get_pods_for_cr_connections(self, cr, cr_instance, namespace, kubeconfig, conn_op_format="flat"):
 		pod_list = []
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
@@ -516,7 +542,9 @@ class CRMetrics(CRBase):
 		if platf == "Darwin":
 			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' --output=' + conn_op_format + ' --ignore=ServiceAccount:default,Namespace:' + kb_ns
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' --output=' + conn_op_format + ' --ignore=ServiceAccount:default,Namespace:'+ kb_ns
+			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' --output=' + conn_op_format + ' --ignore=Namespace:'+ kb_ns
+		parts = kubeconfig.split("=")
+		cmd = cmd + " " + kubeconfig
 		if cmd:
 			#print(cmd)
 			output = ''
@@ -777,7 +805,7 @@ class CRMetrics(CRBase):
 		#print(networkMetric)
 		return float(networkMetric)
 
-	def _get_network_usage(self, pod_list):
+	def _get_network_usage(self, pod_list, kubeconfig):
 		networkReceiveBytesTotal = 0
 		networkTransmitBytesTotal = 0
 
@@ -804,7 +832,7 @@ class CRMetrics(CRBase):
 			#print("PodName:" + podName)
 			#print("NodeName:" + nodeName)
 			#print("PodNS:" + podNS)
-			networkMetricsCmd = cmd + " " + nodeName
+			networkMetricsCmd = cmd + " " + nodeName + " " + kubeconfig
 			try:
 				output = subprocess.Popen(networkMetricsCmd, stdout=subprocess.PIPE,
 										  stderr=subprocess.PIPE, shell=True).communicate()[0]
@@ -945,7 +973,7 @@ class CRMetrics(CRBase):
 		print("    Total MEMORY(bytes): " + str(all_mem) + "Mi")
 		print("    Total Storage(bytes): (Upcoming)")
 
-	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace, follow_connections, opformat):
+	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace, follow_connections, opformat, kubeconfig):
 		accountidentity = self._get_identity(custom_resource, custom_res_instance, namespace)
 		accountidentity = ''
 		pod_list = []
@@ -956,13 +984,18 @@ class CRMetrics(CRBase):
 		if follow_connections == "true":
 			num_of_resources = "-"
 			conn_op_format = "json"
-			pod_list = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace, conn_op_format)
+			#pod_list = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace, kubeconfig, conn_op_format)
+			pod_list = self.get_pods(custom_resource, custom_res_instance, kubeconfig) # uses label selectors
+			if len(pod_list) == 0:
+			    # uses kubectl connections plugin - slower than label selectors
+			    pod_list = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace, kubeconfig, conn_op_format)
+
 		#cpu, memory = self._get_cpu_memory_usage(pod_list)
 		num_of_containers_conn = self._parse_number_of_containers(pod_list)
 		total_storage_conn = self._parse_persistentvolumeclaims(pod_list)
 		num_of_hosts_conn = self._parse_number_of_hosts(pod_list)
-		cpu_conn, memory_conn = self._get_cpu_memory_usage_kubelet(pod_list)
-		networkReceiveBytesTotal, networkTransmitBytesTotal = self._get_network_usage(pod_list)
+		cpu_conn, memory_conn = self._get_cpu_memory_usage_kubelet(pod_list, kubeconfig)
+		networkReceiveBytesTotal, networkTransmitBytesTotal = self._get_network_usage(pod_list, kubeconfig)
 
 		num_of_not_running_pods = self._num_of_not_running_pods(pod_list)
 		num_of_pods = len(pod_list)
@@ -1124,7 +1157,8 @@ if __name__ == '__main__':
 		namespace = sys.argv[4]
 		outputformat = sys.argv[5]
 		follow_connections = sys.argv[6]
-		crMetrics.get_metrics_cr(custom_resource, custom_resource_instance, namespace, follow_connections, outputformat)
+		kubeconfig = sys.argv[7]
+		crMetrics.get_metrics_cr(custom_resource, custom_resource_instance, namespace, follow_connections, outputformat, kubeconfig)
 	
 	if res_type == "account":
 		creator_account = sys.argv[2]

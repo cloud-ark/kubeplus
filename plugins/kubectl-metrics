@@ -91,4 +91,4 @@ follow_connections=true
 
 #echo $output
 
-python /$KUBEPLUS_HOME/plugins/crmetrics.py "cr" $customres $instance $namespace $output $follow_connections
+python /$KUBEPLUS_HOME/plugins/crmetrics.py "cr" $customres $instance $namespace $output $follow_connections $kubeconfig

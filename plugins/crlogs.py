@@ -70,7 +70,7 @@ class CRLogs(CRBase):
 				print(e)
 		return json_output
 
-	def get_pods(self, resources):
+	def get_pods1(self, resources):
 		pod_list = []
 		for resource in resources:
 			#print(resource)
@@ -96,14 +96,14 @@ if __name__ == '__main__':
 	kubeconfig = sys.argv[5]
 	#print(kind + " " + instance + " " + namespace + " " + kubeconfig)
 	resources = {}
-	if relation == 'connections':
-		resources = crLogs.get_resources_connections(kind, instance, namespace, kubeconfig)
-		#print(resources)
-	if relation == 'composition':
-		resources = crLogs.get_resources_composition(kind, instance, namespace, kubeconfig)
-		#print(resources)
+	#if relation == 'connections':
+	#	resources = crLogs.get_resources_connections(kind, instance, namespace, kubeconfig)
+	#	#print(resources)
+	#if relation == 'composition':
+	#	resources = crLogs.get_resources_composition(kind, instance, namespace, kubeconfig)
+	#	#print(resources)
 	#resource_json = json.loads(resources)
-	pods = crLogs.get_pods(resources)
+	pods = crLogs.get_pods(kind, instance, kubeconfig)
 	for pod in pods:
 		pod_name = pod['Name']
 		pod_namespace = pod['Namespace']
