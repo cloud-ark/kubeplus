@@ -228,7 +228,7 @@ func getKubePlusPod() string {
 func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 
 	//sync.Mutex.Lock()
-	fmt.Printf("Inside deleteCRDInstances...\n")
+	fmt.Printf("-- Inside deleteCRDInstances...\n")
 	kind := request.QueryParameter("kind")
 	group := request.QueryParameter("group")
 	version := request.QueryParameter("version")
@@ -266,7 +266,7 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 			fmt.Printf("Error:%v\n", err)
 		}
 	}
-	//fmt.Printf("CRDObjList:%v\n", crdObjList)
+	fmt.Printf("CRDObjList:%v\n", crdObjList)
 
 	for _, instanceObj := range crdObjList.Items {
 		objData := instanceObj.UnstructuredContent()
@@ -279,9 +279,9 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 			continue;
 		}
 
-		//fmt.Printf("objData:%v\n", objData)
+		fmt.Printf("objData:%v\n", objData)
 		status := objData["status"]
-		//fmt.Printf("Status:%v\n", status)
+		fmt.Printf("Status:%v\n", status)
 		if status != nil {
 			helmreleaseNS, helmrelease := getHelmReleaseName(status)
 			fmt.Printf("Helm release:%s, %s\n", helmreleaseNS, helmrelease)
@@ -292,11 +292,14 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 					fmt.Printf("Deleting the namespace...\n")
 					
 					// The namespace created to deploy the Helm chart
-					// needs to be deleted.
-					namespaceDeleteCmd := "./root/kubectl delete ns " + helmreleaseNS
-					cmdRunnerPod := getKubePlusPod()
-					_, execOutput := executeExecCall(cmdRunnerPod, namespaceDeleteCmd)
-                                	fmt.Printf("Output of Delete NS Cmd:%v\n", execOutput)
+					// needs to be deleted only if the helmreleaseNS does not match namespace.
+					// For managed app use-case, namespace and helmreleaseNS will be same.
+					if helmreleaseNS != namespace {
+						namespaceDeleteCmd := "./root/kubectl delete ns " + helmreleaseNS
+						cmdRunnerPod := getKubePlusPod()
+						_, execOutput := executeExecCall(cmdRunnerPod, namespaceDeleteCmd)
+                                		fmt.Printf("Output of Delete NS Cmd:%v\n", execOutput)
+					}
 
 					if crName == "" {
 						fmt.Printf("Deleting the object %s\n", objName)
@@ -643,6 +646,8 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	ok := false
 	execOutput := ""
 
+	crObjNamespace := namespace
+
 	if platformWorkflowName != "" {
 		config, err := rest.InClusterConfig()
 		if err != nil {
@@ -704,20 +709,28 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 			releaseName := lowercaseKind + "-" + customresource
 	 			fmt.Printf("Release name:%s\n", releaseName)
 
+				targetNSName := namespace
 				if dryrun == "" {
-					createNSCmd := "./root/kubectl create ns " + customresource
-					_, execOutput = executeExecCall(cmdRunnerPod, createNSCmd)
-					fmt.Printf("Output of Create NS Cmd:%v\n", execOutput)
+					if namespace == "default" {
+						createNSCmd := "./root/kubectl create ns " + customresource
+						_, execOutput = executeExecCall(cmdRunnerPod, createNSCmd)
+						fmt.Printf("Output of Create NS Cmd:%v\n", execOutput)
+						targetNSName = customresource
+					}
 
-					annotateNSCmd := "./root/kubectl annotate namespace " + customresource + " meta.helm.sh/release-name=\"" + releaseName + "\""
+					annotateNSCmd := "./root/kubectl annotate --overwrite=true namespace " + targetNSName + " meta.helm.sh/release-name=\"" + releaseName + "\""
 					fmt.Printf("Annotation NS Cmd:%v\n", annotateNSCmd)
 					_, execOutput = executeExecCall(cmdRunnerPod, annotateNSCmd)
 					fmt.Printf("Output of Annotate NS Cmd:%v\n", execOutput)
 
+					labelNSCmd := "./root/kubectl label --overwrite=true namespace " + targetNSName + " managedby=kubeplus" 
+					fmt.Printf("Label NS Cmd:%v\n", labelNSCmd)
+					_, execOutput = executeExecCall(cmdRunnerPod, labelNSCmd)
+					fmt.Printf("Output of Label NS Cmd:%v\n", execOutput)
 				}
 
 				// Install the Helm chart in the namespace that is created for that instance
-	 			helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + customresource
+	 			helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + targetNSName
 	 			if dryrun != "" {
 		 			helmInstallCmd = "./root/helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + namespace + " --dry-run" 		
 	 			}
@@ -737,7 +750,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 				 						fmt.Printf("ReleaseName:%s\n", releaseName)
 		 								releaseName = strings.TrimSpace(releaseName)
 		 								fmt.Printf("RN:%s\n", releaseName)
-		 								go updateStatus(kind, group, version, plural, customresource, namespace, releaseName)
+		 								go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseName)
 		 							}
 	 							}
 	 						}
@@ -755,8 +768,14 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 						}
 	 					}
 	 				}
+				       //Update the kubeplus-saas-consumer and kubeplus-saas-provider roles
+				       /*roleUpdateCmd := "python /root/roleupdater.py " + KUBEPLUS_NAMESPACE + " " + plural
+				       fmt.Printf("Role Update Cmd:%s\n", roleUpdateCmd)
+	 			       ok, execOutput = executeExecCall(cmdRunnerPod, roleUpdateCmd)
+				       fmt.Printf("O/P:%s\n",ok)
+				       fmt.Printf("ExecO/P:%s\n",execOutput)*/
 	 			} else {
-		 			go updateStatus(kind, group, version, plural, customresource, namespace, execOutput)
+		 			go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, execOutput)
 	 			}
 	    	}
  		//}
@@ -769,8 +788,10 @@ func deployChart(request *restful.Request, response *restful.Response) {
 			response.Write([]byte(execOutput))
 		} else {
 			// Appending the Namespace to the list of Kinds since we are creating NS corresponding to
-			// each Helm release.
-			kinds = append(kinds, "Namespace")
+			// each Helm release and if the kubeconfig namespace is "default" (SaaS use-case). 
+			if namespace == "default" {
+				kinds = append(kinds, "Namespace")
+			}
 			kindsString := strings.Join(kinds, "-")
 			fmt.Printf("KindString:%s\n", kindsString)
 			response.Write([]byte(kindsString))
@@ -854,22 +875,22 @@ func untarChart(chartName2, cmdRunnerPod, namespace string) string {
 	 			return chartName
 }
 
-func updateStatus(kind, group, version, plural, instance, namespace, releaseName string) {
+func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, releaseName string) {
 
 	res := schema.GroupVersionResource{Group: group,
 									   Version: version,
 									   Resource: plural}
 	for {
-		obj, err := dynamicClient.Resource(res).Namespace(namespace).Get(instance, metav1.GetOptions{})
+		obj, err := dynamicClient.Resource(res).Namespace(crdObjNS).Get(instance, metav1.GetOptions{})
 		if err == nil {
 			objData := obj.UnstructuredContent()
 			helmrelease := make(map[string]interface{},0)
-			// Helm release will be done in the new namespace that is created
-			// corresponding to the customresource instance.
-			helmrelease["helmrelease"] = instance + ":" + releaseName
+			// Helm release will be done in the target namespace where the customresource instance
+			// is deployed.
+			helmrelease["helmrelease"] = targetNS + ":" + releaseName
 			objData["status"] = helmrelease
 			obj.SetUnstructuredContent(objData)
-			dynamicClient.Resource(res).Namespace(namespace).Update(obj, metav1.UpdateOptions{})
+			dynamicClient.Resource(res).Namespace(crdObjNS).Update(obj, metav1.UpdateOptions{})
 			// break out of the for loop
 			break 
 		} else {

@@ -83,7 +83,7 @@ openssl req -new -key ${tmpdir}/server-key.pem -subj "/CN=${service}.${namespace
 ./root/kubectl delete csr ${csrName} 2>/dev/null || true
 
 # create  server cert/key CSR and  send to k8s API
-cat <<EOF | ./root/kubectl create -f -
+cat <<EOF | ./root/kubectl create --validate=false -f -
 apiVersion: certificates.k8s.io/v1beta1
 kind: CertificateSigningRequest
 metadata:
@@ -142,3 +142,4 @@ kubectl create -f /root/kubeplus-non-pod-resources.yaml 2>/dev/null || true
 
 python3 /root/kubeconfiggenerator.py $namespace
 
+kubectl label --overwrite=true ns $namespace managedby=kubeplus
