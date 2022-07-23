@@ -104,3 +104,17 @@ Single namespace setup
     - kubeplus namespace remains intact
 25. helm delete kubeplus -n $KUBEPLUS_NS
 26. kubectl delete ns kubeplus
+
+
+KubePlus Operator troubleshooting:
+-----------------------------------
+If any of the above steps fail (don't give expected output), collect the logs and share them with us in a Github issue.
+
+```
+  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c crd-hook
+  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c helmer
+  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c platform-operator
+  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c webhook-cert-setup
+  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c consumerui
+```
+
