@@ -22,7 +22,7 @@ KubePlus offers following benefits towards deploying a Kubernetes-native applica
 The typical requirements in a service-based delivery model of Kubernetes applications are as follows:
 - From cluster admin's perspective it is important to isolate different application instances from one another on the cluster.
 - Application consumers need a self-service model to provision application instances.
-- Application providers need to be able to troubleshoot application instances, monitor them, and track their resource consumption.
+- Application providers need to be able to troubleshoot application instances, monitor them, track their resource consumption, possibly remotely.
 
 KubePlus achieves these goals as follows. KubePlus defines a ```provider API``` to create application-specific ```consumer APIs```.
 The ```provider API``` is a KubePlus CRD (Custom Resource Definition) named ``ResourceComposition`` that enables registering an application Helm chart in the cluster by defining a new Kubernetes API (CRD) representing the chart. The new CRD is essentially the ```consumer API``` which the application consumers use to instantiate the registered Helm chart in a self-service manner. Through ``ResourceComposition``application providers can define application-level policies, which KubePlus applies when instantiating the registered chart as part of handling the consumer APIs.
@@ -39,15 +39,20 @@ KubePlus offers following functions to application providers:
 - Troubleshoot: Gain application-level insights through fine-grained Kubernetes resource relationship graphs.
 
 
-## Demo
+## Use-cases
 
-KubePlus comes with a control center with embedded Prometheus integration for providers to manage their SaaS across multiple Kubernetes clusters.
-See the control center in [action](https://youtu.be/aIVnC4GKIV4).
+KubePlus supports two use-cases - multi-customer SaaS and managed application delivery.
+The multi-customer SaaS use-case involves an application provider/DevOps team creating a separate instance of an application in a separate namespace. The multi-customer SaaS use-case has been identified in the Kubernetes documentation as one of the [primary use-cases of Kubernetes multi-tenancy](https://kubernetes.io/docs/concepts/security/multi-tenancy/).
+The managed application delivery use-case involves an application provider delivering their application on other team's cluster.
+
+From KubePlus setup perspective, the primary difference between the two use-cases is the permissions that are granted to the KubePlus Operator. For the multi-instance SaaS use-case, the KubePlus Operator needs permissions to create namespaces and deploy applications within them. For managed application delivery use-case, our design does not provide the namespace creation permissions to the KubePlus Operator.
+
+Configuring KubePlus for the above use-cases is simple. In our design, if KubePlus Operator is installed in the default namespace, then it gets namespace create permissions, otherwise it does not. So for multi-instance SaaS use-case, install KubePlus in the default namespace. For managed application delivery use-case, install it in any other namespace. You can experiment with the two use-cases by following the example steps [here](./examples/multitenancy/hello-world/saas-and-managed-app-testing.md)
 
 
-## Under the hood of Provider/Consumer APIs
+## Example
 
-To understand the working of KubePlus, let us see how a Wordpress provider can offer a multi-tenant Wordpress service using KubePlus.
+To understand the working of KubePlus, let us see how a Wordpress provider can offer a multi-tenant Wordpress service using KubePlus (Wordpress SaaS).
 
 
 ### Cluster admin actions
@@ -58,14 +63,13 @@ Cluster administrator installs KubePlus on their cluster.
 
 ```
 $ KUBEPLUS_NS=default
-$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.8.tgz?raw=true" -n $KUBEPLUS_NS
+$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.9.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
 *2. Retrieve Provider kubeconfig file*
 
 KubePlus creates provider and consumer kubeconfig files with appropriately scoped
-RBAC policies. Cluster admin needs to distribute them to application providers and consumers. KubePlus comes with kubectl plugins to retrieve these files.
-The provider kubeconfig file has permissions to register application helm charts under consumer APIs in the cluster. The consumer kubeconfig file has permissions to perform CRUD operations on the registered consumer APIs.
+RBAC policies. Cluster admin needs to distribute them to application providers and consumers. The provider kubeconfig file has permissions to register application helm charts under consumer APIs in the cluster. The consumer kubeconfig file has permissions to perform CRUD operations on the registered consumer APIs.
 
 ```
 $ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider.conf
@@ -77,6 +81,10 @@ $ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o js
 
 The provider team defines the consumer API named ```WordpressService``` using the ```ResourceComposition``` CRD (the provider API). The Wordpress Helm chart that underlies this service is created by the provider team. The spec properties of the ```WordpressService Custom Resource``` are the attributes defined in the Wordpress Helm chart's values.yaml.
 
+```
+$ kubectl create -f wordpress-service-composition.yaml --kubeconfig=provider.conf
+```
+
 As part of registering the consumer API, the provider team can define policies such as the cpu and memory that should be allocated to each Wordpress stack, or the specific worker node on which to deploy a Wordpress stack, etc. KubePlus will apply these policies to the Helm releases when instantiating the underlying Helm chart.
 
 <p align="center">
@@ -85,17 +93,19 @@ As part of registering the consumer API, the provider team can define policies s
 
 [Here](https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/wordpress-mysqlcluster-stack/wordpress-service-composition.yaml) is the ResourceComposition definition for the WordpressService.
 
-*2. Grant permission to the consumer to create instances of WordpressService*
 
-Before consumers can instantiate WordpressService resources, the provider needs to grant permission to the consumer for that resource. KubePlus comes with a kubectl plugin for this purpose:
+*2. Create application instance*
 
-```
-kubectl grantpermission consumer wordpressservices provider.conf $KUBEPLUS_NS
-```
+The provider uses WordpressService Custom Resource (the consumer API) to provision an instance of Wordpress stack. The instances can be created using ``kubectl`` or through a web portal.  Here is consumer portal for WordpressService showing the created ```tenant1``` instance.
 
-*3. Provider team uses kubeplus kubectl plugins to troubleshoot and monitor WordpressService instances*.
+<p align="center">
+<img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1-consumerui.png" class="center">
+</p>
 
-Once a consumer has instantiated a WordpressService instance, the provider can
+
+*3. Troubleshoot and monitor application instances*.
+
+Once a WordpressService instance has been created, the provider can
 monitor and troubleshoot it using the various kubectl plugins that KubePlus provides.
 
 With the ``kubectl connections`` plugin provider can check whether all Kubernetes resources have been created as expected. The graphical output makes it easy to check the connectivity between different resources.
@@ -117,48 +127,34 @@ kubectl metrics WordpressService tenant1 default -o pretty -k provider.conf
 <img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1-metrics-pretty.png" class="center">
 </p>
 
-### Consumer action
+```kubectl applogs``` enables retrieving WordpressService instance logs and ```kubectl appurl``` enables retrieving the instance's url.
 
-The consumer uses WordpressService Custom Resource (the consumer API) to provision an instance of Wordpress stack. The instances can be created using ``kubectl`` or through a web portal.  Here is consumer portal for WordpressService showing the created ```tenant1``` instance.
 
-<p align="center">
-<img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1-consumerui.png" class="center">
-</p>
+## Demo
 
+In order to enable application providers manage and deliver their applications using KubePlus, we have developed a control center with embedded Prometheus that enables managing their application SaaS across multiple Kubernetes clusters.
+See the control center in action [here](https://youtu.be/aIVnC4GKIV4).
+
+To try out the control center, download and install it from [here](https://cloudark.io/download). Then follow the steps in the README.md therein.
 
 
 ## Components
 
-KubePlus consists of in-cluster components and components that run outside the cluster.
-
-### 1. In-cluster components
-
-The in-cluster components of KubePlus are the ``KubePlus Operator`` and the
-``Consumer UI``.
-
-The KubePlus Operator consists of a custom controller, a mutating webhook and the helmer module. Here is a brief summary of these components. Details about them are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/kubeplus-components.html).
+The KubePlus Operator consists of a custom controller, a mutating webhook, a helmer module, and a consumer ui module. 
 
 <p align="center">
 <img src="./docs/crd-for-crds-2.jpg" width="700" height="300" class="center">
 </p>
 
-The custom controller handles the ```ResourceComposition```. It is used to:
-- Define new CRDs representing Helm charts (consumer APIs).
-- Define policies (e.g. cpu/memory limits, node selection, etc.) for service instances.
+The custom controller handles the ```ResourceComposition``` CRD. This CRD is used to:
+- Define new CRDs representing application Helm charts (the consumer APIs).
+- Define policies (e.g. cpu/memory limits, node selection, etc.) at application Helm chart level.
 
-The mutating webook and helmer modules support the custom controller in delivering the KubePlus experience.
+The mutating webook and helmer modules support the custom controller in delivering the KubePlus experience. Consumer UI is service specific and can be used to create service instances by consumers. It is accessible through proxy.
 
-The ``Consumer UI`` runs on the cluster and is accessible through proxy. Consumer UI is service specific and can be used to create service instances by consumers.
+KubePlus kubectl plugins are installed outside the cluster. They enable discovering, monitoring and troubleshooting of application instances. The plugins track resource relationships through owner references, labels, annotations, and spec properties. These relationships enable providers to get aggregated consumption metrics for cpu, memory, storage, network, and logs at Helm release level.
 
-
-### 2. KubePlus components outside the cluster
-
-The KubePlus components that run outside the cluster are: the KubePlus SaaS Manager control center and kubectl plugins.
-
-The KubePlus SaaS Manager control center consists of ``Provider portal`` through which providers can manage their SaaS across different clusters. It comes with integrated Prometheus that enables tracking resource metrics for service instances.
-
-KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot application instances. The plugins track resource relationships through owner references, labels, annotations, and spec properties. These relationships enable providers to get aggregated consumption metrics (for cpu, memory, storage, network), and logs at the application instance level. The plugins are integrated within the Provider portal.
-
+More details about these components are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/kubeplus-components.html).
 
 ## Try
 
@@ -169,19 +165,31 @@ KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot 
 
 - Install KubePlus Operator.
 
+Choose the default namespace if configuring for the multi-customer SaaS use-case.
+For managed application delivery, choose any other namespace.
+
 ```
-   $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
-   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.8.tgz?raw=true" -n $KUBEPLUS_NS
+   $ KUBEPLUS_NS=default
+   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.9.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
-- Install KubePlus kubectl plugins (see below)
+- Install KubePlus kubectl plugins
 
-- Download and Install KubePlus SaaS Manager control center from [here](https://cloudark.io/download). Follow the steps in the README.md therein.
+KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of Kubernetes applications.
+
+```
+   $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
+   $ gunzip kubeplus-kubectl-plugins.tar.gz
+   $ tar -xvf kubeplus-kubectl-plugins.tar
+   $ export KUBEPLUS_HOME=`pwd`
+   $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
+   $ kubectl kubeplus commands
+```
 
 - Try following examples:
-  - [Jenkins service](./examples/jenkins/non-operator/steps.txt)
-  - [Hello World service](./examples/multitenancy/hello-world/steps.txt)
+  - [Hello World service](./examples/multitenancy/hello-world/saas-and-managed-app-testing.md)
   - [Wordpress service](./examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt)
+  - [Jenkins service](./examples/jenkins/non-operator/steps.txt)
 
 - Debug:
   ```
@@ -195,29 +203,7 @@ KubePlus kubectl plugins enable providers to discover, monitor and troubleshoot 
 - Cleanup:
   ```
   - helm delete kubeplus -n $KUBEPLUS_NS
-  - wget https://github.com/cloud-ark/kubeplus/raw/master/deploy/delete-kubeplus-components.sh
-  - ./delete-kubeplus-components.sh
-  - ./kubeplus-control-center stop
   ```
-
-## KubePlus kubectl plugins
-
-KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of Kubernetes applications. You can install them following these steps:
-
-```
-   $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
-   $ gunzip kubeplus-kubectl-plugins.tar.gz
-   $ tar -xvf kubeplus-kubectl-plugins.tar
-   $ export KUBEPLUS_HOME=`pwd`
-   $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
-   $ kubectl kubeplus commands
-```
-
-You can retrieve provider kubeconfig using following command:
-```
-   $ kubectl retrieve kubeconfig provider $KUBEPLUS_NS > provider.conf
-```
-
 
 ## CNCF Landscape
 
