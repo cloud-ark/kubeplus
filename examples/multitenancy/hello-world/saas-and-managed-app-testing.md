@@ -1,3 +1,6 @@
+SaaS and Managed Application delivery example
+==============================================
+
 KubePlus Operator can be set up in two ways - multi-namespace and single namespace.
 The multi-namespace configuration is ideal when a separate instance of an application
 needs to be created in a separate namespace. The single namespace configuration is
@@ -9,21 +12,27 @@ default Namespace whereas for single namespace configuration, the KubePlus Opera
 needs to be installed in any other namespace. When installed in the default Namespace,
 KubePlus gets permissions to create new namespaces and deploy applications inside them.
 
-Here are the steps for each configuration.
-
+Use Kubernetes version <= 1.20 and Helm version 3+. With minikube, you can create a cluster with a specific version like so:
+```
+    $ minikube start --kubernetes-version=v1.20.0
+```
 
 Multi-namespace setup
 ----------------------
 1. KUBEPLUS_NS=default
-2. helm install kubeplus /home/vagrant/go/src/github.com/cloud-ark/kubeplus/deploy/kubeplus-chart -n $KUBEPLUS_NS
+2. helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.9.tgz?raw=true" -n $KUBEPLUS_NS
 3. kubectl create ns testns --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus
+   - request should be allowed
 4. kubectl create ns testns1 --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus-saas-provider
+   - request should be denied
 5. kubectl create ns testns2 --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus-saas-consumer
+   - request should be denied
 6.  until kubectl get pods -n $KUBEPLUS_NS | grep Running; do echo "Waiting for KubePlus Operator to become ready"; sleep 1; done
 7. kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
 8.  more consumer.conf | grep namespace
     - namespace should be set to 'default'
 9. kubectl create -f hello-world-service-composition.yaml --kubeconfig=consumer.conf
+   - request should be denied
 10. kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider.conf
 11.  more provider.conf | grep namespace
     - namespace should be set to 'default'
@@ -50,6 +59,7 @@ Multi-namespace setup
 24. kubectl get ns
     -> hs1 namespace has been deleted
 25. kubectl delete ns testns --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus
+    - should be allowed
 26. helm delete kubeplus -n $KUBEPLUS_NS
 
 
@@ -57,7 +67,7 @@ Single namespace setup
 -----------------------
 1. kubectl create ns kubeplus
 2. KUBEPLUS_NS=kubeplus
-3. helm install kubeplus /home/vagrant/go/src/github.com/cloud-ark/kubeplus/deploy/kubeplus-chart -n $KUBEPLUS_NS
+3. helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.9.tgz?raw=true" -n $KUBEPLUS_NS
 4. kubectl create ns testns --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus
    - request should be denied
 5. kubectl create ns testns1 --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus-saas-provider
