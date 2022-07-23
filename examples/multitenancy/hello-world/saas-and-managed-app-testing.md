@@ -34,7 +34,7 @@ Multi-namespace setup
 9. kubectl create -f hello-world-service-composition.yaml --kubeconfig=consumer.conf
    - request should be denied
 10. kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider.conf
-11.  more provider.conf | grep namespace
+11. more provider.conf | grep namespace
     - namespace should be set to 'default'
 12. kubectl create -f hello-world-service-composition.yaml --kubeconfig=provider.conf
 13. until kubectl get crds --kubeconfig=provider.conf | grep hello  ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
@@ -42,9 +42,9 @@ Multi-namespace setup
 15. kubectl create -f hs1.yaml --kubeconfig=consumer.conf
 16. kubectl get helloworldservices hs1 -o json
 17. kubectl get pods -A
-   -> Hello World Pod in hs1 namespace
+    - Hello World Pod in hs1 namespace
 18. kubectl get ns
-   -> hs1 namespace has been created
+    - hs1 namespace has been created
 19. kubectl appurl HelloWorldService hs1 default -k consumer.conf
     - curl the IP address received. Should see "Hello hello hello"
 20. kubectl applogs HelloWorldService hs1 default -k consumer.conf
@@ -55,9 +55,9 @@ Multi-namespace setup
     - Should see the metrics
 23. kubectl delete -f hs1.yaml --kubeconfig=consumer.conf
     - kubectl get pods -A
-      -> Hello World Pod is deleted
+      - Hello World Pod is deleted
 24. kubectl get ns
-    -> hs1 namespace has been deleted
+    - hs1 namespace has been deleted
 25. kubectl delete ns testns --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus
     - should be allowed
 26. helm delete kubeplus -n $KUBEPLUS_NS
@@ -81,14 +81,14 @@ Single namespace setup
 10. kubectl create -f hello-world-service-composition.yaml --kubeconfig=consumer.conf
     - request should be denied
 11. kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider.conf
-12.  more provider.conf | grep namespace
+12. more provider.conf | grep namespace
     - namespace should be set to 'kubeplus'
 13. kubectl create -f hello-world-service-composition.yaml --kubeconfig=provider.conf
 14. until kubectl get crds --kubeconfig=provider.conf | grep hello  ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
 15. kubectl man HelloWorldService -k provider.conf
 16. kubectl create -f hs1.yaml --kubeconfig=provider.conf
 17. kubectl get pods -A
-   -> Hello World Pod in kubeplus namespace
+    - Hello World Pod in kubeplus namespace
 18. kubectl appurl HelloWorldService hs1 kubeplus -k provider.conf
     - curl the IP address received. Should see "Hello hello hello"
 19. kubectl applogs HelloWorldService hs1 kubeplus -k provider.conf
@@ -99,8 +99,8 @@ Single namespace setup
     - Should see the metrics
 22. kubectl delete -f hs1.yaml --kubeconfig=provider.conf
 23. kubectl get pods -A
-   -> Hello World Pod is deleted
+    - Hello World Pod is deleted
 24. kubectl get ns
-    -> kubeplus namespace remains intact
+    - kubeplus namespace remains intact
 25. helm delete kubeplus -n $KUBEPLUS_NS
 26. kubectl delete ns kubeplus
