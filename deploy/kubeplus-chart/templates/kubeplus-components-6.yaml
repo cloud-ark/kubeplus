@@ -215,6 +215,9 @@ rules:
 - apiGroups: ["platformapi.kubeplus"]
   resources: ["*"]
   verbs: ["get","list","create","update","delete","watch","patch"]
+- apiGroups: [""]
+  resources: ["pods/portforward"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
