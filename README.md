@@ -193,11 +193,11 @@ KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of Kub
 
 - Debug:
   ```
-  - kubectl logs kubeplus $KUBEPLUS_NS -c crd-hook
-  - kubectl logs kubeplus $KUBEPLUS_NS -c helmer
-  - kubectl logs kubeplus $KUBEPLUS_NS -c platform-operator
-  - kubectl logs kubeplus $KUBEPLUS_NS -c webhook-cert-setup
-  - kubectl logs kubeplus $KUBEPLUS_NS -c consumerui
+  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c crd-hook
+  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c helmer
+  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c platform-operator
+  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c webhook-cert-setup
+  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c consumerui
   ```
 
 - Cleanup:
