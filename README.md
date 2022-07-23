@@ -102,6 +102,13 @@ The provider uses WordpressService Custom Resource (the consumer API) to provisi
 <img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1-consumerui.png" class="center">
 </p>
 
+```
+$ kubectl create -f <wordpress-service>.yaml --kubeconfig=provider.conf
+                        or
+$ wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/open-consumer-ui.sh
+$ chmod +x open-consumer-ui.sh
+$ ./open-consumer-ui.sh provider.conf
+```
 
 *3. Troubleshoot and monitor application instances*.
 
