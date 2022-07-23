@@ -1,3 +1,6 @@
+SaaS and Managed Application delivery example
+==============================================
+
 KubePlus Operator can be set up in two ways - multi-namespace and single namespace.
 The multi-namespace configuration is ideal when a separate instance of an application
 needs to be created in a separate namespace. The single namespace configuration is
@@ -9,8 +12,10 @@ default Namespace whereas for single namespace configuration, the KubePlus Opera
 needs to be installed in any other namespace. When installed in the default Namespace,
 KubePlus gets permissions to create new namespaces and deploy applications inside them.
 
-Here are the steps for each configuration.
-
+Use Kubernetes version <= 1.20 and Helm version 3+. With minikube, you can create a cluster with a specific version like so:
+```
+    $ minikube start --kubernetes-version=v1.20.0
+```
 
 Multi-namespace setup
 ----------------------
