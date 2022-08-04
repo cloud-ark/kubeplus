@@ -94,7 +94,7 @@ import (
   }
 ```
 
-Q2. How create AdmissionReview response in your mutating webhook?
+Q2. How to create AdmissionReview response in your mutating webhook?
 
 A. The main thing to note here is that the AdmissionReview response object requires following three fields set - Kind (AdmissionReview), APIVersion (``admission.k8s.io/v1``), Response.UID.
 
@@ -163,7 +163,7 @@ A. Check the steps [here](https://github.com/cloud-ark/kubeplus/issues/14#issuec
 
 Q5. How to create a ServiceAccount secret token?
 
-A. The main thing to note here is that a Secret object is no longer created by default for ServiceAccount. We have to create the Secret ourselves. First create a ServiceAccount, then create a secret with ServiceAccount name set as an annotation on the Secret. And make sure that you set the Secret type to ``kubernetes.io/service-account-token``. The Secret will be populated with the token that you can retrieve using ``kubectl describe secret``.
+A. The main thing to note here is that a Secret object is no longer created by default for ServiceAccount. We have to create the Secret ourselves. First create a ServiceAccount, then create a secret with ServiceAccount name set as an annotation on the Secret. Make sure that you set the Secret type to ``kubernetes.io/service-account-token``. The Secret will be populated with the token that you can retrieve using ``kubectl describe secret``.
 
 ```
 $ kubectl create sa abc
