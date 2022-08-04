@@ -1,7 +1,7 @@
 Code snippets for migrating to Kubernetes v1.22+
 =================================================
 
-Recently we have been working on migrating KubePlus to the latest version of Kubernetes (1.24+). This has been an involved process, as several key APIs and procedures that KubePlus depended on have been graduated or changed. These include, APIs and steps related to creating Kubernetes Mutating Webhooks, APIs related to working with Kubernetes Custom Resource Definitions (CRDs), steps to create custom clients, listers, informers for your CRDs, and steps involved in creating ServiceAccount secret tokens. 
+Recently we have been working on migrating KubePlus to the latest version of Kubernetes (1.24+). This has been an involved process, as several key APIs and procedures that KubePlus depended on have been graduated or changed. These include, APIs and steps related to creating Kubernetes Mutating Webhook, APIs related to working with Kubernetes Custom Resource Definitions (CRDs), steps to create clients, listers, informers for your CRDs, and steps involved in creating ServiceAccount secret tokens. 
 
 While broad-level suggestions about this migration were already [published on Kubernetes blog](https://kubernetes.io/blog/2021/07/14/upcoming-changes-in-kubernetes-1-22/), we realized that when it came to actual code-level details, these suggestions were not sufficient. After going through several Github issues, Kubernetes code, and StackOverflow posts, we felt that a document that shows code snippets for each of the above problems can be useful for others who are going through this migration. Hopefully, this saves you some time as you work on your migration. 
 
@@ -84,8 +84,8 @@ import (
                                 },
                         },
                         Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
-                                Plural: plural,
-                                Kind: kind,
+                                Plural: "helloworldservices",
+                                Kind: "HelloWorldService",
                         },
                         Scope: "Namespaced",
                 },
