@@ -29,10 +29,10 @@ Here is Golang code to achieve that.
 
 ```
 import (
-		metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-        apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-		apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
-		"k8s.io/client-go/rest"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+    apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
+    "k8s.io/client-go/rest"
 )
 
 
@@ -101,13 +101,13 @@ A. The main thing to note here is that the AdmissionReview response object requi
 
 ```
 import (
-		"fmt"
-		"net/http"
-        "strings"
-		"io/ioutil"
-        "k8s.io/api/admission/v1"
-        admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1"
-        "k8s.io/apimachinery/pkg/runtime/serializer"
+    "fmt"
+	"net/http"
+    "strings"
+    "io/ioutil"
+    "k8s.io/api/admission/v1"
+    admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1"
+    "k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
 func() mutate(ar *v1.AdmissionReview, httpMethod string) *v1.AdmissionResponse {
@@ -153,17 +153,17 @@ func() serve(w http.ResponseWriter, r *http.Request) {
 
 Q3. How to register a mutating webhook?
 
-A. Check [sample-mutatingwebhookserver](https://github.com/cloud-ark/sample-mutatingwebhook)
+A. Check [sample-mutatingwebhookserver](https://github.com/cloud-ark/sample-mutatingwebhook).
 
 
 Q4. How to create client, lister, informer for your CRDs?
 
-A. Check the steps [here](https://github.com/cloud-ark/kubeplus/issues/14#issuecomment-1197339771)
+A. Check the steps [here](https://github.com/cloud-ark/kubeplus/issues/14#issuecomment-1197339771).
 
 
 Q5. How to create a ServiceAccount secret token?
 
-A. The main thing to note here is that a Secret object is no longer created by default for ServiceAccount. We have to create the Secret ourselves. First create a ServiceAccount, then create a secret with ServiceAccount name set as an annotation on the Secret. And make sure that you set the Secret type to ``kubernetes.io/service-account-token``. The Secret will be populated with the token that you can retrieve.
+A. The main thing to note here is that a Secret object is no longer created by default for ServiceAccount. We have to create the Secret ourselves. First create a ServiceAccount, then create a secret with ServiceAccount name set as an annotation on the Secret. And make sure that you set the Secret type to ``kubernetes.io/service-account-token``. The Secret will be populated with the token that you can retrieve using ``kubectl describe secret``.
 
 ```
 $ kubectl create sa abc
