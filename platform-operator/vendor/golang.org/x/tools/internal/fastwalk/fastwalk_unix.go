@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build (linux || darwin || freebsd || openbsd || netbsd) && !appengine
 // +build linux darwin freebsd openbsd netbsd
 // +build !appengine
 
 package fastwalk
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"syscall"
@@ -22,7 +22,7 @@ const blockSize = 8 << 10
 const unknownFileMode os.FileMode = os.ModeNamedPipe | os.ModeSocket | os.ModeDevice
 
 func readDir(dirName string, fn func(dirName, entName string, typ os.FileMode) error) error {
-	fd, err := syscall.Open(dirName, 0, 0)
+	fd, err := open(dirName, 0, 0)
 	if err != nil {
 		return &os.PathError{Op: "open", Path: dirName, Err: err}
 	}
@@ -32,10 +32,11 @@ func readDir(dirName string, fn func(dirName, entName string, typ os.FileMode) e
 	buf := make([]byte, blockSize) // stack-allocated; doesn't escape
 	bufp := 0                      // starting read position in buf
 	nbuf := 0                      // end valid data in buf
+	skipFiles := false
 	for {
 		if bufp >= nbuf {
 			bufp = 0
-			nbuf, err = syscall.ReadDirent(fd, buf)
+			nbuf, err = readDirent(fd, buf)
 			if err != nil {
 				return os.NewSyscallError("readdirent", err)
 			}
@@ -62,15 +63,23 @@ func readDir(dirName string, fn func(dirName, entName string, typ os.FileMode) e
 			}
 			typ = fi.Mode() & os.ModeType
 		}
+		if skipFiles && typ.IsRegular() {
+			continue
+		}
 		if err := fn(dirName, name, typ); err != nil {
+			if err == ErrSkipFiles {
+				skipFiles = true
+				continue
+			}
 			return err
 		}
 	}
 }
 
 func parseDirEnt(buf []byte) (consumed int, name string, typ os.FileMode) {
-	// golang.org/issue/15653
-	dirent := (*syscall.Dirent)(unsafe.Pointer(&buf[0]))
+	// golang.org/issue/37269
+	dirent := &syscall.Dirent{}
+	copy((*[unsafe.Sizeof(syscall.Dirent{})]byte)(unsafe.Pointer(dirent))[:], buf)
 	if v := unsafe.Offsetof(dirent.Reclen) + unsafe.Sizeof(dirent.Reclen); uintptr(len(buf)) < v {
 		panic(fmt.Sprintf("buf size of %d smaller than dirent header size %d", len(buf), v))
 	}
@@ -106,10 +115,7 @@ func parseDirEnt(buf []byte) (consumed int, name string, typ os.FileMode) {
 	}
 
 	nameBuf := (*[unsafe.Sizeof(dirent.Name)]byte)(unsafe.Pointer(&dirent.Name[0]))
-	nameLen := bytes.IndexByte(nameBuf[:], 0)
-	if nameLen < 0 {
-		panic("failed to find terminating 0 byte in dirent")
-	}
+	nameLen := direntNamlen(dirent)
 
 	// Special cases for common things:
 	if nameLen == 1 && nameBuf[0] == '.' {
@@ -120,4 +126,28 @@ func parseDirEnt(buf []byte) (consumed int, name string, typ os.FileMode) {
 		name = string(nameBuf[:nameLen])
 	}
 	return
+}
+
+// According to https://golang.org/doc/go1.14#runtime
+// A consequence of the implementation of preemption is that on Unix systems, including Linux and macOS
+// systems, programs built with Go 1.14 will receive more signals than programs built with earlier releases.
+//
+// This causes syscall.Open and syscall.ReadDirent sometimes fail with EINTR errors.
+// We need to retry in this case.
+func open(path string, mode int, perm uint32) (fd int, err error) {
+	for {
+		fd, err := syscall.Open(path, mode, perm)
+		if err != syscall.EINTR {
+			return fd, err
+		}
+	}
+}
+
+func readDirent(fd int, buf []byte) (n int, err error) {
+	for {
+		nbuf, err := syscall.ReadDirent(fd, buf)
+		if err != syscall.EINTR {
+			return nbuf, err
+		}
+	}
 }

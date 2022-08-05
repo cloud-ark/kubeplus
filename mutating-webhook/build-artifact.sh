@@ -17,7 +17,7 @@ if [ "$artifacttype" = "versioned" ]; then
     export GO111MODULE=on; CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o crd-hook
     #docker build --no-cache -t lmecld/pac-mutating-admission-webhook:$version .
     #docker push lmecld/pac-mutating-admission-webhook:$version
-    docker build --no-cache -t gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:$version .
+    docker build -t gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:$version .
     docker push gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:$version
 fi
 

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"strconv"
 	//"sync"
+	"context"
 
 	"os"
 	"k8s.io/client-go/dynamic"
@@ -31,7 +32,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/remotecommand"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	platformworkflowclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
+	platformworkflowclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/clientset/versioned"
 	//platformworkflowv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/workflowcontroller/v1alpha1"
 )
 
@@ -151,7 +152,7 @@ func getChartValues(request *restful.Request, response *restful.Response) {
 		var sampleclientset platformworkflowclientset.Interface
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
-		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Get(platformWorkflowName, metav1.GetOptions{})
+		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Get(context.Background(), platformWorkflowName, metav1.GetOptions{})
 		//fmt.Printf("PlatformWorkflow:%v\n", platformWorkflow1)
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
@@ -192,7 +193,7 @@ func getKubePlusPod() string {
 		fmt.Printf("Error:%v\n", err1)
 		return podName
 	}*/
-	replicaSetList, err2 := kubeClient.AppsV1().ReplicaSets(KUBEPLUS_NAMESPACE).List(metav1.ListOptions{})
+	replicaSetList, err2 := kubeClient.AppsV1().ReplicaSets(KUBEPLUS_NAMESPACE).List(context.Background(), metav1.ListOptions{})
 	if err2 != nil {
 		fmt.Printf("Error:%v\n", err2)
 		return podName
@@ -208,7 +209,7 @@ func getKubePlusPod() string {
 		}
 	}
 
-	podList, err3 := kubeClient.CoreV1().Pods(KUBEPLUS_NAMESPACE).List(metav1.ListOptions{})
+	podList, err3 := kubeClient.CoreV1().Pods(KUBEPLUS_NAMESPACE).List(context.Background(), metav1.ListOptions{})
 	if err3 != nil {
 		fmt.Printf("Error:%v\n", err3)
 		return podName
@@ -258,15 +259,17 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 	}
 	dynamicClient, _ := dynamic.NewForConfig(config)
 
-	crdObjList, err := dynamicClient.Resource(ownerRes).Namespace(namespace).List(metav1.ListOptions{})
+	crdObjList, err := dynamicClient.Resource(ownerRes).Namespace(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Printf("Error:%v\n...checking in non-namespace", err)
-		crdObjList, err = dynamicClient.Resource(ownerRes).List(metav1.ListOptions{})
+		crdObjList, err = dynamicClient.Resource(ownerRes).List(context.Background(), metav1.ListOptions{})
 		if err != nil {
 			fmt.Printf("Error:%v\n", err)
 		}
 	}
 	fmt.Printf("CRDObjList:%v\n", crdObjList)
+
+	execOutput := ""
 
 	for _, instanceObj := range crdObjList.Items {
 		objData := instanceObj.UnstructuredContent()
@@ -297,13 +300,14 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 					if helmreleaseNS != namespace {
 						namespaceDeleteCmd := "./root/kubectl delete ns " + helmreleaseNS
 						cmdRunnerPod := getKubePlusPod()
-						_, execOutput := executeExecCall(cmdRunnerPod, namespaceDeleteCmd)
-                                		fmt.Printf("Output of Delete NS Cmd:%v\n", execOutput)
+						// Do in the background as deleting NS is a time consuming action
+						go executeExecCall(cmdRunnerPod, namespaceDeleteCmd)
+                                		//fmt.Printf("Output of Delete NS Cmd:%v\n", execOutput)
 					}
 
 					if crName == "" {
 						fmt.Printf("Deleting the object %s\n", objName)
-						dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(objName, &metav1.DeleteOptions{})
+						dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(context.Background(), objName, metav1.DeleteOptions{})
 					}
 				}
 			}
@@ -315,9 +319,11 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 		configMapName := lowercaseKind + "-usage"
 		// Delete the usage configmap
 		fmt.Printf("Deleting the usage configmap:%s\n", configMapName)
-		kubeClient.CoreV1().ConfigMaps(namespace).Delete(configMapName, &metav1.DeleteOptions{})
+		kubeClient.CoreV1().ConfigMaps(namespace).Delete(context.Background(), configMapName, metav1.DeleteOptions{})
 		fmt.Println("Done deleting CRD Instances..")
 	}
+
+	response.Write([]byte(execOutput))
 	//sync.mutex.Unlock()
 }
 
@@ -478,7 +484,7 @@ func getMetrics(request *restful.Request, response *restful.Response) {
 		var sampleclientset platformworkflowclientset.Interface
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
-		resourceMonitors, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(KUBEPLUS_NAMESPACE).List(metav1.ListOptions{})
+		resourceMonitors, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(KUBEPLUS_NAMESPACE).List(context.Background(), metav1.ListOptions{})
 		//followConnections := ""
 		for _, resMonitor := range resourceMonitors.Items {
 			fmt.Printf("ResourceMonitor:%v\n", resMonitor)
@@ -568,7 +574,7 @@ func getReleaseName(kind, customresource, namespace string) (string, string) {
 										   Version: version,
 										   Resource: plural}
 
-		obj, _ := dynamicClient.Resource(res).Namespace(namespace).Get(customresource, metav1.GetOptions{})
+		obj, _ := dynamicClient.Resource(res).Namespace(namespace).Get(context.Background(), customresource, metav1.GetOptions{})
 		objData := obj.UnstructuredContent()
 		fmt.Printf("objData:%v\n", objData)
 		status := objData["status"]
@@ -658,7 +664,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
 		resourceCompositionNS := KUBEPLUS_NAMESPACE
-		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(resourceCompositionNS).Get(platformWorkflowName, metav1.GetOptions{})
+		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(resourceCompositionNS).Get(context.Background(), platformWorkflowName, metav1.GetOptions{})
 		fmt.Printf("PlatformWorkflow:%v\n", platformWorkflow1)
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
@@ -880,8 +886,13 @@ func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, re
 	res := schema.GroupVersionResource{Group: group,
 									   Version: version,
 									   Resource: plural}
+        fmt.Printf("Res:%v\n",res)
+	fmt.Printf("kind:%s, group: %s, version:%s, plural:%s, instance:%s, crdObjNS:%s, targetNS:%s, releaseName:%s",
+		   kind, group, version, plural, instance, crdObjNS, targetNS, releaseName)
 	for {
-		obj, err := dynamicClient.Resource(res).Namespace(crdObjNS).Get(instance, metav1.GetOptions{})
+		obj, err := dynamicClient.Resource(res).Namespace(crdObjNS).Get(context.Background(), instance, metav1.GetOptions{})
+		fmt.Printf("Error:%v\n", err)
+		fmt.Printf("Obj:%v\n",obj)
 		if err == nil {
 			objData := obj.UnstructuredContent()
 			helmrelease := make(map[string]interface{},0)
@@ -889,8 +900,10 @@ func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, re
 			// is deployed.
 			helmrelease["helmrelease"] = targetNS + ":" + releaseName
 			objData["status"] = helmrelease
+			fmt.Printf("objData:%v\n",objData)
 			obj.SetUnstructuredContent(objData)
-			dynamicClient.Resource(res).Namespace(crdObjNS).Update(obj, metav1.UpdateOptions{})
+			updatedObj, err1 := dynamicClient.Resource(res).Namespace(crdObjNS).Update(context.Background(), obj, metav1.UpdateOptions{})
+			fmt.Printf("UpdatedObj:%v, err1:%v\n",updatedObj, err1) 
 			// break out of the for loop
 			break 
 		} else {
@@ -910,7 +923,7 @@ func getOverrides(kind, group, version, plural, instance, namespace string) stri
 									   Version: version,
 									   Resource: plural}
 
-	obj, _ := dynamicClient.Resource(res).Namespace(namespace).Get(instance, metav1.GetOptions{})
+	obj, _ := dynamicClient.Resource(res).Namespace(namespace).Get(context.Background(), instance, metav1.GetOptions{})
 	objData := obj.UnstructuredContent()
 	fmt.Printf("objData:%v\n", objData)
 	spec := objData["spec"]

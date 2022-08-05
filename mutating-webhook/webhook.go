@@ -7,23 +7,24 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"context"
 
 	"github.com/buger/jsonparser"
 	guuid "github.com/google/uuid"
 
-	"k8s.io/api/admission/v1beta1"
-	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	"k8s.io/api/admission/v1"
+	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/kubernetes/pkg/apis/core/v1"
+	//"k8s.io/kubernetes/pkg/apis/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/kubernetes"
 
-	platformworkflowclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
+	platformworkflowclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/clientset/versioned"
 	platformworkflowv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/workflowcontroller/v1alpha1"
 )
 
@@ -100,7 +101,7 @@ func init() {
 }
 
 // main mutation process
-func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod string) *v1beta1.AdmissionResponse {
+func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v1.AdmissionResponse {
 	req := ar.Request
 
 	fmt.Println("=== Request ===")
@@ -134,10 +135,11 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 		if strings.Contains(user, "kubeplus-saas-provider") {
 			errResponse := trackCustomAPIs(ar)
 			if errResponse != nil {
+				fmt.Printf("111222333")
 				return errResponse
 			}
 		} else {
-			return &v1beta1.AdmissionResponse{
+			return &v1.AdmissionResponse{
 				Result: &metav1.Status{
 					Message: "ResourceComposition instance can only be created by Provider.",
 				},
@@ -196,7 +198,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 	if req.Kind.Kind == "Namespace" {
 
 		if strings.Contains(user, "kubeplus-saas-provider") || strings.Contains(user, "kubeplus-saas-consumer") {
-			return &v1beta1.AdmissionResponse{
+			return &v1.AdmissionResponse{
 				Result: &metav1.Status{
 					Message: "Permission denied: Namespace cannot be created.",
 				},
@@ -204,7 +206,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 		}
 
 		if !strings.Contains(webhook_namespace, "default") {
-			return &v1beta1.AdmissionResponse{
+			return &v1.AdmissionResponse{
 				Result: &metav1.Status{
 					Message: "Permission denied: Namespace can be created only if KubePlus is deployed in default Namespace.",
 				},
@@ -224,17 +226,17 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview, httpMethod strin
 	patchBytes, _ := json.Marshal(patchOperations)
 	//fmt.Printf("---------------------------------\n")
 	// marshal the struct into bytes to pass into AdmissionResponse
-	return &v1beta1.AdmissionResponse{
+	return &v1.AdmissionResponse{
 		Allowed: true,
 		Patch:   patchBytes,
-		PatchType: func() *v1beta1.PatchType {
-			pt := v1beta1.PatchTypeJSONPatch
+		PatchType: func() *v1.PatchType {
+			pt := v1.PatchTypeJSONPatch
 			return &pt
 		}(),
 	}
 }
 
-func handleDelete(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func handleDelete(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	fmt.Println("Inside handleDelete...")
 	req := ar.Request
 	//fmt.Printf("%v\n---",req)
@@ -264,9 +266,15 @@ func handleDelete(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 
 	user := req.UserInfo.Username
 
+	if user == "system:serviceaccount:default:kubeplus" {
+		return &v1.AdmissionResponse{
+			Allowed: true,
+		}
+	}
+
 	if kind == "ResourceComposition" {
 		if !strings.Contains(user, "kubeplus-saas-provider") {
-			return &v1beta1.AdmissionResponse{
+			return &v1.AdmissionResponse{
 				Result: &metav1.Status{
 					Message: "ResourceComposition instance can only be deleted by Provider.",
 				},
@@ -277,7 +285,7 @@ func handleDelete(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	if req.Kind.Kind == "Namespace" {
 
 		if (strings.Contains(user, "kubeplus-saas-provider") || strings.Contains(user, "kubeplus-saas-consumer")) {
-			return &v1beta1.AdmissionResponse{
+			return &v1.AdmissionResponse{
 				Result: &metav1.Status{
 					Message: "Permission denied: Namespace cannot be deleted.",
 				},
@@ -288,10 +296,13 @@ func handleDelete(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	fmt.Printf("Calling DeleteCRDInstances...")
 	DeleteCRDInstances(kind, group, version, plural, namespace, resName)
 	fmt.Println("After calling DeleteCRDInstances...")
-	return nil
+
+	return &v1.AdmissionResponse{
+		Allowed: true,
+	}
 }
 
-func checkAndApplyNSPolicies(ar *v1beta1.AdmissionReview) []patchOperation {
+func checkAndApplyNSPolicies(ar *v1.AdmissionReview) []patchOperation {
 
 	req := ar.Request
 
@@ -344,7 +355,7 @@ func checkAndApplyNSPolicies(ar *v1beta1.AdmissionReview) []patchOperation {
 		fmt.Printf("Scope:%s\n",scope)
 		if scope == "Namespace" {
 			resKindAndName := serviceKind + "-" + serviceInstance
-			resAR := resourceNameObjMap[resKindAndName].(*v1beta1.AdmissionReview)
+			resAR := resourceNameObjMap[resKindAndName].(*v1.AdmissionReview)
 			req := resAR.Request
 			body := resAR.Request.Object.Raw
 
@@ -361,7 +372,7 @@ func checkAndApplyNSPolicies(ar *v1beta1.AdmissionReview) []patchOperation {
 	return patchOperations
 }
 
-func getReleaseName(ar *v1beta1.AdmissionReview) string {
+func getReleaseName(ar *v1.AdmissionReview) string {
 	req := ar.Request
 	annotations1 := make(map[string]string, 0)
 	allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
@@ -381,7 +392,7 @@ func getReleaseName(ar *v1beta1.AdmissionReview) string {
 	return ""
 }
 
-func saveResource(ar *v1beta1.AdmissionReview) {
+func saveResource(ar *v1.AdmissionReview) {
 	kind, resName, _ := getObjectDetails(ar)
 	//key := kind + "/" + namespace + "/" + resName
 	key := kind + "-" + resName
@@ -389,7 +400,7 @@ func saveResource(ar *v1beta1.AdmissionReview) {
 	resourceNameObjMap[key] = ar
 }
 
-func saveResourcePolicy(ar *v1beta1.AdmissionReview) {
+func saveResourcePolicy(ar *v1.AdmissionReview) {
 	req := ar.Request
 	body := req.Object.Raw
 
@@ -416,7 +427,7 @@ func saveResourcePolicy(ar *v1beta1.AdmissionReview) {
  	fmt.Printf("Resource Policy Map:%v\n", resourcePolicyMap)
 }
 
-func checkServiceLevelPolicyApplicability(ar *v1beta1.AdmissionReview) (string, string, string, string) {
+func checkServiceLevelPolicyApplicability(ar *v1.AdmissionReview) (string, string, string, string) {
 	fmt.Printf("Inside checkServiceLevelPolicyApplicability")
 
 	req := ar.Request
@@ -537,7 +548,7 @@ func findRoot(namespace, kind, name, apiVersion string) (string, string, string)
 	    fmt.Println(err1)
 		return rootKind, rootName, rootAPIVersion
 	}
-	instanceObj, err2 := dynamicClient.Resource(ownerRes).Namespace(namespace).Get(
+	instanceObj, err2 := dynamicClient.Resource(ownerRes).Namespace(namespace).Get(context.Background(),
 																				   name,
 																	   		 	   metav1.GetOptions{})
 	if err2 != nil {
@@ -606,7 +617,7 @@ func getAPIDetailsFromHelmReleaseAnnotation(releaseName string) (string, string,
 	return capiKind, oinstance, capiGroup, capiVersion
 }
 
-func applyPolicies(ar *v1beta1.AdmissionReview, customAPI, rootKind, rootName, rootNamespace string) []patchOperation {
+func applyPolicies(ar *v1.AdmissionReview, customAPI, rootKind, rootName, rootNamespace string) []patchOperation {
 	req := ar.Request
 	body := req.Object.Raw
 
@@ -715,7 +726,7 @@ func getFieldValueFromInstance(fieldName, rootKind, rootName string) string {
 		//rootkey := lowercaseRootKind + "/" + rootNamespace + "/" + rootName
 	rootkey := lowercaseRootKind + "-" + rootName
 	fmt.Printf("Root Key:%s\n", rootkey)
-	arSaved := resourceNameObjMap[rootkey].(*v1beta1.AdmissionReview)
+	arSaved := resourceNameObjMap[rootkey].(*v1.AdmissionReview)
 	reqObject := arSaved.Request
 	reqspec := reqObject.Object.Raw
 
@@ -729,7 +740,7 @@ func getFieldValueFromInstance(fieldName, rootKind, rootName string) string {
 	return fieldValueS
 }
 
-func getObjectDetails(ar *v1beta1.AdmissionReview) (string, string, string) {
+func getObjectDetails(ar *v1.AdmissionReview) (string, string, string) {
 
 	req := ar.Request
 	body := req.Object.Raw
@@ -747,7 +758,7 @@ func getObjectDetails(ar *v1beta1.AdmissionReview) (string, string, string) {
 	return lowercaseKind, resName, namespace
 }
 
-func trackCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	req := ar.Request
 	body := req.Object.Raw
 
@@ -769,7 +780,7 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	// where KubePlus is deployed.
 	kubePlusNS := GetNamespace()
 	if namespace != kubePlusNS {
-		return &v1beta1.AdmissionResponse{
+		return &v1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: "ResourceComposition instance should be created in the same Namespace as KubePlus Namespace (" + kubePlusNS + ")",
 			},
@@ -799,7 +810,7 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 		if failed == plural {
 			message = "Resource with Plural Name " + plural + " exists in the cluster."
 		}
-		return &v1beta1.AdmissionResponse{
+		return &v1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: message,
 			},
@@ -809,13 +820,15 @@ func trackCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	message := string(TestChartDeployment(kind, namespace, chartName, chartURL))
 	fmt.Printf("After TestChartDeployment - message:%s\n", message)
 	if strings.Contains(message, "Error") {
-		return &v1beta1.AdmissionResponse{
+		fmt.Printf("99999999\n")
+		return &v1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: message,
 			},
 		}
 	}
 
+	fmt.Printf("10101010101\n")
  	return nil
 }
 
@@ -860,7 +873,7 @@ func registerManPage(kind, platformworkflow, namespace string) string {
 		Data: yamlDataMap,
 	}
 
-	_, err1 := kubeClient.CoreV1().ConfigMaps(namespace).Create(configMap)
+	_, err1 := kubeClient.CoreV1().ConfigMaps(namespace).Create(context.Background(), configMap, metav1.CreateOptions{})
 
 	if err1 != nil {
 		fmt.Printf("Error:%s\n", err1.Error())
@@ -873,7 +886,7 @@ func registerManPage(kind, platformworkflow, namespace string) string {
 	return usageAnnotationValue
 }
 
-func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
+func getPaCAnnotation(ar *v1.AdmissionReview) map[string]string {
 	// Add crd annotation
 	annotations1 := make(map[string]string, 0)
 
@@ -881,18 +894,19 @@ func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 	body := req.Object.Raw
 	crdkind, _ := jsonparser.GetUnsafeString(body, "spec", "names", "kind")
 	crdplural, _ := jsonparser.GetUnsafeString(body, "spec", "names", "plural")
-	crdversion, _ := jsonparser.GetUnsafeString(body, "spec", "version")
+	crdversion, _ := jsonparser.GetUnsafeString(body, "spec", "versions","[0]","name")
 	crdgroup, _ := jsonparser.GetUnsafeString(body, "spec", "group")
 	fmt.Printf("CRDKind:%s, CRDPlural:%s, CRDVersion:%s\n", crdkind, crdplural, crdversion)
 	customAPI := crdgroup + "/" + crdversion + "/" + crdkind
 	platformWorkflowName, ok := customAPIPlatformWorkflowMap[customAPI]
+	fmt.Printf("PlatformWorkflowName:%s, ok:%v\n", platformWorkflowName, ok)
 	chartKinds := ""
 	if ok {
 
 			namespace := GetNamespace()
 	 		chartKindsB := DryRunChart(platformWorkflowName, namespace)
 	 		chartKinds = string(chartKindsB)
-	 		//fmt.Printf("Chart Kinds:%v\n", chartKinds)
+	 		fmt.Printf("Chart Kinds:%v\n", chartKinds)
 
 	 		// If no kinds are found in the dry run then there is nothing to be done.
 	 		if chartKinds == "" {
@@ -916,7 +930,7 @@ func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 
 	 	//fmt.Printf("Unique kinds:%v\n", uniqueKinds)
 	 	chartKinds = strings.Join(uniqueKinds, ";")
-	  	//fmt.Printf("Annotating %s\n", chartKinds)
+	  	fmt.Printf("Annotating %s\n", chartKinds)
 
 		allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
 		if err == nil {
@@ -949,7 +963,7 @@ func getPaCAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
 	return annotations1
 }
 
-func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	//fmt.Printf("Inside handleCustomAPIs...\n")
 	req := ar.Request
 	body := req.Object.Raw
@@ -1002,7 +1016,7 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 		var sampleclientset platformworkflowclientset.Interface
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
 
-		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Get(platformWorkflowName, metav1.GetOptions{})
+		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Get(context.Background(), platformWorkflowName, metav1.GetOptions{})
 		//fmt.Printf("ResourceComposition:%v\n", platformWorkflow1)
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
@@ -1024,7 +1038,7 @@ func handleCustomAPIs(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 // We initially started with this approach but are not using it anymore as the ResourceComposition instance is not technically
 // owner of instances of the Custom API. Instead, we are using PaC annotation relationship
 // to track this relation. The specific annotation that we look for is the Helm release name annotation.
-func setOwnerReference(ar *v1beta1.AdmissionReview) {
+func setOwnerReference(ar *v1.AdmissionReview) {
 	req := ar.Request
 	body := req.Object.Raw
 	ckind, err := jsonparser.GetUnsafeString(body, "kind")
@@ -1120,8 +1134,8 @@ func updateOwnerReference(cgroup, cversion, cplural, cinstance, ogroup, oversion
 	}
 
 	for {
-		cobj, err1 := dynamicClient.Resource(cres).Namespace(namespace).Get(cinstance, metav1.GetOptions{})
-		oobj, err2 := dynamicClient.Resource(ores).Namespace(namespace).Get(oinstance, metav1.GetOptions{})
+		cobj, err1 := dynamicClient.Resource(cres).Namespace(namespace).Get(context.Background(), cinstance, metav1.GetOptions{})
+		oobj, err2 := dynamicClient.Resource(ores).Namespace(namespace).Get(context.Background(), oinstance, metav1.GetOptions{})
 
 		if err1 == nil && err2 == nil {
 			oapiVersion := oobj.GetAPIVersion()
@@ -1135,7 +1149,7 @@ func updateOwnerReference(cgroup, cversion, cplural, cinstance, ogroup, oversion
 			refList := make([]metav1.OwnerReference, 0)
 			refList = append(refList, ref)
 			cobj.SetOwnerReferences(refList)
-			dynamicClient.Resource(cres).Namespace(namespace).Update(cobj, metav1.UpdateOptions{})
+			dynamicClient.Resource(cres).Namespace(namespace).Update(context.Background(), cobj, metav1.UpdateOptions{})
 			// break out of the for loop
 			break 
 		} else {
@@ -1165,7 +1179,7 @@ func getAnnotationPatch(allAnnotations map[string]string) patchOperation {
 	return patch
 }
 
-func getAccountIdentityAnnotation(ar *v1beta1.AdmissionReview) map[string]string {
+func getAccountIdentityAnnotation(ar *v1.AdmissionReview) map[string]string {
 	//fmt.Println("Inside getAccountIdentityAnnotation...")
 	req := ar.Request
 
@@ -1195,7 +1209,7 @@ func getAccountIdentityAnnotation(ar *v1beta1.AdmissionReview) map[string]string
 // This method resolves binding functions - ImportValue, AddLabel, AddAnnotations in the Spec.
 // Currently handling such Spec is turned off (there is no reference to this method in the main flow.)
 // Leaving this method around for reference.
-func getSpecResolvedPatch(ar *v1beta1.AdmissionReview) ([]patchOperation, *v1beta1.AdmissionResponse) {
+func getSpecResolvedPatch(ar *v1.AdmissionReview) ([]patchOperation, *v1.AdmissionResponse) {
 	fmt.Printf("Inside getSpecResolvedPatch...\n")
 	var patchOperations []patchOperation
 	patchOperations = make([]patchOperation, 0)
@@ -1212,7 +1226,7 @@ func getSpecResolvedPatch(ar *v1beta1.AdmissionReview) ([]patchOperation, *v1bet
 			value, err := ResolveImportString(importString)
 			fmt.Printf("ImportString:%s, Resolved ImportString value:%s", importString, value)
 			if err != nil {
-				return patchOperations, &v1beta1.AdmissionResponse{
+				return patchOperations, &v1.AdmissionResponse{
 					Result: &metav1.Status{
 						Message: err.Error(),
 					},
@@ -1231,7 +1245,7 @@ func getSpecResolvedPatch(ar *v1beta1.AdmissionReview) ([]patchOperation, *v1bet
 			_, err := AddResourceLabel(resolveObj.Value)
 			if err != nil {
 				fmt.Printf("Could not add Label to: %s", resolveObj.Value)
-				return patchOperations, &v1beta1.AdmissionResponse{
+				return patchOperations, &v1.AdmissionResponse{
 					Result: &metav1.Status{
 						Message: err.Error(),
 					},
@@ -1246,7 +1260,7 @@ func getSpecResolvedPatch(ar *v1beta1.AdmissionReview) ([]patchOperation, *v1bet
 			_, err := AddResourceAnnotation(resolveObj.Value)
 			if err != nil {
 				fmt.Printf("Could not add annotation to: %s", resolveObj.Value)
-				return patchOperations, &v1beta1.AdmissionResponse{
+				return patchOperations, &v1.AdmissionResponse{
 					Result: &metav1.Status{
 						Message: err.Error(),
 					},
@@ -1296,11 +1310,11 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var admissionResponse *v1beta1.AdmissionResponse
-	ar := v1beta1.AdmissionReview{}
+	var admissionResponse *v1.AdmissionResponse
+	ar := v1.AdmissionReview{}
 	if _, _, err := deserializer.Decode(body, nil, &ar); err != nil {
 		fmt.Printf("Can't decode body: %v", err)
-		admissionResponse = &v1beta1.AdmissionResponse{
+		admissionResponse = &v1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: err.Error(),
 			},
@@ -1315,11 +1329,13 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	admissionReview := v1beta1.AdmissionReview{}
+	admissionReview := v1.AdmissionReview{}
 	if admissionResponse != nil {
 		admissionReview.Response = admissionResponse
 		if ar.Request != nil {
 			admissionReview.Response.UID = ar.Request.UID
+			admissionReview.APIVersion = "admission.k8s.io/v1"
+			admissionReview.Kind = "AdmissionReview"
 		}
 		resp, err := json.Marshal(admissionReview)
 		if err != nil {

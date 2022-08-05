@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 func NewRootGetAction(resource schema.GroupVersionResource, name string) GetActionImpl {
@@ -152,45 +153,49 @@ func NewUpdateAction(resource schema.GroupVersionResource, namespace string, obj
 	return action
 }
 
-func NewRootPatchAction(resource schema.GroupVersionResource, name string, patch []byte) PatchActionImpl {
+func NewRootPatchAction(resource schema.GroupVersionResource, name string, pt types.PatchType, patch []byte) PatchActionImpl {
 	action := PatchActionImpl{}
 	action.Verb = "patch"
 	action.Resource = resource
 	action.Name = name
+	action.PatchType = pt
 	action.Patch = patch
 
 	return action
 }
 
-func NewPatchAction(resource schema.GroupVersionResource, namespace string, name string, patch []byte) PatchActionImpl {
+func NewPatchAction(resource schema.GroupVersionResource, namespace string, name string, pt types.PatchType, patch []byte) PatchActionImpl {
 	action := PatchActionImpl{}
 	action.Verb = "patch"
 	action.Resource = resource
 	action.Namespace = namespace
 	action.Name = name
+	action.PatchType = pt
 	action.Patch = patch
 
 	return action
 }
 
-func NewRootPatchSubresourceAction(resource schema.GroupVersionResource, name string, patch []byte, subresources ...string) PatchActionImpl {
+func NewRootPatchSubresourceAction(resource schema.GroupVersionResource, name string, pt types.PatchType, patch []byte, subresources ...string) PatchActionImpl {
 	action := PatchActionImpl{}
 	action.Verb = "patch"
 	action.Resource = resource
 	action.Subresource = path.Join(subresources...)
 	action.Name = name
+	action.PatchType = pt
 	action.Patch = patch
 
 	return action
 }
 
-func NewPatchSubresourceAction(resource schema.GroupVersionResource, namespace, name string, patch []byte, subresources ...string) PatchActionImpl {
+func NewPatchSubresourceAction(resource schema.GroupVersionResource, namespace, name string, pt types.PatchType, patch []byte, subresources ...string) PatchActionImpl {
 	action := PatchActionImpl{}
 	action.Verb = "patch"
 	action.Resource = resource
 	action.Subresource = path.Join(subresources...)
 	action.Namespace = namespace
 	action.Name = name
+	action.PatchType = pt
 	action.Patch = patch
 
 	return action
@@ -217,10 +222,15 @@ func NewUpdateSubresourceAction(resource schema.GroupVersionResource, subresourc
 }
 
 func NewRootDeleteAction(resource schema.GroupVersionResource, name string) DeleteActionImpl {
+	return NewRootDeleteActionWithOptions(resource, name, metav1.DeleteOptions{})
+}
+
+func NewRootDeleteActionWithOptions(resource schema.GroupVersionResource, name string, opts metav1.DeleteOptions) DeleteActionImpl {
 	action := DeleteActionImpl{}
 	action.Verb = "delete"
 	action.Resource = resource
 	action.Name = name
+	action.DeleteOptions = opts
 
 	return action
 }
@@ -236,11 +246,16 @@ func NewRootDeleteSubresourceAction(resource schema.GroupVersionResource, subres
 }
 
 func NewDeleteAction(resource schema.GroupVersionResource, namespace, name string) DeleteActionImpl {
+	return NewDeleteActionWithOptions(resource, namespace, name, metav1.DeleteOptions{})
+}
+
+func NewDeleteActionWithOptions(resource schema.GroupVersionResource, namespace, name string, opts metav1.DeleteOptions) DeleteActionImpl {
 	action := DeleteActionImpl{}
 	action.Verb = "delete"
 	action.Resource = resource
 	action.Namespace = namespace
 	action.Name = name
+	action.DeleteOptions = opts
 
 	return action
 }
@@ -386,6 +401,7 @@ type UpdateAction interface {
 type DeleteAction interface {
 	Action
 	GetName() string
+	GetDeleteOptions() metav1.DeleteOptions
 }
 
 type DeleteCollectionAction interface {
@@ -396,6 +412,7 @@ type DeleteCollectionAction interface {
 type PatchAction interface {
 	Action
 	GetName() string
+	GetPatchType() types.PatchType
 	GetPatch() []byte
 }
 
@@ -433,8 +450,18 @@ func (a ActionImpl) GetSubresource() string {
 	return a.Subresource
 }
 func (a ActionImpl) Matches(verb, resource string) bool {
-	return strings.ToLower(verb) == strings.ToLower(a.Verb) &&
-		strings.ToLower(resource) == strings.ToLower(a.Resource.Resource)
+	// Stay backwards compatible.
+	if !strings.Contains(resource, "/") {
+		return strings.EqualFold(verb, a.Verb) &&
+			strings.EqualFold(resource, a.Resource.Resource)
+	}
+
+	parts := strings.SplitN(resource, "/", 2)
+	topresource, subresource := parts[0], parts[1]
+
+	return strings.EqualFold(verb, a.Verb) &&
+		strings.EqualFold(topresource, a.Resource.Resource) &&
+		strings.EqualFold(subresource, a.Subresource)
 }
 func (a ActionImpl) DeepCopy() Action {
 	ret := a
@@ -537,8 +564,9 @@ func (a UpdateActionImpl) DeepCopy() Action {
 
 type PatchActionImpl struct {
 	ActionImpl
-	Name  string
-	Patch []byte
+	Name      string
+	PatchType types.PatchType
+	Patch     []byte
 }
 
 func (a PatchActionImpl) GetName() string {
@@ -549,29 +577,40 @@ func (a PatchActionImpl) GetPatch() []byte {
 	return a.Patch
 }
 
+func (a PatchActionImpl) GetPatchType() types.PatchType {
+	return a.PatchType
+}
+
 func (a PatchActionImpl) DeepCopy() Action {
 	patch := make([]byte, len(a.Patch))
 	copy(patch, a.Patch)
 	return PatchActionImpl{
 		ActionImpl: a.ActionImpl.DeepCopy().(ActionImpl),
 		Name:       a.Name,
+		PatchType:  a.PatchType,
 		Patch:      patch,
 	}
 }
 
 type DeleteActionImpl struct {
 	ActionImpl
-	Name string
+	Name          string
+	DeleteOptions metav1.DeleteOptions
 }
 
 func (a DeleteActionImpl) GetName() string {
 	return a.Name
 }
 
+func (a DeleteActionImpl) GetDeleteOptions() metav1.DeleteOptions {
+	return a.DeleteOptions
+}
+
 func (a DeleteActionImpl) DeepCopy() Action {
 	return DeleteActionImpl{
-		ActionImpl: a.ActionImpl.DeepCopy().(ActionImpl),
-		Name:       a.Name,
+		ActionImpl:    a.ActionImpl.DeepCopy().(ActionImpl),
+		Name:          a.Name,
+		DeleteOptions: *a.DeleteOptions.DeepCopy(),
 	}
 }
 
