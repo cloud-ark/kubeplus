@@ -4,6 +4,7 @@ import subprocess
 import sys
 import os
 import yaml
+import time
 
 
 class KubeconfigGenerator(object):
@@ -14,7 +15,7 @@ class KubeconfigGenerator(object):
 		cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
 		out = cmdOut[0]
 		err = cmdOut[1]
-		#print(out)
+		print(out)
 		if out != '':
 			return out
 			#printlines(out.decode('utf-8'))
@@ -70,16 +71,26 @@ class KubeconfigGenerator(object):
 		json_file = json.dumps(top_level_dict)
 		fileName =  sa + ".json"
 
-		fp = open("/root/" + fileName, "w")
+		fp = open(os.getenv("HOME") + "/" + fileName, "w")
 		fp.write(json_file)
 		fp.close()
 
 		configmapName = sa + "-kubeconfig"
-		cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=/root/" + fileName
-		self.run_command(cmd)
+		created = False 
+		while not created:        
+			cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getenv("HOME") + "/" + fileName
+			self.run_command(cmd)
+			get_cmd = "kubectl get configmap " + configmapName + " -n "  + namespace
+			output = self.run_command(cmd)
+			output = output.decode('utf-8')    
+			if 'Error from server (NotFound)' in output:
+				time.sleep(2)
+				print("Trying again..")
+			else:
+				created = True
 
 	def _create_role_rolebinding(self, contents, name):
-		filePath = "/root/" + name
+		filePath = os.getenv("HOME") + "/" + name
 		fp = open(filePath, "w")
 		#json_content = json.dumps(contents)
 		#fp.write(json_content)
@@ -306,31 +317,82 @@ class KubeconfigGenerator(object):
 		if entity == 'consumer':
 			self._apply_consumer_rbac(sa, namespace)
 
+	def _create_secret(self, sa, namespace):
+
+		annotations = {}
+		annotations['kubernetes.io/service-account.name'] = sa
+
+		metadata = {}
+		metadata['name'] = sa
+		metadata['namespace'] = namespace
+		metadata['annotations'] = annotations
+
+		secret = {}
+		secret['apiVersion'] = "v1"
+		secret['kind'] = "Secret"
+		secret['metadata'] = metadata
+		secret['type'] = 'kubernetes.io/service-account-token'
+
+		secretName = sa + "-secret.yaml"
+
+		filePath = os.getenv("HOME") + "/" + secretName
+		fp = open(filePath, "w")
+		yaml_content = yaml.dump(secret)
+		fp.write(yaml_content)
+		fp.close()
+		print("---")
+		print(yaml_content)
+		print("---")
+		created = False
+		while not created:
+			cmd = " kubectl create -f " + filePath
+			out = self.run_command(cmd)
+			if out != '':
+				out = out.decode('utf-8').strip()
+				print(out)
+				if 'created' in out:
+					created = True
+			else:
+				time.sleep(2)
+		print("Create secret:" + out)
+		return out
+
 	def _generate_kubeconfig(self, sa, namespace):
 		cmdprefix = ""
 		#cmd = " kubectl create sa " + sa + " -n " + namespace
 		#cmdToRun = cmdprefix + " " + cmd
 		#self.run_command(cmdToRun)
 
-		cmd = " kubectl get sa " + sa + " -n " + namespace + " -o json "
-		cmdToRun = cmdprefix + " " + cmd
-		out = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
-		out = out.decode('utf-8')
-		if out:
-			json_output = json.loads(out)
-			secretName = json_output["secrets"][0]["name"]
+		#cmd = " kubectl get sa " + sa + " -n " + namespace + " -o json "
+		#cmdToRun = cmdprefix + " " + cmd
+		#out = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+
+		secretName = sa
+		out = self._create_secret(secretName, namespace)
+		print("Create secret:" + out)
+		if 'secret/' + sa + ' created' in out:
+			#json_output = json.loads(out)
+			#secretName = json_output["secrets"][0]["name"]
 			#print("Secret Name:" + secretName)
 
-			cmd1 = " kubectl describe secret " + secretName + " -n " + namespace
-			cmdToRun = cmdprefix + " " + cmd1
-			out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
-			out1 = out1.decode('utf-8')
-			token = ''
-			for line in out1.split("\n"):
-				if 'token' in line:
-					parts = line.split(":")
-					token = parts[1].strip()
+			tokenFound = False
+			while not tokenFound:
+				cmd1 = " kubectl describe secret " + secretName + " -n " + namespace
+				cmdToRun = cmdprefix + " " + cmd1
+				out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+				out1 = out1.decode('utf-8')
+				print(out1)
+				token = ''
+				for line in out1.split("\n"):
+					if 'token' in line:
+						parts = line.split(":")
+						token = parts[1].strip()
+				if token != '':
+					tokenFound = True
+				else:
+					time.sleep(2)
 
+			print("Got secret token")
 			cmd1 = " kubectl get secret " + secretName + " -n " + namespace + " -o json "
 			cmdToRun = cmdprefix + " " + cmd1
 			out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
@@ -357,13 +419,15 @@ class KubeconfigGenerator(object):
 if __name__ == '__main__':
 	kubeconfigGenerator = KubeconfigGenerator()
 	namespace = sys.argv[1]
-
+	# 2. Generate Consumer kubeconfig
+	sa = 'kubeplus-saas-consumer'
+	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
+	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')
+	
 	# 1. Generate Provider kubeconfig
 	sa = 'kubeplus-saas-provider'
 	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
 	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider')
 
-	# 2. Generate Consumer kubeconfig
-	sa = 'kubeplus-saas-consumer'
-	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
-	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')
+	time.sleep(10)
+
