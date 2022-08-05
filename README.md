@@ -63,7 +63,7 @@ Cluster administrator installs KubePlus on their cluster.
 
 ```
 $ KUBEPLUS_NS=default
-$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.9.tgz?raw=true" -n $KUBEPLUS_NS
+$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.0.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
 *2. Retrieve Provider kubeconfig file*
@@ -165,9 +165,9 @@ More details about these components are available [here](https://cloud-ark.githu
 
 ## Try
 
-- Use Kubernetes version <= 1.20 and Helm version 3+. With minikube, you can create a cluster with a specific version like so:
+- Create a minikube cluster with a specific version like so:
 ```
-    $ minikube start --kubernetes-version=v1.20.0
+    $ minikube start --kubernetes-version=v1.24.3
 ```
 
 - Install KubePlus Operator.
@@ -177,7 +177,7 @@ For managed application delivery, choose any other namespace.
 
 ```
    $ KUBEPLUS_NS=default
-   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.9.tgz?raw=true" -n $KUBEPLUS_NS
+   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.0.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
 - Install KubePlus kubectl plugins
