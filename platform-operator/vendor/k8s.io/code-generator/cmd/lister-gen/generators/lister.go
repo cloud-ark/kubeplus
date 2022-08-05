@@ -30,14 +30,11 @@ import (
 	"k8s.io/code-generator/cmd/client-gen/generators/util"
 	clientgentypes "k8s.io/code-generator/cmd/client-gen/types"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 )
 
 // NameSystems returns the name system used by the generators in this package.
-func NameSystems() namer.NameSystems {
-	pluralExceptions := map[string]string{
-		"Endpoints": "Endpoints",
-	}
+func NameSystems(pluralExceptions map[string]string) namer.NameSystems {
 	return namer.NameSystems{
 		"public":             namer.NewPublicNamer(0),
 		"private":            namer.NewPrivateNamer(0),
@@ -66,7 +63,7 @@ func DefaultNameSystem() string {
 func Packages(context *generator.Context, arguments *args.GeneratorArgs) generator.Packages {
 	boilerplate, err := arguments.LoadGoBoilerplate()
 	if err != nil {
-		glog.Fatalf("Failed loading boilerplate: %v", err)
+		klog.Fatalf("Failed loading boilerplate: %v", err)
 	}
 
 	var packageList generator.Packages
@@ -75,7 +72,7 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 
 		objectMeta, internal, err := objectMetaForPackage(p)
 		if err != nil {
-			glog.Fatal(err)
+			klog.Fatal(err)
 		}
 		if objectMeta == nil {
 			// no types in this package had genclient
@@ -88,7 +85,7 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 		if internal {
 			lastSlash := strings.LastIndex(p.Path, "/")
 			if lastSlash == -1 {
-				glog.Fatalf("error constructing internal group version for package %q", p.Path)
+				klog.Fatalf("error constructing internal group version for package %q", p.Path)
 			}
 			gv.Group = clientgentypes.Group(p.Path[lastSlash+1:])
 			internalGVPkg = p.Path
@@ -165,7 +162,7 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 func objectMetaForPackage(p *types.Package) (*types.Type, bool, error) {
 	generatingForPackage := false
 	for _, t := range p.Types {
-		// filter out types which dont have genclient.
+		// filter out types which don't have genclient.
 		if !util.MustParseClientGenTags(append(t.SecondClosestCommentLines, t.CommentLines...)).GenerateClient {
 			continue
 		}
@@ -223,7 +220,7 @@ func (g *listerGenerator) Imports(c *generator.Context) (imports []string) {
 func (g *listerGenerator) GenerateType(c *generator.Context, t *types.Type, w io.Writer) error {
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
 
-	glog.V(5).Infof("processing type %v", t)
+	klog.V(5).Infof("processing type %v", t)
 	m := map[string]interface{}{
 		"Resource":   c.Universe.Function(types.Name{Package: t.Name.Package, Name: "Resource"}),
 		"type":       t,
@@ -261,8 +258,10 @@ func (g *listerGenerator) GenerateType(c *generator.Context, t *types.Type, w io
 
 var typeListerInterface = `
 // $.type|public$Lister helps list $.type|publicPlural$.
+// All objects returned here must be treated as read-only.
 type $.type|public$Lister interface {
 	// List lists all $.type|publicPlural$ in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*$.type|raw$, err error)
 	// $.type|publicPlural$ returns an object that can list and get $.type|publicPlural$.
 	$.type|publicPlural$(namespace string) $.type|public$NamespaceLister
@@ -272,10 +271,13 @@ type $.type|public$Lister interface {
 
 var typeListerInterface_NonNamespaced = `
 // $.type|public$Lister helps list $.type|publicPlural$.
+// All objects returned here must be treated as read-only.
 type $.type|public$Lister interface {
 	// List lists all $.type|publicPlural$ in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*$.type|raw$, err error)
 	// Get retrieves the $.type|public$ from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*$.type|raw$, error)
 	$.type|public$ListerExpansion
 }
@@ -328,10 +330,13 @@ func (s *$.type|private$Lister) Get(name string) (*$.type|raw$, error) {
 
 var namespaceListerInterface = `
 // $.type|public$NamespaceLister helps list and get $.type|publicPlural$.
+// All objects returned here must be treated as read-only.
 type $.type|public$NamespaceLister interface {
 	// List lists all $.type|publicPlural$ in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*$.type|raw$, err error)
 	// Get retrieves the $.type|public$ from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*$.type|raw$, error)
 	$.type|public$NamespaceListerExpansion
 }

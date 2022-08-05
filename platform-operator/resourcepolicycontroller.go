@@ -22,10 +22,10 @@ import (
 	"k8s.io/client-go/util/workqueue"
 
 	workflowcontrollerv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/workflowcontroller/v1alpha1"
-	clientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
-	platformstackscheme "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned/scheme"
-	informers "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/informers/externalversions"
-	listers "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/listers/workflowcontroller/v1alpha1"
+	clientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/clientset/versioned"
+	platformstackscheme "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/clientset/versioned/scheme"
+	informers "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/informers/externalversions"
+	listers "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/listers/workflowcontroller/v1alpha1"
 )
 
 const controllerAgent = "resourcepolicy-controller"

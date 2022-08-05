@@ -24,8 +24,16 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
+	// CSIDrivers returns a CSIDriverInformer.
+	CSIDrivers() CSIDriverInformer
+	// CSINodes returns a CSINodeInformer.
+	CSINodes() CSINodeInformer
+	// CSIStorageCapacities returns a CSIStorageCapacityInformer.
+	CSIStorageCapacities() CSIStorageCapacityInformer
 	// StorageClasses returns a StorageClassInformer.
 	StorageClasses() StorageClassInformer
+	// VolumeAttachments returns a VolumeAttachmentInformer.
+	VolumeAttachments() VolumeAttachmentInformer
 }
 
 type version struct {
@@ -39,7 +47,27 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
+// CSIDrivers returns a CSIDriverInformer.
+func (v *version) CSIDrivers() CSIDriverInformer {
+	return &cSIDriverInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// CSINodes returns a CSINodeInformer.
+func (v *version) CSINodes() CSINodeInformer {
+	return &cSINodeInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// CSIStorageCapacities returns a CSIStorageCapacityInformer.
+func (v *version) CSIStorageCapacities() CSIStorageCapacityInformer {
+	return &cSIStorageCapacityInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
 // StorageClasses returns a StorageClassInformer.
 func (v *version) StorageClasses() StorageClassInformer {
 	return &storageClassInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// VolumeAttachments returns a VolumeAttachmentInformer.
+func (v *version) VolumeAttachments() VolumeAttachmentInformer {
+	return &volumeAttachmentInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

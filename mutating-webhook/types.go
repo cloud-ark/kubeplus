@@ -6,7 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	"context"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	"k8s.io/client-go/rest"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -178,7 +179,7 @@ func trackKindAPIDetails() {
 			fmt.Printf("Cannot discover Custom Resource connections. But can do rest..")
 			//return err
 		}
-		crdList, err := crdClient.CustomResourceDefinitions().List(
+		crdList, err := crdClient.CustomResourceDefinitions().List(context.Background(),
 																   metav1.ListOptions{})
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
@@ -187,7 +188,7 @@ func trackKindAPIDetails() {
 		for _, crd := range crdList.Items {
 			crdName := crd.ObjectMeta.Name
 			//fmt.Printf("CRD NAME:%s\n", crdName)
-			crdObj, err := crdClient.CustomResourceDefinitions().Get(
+			crdObj, err := crdClient.CustomResourceDefinitions().Get(context.Background(),
 													     			 crdName, 
 																	 metav1.GetOptions{})
 			if err != nil {
@@ -207,7 +208,7 @@ func trackKindAPIDetails() {
 			}*/
 
 			group := crdObj.Spec.Group
-			version := crdObj.Spec.Version
+			version := crdObj.Spec.Versions[0].Name
 			endpoint := "apis/" + group + "/" + version
 			kind := crdObj.Spec.Names.Kind
 			plural := crdObj.Spec.Names.Plural

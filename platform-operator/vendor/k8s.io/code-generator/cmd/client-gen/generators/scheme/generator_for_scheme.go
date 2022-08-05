@@ -69,10 +69,11 @@ func (g *GenScheme) Imports(c *generator.Context) (imports []string) {
 					packagePath = filepath.Dir(packagePath)
 				}
 				packagePath = filepath.Join(packagePath, "install")
-				imports = append(imports, strings.ToLower(fmt.Sprintf("%s \"%s\"", groupAlias, path.Vendorless(packagePath))))
+
+				imports = append(imports, fmt.Sprintf("%s \"%s\"", groupAlias, path.Vendorless(packagePath)))
 				break
 			} else {
-				imports = append(imports, strings.ToLower(fmt.Sprintf("%s%s \"%s\"", groupAlias, version.Version.NonEmpty(), path.Vendorless(packagePath))))
+				imports = append(imports, fmt.Sprintf("%s%s \"%s\"", groupAlias, strings.ToLower(version.Version.NonEmpty()), path.Vendorless(packagePath)))
 			}
 		}
 	}
@@ -86,6 +87,7 @@ func (g *GenScheme) GenerateType(c *generator.Context, t *types.Type, w io.Write
 	allInstallGroups := clientgentypes.ToGroupInstallPackages(g.Groups, g.GroupGoNames)
 
 	m := map[string]interface{}{
+		"publicScheme":              !g.PrivateScheme,
 		"allGroupVersions":          allGroupVersions,
 		"allInstallGroups":          allInstallGroups,
 		"customRegister":            false,
@@ -132,7 +134,7 @@ func (g *GenScheme) GenerateType(c *generator.Context, t *types.Type, w io.Write
 var globalsTemplate = `
 var $.Scheme$ = $.runtimeNewScheme|raw$()
 var $.Codecs$ = $.serializerNewCodecFactory|raw$($.Scheme$)
-var $.ParameterCodec$ = $.runtimeNewParameterCodec|raw$($.Scheme$)`
+$if .publicScheme$var $.ParameterCodec$ = $.runtimeNewParameterCodec|raw$($.Scheme$)$end -$`
 
 var registryRegistration = `
 

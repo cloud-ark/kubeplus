@@ -13,8 +13,8 @@ import (
 	// Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
 	// _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
-	clientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
-	informers "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/informers/externalversions"
+	clientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/clientset/versioned"
+	informers "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/informers/externalversions"
 	"github.com/cloud-ark/kubeplus/platform-operator/pkg/signals"
 
 	"k8s.io/client-go/rest"

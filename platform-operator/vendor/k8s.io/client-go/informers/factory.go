@@ -27,19 +27,23 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	admissionregistration "k8s.io/client-go/informers/admissionregistration"
+	apiserverinternal "k8s.io/client-go/informers/apiserverinternal"
 	apps "k8s.io/client-go/informers/apps"
 	autoscaling "k8s.io/client-go/informers/autoscaling"
 	batch "k8s.io/client-go/informers/batch"
 	certificates "k8s.io/client-go/informers/certificates"
+	coordination "k8s.io/client-go/informers/coordination"
 	core "k8s.io/client-go/informers/core"
+	discovery "k8s.io/client-go/informers/discovery"
 	events "k8s.io/client-go/informers/events"
 	extensions "k8s.io/client-go/informers/extensions"
+	flowcontrol "k8s.io/client-go/informers/flowcontrol"
 	internalinterfaces "k8s.io/client-go/informers/internalinterfaces"
 	networking "k8s.io/client-go/informers/networking"
+	node "k8s.io/client-go/informers/node"
 	policy "k8s.io/client-go/informers/policy"
 	rbac "k8s.io/client-go/informers/rbac"
 	scheduling "k8s.io/client-go/informers/scheduling"
-	settings "k8s.io/client-go/informers/settings"
 	storage "k8s.io/client-go/informers/storage"
 	kubernetes "k8s.io/client-go/kubernetes"
 	cache "k8s.io/client-go/tools/cache"
@@ -186,23 +190,31 @@ type SharedInformerFactory interface {
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
 	Admissionregistration() admissionregistration.Interface
+	Internal() apiserverinternal.Interface
 	Apps() apps.Interface
 	Autoscaling() autoscaling.Interface
 	Batch() batch.Interface
 	Certificates() certificates.Interface
+	Coordination() coordination.Interface
 	Core() core.Interface
+	Discovery() discovery.Interface
 	Events() events.Interface
 	Extensions() extensions.Interface
+	Flowcontrol() flowcontrol.Interface
 	Networking() networking.Interface
+	Node() node.Interface
 	Policy() policy.Interface
 	Rbac() rbac.Interface
 	Scheduling() scheduling.Interface
-	Settings() settings.Interface
 	Storage() storage.Interface
 }
 
 func (f *sharedInformerFactory) Admissionregistration() admissionregistration.Interface {
 	return admissionregistration.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Internal() apiserverinternal.Interface {
+	return apiserverinternal.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Apps() apps.Interface {
@@ -221,8 +233,16 @@ func (f *sharedInformerFactory) Certificates() certificates.Interface {
 	return certificates.New(f, f.namespace, f.tweakListOptions)
 }
 
+func (f *sharedInformerFactory) Coordination() coordination.Interface {
+	return coordination.New(f, f.namespace, f.tweakListOptions)
+}
+
 func (f *sharedInformerFactory) Core() core.Interface {
 	return core.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Discovery() discovery.Interface {
+	return discovery.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Events() events.Interface {
@@ -233,8 +253,16 @@ func (f *sharedInformerFactory) Extensions() extensions.Interface {
 	return extensions.New(f, f.namespace, f.tweakListOptions)
 }
 
+func (f *sharedInformerFactory) Flowcontrol() flowcontrol.Interface {
+	return flowcontrol.New(f, f.namespace, f.tweakListOptions)
+}
+
 func (f *sharedInformerFactory) Networking() networking.Interface {
 	return networking.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Node() node.Interface {
+	return node.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Policy() policy.Interface {
@@ -247,10 +275,6 @@ func (f *sharedInformerFactory) Rbac() rbac.Interface {
 
 func (f *sharedInformerFactory) Scheduling() scheduling.Interface {
 	return scheduling.New(f, f.namespace, f.tweakListOptions)
-}
-
-func (f *sharedInformerFactory) Settings() settings.Interface {
-	return settings.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Storage() storage.Interface {

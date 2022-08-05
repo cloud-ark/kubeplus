@@ -5,15 +5,16 @@ import (
 	//"os"
 	//"flag"
 	"time"
+	"context"
 	//"path/filepath"
 	//"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/rest"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
 	//admissionregistration "k8s.io/api/admissionregistration/v1beta1"
-	admissionregistrationclientset "k8s.io/client-go/kubernetes/typed/admissionregistration/v1beta1"
+	admissionregistrationclientset "k8s.io/client-go/kubernetes/typed/admissionregistration/v1"
 )
 
 const (
@@ -24,17 +25,21 @@ const (
 
 func main() {
 
+        cfg, err := rest.InClusterConfig()
+        if err != nil {
+                panic(err.Error())
+        }
+
+	crdClient, _ := apiextensionsclientset.NewForConfig(cfg)
+
 	for {
 
-		cfg, _ := clientcmd.BuildConfigFromFlags("", "")
-		crdClient, _ := apiextensionsclientset.NewForConfig(cfg)
-
-		crds, _ := crdClient.CustomResourceDefinitions().List(metav1.ListOptions{})
+		crds, _ := crdClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{})
 
 		for _, crd := range crds.Items {
 			//crdName := "moodles.moodlecontroller.kubeplus"
 			crdName := crd.Name
-			crdObj, err := crdClient.CustomResourceDefinitions().Get(crdName, metav1.GetOptions{})
+			crdObj, err := crdClient.CustomResourceDefinitions().Get(context.Background(), crdName, metav1.GetOptions{})
 			annotations := crdObj.ObjectMeta.Annotations
 			val, ok := annotations[CREATED_BY_KEY]
 			if !ok || val != CREATED_BY_VALUE {
@@ -42,12 +47,12 @@ func main() {
 			}
 
 			resourceAPIGroup := crdObj.Spec.Group
-			//fmt.Printf("Custom Resource API Group:%s\n", resourceAPIGroup)
+			fmt.Printf("Custom Resource API Group:%s\n", resourceAPIGroup)
 
 			resourcePlural := crdObj.Spec.Names.Plural
-			//fmt.Printf("Custom Resource Plural:%s\n", resourcePlural)
+			fmt.Printf("Custom Resource Plural:%s\n", resourcePlural)
 
-			resourceAPIVersion := crdObj.Spec.Version
+			resourceAPIVersion := crdObj.Spec.Versions[0].Name
 
 			if err != nil {
 				fmt.Errorf("Error:%s\n", err)
@@ -58,15 +63,14 @@ func main() {
 
 			admissionRegClient, _ := admissionregistrationclientset.NewForConfig(cfg)
 			mutatingWebhookConfigName := "platform-as-code.crd-binding"
-			mutatingWebhookObj, err := admissionRegClient.MutatingWebhookConfigurations().Get(mutatingWebhookConfigName, 
-				metav1.GetOptions{})
+			mutatingWebhookObj, err := admissionRegClient.MutatingWebhookConfigurations().Get(context.Background(), mutatingWebhookConfigName, metav1.GetOptions{})
 
 			if err != nil {
 				fmt.Errorf("Error:%s\n", err)
 			}
-			//fmt.Printf("MutatingWebhook Object:%v\n", mutatingWebhookObj)
+			fmt.Printf("MutatingWebhook Object:%v\n", mutatingWebhookObj)
 
-			//fmt.Println("============= Updating the Rules ==============")
+			fmt.Println("============= Updating the Rules ==============")
 
 			webhooks := mutatingWebhookObj.Webhooks
 
@@ -91,7 +95,12 @@ func main() {
 				webhooks[0] = webhook
 				mutatingWebhookObj.Webhooks = webhooks
 
-				_, _= admissionRegClient.MutatingWebhookConfigurations().Update(mutatingWebhookObj)
+				fmt.Printf("MutatingWebhook Object:%v\n", mutatingWebhookObj)
+
+				_, err = admissionRegClient.MutatingWebhookConfigurations().Update(context.Background(), mutatingWebhookObj, metav1.UpdateOptions{})
+				if err != nil {
+					fmt.Errorf("Error1:%s\n", err)
+				}
 		   }
 		}
 	}

@@ -7,6 +7,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"context"
 
 	_ "github.com/lib/pq"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-    apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+        apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
@@ -31,12 +32,12 @@ import (
 	"k8s.io/client-go/util/workqueue"
 
 	platformworkflowv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/workflowcontroller/v1alpha1"
-	clientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
-	platformstackscheme "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned/scheme"
-	informers "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/informers/externalversions"
-	listers "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/listers/workflowcontroller/v1alpha1"
+	clientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/clientset/versioned"
+	platformstackscheme "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/clientset/versioned/scheme"
+	informers "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/informers/externalversions"
+	listers "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/listers/workflowcontroller/v1alpha1"
 
-	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 
 	"k8s.io/client-go/rest"
 )
@@ -325,7 +326,7 @@ func (c *Controller) deleteFoo(obj interface{}) {
 	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
 
 	action := "delete"
-	handleCRD(kind, version, group, plural, action, namespace)
+	handleCRD(foo.Name, kind, version, group, plural, action, namespace)
 
  	resPolicySpec := foo.Spec.ResPolicy
  	//fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
@@ -387,7 +388,7 @@ func (c *Controller) syncHandler(key string) error {
 	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
 	// Check if CRD is present or not. Create it only if it is not present.
 	action := "create"
-	handleCRD(kind, version, group, plural, action, namespace)
+	handleCRD(name, kind, version, group, plural, action, namespace)
 
  	resPolicySpec := foo.Spec.ResPolicy
  	fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
@@ -419,7 +420,7 @@ func createResourceMonitor(resMonitorSpec interface{}, namespace string) {
 	var sampleclientset clientset.Interface
 	sampleclientset = clientset.NewForConfigOrDie(config)
 
-	resMonitor, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).Create(&resMonitorObject)
+	resMonitor, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).Create(context.Background(), &resMonitorObject, metav1.CreateOptions{})
 	fmt.Printf("ResourceMonitor:%v\n", resMonitor)
 	if err != nil {
 		fmt.Errorf("Error:%s\n", err)
@@ -445,7 +446,7 @@ func deleteResourceMonitor(resMonitorSpec interface{}, namespace string) {
 	var sampleclientset clientset.Interface
 	sampleclientset = clientset.NewForConfigOrDie(config)
 
-	resMonList, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).List(metav1.ListOptions{})
+	resMonList, err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Errorf("Error:%s\n", err)
 	}
@@ -453,7 +454,7 @@ func deleteResourceMonitor(resMonitorSpec interface{}, namespace string) {
 		resMonName := resMon.ObjectMeta.Name
 		if resMonName == inputResMonitorName {
 			fmt.Printf("Deleting ResMonitor %s\n", resMonName)
-			err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).Delete(resMonName, &metav1.DeleteOptions{})
+			err := sampleclientset.WorkflowsV1alpha1().ResourceMonitors(namespace).Delete(context.Background(), resMonName, metav1.DeleteOptions{})
 			if err != nil {
 				fmt.Errorf("Error:%s\n", err)
 			}
@@ -475,7 +476,7 @@ func createResourcePolicy(resPolicySpec interface{}, namespace string) {
 	var sampleclientset clientset.Interface
 	sampleclientset = clientset.NewForConfigOrDie(config)
 
-	resPolicy, err := sampleclientset.WorkflowsV1alpha1().ResourcePolicies(namespace).Create(&resPolicyObject)
+	resPolicy, err := sampleclientset.WorkflowsV1alpha1().ResourcePolicies(namespace).Create(context.Background(), &resPolicyObject, metav1.CreateOptions{})
 	fmt.Printf("ResourcePolicy:%v\n", resPolicy)
 	if err != nil {
 		fmt.Errorf("Error:%s\n", err)
@@ -501,7 +502,7 @@ func deleteResourcePolicy(resPolicySpec interface{}, namespace string) {
 	var sampleclientset clientset.Interface
 	sampleclientset = clientset.NewForConfigOrDie(config)
 
-	resPolicyList, err := sampleclientset.WorkflowsV1alpha1().ResourcePolicies(namespace).List(metav1.ListOptions{})
+	resPolicyList, err := sampleclientset.WorkflowsV1alpha1().ResourcePolicies(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Errorf("Error:%s\n", err)
 	}
@@ -509,7 +510,7 @@ func deleteResourcePolicy(resPolicySpec interface{}, namespace string) {
 		resPolicyName := resPolicy.ObjectMeta.Name
 		if inputResPolicyName == resPolicyName {
 			fmt.Printf("Deleting ResPolicy object %s\n", resPolicyName)
-			err := sampleclientset.WorkflowsV1alpha1().ResourcePolicies(namespace).Delete(resPolicyName, &metav1.DeleteOptions{})
+			err := sampleclientset.WorkflowsV1alpha1().ResourcePolicies(namespace).Delete(context.Background(), resPolicyName, metav1.DeleteOptions{})
 			if err != nil {
 				fmt.Errorf("Error:%s\n", err)
 			}
@@ -517,7 +518,7 @@ func deleteResourcePolicy(resPolicySpec interface{}, namespace string) {
 	}
 }
 
-func handleCRD(kind, version, group, plural, action, namespace string) error {
+func handleCRD(rescomposition, kind, version, group, plural, action, namespace string) error {
 	fmt.Printf("Inside handleCRD %s\n", action)
 	cfg, err := rest.InClusterConfig()
 	if err != nil {
@@ -529,6 +530,51 @@ func handleCRD(kind, version, group, plural, action, namespace string) error {
 	kubePlusAnnotation := make(map[string]string)
 	kubePlusAnnotation[CREATED_BY_KEY] = CREATED_BY_VALUE
 
+	fmt.Printf("Getting values.yaml of the service Helm chart\n")
+	chartValuesBytes := GetValuesYaml(rescomposition, namespace)
+	valuesYaml := string(chartValuesBytes)
+	fmt.Printf("%v\n", valuesYaml)
+	lines := strings.Split(valuesYaml, "\n")
+
+	properties := make([]string,0)
+	for i:=0; i<len(lines);i++ {
+		line1 := strings.TrimSpace(lines[i])
+		if line1 != "" {
+			fmt.Printf("ABC %s\n", line1)
+			parts := strings.Split(line1, ":")
+			if len(parts) == 2 {
+				propName := strings.TrimSpace(parts[0])
+				properties = append(properties, propName)
+			}
+		}
+	}
+
+	fmt.Printf("=====================\n")
+	fmt.Printf("%v\n", properties)
+	fmt.Printf("=====================\n")
+
+	specProperties := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
+	for i:=0; i<len(properties); i++ {
+		fieldName := properties[i]
+		specProperties[fieldName] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
+	}
+	var jsonSchemaInner apiextensionsv1beta1.JSONSchemaProps
+	jsonSchemaInner.Type = "object"
+	jsonSchemaInner.Properties = specProperties
+
+	statusProperties := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
+	statusProperties["helmrelease"] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
+	var jsonSchemaStatus apiextensionsv1beta1.JSONSchemaProps
+	jsonSchemaStatus.Type = "object"
+	jsonSchemaStatus.Properties = statusProperties
+
+	specField := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
+	specField["spec"] = jsonSchemaInner
+	specField["status"] = jsonSchemaStatus
+	var jsonSchemaOuter apiextensionsv1beta1.JSONSchemaProps
+	jsonSchemaOuter.Type = "object"
+	jsonSchemaOuter.Properties = specField
+
 	crd := &apiextensionsv1beta1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: plural + "." + group,
@@ -536,16 +582,25 @@ func handleCRD(kind, version, group, plural, action, namespace string) error {
 		},
 		Spec: apiextensionsv1beta1.CustomResourceDefinitionSpec{
 			Group: group,
-			Version: version,
+			Versions: []apiextensionsv1beta1.CustomResourceDefinitionVersion{
+				{
+					Name: version,
+					Served: true,
+					Storage: true,
+					Schema: &apiextensionsv1beta1.CustomResourceValidation{OpenAPIV3Schema: &jsonSchemaOuter},
+					//Schema: &apiextensionsv1beta1.CustomResourceValidation{OpenAPIV3Schema: &apiextensionsv1beta1.JSONSchemaProps{Type: "object"}},
+				},
+			},
 			Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
 				Plural: plural,
 				Kind: kind,
 			},
+			Scope: "Namespaced",
 		},
 	}
 
 	crdPresent := false
-	crdList, err := crdClient.CustomResourceDefinitions().List(metav1.ListOptions{})
+	crdList, err := crdClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Errorf("Error:%s\n", err)
 		return err
@@ -553,13 +608,13 @@ func handleCRD(kind, version, group, plural, action, namespace string) error {
 	crdToHandle := ""
 	for _, crd := range crdList.Items {
 		crdToHandle = crd.ObjectMeta.Name
-		crdObj, err := crdClient.CustomResourceDefinitions().Get(crdToHandle, metav1.GetOptions{})
+		crdObj, err := crdClient.CustomResourceDefinitions().Get(context.Background(), crdToHandle, metav1.GetOptions{})
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
 			return err
 		}
 		group1 := crdObj.Spec.Group
-		version1 := crdObj.Spec.Version
+		version1 := crdObj.Spec.Versions[0].Name
 		//endpoint := "apis/" + group + "/" + version
 		kind1 := crdObj.Spec.Names.Kind
 		plural1 := crdObj.Spec.Names.Plural
@@ -573,7 +628,7 @@ func handleCRD(kind, version, group, plural, action, namespace string) error {
 
 	if !crdPresent {
 		if action == "create" {
-			_, err1 := crdClient.CustomResourceDefinitions().Create(crd)
+			_, err1 := crdClient.CustomResourceDefinitions().Create(context.Background(), crd, metav1.CreateOptions{})
 			if err1 != nil {
 				panic(err1.Error())
 			}
@@ -582,7 +637,7 @@ func handleCRD(kind, version, group, plural, action, namespace string) error {
 		fmt.Printf("CRD Group:%s Version:%s Kind:%s Plural:%s found.\n", group, version, kind, plural)
 		if action == "delete" {
 			deleteCRDInstances(kind, group, version, plural, namespace)
-			err := crdClient.CustomResourceDefinitions().Delete(crdToHandle, &metav1.DeleteOptions{})
+			err := crdClient.CustomResourceDefinitions().Delete(context.Background(), crdToHandle, metav1.DeleteOptions{})
 			if err != nil {
 				fmt.Errorf("Error:%s\n", err)
 				return err
@@ -593,6 +648,19 @@ func handleCRD(kind, version, group, plural, action, namespace string) error {
 	}
 	return nil
 }
+
+func GetValuesYaml(platformworkflow, namespace string) []byte {
+        args := fmt.Sprintf("platformworkflow=%s&namespace=%s", platformworkflow, namespace)
+        fmt.Printf("Inside GetValuesYaml...\n")
+        //serviceHost, servicePort := getServiceEndpoint("kubeplus")
+        //fmt.Printf("After getServiceEndpoint...\n")
+        var url1 string
+        url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/getchartvalues?%s", HELMER_HOST, HELMER_PORT, args)
+        fmt.Printf("Url:%s\n", url1)
+        body := queryKubeDiscoveryService(url1)
+        return body
+}
+
 
 func deleteCRDInstances(kind, group, version, plural, namespace string) []byte {
 	fmt.Printf("Inside deleteCRDInstances...\n")
@@ -613,7 +681,7 @@ func getServiceEndpoint(servicename string) (string, string) {
 	cfg, _ := rest.InClusterConfig()
 	kubeClient, _ := kubernetes.NewForConfig(cfg)
 	serviceClient := kubeClient.CoreV1().Services(namespace)
-	discoveryServiceObj, _ := serviceClient.Get(servicename, metav1.GetOptions{})
+	discoveryServiceObj, _ := serviceClient.Get(context.Background(), servicename, metav1.GetOptions{})
 	host := discoveryServiceObj.Spec.ClusterIP
 	port := discoveryServiceObj.Spec.Ports[0].Port
 	stringPort := strconv.Itoa(int(port))

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 	"strconv"
-	//"context"
+	"context"
 
 	"k8s.io/client-go/util/retry"
 	"encoding/json"
@@ -31,7 +31,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/dynamic"
 
-	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	//platformstackclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/client/clientset/versioned"
 	//platformstackv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/platformstackcontroller/v1alpha1"
 
@@ -152,7 +152,7 @@ func checkIfResourceCreated(kind, name, namespace string) bool {
 func AddDeploymentLabel(key, value string, name, namespace string) {
 	deployClient := kubeClient.AppsV1().Deployments(namespace)
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		deployment, err := deployClient.Get(name, metav1.GetOptions{})
+		deployment, err := deployClient.Get(context.Background(), name, metav1.GetOptions{})
 		if err != nil {
 			panic(fmt.Errorf("Failed to get latest version of Deployment: %v", err))
 		}
@@ -164,7 +164,7 @@ func AddDeploymentLabel(key, value string, name, namespace string) {
 		} else {
 			deployment.ObjectMeta.Labels[key] = value
 		}
-		_, updateErr := deployClient.Update(deployment)
+		_, updateErr := deployClient.Update(context.Background(), deployment, metav1.UpdateOptions{})
 		return updateErr
 	})
 	if retryErr != nil {
@@ -290,7 +290,7 @@ func parseCRDAnnotation(crdName, crName, annotationName, propertyName string) (s
 	cfg, err := rest.InClusterConfig()
 	crdClient, _ := apiextensionsclientset.NewForConfig(cfg)
 
-	crdObj, err := crdClient.CustomResourceDefinitions().Get(crdName, metav1.GetOptions{})
+	crdObj, err := crdClient.CustomResourceDefinitions().Get(context.Background(), crdName, metav1.GetOptions{})
 	if err != nil {
 		fmt.Errorf("Error:%s\n", err)
 		return "", err
@@ -317,7 +317,7 @@ func parseCRDAnnotation(crdName, crName, annotationName, propertyName string) (s
 	fmt.Printf("Namespace:%s, ConfigMapName:%s, ConfigMapKey:%s\n", namespace, configMapName, configMapKey)
 
 	kubeClient, err := kubernetes.NewForConfig(cfg)
-	configMapObj, _ := kubeClient.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
+	configMapObj, _ := kubeClient.CoreV1().ConfigMaps(namespace).Get(context.Background(), configMapName, metav1.GetOptions{})
 
 	fmt.Printf("ConfigMapObj:%v\n", configMapObj)
 
@@ -738,7 +738,7 @@ func addLabel(labelkey, labelvalue, kind, resource, namespace string) {
 	res := schema.GroupVersionResource{Group: resourceGroup,
 									   Version: resourceApiVersion,
 									   Resource: resourceKindPlural}
-	obj, err1 := dynamicClient.Resource(res).Namespace(namespace).Get(resource, metav1.GetOptions{})
+	obj, err1 := dynamicClient.Resource(res).Namespace(namespace).Get(context.Background(), resource, metav1.GetOptions{})
 	if err1 != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 		return
@@ -753,7 +753,7 @@ func addLabel(labelkey, labelvalue, kind, resource, namespace string) {
 	objCopy.SetLabels(labelMap)
 
 	fmt.Printf("Before adding label.\n")
-	_, err = dynamicClient.Resource(res).Namespace(namespace).Update(objCopy, metav1.UpdateOptions{})
+	_, err = dynamicClient.Resource(res).Namespace(namespace).Update(context.Background(), objCopy, metav1.UpdateOptions{})
 	fmt.Printf("Done adding label.\n")
 
 	if err != nil {
@@ -772,7 +772,7 @@ func addAnnotation(labelkey, labelvalue, kind, resource, namespace string) {
 	res := schema.GroupVersionResource{Group: resourceGroup,
 									   Version: resourceApiVersion,
 									   Resource: resourceKindPlural}
-	obj, err1 := dynamicClient.Resource(res).Namespace(namespace).Get(resource, metav1.GetOptions{})
+	obj, err1 := dynamicClient.Resource(res).Namespace(namespace).Get(context.Background(), resource, metav1.GetOptions{})
 	if err1 != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 		return
@@ -787,7 +787,7 @@ func addAnnotation(labelkey, labelvalue, kind, resource, namespace string) {
 	objCopy.SetAnnotations(annotationMap)
 
 	fmt.Printf("Before adding annotations.\n")
-	_, err = dynamicClient.Resource(res).Namespace(namespace).Update(objCopy, metav1.UpdateOptions{})
+	_, err = dynamicClient.Resource(res).Namespace(namespace).Update(context.Background(), objCopy, metav1.UpdateOptions{})
 	fmt.Printf("Done adding annotations.\n")
 
 	if err != nil {
@@ -923,7 +923,7 @@ func getServiceEndpoint(servicename string) (string, string) {
 	cfg, _ := rest.InClusterConfig()
 	kubeClient, _ := kubernetes.NewForConfig(cfg)
 	serviceClient := kubeClient.CoreV1().Services(namespace)
-	discoveryServiceObj, _ := serviceClient.Get(servicename, metav1.GetOptions{})
+	discoveryServiceObj, _ := serviceClient.Get(context.Background(), servicename, metav1.GetOptions{})
 	host := discoveryServiceObj.Spec.ClusterIP
 	port := discoveryServiceObj.Spec.Ports[0].Port
 	stringPort := strconv.Itoa(int(port))
@@ -954,9 +954,9 @@ func queryKubeDiscoveryService(url1 string) []byte {
 	defer resp.Body.Close()
 	resp_body, _ := ioutil.ReadAll(resp.Body)
 
-	//fmt.Println("Response status:%s\n",resp.Status)
-	//fmt.Println("Response body:%s\n",string(resp_body))
-	//fmt.Println("Exiting QueryCompositionEndpoint")
+	fmt.Println("Response status:%s\n",resp.Status)
+	fmt.Println("Response body:%s\n",string(resp_body))
+	fmt.Println("Exiting QueryCompositionEndpoint")
 	return resp_body
 }
 

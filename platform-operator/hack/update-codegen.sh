@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash 
 
 # Copyright 2017 The Kubernetes Authors.
 #
@@ -14,17 +14,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -x
 set -o errexit
 set -o nounset
 set -o pipefail
 
+SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
+CODEGEN_PKG=${CODEGEN_PKG:-$(cd "${SCRIPT_ROOT}"; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo ../code-generator)}
+
 # generate the code with:
-# - --output-base because this script should also be able to run inside the vendor dir of
-#   k8s.io/kubernetes. The output-base is needed for the generators to output into the vendor dir
-#   instead of the $GOPATH directly. For normal projects this can be dropped.
-#  --output-base "$(dirname ${BASH_SOURCE})/../../.."
-$(dirname ${BASH_SOURCE})/../generate-groups.sh all \
-  github.com/cloud-ark/kubeplus/platform-operator/pkg/client github.com/cloud-ark/kubeplus/platform-operator/pkg/apis \
-  "workflowcontroller:v1alpha1"
-#  --output-base "$(dirname ${BASH_SOURCE})/../../.."
+# --output-base    because this script should also be able to run inside the vendor dir of
+#                  k8s.io/kubernetes. The output-base is needed for the generators to output into the vendor dir
+#                  instead of the $GOPATH directly. For normal projects this can be dropped.
+
+echo $SCRIPT_ROOT
+output_base="$(dirname "${BASH_SOURCE[0]}")/../../.."
+echo "----"
+echo $output_base
+bash "${CODEGEN_PKG}"/generate-groups.sh "deepcopy,client,informer,lister" \
+  github.com/cloud-ark/kubeplus/platform-operator/pkg/generated github.com/cloud-ark/kubeplus/platform-operator/pkg/apis \
+  "workflowcontroller:v1alpha1" -v 10 \
+#  --output-base $output_base \
+#  --go-header-file "${SCRIPT_ROOT}"/hack/boilerplate.go.txt
+
+# To use your own boilerplate text append:
+#   --go-header-file "${SCRIPT_ROOT}"/hack/custom-boilerplate.go.txt
