@@ -17,6 +17,19 @@ Use Helm version 3+. With minikube, you can create a cluster with a specific ver
     $ minikube start --kubernetes-version=v1.24.3
 ```
 
+Setup KubePlus kubectl plugins
+-------------------------------
+```
+$ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
+$ gunzip kubeplus-kubectl-plugins.tar.gz
+$ tar -xvf kubeplus-kubectl-plugins.tar
+$ export KUBEPLUS_HOME=`pwd`
+$ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
+$ kubectl kubeplus commands
+```
+
+
+
 Multi-namespace setup
 ----------------------
 ```
