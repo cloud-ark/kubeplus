@@ -20,7 +20,7 @@ Use Helm version 3+. With minikube, you can create a cluster with a specific ver
 Multi-namespace setup
 ----------------------
 1. KUBEPLUS_NS=default
-2. helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.9.tgz?raw=true" -n $KUBEPLUS_NS
+2. helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.0.tgz?raw=true" -n $KUBEPLUS_NS
 3. kubectl create ns testns --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus
    - request should be allowed
 4. kubectl create ns testns1 --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus-saas-provider
@@ -67,7 +67,7 @@ Single namespace setup
 -----------------------
 1. kubectl create ns kubeplus
 2. KUBEPLUS_NS=kubeplus
-3. helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-2.0.9.tgz?raw=true" -n $KUBEPLUS_NS
+3. helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.0.tgz?raw=true" -n $KUBEPLUS_NS
 4. kubectl create ns testns --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus
    - request should be denied
 5. kubectl create ns testns1 --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus-saas-provider
