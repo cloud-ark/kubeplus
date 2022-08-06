@@ -12,9 +12,9 @@ default Namespace whereas for single namespace configuration, the KubePlus Opera
 needs to be installed in any other namespace. When installed in the default Namespace,
 KubePlus gets permissions to create new namespaces and deploy applications inside them.
 
-Use Kubernetes version <= 1.20 and Helm version 3+. With minikube, you can create a cluster with a specific version like so:
+Use Helm version 3+. With minikube, you can create a cluster with a specific version like so:
 ```
-    $ minikube start --kubernetes-version=v1.20.0
+    $ minikube start --kubernetes-version=v1.24.3
 ```
 
 Multi-namespace setup
