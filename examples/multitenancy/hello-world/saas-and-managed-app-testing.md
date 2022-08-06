@@ -19,6 +19,7 @@ Use Helm version 3+. With minikube, you can create a cluster with a specific ver
 
 Multi-namespace setup
 ----------------------
+```
 1. KUBEPLUS_NS=default
 2. helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.0.tgz?raw=true" -n $KUBEPLUS_NS
 3. kubectl create ns testns --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus
@@ -61,10 +62,11 @@ Multi-namespace setup
 25. kubectl delete ns testns --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus
     - should be allowed
 26. helm delete kubeplus -n $KUBEPLUS_NS
-
+```
 
 Single namespace setup
 -----------------------
+```
 1. kubectl create ns kubeplus
 2. KUBEPLUS_NS=kubeplus
 3. helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.0.tgz?raw=true" -n $KUBEPLUS_NS
@@ -104,7 +106,7 @@ Single namespace setup
     - kubeplus namespace remains intact
 25. helm delete kubeplus -n $KUBEPLUS_NS
 26. kubectl delete ns kubeplus
-
+```
 
 KubePlus Operator troubleshooting:
 -----------------------------------
