@@ -31,7 +31,10 @@ customres=$1
 instance=$2
 namespace="$3"
 output="pretty"
-kubeconfig1="$HOME/.kube/config" #default value
+kubeconfig1=""
+if [[ $HOME != "/root" ]]; then
+        kubeconfig1="$HOME/.kube/config" #default value
+fi
 
 shift;
 shift;
