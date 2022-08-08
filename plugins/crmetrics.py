@@ -162,8 +162,8 @@ class CRMetrics(CRBase):
 			pod_list = self._get_pods(json_block)
 		return pod_list
 
-	def _get_pod(self, pod):
-		cmd = 'kubectl get pods ' + pod['Name'] + ' -n ' + pod['Namespace'] + ' -o json'
+	def _get_pod(self, pod, kubeconfig=''):
+		cmd = 'kubectl get pods ' + pod['Name'] + ' -n ' + pod['Namespace'] + ' -o json' + ' ' + kubeconfig
 		out = ''
 		#print(cmd)
 		try:
@@ -177,11 +177,11 @@ class CRMetrics(CRBase):
 			json_output = json.loads(out)
 		return json_output
 
-	def _parse_number_of_hosts(self, pod_list):
+	def _parse_number_of_hosts(self, pod_list, kubecfg=''):
 		num_of_hosts = 0
 		host_list = []
 		for pod in pod_list:
-			json_output = self._get_pod(pod)
+			json_output = self._get_pod(pod, kubeconfig=kubecfg)
 			if 'status' in json_output:
 				if 'hostIP' in json_output['status']:
 					hostIP = json_output['status']['hostIP']
@@ -189,10 +189,10 @@ class CRMetrics(CRBase):
 						host_list.append(hostIP)
 		return len(host_list)
 
-	def _parse_number_of_containers(self, pod_list):
+	def _parse_number_of_containers(self, pod_list, kubecfg=''):
 		num_of_containers = 0
 		for pod in pod_list:
-			json_output = self._get_pod(pod)
+			json_output = self._get_pod(pod, kubeconfig=kubecfg)
 			containers = json_output['spec']['containers']
 			num_of_containers = num_of_containers + len(containers)
 			if 'initContainers' in json_output['spec']:
@@ -200,21 +200,21 @@ class CRMetrics(CRBase):
 				num_of_containers = num_of_containers + len(init_containers)
 		return num_of_containers
 
-	def _num_of_not_running_pods(self, pod_list):
+	def _num_of_not_running_pods(self, pod_list, kubecfg=''):
 		num_of_not_running_pods = 0
 		for pod in pod_list:
-			json_output = self._get_pod(pod)
+			json_output = self._get_pod(pod, kubeconfig=kubecfg)
 			if json_output['status']['phase'] != 'Running':
 				num_of_not_running_pods = num_of_not_running_pods + 1
 
 		return num_of_not_running_pods
 
-	def _parse_persistentvolumeclaims(self, pod_list):
+	def _parse_persistentvolumeclaims(self, pod_list, kubecfg=''):
 		total_storage = 0
 		pvc_list = []
 		for pod in pod_list:
 			pvc_details = {}
-			json_output = self._get_pod(pod)
+			json_output = self._get_pod(pod, kubeconfig=kubecfg)
 			#print(json_output)
 			#print("--------\n")
 			if json_output['spec']['volumes']:
@@ -256,7 +256,7 @@ class CRMetrics(CRBase):
 								total_storage = total_storage + storage_nums[0]
 		return total_storage
 
-	def _get_cpu_memory_usage_kubelet(self, pod_list, kubeconfig):
+	def _get_cpu_memory_usage_kubelet(self, pod_list, kubecfg=''):
 		total_cpu = 0
 		total_mem = 0
 
@@ -273,7 +273,7 @@ class CRMetrics(CRBase):
 		for pod in pod_list:
 			#print("POD:")
 			#print(pod)
-			pod_json = self._get_pod(pod)
+			pod_json = self._get_pod(pod, kubeconfig=kubecfg)
 
             # If nodeName is not present in Pod spec then it means that Pod is not scheduled
 			if 'nodeName' not in pod_json['spec']:
@@ -805,7 +805,7 @@ class CRMetrics(CRBase):
 		#print(networkMetric)
 		return float(networkMetric)
 
-	def _get_network_usage(self, pod_list, kubeconfig):
+	def _get_network_usage(self, pod_list, kubecfg=''):
 		networkReceiveBytesTotal = 0
 		networkTransmitBytesTotal = 0
 
@@ -819,7 +819,7 @@ class CRMetrics(CRBase):
 			cmd = kubeplus_home + '/plugins/kubediscovery-linux networkmetrics '
 
 		for pod in pod_list:
-			pod_json = self._get_pod(pod)
+			pod_json = self._get_pod(pod, kubeconfig=kubecfg)
 
             # If nodeName is not present in Pod spec then it means that Pod is not scheduled
 			if 'nodeName' not in pod_json['spec']:
@@ -991,13 +991,14 @@ class CRMetrics(CRBase):
 			    pod_list = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace, kubeconfig, conn_op_format)
 
 		#cpu, memory = self._get_cpu_memory_usage(pod_list)
-		num_of_containers_conn = self._parse_number_of_containers(pod_list)
-		total_storage_conn = self._parse_persistentvolumeclaims(pod_list)
-		num_of_hosts_conn = self._parse_number_of_hosts(pod_list)
-		cpu_conn, memory_conn = self._get_cpu_memory_usage_kubelet(pod_list, kubeconfig)
-		networkReceiveBytesTotal, networkTransmitBytesTotal = self._get_network_usage(pod_list, kubeconfig)
+		#print(pod_list)        
+		num_of_containers_conn = self._parse_number_of_containers(pod_list, kubecfg=kubeconfig)
+		total_storage_conn = self._parse_persistentvolumeclaims(pod_list, kubecfg=kubeconfig)
+		num_of_hosts_conn = self._parse_number_of_hosts(pod_list, kubecfg=kubeconfig)
+		cpu_conn, memory_conn = self._get_cpu_memory_usage_kubelet(pod_list, kubecfg=kubeconfig)
+		networkReceiveBytesTotal, networkTransmitBytesTotal = self._get_network_usage(pod_list, kubecfg=kubeconfig)
 
-		num_of_not_running_pods = self._num_of_not_running_pods(pod_list)
+		num_of_not_running_pods = self._num_of_not_running_pods(pod_list, kubecfg=kubeconfig)
 		num_of_pods = len(pod_list)
 		num_of_containers = num_of_containers_conn
 		num_of_hosts = num_of_hosts_conn
