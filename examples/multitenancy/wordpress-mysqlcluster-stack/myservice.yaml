@@ -1,6 +1,0 @@
-apiVersion: platformapi.kubeplus/v1alpha1
-kind: MyService 
-metadata:
-  name: wp-service-tenant1
-spec:
-  tenantName: tenant1
