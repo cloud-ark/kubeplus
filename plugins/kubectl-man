@@ -9,7 +9,7 @@ fi
 
 kind=$1
 kubeconfig=$3
-namespace=`more $kubeconfig | python -m json.tool | grep namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`
+namespace=`cat $kubeconfig | python -m json.tool | grep namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`
 
 check_kind $kind $kubeconfig
 

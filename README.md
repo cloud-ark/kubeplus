@@ -195,7 +195,7 @@ KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of Kub
 
 - Try following examples:
   - [Hello World service](./examples/multitenancy/hello-world/saas-and-managed-app-testing.md)
-  - [Wordpress service](./examples/multitenancy/wordpress-mysqlcluster-stack/steps.txt)
+  - [Wordpress service](./examples/multitenancy/wordpressl/steps.txt)
   - [Jenkins service](./examples/jenkins/non-operator/steps.txt)
 
 - Debug:

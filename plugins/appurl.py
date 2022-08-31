@@ -20,7 +20,7 @@ class AppURLFinder(CRBase):
 						break
 				if not present:
 					svc_list.append(resource)
-		#print(pod_list)
+		#print(svc_list)
 		return svc_list
 
 	def get_svc_port(self, svcs, namespace, kubeconfig):
@@ -34,6 +34,7 @@ class AppURLFinder(CRBase):
 
 				if out:
 					json_output = json.loads(out)
+					#print(json_output)
 					service_type = json_output['spec']['type']
 					if service_type == 'NodePort':
 						nodePort = json_output['spec']['ports'][0]['nodePort']
@@ -42,6 +43,19 @@ class AppURLFinder(CRBase):
 			except Exception as e:
 				print(e)
 		return nodePort
+
+	def get_node_ip(self, kubeconfig):
+		cmd = 'kubectl describe node ' + kubeconfig
+		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+		out = out.decode('utf-8')
+		#print("Node o/p:" + out)
+		for line in out.split("\n"):
+			if 'ExternalIP' in line:
+				parts = line.split(":")
+				nodeIP = parts[1].strip()
+				#print("Node IP:" + nodeIP)
+				return nodeIP
+		return ""
 
 	def get_server_ip(self, kubeconfig):
 		server_ip = ''
@@ -87,12 +101,16 @@ if __name__ == '__main__':
 	try:
 		svcs = appURLFinder.get_svc(resources)
 		svcPort = appURLFinder.get_svc_port(svcs, namespace, kubeconfig)
-		appIP = appURLFinder.get_server_ip(kubeconfig)
+		appIP = appURLFinder.get_node_ip(kubeconfig)
+		if appIP == "":
+			appIP = appURLFinder.get_server_ip(kubeconfig)
 		if appIP == '':
 			print("KubePlus SaaS Consumer context not found in the kubeconfig.")
 			print("Cannot form app url.")
 			exit()
 		else:
+			if "//" not in appIP:
+				appIP = "//" + appIP
 			appURL = "http:" + appIP + ":" + str(svcPort)
 			appURL = appURL.strip()
 			#print("App port:" + str(svcPort))
