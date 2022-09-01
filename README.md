@@ -114,7 +114,7 @@ kubectl metrics WordpressService wp-for-tenant1 default -o pretty -k provider.co
 ```
 
 <p align="center">
-<img src="./examples/multitenancy/wordpress/wp-tenant1-metrics-pretty.png" class="center">
+<img src="./examples/multitenancy/wordpress/wp-tenant1-metrics-pretty.png" style="width:50%; height:50%" class="center">
 </p>
 
 ```kubectl applogs``` enables retrieving WordpressService instance logs and ```kubectl appurl``` enables retrieving the instance's url.
@@ -176,7 +176,6 @@ KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of Kub
 - Try following examples:
   - [Hello World service](./examples/multitenancy/hello-world/saas-and-managed-app-testing.md)
   - [Wordpress service](./examples/multitenancy/wordpress/steps.txt)
-  - [Jenkins service](./examples/jenkins/non-operator/steps.txt)
 
 - Debug:
   ```
