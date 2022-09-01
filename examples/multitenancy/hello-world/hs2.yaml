@@ -1,0 +1,7 @@
+apiVersion: platformapi.kubeplus/v1alpha1
+kind: HelloWorldService
+metadata:
+  name: hs2
+spec:
+  greeting: Hello1 hello hello
+

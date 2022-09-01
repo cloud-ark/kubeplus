@@ -34,11 +34,13 @@ Create WordpressService consumer API registering the Wordpress Helm chart with i
   - If required modify the Pod policies in the podconfig section (cpu/memory requests and limits) 
   - kubectl create -f wordpress-service-composition.yaml --kubeconfig=provider.conf
 - Verify WordpressStack CRD registered
-  - until kubectl get crds --kubeconfig=provider.conf | grep wordpress  ; do echo "Waiting for WordpressService CRD to be registered.."; sleep 1; done
+  - until kubectl get crds --kubeconfig=provider.conf | grep wordpressservices.platformapi.kubeplus  ; do echo "Waiting for WordpressService CRD to be registered.."; sleep 1; done
 
 
 Create Tenant1 Wordpress stack: 
 -----------------------------------
+You can use either the provider.conf or consumer.conf in below commands.
+
 Check the man page for WordpressService to learn about what spec properties are available on the WordpressService resource
 - kubectl man WordpressService -k consumer.conf
 
@@ -46,11 +48,11 @@ Deploy WordPressService for tenant1
 - kubectl create -f tenant1.yaml --kubeconfig=consumer.conf
 
 Verify that WP instance is created:
-- kubectl get ns
+- kubectl get ns --kubeconfig=provider.conf
   -> verify that wp-for-tenant1 namespace is created
-- kubectl describe wordpressservice wp-for-tenant1
+- kubectl describe wordpressservice wp-for-tenant1 --kubeconfig=provider.conf
   -> should see the name of the helm release in the status field
-- kubectl get pods -n wp-for-tenant1 
+- kubectl get pods -n wp-for-tenant1 --kubeconfig=provider.conf
   -> should see 2 pods getting created
 
 Wait till all the wp-for-tenant1 instance pods are in 'Running' state.
