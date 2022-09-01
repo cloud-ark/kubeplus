@@ -174,7 +174,7 @@ KubePlus kubectl plugins enable discovery, monitoring and troubleshooting of Kub
 ```
 
 - Try following examples:
-  - [Hello World service](./examples/multitenancy/hello-world/saas-and-managed-app-testing.md)
+  - [Hello World service](./examples/multitenancy/hello-world/steps.txt)
   - [Wordpress service](./examples/multitenancy/wordpress/steps.txt)
 
 - Debug:

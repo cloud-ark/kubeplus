@@ -4,81 +4,85 @@ Hello World as-a-Service
 This example shows a basic Hello World Service creation.
 The provider creates HelloWorldService from the Hello World Helm chart.
 While creating the HelloWorldService, provider defines the resource requests and limits for cpu and memory resources for the Pods
-that will be created as part of this service instance. The node on which the Pod(s) should be deployed is also
-defined as part of this Service creation. The consumer creates instances of HelloWorldService to run a Pod that displays Hello World. 
+that will be created as part of this service's instances. The node on which the Pod(s) should be deployed is also
+defined as part of instance  creation. The consumer creates instances of HelloWorldService to run a Pod that displays Hello World. 
 
-Provider steps:
-----------------
-1. KUBEPLUS_NS=<Namespace in which KubePlus is installed>
+Setup:
+------
+Install Helm v3
+Install minikube
 
-2. Register HelloWorldService API
-   - kubectl create -f hello-world-service-composition.yaml
+Create minikube cluster
+- minikube start --kubernetes-version=v1.24.3
 
-3. until kubectl get crds | grep helloworldservices.platformapi.kubeplus ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
+Install KubePlus Operator 
+$ KUBEPLUS_NS=default
+$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.0.tgz?raw=true" -n $KUBEPLUS_NS
+
+Install KubePlus kubectl plugins
+$ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
+$ gunzip kubeplus-kubectl-plugins.tar.gz
+$ tar -xvf kubeplus-kubectl-plugins.tar
+$ export KUBEPLUS_HOME=`pwd`
+$ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
+$ kubectl kubeplus commands
+
+Get Provider and Consumer kubeconfigs:
+---------------------------------------
+Extract provider kubeconfig:
+- kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider.conf
+
+Extract consumer kubeconfig:
+- kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
+
+
+Create new consumer API:
+------------------------
+1. Register HelloWorldService API
+   - kubectl create -f hello-world-service-composition.yaml --kubeconfig=provider.conf
+
+2. until kubectl get crds --kubeconfig=provider.conf  | grep helloworldservices.platformapi.kubeplus ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
    - Wait till the HelloWorldService CRD is registered
 
-5. Retrieve provider kubeconfig 
-   - kubectl retrieve kubeconfig provider $KUBEPLUS_NS > provider.conf
 
-6. Retrieve consumer kubeconfig and share that with the consumer team
-   - kubectl retrieve kubeconfig consumer $KUBEPLUS_NS > consumer.conf
+Instance creation steps:
+-------------------------
+You can use either the provider.conf or consumer.conf in below commands.
 
-7. Grant permission to consumer kubeconfig to create HelloWorldService resources
-  - kubectl grantpermission consumer helloworldservices provider.conf $KUBEPLUS_NS
-
-Consumer steps:
-----------------
 1. Check HelloWorldService man page
-   - kubectl man HelloWorldService
+   - kubectl man HelloWorldService -k consumer.conf
 
-2. Create a hello world tenant
-   - Modify spec.nodeName in tenant1.yaml to refer to some node in your cluster
-   - kubectl get nodes
-   - Update tenant1.yaml
-   - kubectl create -f tenant1.yaml --kubeconfig=consumer.conf
+2. Create a hello world instance
+   - kubectl create -f hs1.yaml --kubeconfig=consumer.conf
 
-3. Verify that resource requests and limits for cpu and memory, and nodeSelector, have been set
-   on the hello world Pod.
-   - HELLOWORLD_POD=`kubectl get pods -A | grep hello | awk '{print $2}'`
-   - HELLOWORLD_NS=`kubectl get pods -A | grep hello | awk '{print $1}'`
-   - kubectl get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json | jq -r '.spec.containers[0].resources'
-   - kubectl get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json | jq -r '.spec.nodeName'
+3. Verify that resource requests and limits for cpu and memory have been set
+   on the hello world Pod as defined in the ResourceComposition definition in hello-world-service-composition.yaml
+   - HELLOWORLD_POD=`kubectl get pods -A --kubeconfig=consumer.conf | grep hello | awk '{print $2}'`
+   - HELLOWORLD_NS=`kubectl get pods -A --kubeconfig=consumer.conf | grep hello | awk '{print $1}'`
+   - kubectl get pods $HELLOWORLD_POD --kubeconfig=consumer.conf -n $HELLOWORLD_NS -o json | jq -r '.spec.containers[0].resources'
 
 4. Retrievel application url
-   - kubectl appurl HelloWorldService hello-world-tenant1 default -k consumer.conf
+   - kubectl appurl HelloWorldService hs1  default -k consumer.conf
+   - curl <app-url> from above output
+     - should see "Hello hello hello" displayed
 
 5. Retrievel application logs
-   - kubectl applogs HelloWorldService hello-world-tenant1 default -k consumer.conf
+   - kubectl applogs HelloWorldService hs1 default -k consumer.conf
 
 6. Retrievel application metrics
-   - kubectl metrics HelloWorldService hello-world-tenant1 default -k consumer.conf
+   - kubectl metrics HelloWorldService hs1 default -k consumer.conf
 
 7. Check resource connectivity graph
-   - kubectl connections HelloWorldService hello-world-tenant1 default -k consumer.conf -o png
+   - kubectl connections HelloWorldService hs1 default -k consumer.conf -o png
 
-7. Try to deploy second instance of of hello world tenant:
-   - kubectl create -f tenant2.yaml
-
-8. Check any errors
-   - kubectl describe helloworldservices hello-world-tenant2
-
-
-Provider steps:
-----------------
-1. Check the resource consumption of the tenant1 (cpu, memory, storage, network)
-   - KUBEPLUS_POD=`kubectl get pods | grep kubeplus | awk '{print $1}'`
-
-2. In a new terminal window:
-    - kubectl port-forward $KUBEPLUS_POD -n default 8081:8090
-
-3. curl -kv "http://127.0.0.1:8081/apis/kubeplus/metrics?kind=HelloWorldService&instance=hello-world-tenant1&namespace=default"
-
+8. Check that the application instance Pods are created in a new namespace
+   - kubectl get pods --kubeconfig=consumer.conf
+     - should see the hello world pod in hs1 namespace
 
 Clean up:
 -----------
 - As consumer:
-  - kubectl delete -f tenant2.yaml
-  - kubectl delete -f tenant1.yaml
+  - kubectl delete -f hs1.yaml --kubeconfig=consumer.conf
 
 - As provider:
-- kubectl delete -f hello-world-service-composition.yaml
+  - kubectl delete -f hello-world-service-composition.yaml --kubeconfig=provider.conf
