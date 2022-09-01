@@ -12,10 +12,6 @@ KubePlus offers following benefits towards deploying a Kubernetes-native applica
 - Troubleshooting and governance of application instances.
 - Tracking consumption metrics (cpu, memory, storage and network) at Helm release level in Prometheus. Application providers can use these metrics to define consumption-based chargeback models.
 
-<p align="center">
-<img src="./docs/jenkins-cpu-graph.png" class="center">
-</p>
-
 
 ## Overview
 
@@ -38,21 +34,9 @@ KubePlus offers following functions to application providers:
 - Monitor: Track application-specific consumption metrics for cpu, memory, storage, network.
 - Troubleshoot: Gain application-level insights through fine-grained Kubernetes resource relationship graphs.
 
-
-## Use-cases
-
-KubePlus supports two use-cases - multi-customer SaaS and managed application delivery.
-The multi-customer SaaS use-case involves an application provider/DevOps team creating a separate instance of an application in a separate namespace. The multi-customer SaaS use-case has been identified in the Kubernetes documentation as one of the [primary use-cases of Kubernetes multi-tenancy](https://kubernetes.io/docs/concepts/security/multi-tenancy/).
-The managed application delivery use-case involves an application provider delivering their application on other team's cluster.
-
-From KubePlus setup perspective, the primary difference between the two use-cases is the permissions that are granted to the KubePlus Operator. For the multi-instance SaaS use-case, the KubePlus Operator needs permissions to create namespaces and deploy applications within them. For managed application delivery use-case, our design does not provide the namespace creation permissions to the KubePlus Operator.
-
-Configuring KubePlus for the above use-cases is simple. In our design, if KubePlus Operator is installed in the default namespace, then it gets namespace create permissions, otherwise it does not. So for multi-instance SaaS use-case, install KubePlus in the default namespace. For managed application delivery use-case, install it in any other namespace. You can experiment with the two use-cases by following the example steps [here](./examples/multitenancy/hello-world/saas-and-managed-app-testing.md)
-
-
 ## Example
 
-To understand the working of KubePlus, let us see how a Wordpress provider can offer a multi-tenant Wordpress service using KubePlus (Wordpress SaaS).
+To understand the working of KubePlus, let us see how a Wordpress provider can offer a multi-tenant Wordpress service using KubePlus [(Wordpress SaaS)](./examples/multitenancy/wordpress/steps.txt).
 
 
 ### Cluster admin actions
@@ -66,13 +50,19 @@ $ KUBEPLUS_NS=default
 $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.0.tgz?raw=true" -n $KUBEPLUS_NS
 ```
 
-*2. Retrieve Provider kubeconfig file*
+KubePlus can be installed in the default Namespace or its own Namespace. When installed in the default NS, the application instances
+that KubePlus creates are created in separate namespaces. When installed in its own NS, the application instances are created in that same NS
+where KubePlus is deployed.
+
+
+*2. Retrieve Provider and Consumer kubeconfig files*
 
 KubePlus creates provider and consumer kubeconfig files with appropriately scoped
 RBAC policies. Cluster admin needs to distribute them to application providers and consumers. The provider kubeconfig file has permissions to register application helm charts under consumer APIs in the cluster. The consumer kubeconfig file has permissions to perform CRUD operations on the registered consumer APIs.
 
 ```
 $ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider.conf
+$ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
 ```
 
 ### Provider actions
@@ -80,6 +70,8 @@ $ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o js
 *1. Create consumer API*
 
 The provider team defines the consumer API named ```WordpressService``` using the ```ResourceComposition``` CRD (the provider API). The Wordpress Helm chart that underlies this service is created by the provider team. The spec properties of the ```WordpressService Custom Resource``` are the attributes defined in the Wordpress Helm chart's values.yaml.
+
+[Here](https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/wordpress/wordpress-service-composition.yaml) is the ResourceComposition definition for the WordpressService.
 
 ```
 $ kubectl create -f wordpress-service-composition.yaml --kubeconfig=provider.conf
@@ -91,23 +83,14 @@ As part of registering the consumer API, the provider team can define policies s
 <img src="./docs/wordpress-service-crd.png" width="650" height="250" class="center">
 </p> 
 
-[Here](https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/wordpress-mysqlcluster-stack/wordpress-service-composition.yaml) is the ResourceComposition definition for the WordpressService.
 
 
 *2. Create application instance*
 
-The provider uses WordpressService Custom Resource (the consumer API) to provision an instance of Wordpress stack. The instances can be created using ``kubectl`` or through a web portal.  Here is consumer portal for WordpressService showing the created ```tenant1``` instance.
-
-<p align="center">
-<img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1-consumerui.png" class="center">
-</p>
+An instance of the Wordpress stack is created using the WordpressService Custom Resource (the consumer API). Either the provider or consumer kubeconfig can be used for this purpose.
 
 ```
-$ kubectl create -f <wordpress-service>.yaml --kubeconfig=provider.conf
-                        or
-$ wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/open-consumer-ui.sh
-$ chmod +x open-consumer-ui.sh
-$ ./open-consumer-ui.sh provider.conf
+$ kubectl create -f tenant1.yaml --kubeconfig=provider.conf
 ```
 
 *3. Troubleshoot and monitor application instances*.
@@ -118,31 +101,30 @@ monitor and troubleshoot it using the various kubectl plugins that KubePlus prov
 With the ``kubectl connections`` plugin provider can check whether all Kubernetes resources have been created as expected. The graphical output makes it easy to check the connectivity between different resources.
 
 ```
-kubectl connections WordpressService tenant1 default -k provider.conf -o png -i Namespace:default,ServiceAccount:default -n label,specproperty,envvariable,annotation 
+kubectl connections WordpressService wp-for-tenant1 default -k provider.conf -o png 
 ```
 <p align="center">
-<img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1.png" class="center">
+<img src="./examples/multitenancy/wordpress/wp-tenant1-connections.png" class="center">
 </p>
 
 Using ```kubectl metrics``` plugin, provider can check cpu, memory, storage, network ingress/egress for a WordpressService instance. The metrics output is available in pretty, json and Prometheus formats.
 
 ```
-kubectl metrics WordpressService tenant1 default -o pretty -k provider.conf 
+kubectl metrics WordpressService wp-for-tenant1 default -o pretty -k provider.conf 
 ```
 
 <p align="center">
-<img src="./examples/multitenancy/wordpress-mysqlcluster-stack/wp-tenant1-metrics-pretty.png" class="center">
+<img src="./examples/multitenancy/wordpress/wp-tenant1-metrics-pretty.png" class="center">
 </p>
 
 ```kubectl applogs``` enables retrieving WordpressService instance logs and ```kubectl appurl``` enables retrieving the instance's url.
 
 
-## Demo
+## KubePlus SaaS Manager
 
-In order to enable application providers manage and deliver their applications using KubePlus, we have developed a control center with embedded Prometheus that enables managing their application SaaS across multiple Kubernetes clusters.
-See the control center in action [here](https://youtu.be/aIVnC4GKIV4).
+In order to enable application providers manage and deliver their application SaaS using KubePlus, we have developed a control center with embedded Prometheus as part of our [KubePlus SaaS Manager offering](https://cloudark.io/kubeplus-saas-manager). The control center enables providers manage their application SaaS across multiple Kubernetes clusters. See the control center in action [here](https://youtu.be/ZVhTE6WSjVI).
 
-To try out the control center, download and install it from [here](https://cloudark.io/download). Then follow the steps in the README.md therein.
+You can try out the control center [here](https://cloudark.io/free-trial).
 
 
 ## Components
@@ -172,8 +154,6 @@ More details about these components are available [here](https://cloud-ark.githu
 
 - Install KubePlus Operator.
 
-Choose the default namespace if configuring for the multi-customer SaaS use-case.
-For managed application delivery, choose any other namespace.
 
 ```
    $ KUBEPLUS_NS=default
