@@ -29,7 +29,7 @@ The ```provider API``` is named ``ResourceComposition`` that enables registering
 </p>
 
 
-KubePlus comes with a control center to manage application SaaS. The control center contains embedded Prometheus to track application resource consumption. You can host the control center yourself. For support,you can purchase our [subscription](https://cloudark.io/kubeplus-saas-manager). The control center enables providers manage their application SaaS across multiple Kubernetes clusters. See the control center in action [here](https://youtu.be/ZVhTE6WSjVI).
+KubePlus comes with a control center to manage application SaaS across multiple Kubernetes clusters. The control center contains embedded Prometheus to track application resource consumption. You can host the control center yourself. For support, you can purchase our [subscription](https://cloudark.io/kubeplus-saas-manager). See the control center in action [here](https://youtu.be/ZVhTE6WSjVI).
 
 ## Try
 
@@ -45,7 +45,7 @@ KubePlus comes with a control center to manage application SaaS. The control cen
    $ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider.conf
 ```
 
-- Start the control center
+- Start the control center. For the first time you will be asked to setup user credentials.
 ```
 Usage: ./kubeplus-control-center.sh <start|stop> <http|https> <domain_name> [<inet_ip>]
 ```
@@ -53,10 +53,15 @@ Usage: ./kubeplus-control-center.sh <start|stop> <http|https> <domain_name> [<in
    $ ./kubeplus-control-center.sh start http localhost localhost
 ```
 
+<p align="center">
+<img src="./docs/kubeplus-saas-manager-login-screen.png" style="width:75%; height:75%" class="center">
+</p>
+
+
 - Register the cluster by adding the provider kubeconfig 
 
 <p align="center">
-<img src="./docs/kubeplus-saas-manager-register-cluster.png" style="width:50%; height:50%" class="center">
+<img src="./docs/kubeplus-saas-manager-register-cluster.png" style="width:75%; height:75%" class="center">
 </p>
 
 - Register Wordpress Service
@@ -67,55 +72,56 @@ https://github.com/cloud-ark/k8s-workshop/blob/master/wordpress-deployment-chart
 ```
 
 <p align="center">
-<img src="./docs/kubeplus-saas-manager-register-service.png" style="width:50%; height:50%" class="center">
+<img src="./docs/kubeplus-saas-manager-register-service.png" style="width:75%; height:75%" class="center">
 </p>
 
 - Add the service to the cluster
 
 <p align="center">
-<img src="./docs/kubeplus-saas-manager-add-service-to-cluster.png" style="width:50%; height:50%" class="center">
+<img src="./docs/kubeplus-saas-manager-add-service-to-cluster.png" style="width:75%; height:75%" class="center">
 </p>
 
 - Create application instance
 
 <p align="center">
-<img src="./docs/kubeplus-saas-manager-create-instance1.png" style="width:50%; height:50%" class="center">
+<img src="./docs/kubeplus-saas-manager-create-instance1.png" style="width:75%; height:75%" class="center">
 </p>
 
 
-- Check resource consumption in the Prometheus
+- Check application resource consumption in the Prometheus
 
 <p align="center">
-<img src="./docs/kubeplus-saas-manager-running-instance.png" style="width:50%; height:50%" class="center">
+<img src="./docs/kubeplus-saas-manager-running-instance.png" style="width:75%; height:75%" class="center">
 </p>
 
 
 <p align="center">
-<img src="./docs/kubeplus-saas-manager-prometheus.png" style="width:50%; height:50%" class="center">
+<img src="./docs/kubeplus-saas-manager-prometheus.png" style="width:75%; height:75%" class="center">
 </p>
 
 
-- Check topology
+- Check application topology
 
 <p align="center">
-<img src="./docs/kubeplus-saas-manager-topology.png" style="width:50%; height:50%" class="center">
+<img src="./docs/kubeplus-saas-manager-topology.png" style="width:75%; height:75%" class="center">
 </p>
 
 
-- Troubleshoot 
+- Troubleshoot application resources 
 
 <p align="center">
-<img src="./docs/kubeplus-saas-manager-kubectl-access.png" style="width:50%; height:50%" class="center">
+<img src="./docs/kubeplus-saas-manager-kubectl-access.png" style="width:75%; height:75%" class="center">
 </p>
 
-- Debug:
-  ```
+## Troubleshoot KubePlus
+
+```
   - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c crd-hook
   - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c helmer
   - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c platform-operator
   - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c webhook-cert-setup
   - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c consumerui
-  ```
+```
 
 - Cleanup:
   ```
