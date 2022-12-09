@@ -6,6 +6,68 @@ import os
 import yaml
 import time
 
+from logging.config import dictConfig
+
+from flask import request
+from flask import Flask, render_template
+
+application = Flask(__name__)
+app = application
+
+
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://flask.logging.wsgi_errors_stream',
+        'formatter': 'default'
+    },
+     'file.handler': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': '/root/kubeconfiggenerator.log',
+            'maxBytes': 10000000,
+            'backupCount': 5,
+            'level': 'DEBUG',
+        },
+    },
+    'root': {
+        'level': 'INFO',
+        'handlers': ['file.handler']
+    }
+})
+
+
+
+def create_role_rolebinding(contents, name):
+    filePath = os.getenv("HOME") + "/" + name
+    fp = open(filePath, "w")
+    #json_content = json.dumps(contents)
+    #fp.write(json_content)
+    yaml_content = yaml.dump(contents)
+    fp.write(yaml_content)
+    fp.close()
+    print("---")
+    print(yaml_content)
+    print("---")
+    cmd = " kubectl create -f " + filePath
+    run_command(cmd)
+
+
+def run_command(cmd):
+    #print("Inside run_command")
+    print(cmd)
+    cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
+    out = cmdOut[0]
+    err = cmdOut[1]
+    print(out)
+    if out != '':
+        return out.decode('utf-8')
+    if err != '':
+        return err.decode('utf-8')
+
 
 class KubeconfigGenerator(object):
 
@@ -89,19 +151,6 @@ class KubeconfigGenerator(object):
 			else:
 				created = True
 
-	def _create_role_rolebinding(self, contents, name):
-		filePath = os.getenv("HOME") + "/" + name
-		fp = open(filePath, "w")
-		#json_content = json.dumps(contents)
-		#fp.write(json_content)
-		yaml_content = yaml.dump(contents)
-		fp.write(yaml_content)
-		fp.close()
-		print("---")
-		print(yaml_content)
-		print("---")
-		cmd = " kubectl create -f " + filePath
-		self.run_command(cmd)
 
 	def _apply_consumer_rbac(self, sa, namespace):
 		role = {}
@@ -145,7 +194,7 @@ class KubeconfigGenerator(object):
 		role["rules"] = ruleList
 
 		roleName = sa + "-role-impersonate.yaml"
-		self._create_role_rolebinding(role, roleName)
+		create_role_rolebinding(role, roleName)
 
 		roleBinding = {}
 		roleBinding["apiVersion"] = "rbac.authorization.k8s.io/v1"
@@ -170,7 +219,7 @@ class KubeconfigGenerator(object):
 		roleBinding["roleRef"] = roleRef
 
 		roleBindingName = sa + "-rolebinding-impersonate.yaml"
-		self._create_role_rolebinding(roleBinding, roleBindingName)
+		create_role_rolebinding(roleBinding, roleBindingName)
 
 	def _apply_provider_rbac(self, sa, namespace):
 		role = {}
@@ -284,7 +333,7 @@ class KubeconfigGenerator(object):
 		role["rules"] = ruleList
 
 		roleName = sa + "-role.yaml"
-		self._create_role_rolebinding(role, roleName)
+		create_role_rolebinding(role, roleName)
 
 		roleBinding = {}
 		roleBinding["apiVersion"] = "rbac.authorization.k8s.io/v1"
@@ -309,7 +358,7 @@ class KubeconfigGenerator(object):
 		roleBinding["roleRef"] = roleRef
 
 		roleBindingName = sa + "-rolebinding.yaml"
-		self._create_role_rolebinding(roleBinding, roleBindingName)
+		create_role_rolebinding(roleBinding, roleBindingName)
 
 	def _apply_rbac(self, sa, namespace, entity=''):
 		if entity == 'provider':
@@ -415,10 +464,144 @@ class KubeconfigGenerator(object):
 			print("Kube API Server:" + server)
 			self._create_kubecfg_file(sa, namespace, token, ca_cert, server)
 
+@app.route("/hello")
+def index():
+	return "hello world"
+
+
+@app.route("/update_provider_rbac")
+def apply_rbac():
+    namespace = request.args.get('kubeplusnamespace')
+    resourceComposition = request.args.get('resourceComposition')
+    targetNS = request.args.get('targetNS')
+
+    cmd = '/root/kubectl get resourcecomposition ' + resourceComposition + " -n " + namespace + " -o json"
+    out = run_command(cmd)
+    json_obj = json.loads(out)
+    helm_chart = json_obj['spec']['newResource']['chartURL']
+    print("Helm chart:" + helm_chart)
+    app.logger.info("Helm chart:" + helm_chart)
+
+    cmd = '/root/helm install testchart ' + helm_chart + ' --dry-run'
+    out1 = run_command(cmd)
+    kinds = []
+    for line in out1.split("\n"):
+        if 'kind' in line:
+            parts = line.split(":")
+            kind = parts[1].strip()
+            if kind not in kinds:
+                kinds.append(kind)
+    print("Kinds in chart:" + str(kinds))
+    app.logger.info("Kinds in chart:" + str(kinds))
+
+    cmd = 'kubectl api-resources'
+    out2 = run_command(cmd)
+    kind_version_list = []
+    for line in out2.split("\n"):
+        line = line.strip()
+        line1 = " ".join(line.split())
+        if line1 != " ":
+            parts = line1.split(" ")
+            app.logger.info("Parts:" + str(parts))
+            if parts[0] != '':
+                found_kind = parts[len(parts)-1].strip()
+                plural = parts[0].strip()
+                kind_apiversion_map = {}
+                app.logger.info("Found kind:" + found_kind)
+                app.logger.info("Kinds:" + str(kinds))
+                if found_kind in kinds:
+                    app.logger.info("Inside if..")
+                    kind_apiversion_map['kind'] = found_kind
+                    apiversion = parts[2].strip()
+                    if '/' not in apiversion:
+                        apiversion = ""
+                    kind_apiversion_map['apiversion'] = apiversion 
+                    kind_apiversion_map['plural'] = plural
+                    kind_version_list.append(kind_apiversion_map)
+
+    app.logger.info("Kind APIVersion list:" + str(kind_version_list))
+
+    role = {}
+    role["apiVersion"] = "rbac.authorization.k8s.io/v1"
+    role["kind"] = "Role"
+    metadata = {}
+    role_name = "kubeplus-saas-provider-update-role"
+    metadata["name"] = role_name
+    metadata["namespace"] = targetNS
+    role["metadata"] = metadata
+
+    ruleGroup9 = {}
+    apiGroup9 = []
+    resourceGroup9 = []
+    verbsGroup9 = ["create", "delete", "update", "get"]
+
+    for item in kind_version_list:
+        if item['apiversion'] not in apiGroup9:
+            apiGroup9.append(item['apiversion'])
+        if item['plural'] not in resourceGroup9:
+            resourceGroup9.append(item['plural'])
+
+    ruleGroup9["apiGroups"] = apiGroup9 
+    ruleGroup9["resources"] = resourceGroup9
+    ruleGroup9["verbs"] = verbsGroup9
+    app.logger.info("Rule Group:" + str(ruleGroup9))
+
+    ruleList = []
+    ruleList.append(ruleGroup9)
+    role["rules"] = ruleList
+
+    roleName = role_name + ".yaml" 
+    create_role_rolebinding(role, roleName)
+
+    role_binding_name = "kubeplus-saas-provider-update-rolebinding"
+    roleBinding = {}
+    roleBinding["apiVersion"] = "rbac.authorization.k8s.io/v1"
+    roleBinding["kind"] = "RoleBinding"
+    metadata = {}
+    metadata["name"] = role_binding_name
+    metadata["namespace"] = targetNS
+    roleBinding["metadata"] = metadata
+
+    subject1 = {}
+    subject1["kind"] = "ServiceAccount"
+    subject1["name"] = "kubeplus-saas-provider"
+    subject1["apiGroup"] = ""
+    subject1["namespace"] = namespace
+
+    subject2 = {}
+    subject2["kind"] = "ServiceAccount"
+    subject2["name"] = "kubeplus-saas-consumer"
+    subject2["apiGroup"] = ""
+    subject2["namespace"] = namespace
+
+    subjectList = []
+    subjectList.append(subject1)
+    subjectList.append(subject2)
+    roleBinding["subjects"] = subjectList
+
+    roleRef = {}
+    roleRef["kind"] = "Role"
+    roleRef["name"] = role_name
+    roleRef["apiGroup"] = "rbac.authorization.k8s.io"
+    roleBinding["roleRef"] = roleRef
+
+    roleBindingName = role_binding_name + ".yaml"
+    create_role_rolebinding(roleBinding, roleBindingName)
+    
+    return "abc"
 
 if __name__ == '__main__':
 	kubeconfigGenerator = KubeconfigGenerator()
 	namespace = sys.argv[1]
+
+        # Generate kubeplus-sa kubeconfig
+        #sa = 'kubeplus-sa'
+        #kubeconfigGenerator._generate_kubeconfig(sa, namespace)
+
+        # Note that the reason we are not applying RBAC to consumer and provider
+        # kubeconfigs here is because the RBAC policies are applied when the SA
+        # is created (in the Helm chart)
+
 	# 2. Generate Consumer kubeconfig
 	sa = 'kubeplus-saas-consumer'
 	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
@@ -428,6 +611,8 @@ if __name__ == '__main__':
 	sa = 'kubeplus-saas-provider'
 	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
 	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider')
+        
+	app.run(host='0.0.0.0', port=5005)
 
-	time.sleep(10)
+	#time.sleep(10)
 

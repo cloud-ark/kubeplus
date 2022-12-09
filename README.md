@@ -41,7 +41,7 @@ KubePlus comes with a control center to manage application SaaS across multiple 
 - Install KubePlus Operator and retrieve provider kubeconfig
 ```
    $ KUBEPLUS_NS=default
-   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.0.tgz?raw=true" -n $KUBEPLUS_NS
+   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.1.tgz?raw=true" -n $KUBEPLUS_NS
    $ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider.conf
 ```
 
