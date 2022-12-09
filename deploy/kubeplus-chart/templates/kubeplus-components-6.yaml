@@ -151,6 +151,29 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  name: kubeplus:crudallperms
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["create","update","patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubeplus:crudallperms-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeplus:crudallperms
+subjects:
+- kind: ServiceAccount
+  name: kubeplus 
+  namespace: {{ .Release.Namespace }}
+  apiGroup: ""
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
   name: kubeplus:readallperms
 rules:
 - apiGroups: ["*"]
@@ -298,6 +321,20 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
+  name: kubeconfighelper
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: kubeplus
+  type: NodePort 
+  ports:
+  - protocol: TCP
+    port: 91
+    targetPort: 5005
+---
+kind: Service
+apiVersion: v1
+metadata:
   name: kubeplus-consumerui
   namespace: {{ .Release.Namespace }}
 spec:
@@ -359,14 +396,15 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: kubeconfiggenerator
-        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.0
+        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.1
         imagePullPolicy: IfNotPresent 
         env:
           - name: KUBEPLUS_NAMESPACE
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-        command: ["./root/kubeconfiggenerator.sh"]
+                #command: ["./root/kubeconfiggenerator.sh"]
+        command: [ "python3", "/root/kubeconfiggenerator.py"]
         args:
           - "$(KUBEPLUS_NAMESPACE)"
       - name: crd-hook
