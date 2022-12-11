@@ -23,7 +23,7 @@ subjects:
   namespace: {{ .Release.Namespace }}
   apiGroup: ""
 ---
-{{- if eq .Release.Namespace "default" }}
+#{{- if eq .Release.Namespace "default" }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -61,7 +61,7 @@ subjects:
   name: kubeplus 
   namespace: {{ .Release.Namespace }}
   apiGroup: ""
-{{- end }}
+#{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -396,7 +396,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: kubeconfiggenerator
-        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.1
+        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.2
         imagePullPolicy: IfNotPresent 
         env:
           - name: KUBEPLUS_NAMESPACE
@@ -435,7 +435,8 @@ spec:
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
         #image: gcr.io/cloudark-kubeplus/helm-pod:0.1.4
-        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.0
+        #image: gcr.io/cloudark-kubeplus/helm-pod:3.0.0
+        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.2
         imagePullPolicy: IfNotPresent
         command: ["/root/helm-pod"]
         volumeMounts:
