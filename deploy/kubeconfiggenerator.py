@@ -541,6 +541,8 @@ def apply_rbac():
         if item['plural'] not in resourceGroup9:
             resourceGroup9.append(item['plural'])
 
+    apiGroup9.append("platformapi.kubeplus")
+    resourceGroup9.append("'*'")
     ruleGroup9["apiGroups"] = apiGroup9 
     ruleGroup9["resources"] = resourceGroup9
     ruleGroup9["verbs"] = verbsGroup9

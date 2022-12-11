@@ -717,7 +717,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 
 				targetNSName := namespace
 				if dryrun == "" {
-					if namespace == "default" {
+					if namespace == KUBEPLUS_NAMESPACE {
 						createNSCmd := "./root/kubectl create ns " + customresource
 						_, execOutput = executeExecCall(cmdRunnerPod, createNSCmd)
 						fmt.Printf("Output of Create NS Cmd:%v\n", execOutput)
