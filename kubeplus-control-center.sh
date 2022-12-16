@@ -43,7 +43,7 @@ start_control_center() {
 
 	# Pull image
 	echo "Pulling control center Docker image..."
-	docker pull gcr.io/cloudark-kubeplus/kubeplus-saas-manager-control-center:0.37
+	docker pull gcr.io/cloudark-kubeplus/kubeplus-saas-manager-control-center:0.38
 
 	minikube_ip=`minikube ip`
 
@@ -61,7 +61,7 @@ start_control_center() {
 
 	export DOMAIN_NAME=$domain_name
 
-	containerId=`docker run --env MINIKUBE_IP=$minikube_ip --env PROTOCOL=$protocol --env INET_IP=$inet_ip --env DOMAIN_NAME=$domain_name -p 5002:5002 -P --network host -v ~/.kubeplus/:/root/.kube -v ~/.kubeplus/:/root/.kubeplus -v ~/.kubeplus/consoles/:/prometheus-2.27.1.linux-amd64/consoles -v ~/.kubeplus/prometheus-data/:/prometheus-2.27.1.linux-amd64/data  -d gcr.io/cloudark-kubeplus/kubeplus-saas-manager-control-center:0.37`
+	containerId=`docker run --env MINIKUBE_IP=$minikube_ip --env PROTOCOL=$protocol --env INET_IP=$inet_ip --env DOMAIN_NAME=$domain_name -p 5002:5002 -P --network host -v ~/.kubeplus/:/root/.kube -v ~/.kubeplus/:/root/.kubeplus -v ~/.kubeplus/consoles/:/prometheus-2.27.1.linux-amd64/consoles -v ~/.kubeplus/prometheus-data/:/prometheus-2.27.1.linux-amd64/data  -d gcr.io/cloudark-kubeplus/kubeplus-saas-manager-control-center:0.38`
 	echo $containerId >> ~/.kubeplus/monitoring-container.txt
 	echo "KubePlus Control Center container: $containerId"
 

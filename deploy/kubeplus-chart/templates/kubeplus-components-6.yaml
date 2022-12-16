@@ -210,6 +210,9 @@ rules:
 - apiGroups: ["workflows.kubeplus"]
   resources: ["resourcecompositions","resourceevents","resourcemonitors","resourcepolicies"]
   verbs: ["get","list","create","update","delete","watch","patch"]
+- apiGroups: [""]
+  resources: ["pods","pods/attach","pods/exec","pods/portforward","pods/proxy"]
+  verbs: ["get","list","create","update","delete","watch","patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -396,7 +399,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: kubeconfiggenerator
-        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.2
+        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.3
         imagePullPolicy: IfNotPresent 
         env:
           - name: KUBEPLUS_NAMESPACE
