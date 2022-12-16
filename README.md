@@ -41,7 +41,7 @@ KubePlus generates kubeconfig files for providers and consumers.
 Use the provider kubeconfig to register the cluster in the control center. 
 ```
    $ KUBEPLUS_NS=default
-   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.2.tgz?raw=true" -n $KUBEPLUS_NS
+   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.3.tgz?raw=true" -n $KUBEPLUS_NS
    $ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider.conf
    $ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
 ```
