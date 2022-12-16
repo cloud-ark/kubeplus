@@ -60,13 +60,17 @@ def run_command(cmd):
     #print("Inside run_command")
     print(cmd)
     cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
-    out = cmdOut[0]
-    err = cmdOut[1]
+    out = cmdOut[0].decode('utf-8')
+    err = cmdOut[1].decode('utf-8')
     print(out)
-    if out != '':
-        return out.decode('utf-8')
-    if err != '':
-        return err.decode('utf-8')
+    print("---")
+    print(err)
+    return out, err
+    
+    #if out != '':
+    #    return out.decode('utf-8')
+    #if err != '':
+    #    return err.decode('utf-8')
 
 
 class KubeconfigGenerator(object):
@@ -468,6 +472,43 @@ class KubeconfigGenerator(object):
 def index():
 	return "hello world"
 
+@app.route("/testchart")
+def testchart():
+    chartURL = request.args.get('chartURL')
+    if chartURL:
+        print("Chart URL:" + chartURL)
+        app.logger.info("Chart URL:" + chartURL)
+    chartPath = request.args.get('chartPath')
+    if chartPath:
+        print("Chart Path:" + chartPath)
+        app.logger.info("Chart Path:" + chartPath)
+
+    chartLoc = ''
+    if chartURL != None:
+        chartLoc = chartURL
+    elif chartPath != None:
+        chartLoc = chartPath
+    else:
+        return "Error - chart Path is empty"
+
+    testChartName = "kubeplus-customerapi-reg-testchart"
+    cmd = "helm install " + testChartName + " " + chartLoc
+    out, err = run_command(cmd)
+    print(out)
+    app.logger.info("Helm install output:" + out)
+    print(err)
+    app.logger.info("Helm install error:" + err)
+
+    chartStatus = ''
+    if err != '':
+        chartStatus = err
+    else:
+        chartStatus = 'Chart is good.'
+
+    cmd = "helm delete " + testChartName
+    run_command(cmd)
+    return chartStatus
+
 
 @app.route("/update_provider_rbac")
 def apply_rbac():
@@ -476,14 +517,14 @@ def apply_rbac():
     targetNS = request.args.get('targetNS')
 
     cmd = '/root/kubectl get resourcecomposition ' + resourceComposition + " -n " + namespace + " -o json"
-    out = run_command(cmd)
+    out, _ = run_command(cmd)
     json_obj = json.loads(out)
     helm_chart = json_obj['spec']['newResource']['chartURL']
     print("Helm chart:" + helm_chart)
     app.logger.info("Helm chart:" + helm_chart)
 
     cmd = '/root/helm install testchart ' + helm_chart + ' --dry-run'
-    out1 = run_command(cmd)
+    out1, _ = run_command(cmd)
     kinds = []
     for line in out1.split("\n"):
         if 'kind' in line:
@@ -495,7 +536,7 @@ def apply_rbac():
     app.logger.info("Kinds in chart:" + str(kinds))
 
     cmd = 'kubectl api-resources'
-    out2 = run_command(cmd)
+    out2, _ = run_command(cmd)
     kind_version_list = []
     for line in out2.split("\n"):
         line = line.strip()
