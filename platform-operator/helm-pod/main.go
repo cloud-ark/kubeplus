@@ -794,10 +794,8 @@ func deployChart(request *restful.Request, response *restful.Response) {
 			response.Write([]byte(execOutput))
 		} else {
 			// Appending the Namespace to the list of Kinds since we are creating NS corresponding to
-			// each Helm release and if the kubeconfig namespace is "default" (SaaS use-case). 
-			if namespace == "default" {
-				kinds = append(kinds, "Namespace")
-			}
+			// each Helm release.
+			kinds = append(kinds, "Namespace")
 			kindsString := strings.Join(kinds, "-")
 			fmt.Printf("KindString:%s\n", kindsString)
 			response.Write([]byte(kindsString))
