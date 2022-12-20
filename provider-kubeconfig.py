@@ -8,13 +8,6 @@ import time
 
 from logging.config import dictConfig
 
-from flask import request
-from flask import Flask, render_template
-
-application = Flask(__name__)
-app = application
-
-
 dictConfig({
     'version': 1,
     'formatters': {'default': {
@@ -27,7 +20,7 @@ dictConfig({
     },
      'file.handler': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/root/kubeconfiggenerator.log',
+            'filename': 'provider-kubeconfig.log',
             'maxBytes': 10000000,
             'backupCount': 5,
             'level': 'DEBUG',
@@ -42,7 +35,7 @@ dictConfig({
 
 
 def create_role_rolebinding(contents, name):
-    filePath = os.getenv("HOME") + "/" + name
+    filePath = os.getcwd() + "/" + name
     fp = open(filePath, "w")
     #json_content = json.dumps(contents)
     #fp.write(json_content)
@@ -66,11 +59,6 @@ def run_command(cmd):
     print("---")
     print(err)
     return out, err
-    
-    #if out != '':
-    #    return out.decode('utf-8')
-    #if err != '':
-    #    return err.decode('utf-8')
 
 
 class KubeconfigGenerator(object):
@@ -137,14 +125,14 @@ class KubeconfigGenerator(object):
 		json_file = json.dumps(top_level_dict)
 		fileName =  sa + ".json"
 
-		fp = open(os.getenv("HOME") + "/" + fileName, "w")
+		fp = open(os.getcwd() + "/" + fileName, "w")
 		fp.write(json_file)
 		fp.close()
 
-		configmapName = sa + "-kubeconfig"
+		configmapName = sa
 		created = False 
 		while not created:        
-			cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getenv("HOME") + "/" + fileName
+			cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getcwd() + "/" + fileName
 			self.run_command(cmd)
 			get_cmd = "kubectl get configmap " + configmapName + " -n "  + namespace
 			output = self.run_command(cmd)
@@ -254,8 +242,8 @@ class KubeconfigGenerator(object):
 		# CRUD on clusterroles and clusterrolebindings
 		ruleGroup3 = {}
 		apiGroup3 = ["rbac.authorization.k8s.io"]
-		resourceGroup3 = ["clusterroles","clusterrolebindings"]
-		verbsGroup3 = ["get","watch","list","create","delete","update","patch"]
+		resourceGroup3 = ["clusterroles","clusterrolebindings","roles","rolebindings"]
+		verbsGroup3 = ["get","watch","list","create","delete","update","patch","deletecollection"]
 		ruleGroup3["apiGroups"] = apiGroup3
 		ruleGroup3["resources"] = resourceGroup3
 		ruleGroup3["verbs"] = verbsGroup3
@@ -278,11 +266,11 @@ class KubeconfigGenerator(object):
 		ruleGroup5["resources"] = resourceGroup5
 		ruleGroup5["verbs"] = verbsGroup5
 
-		# CRUD on networkpolicies
+		# CRUD on secrets, serviceaccounts, configmaps
 		ruleGroup6 = {}
-		apiGroup6 = ["networking.k8s.io"]
-		resourceGroup6 = ["networkpolicies"]
-		verbsGroup6 = ["get","watch","list","create","delete","update","patch"]
+		apiGroup6 = [""]
+		resourceGroup6 = ["secrets", "serviceaccounts", "configmaps","events","persistentvolumeclaims","serviceaccounts/token","services","services/proxy","endpoints"]
+		verbsGroup6 = ["get","watch","list","create","delete","update","patch", "deletecollection"]
 		ruleGroup6["apiGroups"] = apiGroup6
 		ruleGroup6["resources"] = resourceGroup6
 		ruleGroup6["verbs"] = verbsGroup6
@@ -296,11 +284,11 @@ class KubeconfigGenerator(object):
 		ruleGroup7["resources"] = resourceGroup7
 		ruleGroup7["verbs"] = verbsGroup7
 
-		# CRUD on HPA
+		# CRUD on Deployments
 		ruleGroup8 = {}
-		apiGroup8 = ["autoscaling"]
-		resourceGroup8 = ["horizontalpodautoscalers"]
-		verbsGroup8 = ["get","watch","list","create","delete","update","patch"]
+		apiGroup8 = ["apps"]
+		resourceGroup8 = ["deployments","daemonsets","deployments/rollback","deployments/scale","replicasets","replicasets/scale","statefulsets","statefulsets/scale"]
+		verbsGroup8 = ["get","watch","list","create","delete","update","patch","deletecollection"]
 		ruleGroup8["apiGroups"] = apiGroup8
 		ruleGroup8["resources"] = resourceGroup8
 		ruleGroup8["verbs"] = verbsGroup8
@@ -314,14 +302,108 @@ class KubeconfigGenerator(object):
 		ruleGroup9["resources"] = resourceGroup9
 		ruleGroup9["verbs"] = verbsGroup9
 
-		# Exec into the Pods
+		# Exec into the Pods and others in the "" apiGroup
 		ruleGroup10 = {}
 		apiGroup10 = [""]
-		resourceGroup10 = ["pods/exec"]
-		verbsGroup10 = ["get","create"]
+		resourceGroup10 = ["pods","pods/attach","pods/exec","pods/portforward","pods/proxy","pods/eviction","replicationcontrollers","replicationcontrollers/scale"]
+		verbsGroup10 = ["get","list","create","update","delete","watch","patch","deletecollection"]
 		ruleGroup10["apiGroups"] = apiGroup10
 		ruleGroup10["resources"] = resourceGroup10
 		ruleGroup10["verbs"] = verbsGroup10
+
+		# AdmissionRegistration
+		ruleGroup11 = {}
+		apiGroup11 = ["admissionregistration.k8s.io"]
+		resourceGroup11 = ["mutatingwebhookconfigurations"]
+		verbsGroup11 = ["get","create","delete","update"]
+		ruleGroup11["apiGroups"] = apiGroup11
+		ruleGroup11["resources"] = resourceGroup11
+		ruleGroup11["verbs"] = verbsGroup11
+
+		# APIExtension
+		ruleGroup12 = {}
+		apiGroup12 = ["apiextensions.k8s.io"]
+		resourceGroup12 = ["customresourcedefinitions"]
+		verbsGroup12 = ["get","create","delete","update", "patch"]
+		ruleGroup12["apiGroups"] = apiGroup12
+		ruleGroup12["resources"] = resourceGroup12
+		ruleGroup12["verbs"] = verbsGroup12
+
+		# Certificates
+		ruleGroup13 = {}
+		apiGroup13 = ["certificates.k8s.io"]
+		resourceGroup13 = ["signers"]
+		resourceNames13 = ["kubernetes.io/legacy-unknown","kubernetes.io/kubelet-serving","kubernetes.io/kube-apiserver-client","cloudark.io/kubeplus"]
+		verbsGroup13 = ["get","create","delete","update", "patch", "approve"]
+		ruleGroup13["apiGroups"] = apiGroup13
+		ruleGroup13["resources"] = resourceGroup13
+		ruleGroup13["resourceNames"] = resourceNames13
+		ruleGroup13["verbs"] = verbsGroup13
+
+		# Read all
+		ruleGroup14 = {}
+		apiGroup14 = ["*"]
+		resourceGroup14 = ["*"]
+		verbsGroup14 = ["get"]
+		ruleGroup14["apiGroups"] = apiGroup14
+		ruleGroup14["resources"] = resourceGroup14
+		ruleGroup14["verbs"] = verbsGroup14
+
+		ruleGroup15 = {}
+		apiGroup15 = ["certificates.k8s.io"]
+		resourceGroup15 = ["certificatesigningrequests", "certificatesigningrequests/approval"]
+		verbsGroup15 = ["create","delete","update", "patch"]
+		ruleGroup15["apiGroups"] = apiGroup15
+		ruleGroup15["resources"] = resourceGroup15
+		ruleGroup15["verbs"] = verbsGroup15
+
+		ruleGroup16 = {}
+		apiGroup16 = ["extensions"]
+		resourceGroup16 = ["deployments","daemonsets","deployments/rollback","deployments/scale","replicasets","replicasets/scale","replicationcontrollers/scale","ingresses","networkpolicies"]
+		verbsGroup16 = ["get","watch","list","create","delete","update","patch","deletecollection"]
+		ruleGroup16["apiGroups"] = apiGroup16
+		ruleGroup16["resources"] = resourceGroup16
+		ruleGroup16["verbs"] = verbsGroup16
+
+		ruleGroup17 = {}
+		apiGroup17 = ["networking.k8s.io"]
+		resourceGroup17 = ["ingresses","networkpolicies"]
+		verbsGroup17 = ["get","watch","list","create","delete","update","patch","deletecollection"]
+		ruleGroup17["apiGroups"] = apiGroup17
+		ruleGroup17["resources"] = resourceGroup17
+		ruleGroup17["verbs"] = verbsGroup17
+
+		ruleGroup18 = {}
+		apiGroup18 = ["authorization.k8s.io"]
+		resourceGroup18 = ["localsubjectaccessreviews"]
+		verbsGroup18 = ["create"]
+		ruleGroup18["apiGroups"] = apiGroup18
+		ruleGroup18["resources"] = resourceGroup18
+		ruleGroup18["verbs"] = verbsGroup18
+
+		ruleGroup19 = {}
+		apiGroup19 = ["autoscaling"]
+		resourceGroup19 = ["horizontalpodautoscalers"]
+		verbsGroup19 = ["create", "delete", "deletecollection", "patch", "update"]
+		ruleGroup19["apiGroups"] = apiGroup19
+		ruleGroup19["resources"] = resourceGroup19
+		ruleGroup19["verbs"] = verbsGroup19
+
+		ruleGroup20 = {}
+		apiGroup20 = ["batch"]
+		resourceGroup20 = ["cronjobs","jobs"]
+		verbsGroup20 = ["create", "delete", "deletecollection", "patch", "update"]
+		ruleGroup20["apiGroups"] = apiGroup20
+		ruleGroup20["resources"] = resourceGroup20
+		ruleGroup20["verbs"] = verbsGroup20
+
+		ruleGroup21 = {}
+		apiGroup21 = ["policy"]
+		resourceGroup21 = ["poddisruptionbudgets"]
+		verbsGroup21 = ["create", "delete", "deletecollection", "patch", "update"]
+		ruleGroup21["apiGroups"] = apiGroup21
+		ruleGroup21["resources"] = resourceGroup21
+		ruleGroup21["verbs"] = verbsGroup21
 
 		ruleList = []
 		ruleList.append(ruleGroup1)
@@ -334,6 +416,18 @@ class KubeconfigGenerator(object):
 		ruleList.append(ruleGroup8)
 		ruleList.append(ruleGroup9)
 		ruleList.append(ruleGroup10)
+		ruleList.append(ruleGroup11)
+		ruleList.append(ruleGroup12)
+		ruleList.append(ruleGroup13)
+		ruleList.append(ruleGroup14)
+		ruleList.append(ruleGroup15)
+		ruleList.append(ruleGroup16)
+		ruleList.append(ruleGroup17)
+		ruleList.append(ruleGroup18)
+		ruleList.append(ruleGroup19)
+		ruleList.append(ruleGroup20)
+		ruleList.append(ruleGroup21)
+
 		role["rules"] = ruleList
 
 		roleName = sa + "-role.yaml"
@@ -388,7 +482,7 @@ class KubeconfigGenerator(object):
 
 		secretName = sa + "-secret.yaml"
 
-		filePath = os.getenv("HOME") + "/" + secretName
+		filePath = os.getcwd() + "/" + secretName
 		fp = open(filePath, "w")
 		yaml_content = yaml.dump(secret)
 		fp.write(yaml_content)
@@ -412,9 +506,9 @@ class KubeconfigGenerator(object):
 
 	def _generate_kubeconfig(self, sa, namespace):
 		cmdprefix = ""
-		#cmd = " kubectl create sa " + sa + " -n " + namespace
-		#cmdToRun = cmdprefix + " " + cmd
-		#self.run_command(cmdToRun)
+		cmd = " kubectl create sa " + sa + " -n " + namespace
+		cmdToRun = cmdprefix + " " + cmd
+		self.run_command(cmdToRun)
 
 		#cmd = " kubectl get sa " + sa + " -n " + namespace + " -o json "
 		#cmdToRun = cmdprefix + " " + cmd
@@ -468,197 +562,38 @@ class KubeconfigGenerator(object):
 			print("Kube API Server:" + server)
 			self._create_kubecfg_file(sa, namespace, token, ca_cert, server)
 
-@app.route("/hello")
-def index():
-	return "hello world"
-
-@app.route("/testchart")
-def testchart():
-    chartURL = request.args.get('chartURL')
-    if chartURL:
-        print("Chart URL:" + chartURL)
-        app.logger.info("Chart URL:" + chartURL)
-    chartPath = request.args.get('chartPath')
-    if chartPath:
-        print("Chart Path:" + chartPath)
-        app.logger.info("Chart Path:" + chartPath)
-
-    chartLoc = ''
-    if chartURL != None:
-        chartLoc = chartURL
-    elif chartPath != None:
-        chartLoc = chartPath
-    else:
-        return "Error - chart Path is empty"
-
-    testChartName = "kubeplus-customerapi-reg-testchart"
-    cmd = "helm install " + testChartName + " " + chartLoc
-    out, err = run_command(cmd)
-    print(out)
-    app.logger.info("Helm install output:" + out)
-    print(err)
-    app.logger.info("Helm install error:" + err)
-
-    chartStatus = ''
-    if err != '':
-        chartStatus = err
-    else:
-        chartStatus = 'Chart is good.'
-
-    cmd = "helm delete " + testChartName
-    run_command(cmd)
-    return chartStatus
-
-
-@app.route("/update_provider_rbac")
-def apply_rbac():
-    namespace = request.args.get('kubeplusnamespace')
-    resourceComposition = request.args.get('resourceComposition')
-    targetNS = request.args.get('targetNS')
-
-    cmd = '/root/kubectl get resourcecomposition ' + resourceComposition + " -n " + namespace + " -o json"
-    out, _ = run_command(cmd)
-    json_obj = json.loads(out)
-    helm_chart = json_obj['spec']['newResource']['chartURL']
-    print("Helm chart:" + helm_chart)
-    app.logger.info("Helm chart:" + helm_chart)
-
-    cmd = '/root/helm install testchart ' + helm_chart + ' --dry-run'
-    out1, _ = run_command(cmd)
-    kinds = []
-    for line in out1.split("\n"):
-        if 'kind' in line:
-            parts = line.split(":")
-            kind = parts[1].strip()
-            if kind not in kinds:
-                kinds.append(kind)
-    print("Kinds in chart:" + str(kinds))
-    app.logger.info("Kinds in chart:" + str(kinds))
-
-    cmd = 'kubectl api-resources'
-    out2, _ = run_command(cmd)
-    kind_version_list = []
-    for line in out2.split("\n"):
-        line = line.strip()
-        line1 = " ".join(line.split())
-        if line1 != " ":
-            parts = line1.split(" ")
-            app.logger.info("Parts:" + str(parts))
-            if parts[0] != '':
-                found_kind = parts[len(parts)-1].strip()
-                plural = parts[0].strip()
-                kind_apiversion_map = {}
-                app.logger.info("Found kind:" + found_kind)
-                app.logger.info("Kinds:" + str(kinds))
-                if found_kind in kinds:
-                    app.logger.info("Inside if..")
-                    kind_apiversion_map['kind'] = found_kind
-                    apiversion = parts[2].strip()
-                    if '/' not in apiversion:
-                        apiversion = ""
-                    kind_apiversion_map['apiversion'] = apiversion 
-                    kind_apiversion_map['plural'] = plural
-                    kind_version_list.append(kind_apiversion_map)
-
-    app.logger.info("Kind APIVersion list:" + str(kind_version_list))
-
-    role = {}
-    role["apiVersion"] = "rbac.authorization.k8s.io/v1"
-    role["kind"] = "Role"
-    metadata = {}
-    role_name = "kubeplus-saas-provider-update-role"
-    metadata["name"] = role_name
-    metadata["namespace"] = targetNS
-    role["metadata"] = metadata
-
-    ruleGroup9 = {}
-    apiGroup9 = []
-    resourceGroup9 = []
-    verbsGroup9 = ["create", "delete", "update", "get"]
-
-    for item in kind_version_list:
-        if item['apiversion'] not in apiGroup9:
-            apiGroup9.append(item['apiversion'])
-        if item['plural'] not in resourceGroup9:
-            resourceGroup9.append(item['plural'])
-
-    apiGroup9.append("platformapi.kubeplus")
-    resourceGroup9.append("'*'")
-    ruleGroup9["apiGroups"] = apiGroup9 
-    ruleGroup9["resources"] = resourceGroup9
-    ruleGroup9["verbs"] = verbsGroup9
-    app.logger.info("Rule Group:" + str(ruleGroup9))
-
-    ruleList = []
-    ruleList.append(ruleGroup9)
-    role["rules"] = ruleList
-
-    roleName = role_name + ".yaml" 
-    create_role_rolebinding(role, roleName)
-
-    role_binding_name = "kubeplus-saas-provider-update-rolebinding"
-    roleBinding = {}
-    roleBinding["apiVersion"] = "rbac.authorization.k8s.io/v1"
-    roleBinding["kind"] = "RoleBinding"
-    metadata = {}
-    metadata["name"] = role_binding_name
-    metadata["namespace"] = targetNS
-    roleBinding["metadata"] = metadata
-
-    subject1 = {}
-    subject1["kind"] = "ServiceAccount"
-    subject1["name"] = "kubeplus-saas-provider"
-    subject1["apiGroup"] = ""
-    subject1["namespace"] = namespace
-
-    subject2 = {}
-    subject2["kind"] = "ServiceAccount"
-    subject2["name"] = "kubeplus-saas-consumer"
-    subject2["apiGroup"] = ""
-    subject2["namespace"] = namespace
-
-    subjectList = []
-    subjectList.append(subject1)
-    subjectList.append(subject2)
-    roleBinding["subjects"] = subjectList
-
-    roleRef = {}
-    roleRef["kind"] = "Role"
-    roleRef["name"] = role_name
-    roleRef["apiGroup"] = "rbac.authorization.k8s.io"
-    roleBinding["roleRef"] = roleRef
-
-    roleBindingName = role_binding_name + ".yaml"
-    create_role_rolebinding(roleBinding, roleBindingName)
-    
-    return "abc"
 
 if __name__ == '__main__':
+
+	if len(sys.argv) < 3:
+		print("python provider-kubeconfig.py <create|delete> <namespace>")
+		exit()
+
+	action = sys.argv[1]
+	namespace = sys.argv[2]
+
 	kubeconfigGenerator = KubeconfigGenerator()
-	namespace = sys.argv[1]
+	sa = 'kubeplus-saas-provider'
+	if action == "create":
+		out, err = run_command("kubectl get ns namespace")
+		if 'not found' in out or 'not found' in err:
+			run_command("kubectl create ns " + namespace)
 
-        # Generate kubeplus-sa kubeconfig
-        #sa = 'kubeplus-sa'
-        #kubeconfigGenerator._generate_kubeconfig(sa, namespace)
+		cmd = "kubectl label --overwrite=true ns " + namespace + " managedby=kubeplus"
+		run_command(cmd)
 
-        # Note that the reason we are not applying RBAC to consumer and provider
-        # kubeconfigs here is because the RBAC policies are applied when the SA
-        # is created (in the Helm chart)
+		# 1. Generate Provider kubeconfig
+		kubeconfigGenerator._generate_kubeconfig(sa, namespace)
+		kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider')
 
-	# 2. Generate Consumer kubeconfig
-	sa = 'kubeplus-saas-consumer'
-	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
-	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')
-	
-        # We are commenting out retrieval of Provider kubeconfig here as we have
-        # now extracted out Provider kubeconfig generation in a step that will 
-        # have to be run first.
-	# 1. Generate Provider kubeconfig
-	#sa = 'kubeplus-saas-provider'
-	#kubeconfigGenerator._generate_kubeconfig(sa, namespace)
-	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider')
-        
-	app.run(host='0.0.0.0', port=5005)
-
-	#time.sleep(10)
+	if action == "delete":
+		run_command("kubectl delete sa " + sa + " -n " + namespace)
+		run_command("kubectl delete configmap " + sa + " -n " + namespace)
+		run_command("kubectl delete clusterrole " + sa + " -n " + namespace)
+		run_command("kubectl delete clusterrolebinding " + sa + " -n " + namespace)
+		cwd = os.getcwd()
+		run_command("rm " + cwd + "/kubeplus-saas-provider-secret.yaml")
+		run_command("rm " + cwd + "/kubeplus-saas-provider.json")
+		run_command("rm " + cwd + "/kubeplus-saas-provider-role.yaml")
+		run_command("rm " + cwd + "/kubeplus-saas-provider-rolebinding.yaml")	
 
