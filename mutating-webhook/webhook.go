@@ -828,6 +828,16 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 		}
 	}
 
+	message1 := string(LintChart(chartURL))
+	fmt.Printf("After LintChart - message:%s\n", message1)
+	if !strings.Contains(message1, "Chart is good") {
+		return &v1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: message1,
+			},
+		}
+	}
+
 	fmt.Printf("10101010101\n")
  	return nil
 }

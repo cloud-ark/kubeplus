@@ -527,6 +527,65 @@ def testchart():
     run_command(cmd)
     return chartStatus
 
+@app.route("/dryrunchart")
+def dryrunchart():
+    chartURL = request.args.get('chartURL')
+    if chartURL:
+        print("Chart URL:" + chartURL)
+        app.logger.info("Chart URL:" + chartURL)
+    chartPath = request.args.get('chartPath')
+    if chartPath:
+        print("Chart Path:" + chartPath)
+        app.logger.info("Chart Path:" + chartPath)
+
+    chartLoc = ''
+    if chartURL != None:
+        chartLoc = chartURL
+    elif chartPath != None:
+        chartLoc = chartPath
+    else:
+        return "Error - chart Path is empty"
+
+    testChartName = "kubeplus-customerapi-reg-testchart"
+    cmd = "helm install " + testChartName + " " + chartLoc + " --dry-run"
+    out, err = run_command(cmd)
+    print(out)
+    app.logger.info("Helm install output:" + out)
+    print(err)
+    app.logger.info("Helm install error:" + err)
+
+    # Check storage class used by pvc; the reclaim policy needs to be delete
+    storage_classes = []
+    pvc_count = 0
+    storage_classname_count = 0
+    for line in out.split("\n"):
+        if 'PersistentVolumeClaim' in line.strip():
+            pvc_count = pvc_count + 1
+        if 'storageClassName' in line.strip():
+            storage_classname_count = storage_classname_count + 1
+            parts = line.split(":")
+            storage_class = parts[1].strip()
+            app.logger.info("Storage class:" + storage_class)
+            if storage_class not in storage_classes:
+                storage_classes.append(storage_class)
+    if storage_classname_count < pvc_count: # this means there is a pvc with no storageClassName explicitly specified
+        if 'standard' not in storage_classes:# it means the pvc defaults to the 'default' storageClassName; so add that.
+            storage_classes.append('standard')
+    app.logger.info("Storage classes:" + str(storage_classes))
+
+    chartStatus = 'Chart is good.'
+    for storageClass in storage_classes:
+        cmd = "kubectl get storageclass " + storageClass + " -o json "
+        out, err = run_command(cmd)
+        json_obj = json.loads(out)
+        reclaim_policy = json_obj['reclaimPolicy']
+        app.logger.info("Reclaim policy:" + reclaim_policy)
+        if reclaim_policy.lower() != "delete":
+            chartStatus = "Storage class with reclaim policy " + reclaim_policy + " not allowed."
+            break
+
+    return chartStatus
+
 
 @app.route("/update_provider_rbac")
 def apply_rbac():
