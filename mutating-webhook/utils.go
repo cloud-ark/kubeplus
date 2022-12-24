@@ -878,6 +878,17 @@ func TestChartDeployment(kind, namespace, chartName, chartURL string) []byte {
 	return body
 }
 
+func LintChart(chartURL string) []byte {
+	fmt.Printf("Inside LintChart...\n")
+	encodedChartURL := url.QueryEscape(chartURL)
+	args := fmt.Sprintf("chartURL=%s", encodedChartURL)
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/dryrunchart?%s", serviceHost, verificationServicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
 func AnnotateCRD(kind, plural, group, chartkinds string) []byte {
 	args := fmt.Sprintf("kind=%s&plural=%s&group=%s&chartkinds=%s", kind, plural, group, chartkinds)
 	fmt.Printf("Inside AnnotateCRD...\n")
