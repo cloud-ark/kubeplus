@@ -994,7 +994,22 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 
 	overridesBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "spec")
 	overrides := string(overridesBytes)
-	//fmt.Printf("Overrides:%s\n", overrides)
+	fmt.Printf("Overrides:%s\n", overrides)
+
+	nodeName, err := jsonparser.GetUnsafeString(req.Object.Raw, "spec", "nodeName")
+	fmt.Printf("nodeName in Spec:%s\n", nodeName)
+
+	if nodeName != "" {
+		validNodeName := CheckApplicationNodeName(nodeName)
+		if !validNodeName {
+			msg := fmt.Sprintf("Invalid node name specified %s\n", nodeName)
+			return &v1.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: msg,
+				},
+			}
+		}
+	}
 
 	customAPI := apiVersion + "/" + kind
 	//fmt.Printf("CustomAPI:%s\n", customAPI)

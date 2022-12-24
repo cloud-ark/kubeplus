@@ -472,6 +472,24 @@ class KubeconfigGenerator(object):
 def index():
 	return "hello world"
 
+@app.route("/nodes")
+def get_nodes():
+    cmd = "kubectl get nodes "
+    out, err = run_command(cmd)
+    app.logger.info("Nodes: " + out)
+    lines = out.split("\n")
+    nodes = []
+    for line in lines:
+        app.logger.info(line)
+        if 'NAME' not in line:
+            parts = line.split(" ")
+            nodeName = parts[0].strip()
+            nodes.append(nodeName)
+
+    nodesString = ",".join(nodes)
+    app.logger.info("Node String:\n" + nodesString)
+    return nodesString
+
 @app.route("/testchart")
 def testchart():
     chartURL = request.args.get('chartURL')
@@ -646,8 +664,10 @@ if __name__ == '__main__':
         # is created (in the Helm chart)
 
 	# 2. Generate Consumer kubeconfig
-	sa = 'kubeplus-saas-consumer'
-	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
+        # TODO: Generating consumer kubeconfig is getting stuck - may be permisison issue.
+        #       Need to debug.
+	#sa = 'kubeplus-saas-consumer'
+	#kubeconfigGenerator._generate_kubeconfig(sa, namespace)
 	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')
 	
         # We are commenting out retrieval of Provider kubeconfig here as we have
