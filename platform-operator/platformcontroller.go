@@ -558,6 +558,10 @@ func handleCRD(rescomposition, kind, version, group, plural, action, namespace s
 		fieldName := properties[i]
 		specProperties[fieldName] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
 	}
+
+	// Add "nodeName" to the specProperties to support node isolation.
+	specProperties["nodeName"] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
+
 	var jsonSchemaInner apiextensionsv1beta1.JSONSchemaProps
 	jsonSchemaInner.Type = "object"
 	jsonSchemaInner.Properties = specProperties

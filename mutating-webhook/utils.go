@@ -42,7 +42,7 @@ var (
 	err error
 	dynamicClient dynamic.Interface
 	platformStackMap map[string]PlatformStackData
-	serviceHost, servicePort string
+	serviceHost, servicePort, verificationServicePort string
 )
 
 func init() {
@@ -53,6 +53,7 @@ func init() {
 	platformStackMap = make(map[string]PlatformStackData)
 	serviceHost = "localhost"
 	servicePort = "8090"
+	verificationServicePort = "5005"
 }
 
 func buildConfig() (*rest.Config, error) {
@@ -110,7 +111,7 @@ func getResourceLabels(req []byte) map[string]string {
 	labelMap := make(map[string]string)
 	fmt.Printf("ResourceDetails:%s\n", string(req))
 
-	hasLabels := checkIfLabelsExist(req) 
+	hasLabels := checkIfLabelsExist(req)
 
 	if !hasLabels {
 		fmt.Println("No labels found")
@@ -798,8 +799,6 @@ func addAnnotation(labelkey, labelvalue, kind, resource, namespace string) {
 func GetPlural(kind, group string) []byte {
 	args := fmt.Sprintf("kind=%s&group=%s", kind, group)
 	fmt.Printf("Inside GetPlural...\n")
-	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
-	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/getPlural?%s", serviceHost, servicePort, args)
 	fmt.Printf("Url:%s\n", url1)
@@ -816,14 +815,41 @@ func CheckResource(kind, plural string) []byte {
 	return body
 }
 
+func CheckApplicationNodeName(nodeName string) bool  {
+	fmt.Printf("Inside CheckApplicationNodeName...%s\n", nodeName)
+
+	result := false
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/nodes", serviceHost, verificationServicePort)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	nodeNamesString := string(body)
+	fmt.Printf("Cluster nodes:%s\n", nodeNamesString)
+	parts := strings.Split(nodeNamesString, ",")
+	if len(parts) > 0 {
+		for _, n := range parts {
+			if n != "" && nodeName == strings.TrimSpace(n) {
+				fmt.Printf("Cluster Node Name:%s Spec Node Name:%s\n", n, nodeName)
+				fmt.Printf("Valid Node name specified.\n")
+				result = true
+				break
+			}
+		}
+	}
+
+	if !result {
+		fmt.Printf("Node name not valid:%s\n", nodeName)
+	}
+
+	return result
+}
+
 // http://10.80.10.160:90/apis/kubeplus/deploy?platformworkflow=hello-world-service-composition&customresource=hello-world-tenant1&namespace=default&overrides={"greeting":"Hello Kubernauts - This is KubePlus"}
 // http://10.80.10.160:90/apis/kubeplus/deploy?platformworkflow=hello-world-service-composition&customresource=hello-world-tenant1&namespace=default&overrides={"greeting":"Hi"}
 func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides string) []byte {
 	encodedOverrides := url.QueryEscape(overrides)
 	args := fmt.Sprintf("platformworkflow=%s&customresource=%s&namespace=%s&overrides=%s", platformworkflow, customresource, namespace, encodedOverrides)
 	fmt.Printf("Inside QueryDeployEndpoint...\n")
-	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
-	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deploy?%s", serviceHost, servicePort, args)
 	fmt.Printf("Url:%s\n", url1)
@@ -834,8 +860,6 @@ func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides 
 func DryRunChart(platformworkflow, namespace string) []byte {
 	args := fmt.Sprintf("platformworkflow=%s&namespace=%s&dryrun=true", platformworkflow, namespace)
 	fmt.Printf("Inside DryRunChart...\n")
-	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
-	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deploy?%s", serviceHost, servicePort, args)
 	fmt.Printf("Url:%s\n", url1)
@@ -847,8 +871,6 @@ func TestChartDeployment(kind, namespace, chartName, chartURL string) []byte {
 	fmt.Printf("Inside TestChartDeployment...\n")
 	encodedChartURL := url.QueryEscape(chartURL)
 	args := fmt.Sprintf("kind=%s&namespace=%s&chartName=%s&chartURL=%s", kind, namespace, chartName, encodedChartURL)
-	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
-	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/testChartDeployment?%s", serviceHost, servicePort, args)
 	fmt.Printf("Url:%s\n", url1)
@@ -859,8 +881,6 @@ func TestChartDeployment(kind, namespace, chartName, chartURL string) []byte {
 func AnnotateCRD(kind, plural, group, chartkinds string) []byte {
 	args := fmt.Sprintf("kind=%s&plural=%s&group=%s&chartkinds=%s", kind, plural, group, chartkinds)
 	fmt.Printf("Inside AnnotateCRD...\n")
-	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
-	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/annotatecrd?%s", serviceHost, servicePort, args)
 	fmt.Printf("Url:%s\n", url1)
@@ -871,8 +891,6 @@ func AnnotateCRD(kind, plural, group, chartkinds string) []byte {
 func DeleteCRDInstances(kind, group, version, plural, namespace, instance string) []byte {
 	fmt.Printf("Inside deleteCRDInstances...\n")
 	args := fmt.Sprintf("kind=%s&group=%s&version=%s&plural=%s&namespace=%s&instance=%s", kind, group, version, plural, namespace, instance)
-	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
-	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deletecrdinstances?%s", serviceHost, servicePort, args)
 	fmt.Printf("Url:%s\n", url1)
@@ -883,8 +901,6 @@ func DeleteCRDInstances(kind, group, version, plural, namespace, instance string
 func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
 	args := fmt.Sprintf("kind=%s&instance=%s&namespace=%s", kind, crdKindName, namespace)
 	fmt.Printf("Inside QueryCompositionEndpoint...\n")
-	//serviceHost, servicePort := getServiceEndpoint("discovery-service")
-	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/platform-as-code/v1/composition?%s", serviceHost, servicePort, args)
 	fmt.Printf("Url:%s\n", url1)
@@ -895,8 +911,6 @@ func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
 func GetValuesYaml(platformworkflow, namespace string) []byte {
 	args := fmt.Sprintf("platformworkflow=%s&namespace=%s", platformworkflow, namespace)
 	fmt.Printf("Inside GetValuesYaml...\n")
-	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
-	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/getchartvalues?%s", serviceHost, servicePort, args)
 	fmt.Printf("Url:%s\n", url1)
@@ -933,7 +947,7 @@ func getServiceEndpoint(servicename string) (string, string) {
 
 // Rename this function to a more generic name since we use it to trigger Custom Resource deployment as well.
 func queryKubeDiscoveryService(url1 string) []byte {
-	//fmt.Printf("..inside queryKubeDiscoveryService")
+	fmt.Printf("..inside queryKubeDiscoveryService")
 	u, err := url.Parse(url1)
 	//fmt.Printf("URL:%s\n",u)
 	if err != nil {
@@ -956,7 +970,7 @@ func queryKubeDiscoveryService(url1 string) []byte {
 
 	fmt.Println("Response status:%s\n",resp.Status)
 	fmt.Println("Response body:%s\n",string(resp_body))
-	fmt.Println("Exiting QueryCompositionEndpoint")
+	fmt.Println("Exiting queryKubeDiscoveryService")
 	return resp_body
 }
 
