@@ -45,6 +45,13 @@ var (
 	serviceHost, servicePort, verificationServicePort string
 )
 
+type ClusterCapacity struct {
+	nodes string `json:"nodes"`
+	total_allocatable_cpu string `json:"total_allocatable_cpu"`
+	total_allocatable_memory string `json:"total_allocatable_memory"`
+	total_allocatable_memory_gb string `json:"total_allocatable_memory_gb"`
+}
+
 func init() {
 	cfg, err = buildConfig()
 	if err != nil {
@@ -846,9 +853,9 @@ func CheckApplicationNodeName(nodeName string) bool  {
 
 // http://10.80.10.160:90/apis/kubeplus/deploy?platformworkflow=hello-world-service-composition&customresource=hello-world-tenant1&namespace=default&overrides={"greeting":"Hello Kubernauts - This is KubePlus"}
 // http://10.80.10.160:90/apis/kubeplus/deploy?platformworkflow=hello-world-service-composition&customresource=hello-world-tenant1&namespace=default&overrides={"greeting":"Hi"}
-func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides string) []byte {
+func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides, cpu_req, cpu_lim, mem_req, mem_lim string) []byte {
 	encodedOverrides := url.QueryEscape(overrides)
-	args := fmt.Sprintf("platformworkflow=%s&customresource=%s&namespace=%s&overrides=%s", platformworkflow, customresource, namespace, encodedOverrides)
+	args := fmt.Sprintf("platformworkflow=%s&customresource=%s&namespace=%s&overrides=%s&cpu_req=%s&cpu_lim=%s&mem_req=%s&mem_lim=%s", platformworkflow, customresource, namespace, encodedOverrides, cpu_req, cpu_lim, mem_req, mem_lim)
 	fmt.Printf("Inside QueryDeployEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deploy?%s", serviceHost, servicePort, args)
@@ -876,6 +883,57 @@ func TestChartDeployment(kind, namespace, chartName, chartURL string) []byte {
 	fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body
+}
+
+func CheckClusterCapacity(cpuRequests, cpuLimits, memRequests, memLimits string) (bool, string) {
+	fmt.Printf("Inside CheckClusterCapacity...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/cluster_capacity", serviceHost, verificationServicePort)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+
+	var clusterCapacity ClusterCapacity
+        json.Unmarshal(body, &clusterCapacity)
+	fmt.Printf("Cluster Capacity:%v\n", clusterCapacity)
+
+	bodyString := string(body)
+	//jsonresp := bodyString.(map[string]string) 
+
+	//totalAllocatableCPU := jsonresp['total_allocatable_cpu']
+	//totalAllocatableMemoryGB := jsonresp['total_allocatable_memory_gb']
+
+	//bodyString: total_allocatable_cpu:123,total_allocatable_memory_gb:2
+	parts := strings.Split(bodyString,",")
+	cpuParts := strings.Split(parts[0],":")
+	totalAllocatableCPU := strings.TrimSpace(cpuParts[1])
+
+	memParts := strings.Split(parts[1],":")
+	totalAllocatableMemoryGB := strings.TrimSpace(memParts[1])
+	
+	fmt.Printf("Total Allocatable CPU:%s\n", totalAllocatableCPU)
+	fmt.Printf("Total Allocatable Memory:%s\n", totalAllocatableMemoryGB)
+
+	cpuRequests = strings.TrimSpace(strings.ReplaceAll(cpuRequests, "m", ""))
+	cpuLimits = strings.TrimSpace(strings.ReplaceAll(cpuLimits, "m", ""))
+
+	memRequests = strings.TrimSpace(strings.ReplaceAll(memRequests, "Gi", ""))
+	memLimits = strings.TrimSpace(strings.ReplaceAll(memLimits, "Gi", ""))
+
+	result := true
+	message := "Quota is within limits."
+	if totalAllocatableCPU < cpuRequests || totalAllocatableCPU < cpuLimits {
+		result = false
+		message = fmt.Sprintf("Specified CPU quota values are more than CPU capacity: %s %s - %s", cpuRequests, cpuLimits, totalAllocatableCPU)
+		return result, message
+	}
+
+	if totalAllocatableMemoryGB < memRequests || totalAllocatableMemoryGB < memLimits {
+		result = false
+		message = fmt.Sprintf("Specified Memory quota values are more than Memory capacity: %s %s - %s", memRequests, memLimits, totalAllocatableMemoryGB)
+		return result, message
+	}
+
+	return result, message
 }
 
 func LintChart(chartURL string) []byte {

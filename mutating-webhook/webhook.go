@@ -47,6 +47,7 @@ var (
 	customAPIPlatformWorkflowMap map[string]string
 	customKindPluralMap map[string]string
 	customAPIInstanceUIDMap map[string]string
+	customAPIQuotaMap map[string]interface{}
 	kindPluralMap map[string]string
 	resourcePolicyMap map[string]interface{}
 	resourceNameObjMap map[string]interface{}
@@ -94,6 +95,7 @@ func init() {
 	customAPIPlatformWorkflowMap = make(map[string]string,0)
 	customAPIInstanceUIDMap = make(map[string]string,0)
 	customKindPluralMap = make(map[string]string,0)
+	customAPIQuotaMap = make(map[string]interface{}, 0)
 	kindPluralMap = make(map[string]string,0)
 	resourcePolicyMap = make(map[string]interface{}, 0)
 	resourceNameObjMap = make(map[string]interface{}, 0)
@@ -838,6 +840,38 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 		}
 	}
 
+	quota_cpu_requests, _ := jsonparser.GetUnsafeString(body, "spec","respolicy","spec","policy","quota","requests.cpu")
+	fmt.Printf("CPU requests(quota):%s\n", quota_cpu_requests)
+
+	quota_memory_requests, _ := jsonparser.GetUnsafeString(body, "spec","respolicy","spec","policy","quota","requests.memory")
+	fmt.Printf("Memory requests(quota):%s\n", quota_memory_requests)
+
+	quota_cpu_limits, _ := jsonparser.GetUnsafeString(body, "spec","respolicy","spec","policy","quota","limits.cpu")
+	fmt.Printf("CPU limits(quota):%s\n", quota_cpu_limits)
+
+	quota_memory_limits, _ := jsonparser.GetUnsafeString(body, "spec","respolicy","spec","policy","quota","limits.memory")
+	fmt.Printf("Memory limits(quota):%s\n", quota_memory_limits)
+
+
+	_, message2 := CheckClusterCapacity(quota_cpu_requests, quota_cpu_limits, quota_memory_requests, quota_memory_limits)
+	fmt.Printf("After CheckClusterCapacity - message:%s\n", message2)
+	if !strings.Contains(message2, "Quota is within limits.") {
+		return &v1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: message2,
+			},
+		}
+	}
+
+	var quota_map map[string]string
+	quota_map = make(map[string]string)
+	quota_map["requests.cpu"] = quota_cpu_requests
+	quota_map["limits.cpu"] = quota_cpu_limits
+	quota_map["requests.memory"] = quota_memory_requests
+	quota_map["limits.memory"] = quota_memory_limits
+
+ 	customAPIQuotaMap[customAPI] = quota_map
+
 	fmt.Printf("10101010101\n")
  	return nil
 }
@@ -1054,7 +1088,17 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 		chartURL := platformWorkflow1.Spec.NewResource.ChartURL
 		chartName := platformWorkflow1.Spec.NewResource.ChartName
  		fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s, ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
- 		QueryDeployEndpoint(platformWorkflowName, crname, namespace, overrides)
+
+		quota_map := customAPIQuotaMap[customAPI].(map[string]string)
+		cpu_requests_q := quota_map["requests.cpu"]
+		cpu_limits_q := quota_map["limits.cpu"]
+		mem_requests_q := quota_map["requests.memory"]
+		mem_limits_q := quota_map["limits.memory"]
+
+		fmt.Printf("cpu_req:%s cpu_lim:%s mem_req:%s mem_lim:%s\n", cpu_requests_q, cpu_limits_q, mem_requests_q, mem_limits_q)
+
+ 		QueryDeployEndpoint(platformWorkflowName, crname, namespace, overrides, cpu_requests_q,
+	                           cpu_limits_q, mem_requests_q, mem_limits_q)
 	}
 	return nil
 }
