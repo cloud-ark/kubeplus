@@ -586,6 +586,120 @@ def dryrunchart():
 
     return chartStatus
 
+def get_cpu_millis(cpu):
+    app.logger.info("Inside get_cpu_millis. CPU:" + cpu)
+    if cpu[len(cpu)-1] == 'm':
+        int_cpu = int(cpu[:len(cpu)-1])
+    else:
+        int_cpu = int(cpu)
+    app.logger.info("Integer milli cpu :" + str(int_cpu))
+    return int_cpu
+
+def get_memory_bytes(memory):
+    app.logger.info("Inside get_memory_bytes. Memory:" + memory)
+    int_mem = int(memory[:len(memory)-2])
+    if 'Ki' in memory:
+        int_mem = pow(2,10) *  int_mem
+    if 'Mi' in memory:
+        int_mem = pow(2,20) *  int_mem
+    if 'Gi' in memory:
+        int_mem = pow(2,30) *  int_mem
+    if 'Ti' in memory:
+        int_mem = pow(2,40) *  int_mem
+    if 'Pi' in memory:
+        int_mem = pow(2,50) *  int_mem
+    if 'Ei' in memory:
+        int_mem = pow(2,60) *  int_mem
+
+    app.logger.info("Integer memory bytes:" + str(int_mem))
+    return int_mem
+
+@app.route("/cluster_capacity")
+def get_cluster_capacity():
+    cmd = 'kubectl get nodes -o json '
+    out, err = run_command(cmd)
+
+    node_info = []
+    if out != '' and err == '':
+        json_obj = json.loads(out)
+        node_list = json_obj['items']
+        total_allocatable_cpu = 0
+        total_allocatable_memory = 0
+        for node in node_list:
+            node_data = {}
+            node_data['name'] = node['metadata']['name']
+            allocatable_cpu = node['status']['allocatable']['cpu']
+            cpu_in_millis = get_cpu_millis(allocatable_cpu)
+            node_data['allocatable_cpu'] = cpu_in_millis
+            total_allocatable_cpu = total_allocatable_cpu + int(cpu_in_millis)
+
+            allocatable_memory = node['status']['allocatable']['memory']
+            memory_in_bytes = get_memory_bytes(allocatable_memory)
+            node_data['allocatable_memory'] = memory_in_bytes
+            total_allocatable_memory = total_allocatable_memory + memory_in_bytes
+            node_info.append(node_data)
+
+    cluster_info = {}
+    cluster_info['nodes'] = node_info
+    cluster_info['total_allocatable_cpu'] = total_allocatable_cpu * 1000
+    total_allocatable_memory_gb = "{:.2f}".format(total_allocatable_memory / (1024 * 1024 * 1024))
+    cluster_info['total_allocatable_memory'] = total_allocatable_memory
+    cluster_info['total_allocatable_memory_gb'] = total_allocatable_memory_gb
+
+    obj_to_ret = json.dumps(cluster_info)
+
+    ret_string = "total_allocatable_cpu:" + str(cluster_info['total_allocatable_cpu']) + ",total_allocatable_memory_gb:" + str(cluster_info['total_allocatable_memory_gb'])
+
+    app.logger.info("Cluster capacity:" + ret_string)
+
+    return ret_string
+
+
+@app.route("/resource_quota")
+def create_resource_quota():
+    app.logger.info("Inside create_resource_quota..")
+    namespace = request.args.get('namespace')
+    helmrelease = request.args.get('helmrelease')
+    cpu_req = request.args.get('cpu_req')
+    cpu_lim = request.args.get('cpu_lim')
+    mem_req = request.args.get('mem_req')
+    mem_lim = request.args.get('mem_lim')
+
+    app.logger.info("Quota details:" + namespace + " " + helmrelease + " " + cpu_req + " " + cpu_lim + " " + mem_req + " " + mem_lim)
+
+    resQuota = {}
+    resQuota["apiVersion"] = "v1"
+    resQuota["kind"] = "ResourceQuota"
+    resMetaData = {}
+    resMetaData["name"] = helmrelease
+    resMetaData["namespace"] = namespace
+    resQuota["metadata"] = resMetaData
+    quotaSpec = {}
+    infraResSpec = {}
+    infraResSpec["requests.cpu"] = cpu_req
+    infraResSpec["requests.memory"] = mem_req
+    infraResSpec["limits.cpu"] = cpu_lim
+    infraResSpec["limits.memory"] = mem_lim
+    quotaSpec["hard"] = infraResSpec
+    resQuota["spec"] = quotaSpec
+
+    app.logger.info("Resource Quota:" + str(resQuota))
+
+    json_file = json.dumps(resQuota)
+    fileName =  helmrelease + "-quota.json"
+
+    fp = open(os.getenv("HOME") + "/" + fileName, "w")
+    fp.write(json_file)
+    fp.close()
+
+    cmd = "kubectl create -f " + os.getenv("HOME") + "/" + fileName
+    out, err = run_command(cmd)
+    app.logger.info("Output of create quota:")
+    app.logger.info("Output:" + out)
+    app.logger.info("Error:" + err)
+
+    err_string = str(err)
+    return err_string
 
 @app.route("/update_provider_rbac")
 def apply_rbac():

@@ -635,6 +635,10 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	namespace := request.QueryParameter("namespace")
 	encodedoverrides := request.QueryParameter("overrides")
 	overrides, err := url.QueryUnescape(encodedoverrides)
+	cpu_req := request.QueryParameter("cpu_req")
+	cpu_lim := request.QueryParameter("cpu_lim")
+	mem_req := request.QueryParameter("mem_req")
+	mem_lim := request.QueryParameter("mem_lim")
 	if err != nil {
 		fmt.Printf("Error encountered in decoding overrides:%v\n", err)
 		fmt.Printf("Not continuing...")
@@ -757,6 +761,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 		 								releaseName = strings.TrimSpace(releaseName)
 		 								fmt.Printf("RN:%s\n", releaseName)
 		 								go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseName)
+										createResourceQuota(targetNSName, releaseName, cpu_req, cpu_lim, mem_req, mem_lim)
 		 							}
 	 							}
 	 						}
@@ -801,6 +806,19 @@ func deployChart(request *restful.Request, response *restful.Response) {
 			response.Write([]byte(kindsString))
 		}
 	}
+}
+
+func createResourceQuota(targetNS, helmRelease, cpu_req, cpu_lim, mem_req, mem_lim string) {
+	fmt.Printf("Inside createResourceQuota...\n")
+
+	args := fmt.Sprintf("namespace=%s&helmrelease=%s&cpu_req=%s&cpu_lim=%s&mem_req=%s&mem_lim=%s",targetNS,helmRelease,cpu_req,cpu_lim,mem_req,mem_lim)
+        var url1 string
+        url1 = fmt.Sprintf("http://localhost:5005/resource_quota?%s", args)
+        fmt.Printf("Url:%s\n", url1)
+
+	http.Get(url1)
+
+	fmt.Printf("After invoking /resource_quota")
 }
 
 func testChartDeployment(request *restful.Request, response *restful.Response) {

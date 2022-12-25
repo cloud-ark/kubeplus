@@ -405,6 +405,14 @@ class KubeconfigGenerator(object):
 		ruleGroup21["resources"] = resourceGroup21
 		ruleGroup21["verbs"] = verbsGroup21
 
+		ruleGroup22 = {}
+		apiGroup22 = [""]
+		resourceGroup22 = ["resourcequotas"]
+		verbsGroup22 = ["create", "delete", "deletecollection", "patch", "update"]
+		ruleGroup22["apiGroups"] = apiGroup22
+		ruleGroup22["resources"] = resourceGroup22
+		ruleGroup22["verbs"] = verbsGroup22
+
 		ruleList = []
 		ruleList.append(ruleGroup1)
 		ruleList.append(ruleGroup2)
@@ -427,6 +435,7 @@ class KubeconfigGenerator(object):
 		ruleList.append(ruleGroup19)
 		ruleList.append(ruleGroup20)
 		ruleList.append(ruleGroup21)
+		ruleList.append(ruleGroup22)
 
 		role["rules"] = ruleList
 
