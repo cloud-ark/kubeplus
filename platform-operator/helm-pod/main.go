@@ -762,6 +762,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 		 								fmt.Printf("RN:%s\n", releaseName)
 		 								go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseName)
 										createResourceQuota(targetNSName, releaseName, cpu_req, cpu_lim, mem_req, mem_lim)
+										createNetworkPolicy(targetNSName, releaseName)
 		 							}
 	 							}
 	 						}
@@ -820,6 +821,20 @@ func createResourceQuota(targetNS, helmRelease, cpu_req, cpu_lim, mem_req, mem_l
 
 	fmt.Printf("After invoking /resource_quota")
 }
+
+func createNetworkPolicy(targetNS, helmRelease string) {
+	fmt.Printf("Inside createNetworkPolicy...\n")
+
+	args := fmt.Sprintf("namespace=%s&helmrelease=%s",targetNS,helmRelease)
+        var url1 string
+        url1 = fmt.Sprintf("http://localhost:5005/network_policy?%s", args)
+        fmt.Printf("Url:%s\n", url1)
+
+	http.Get(url1)
+
+	fmt.Printf("After invoking /network_policy")
+}
+
 
 func testChartDeployment(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Inside testChartDeployment...\n")
