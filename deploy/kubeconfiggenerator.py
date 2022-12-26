@@ -655,6 +655,86 @@ def get_cluster_capacity():
     return ret_string
 
 
+@app.route("/network_policy")
+def create_network_policy():
+    app.logger.info("Inside create_network_policy")
+    namespace = request.args.get('namespace')
+    helmrelease = request.args.get('helmrelease')
+    
+    app.logger.info("Network Policy details:" + namespace + " " + helmrelease)
+
+    netPol1 = {}
+    netPol1["kind"] = "NetworkPolicy"
+    netPol1["apiVersion"] = "networking.k8s.io/v1"
+    netPol1MetaData = {}
+    netPol1MetaData["name"] = "restrict-cross-ns-traffic"
+    netPol1MetaData["namespace"] = namespace
+    netPol1["metadata"] = netPol1MetaData
+    netPol1Spec = {}
+    netPol1PodSelector = {}
+    netPol1PodSelector["matchLabels"] = {}
+    netPol1Spec["podSelector"] = netPol1PodSelector
+
+    netPol1IngressFromList = []
+    netPol1IngressFrom = {}
+    netPol1IngressPodSelector = {}
+    netPol1IngressPodSelector["podSelector"] = {}
+    netPol1IngressPodSelectorList = []
+    netPol1IngressPodSelectorList.append(netPol1IngressPodSelector)
+    netPol1IngressFrom["from"] = netPol1IngressPodSelectorList
+    netPol1IngressFromList.append(netPol1IngressFrom)
+
+    netPol1Spec["ingress"] = netPol1IngressFromList
+    netPol1["spec"] = netPol1Spec
+
+    app.logger.info("Network Policy:" + str(netPol1))
+
+    json_file = json.dumps(netPol1)
+    fileName =  "network-policy-deny-cross-traffic.json"
+
+    fp = open(os.getenv("HOME") + "/" + fileName, "w")
+    fp.write(json_file)
+    fp.close()
+
+    cmd = "kubectl create -f " + os.getenv("HOME") + "/" + fileName
+    out, err = run_command(cmd)
+    app.logger.info("Output of create network policy:")
+    app.logger.info("Output:" + out)
+    app.logger.info("Error:" + err)
+
+    netPol2 = {}
+    netPol2["kind"] = "NetworkPolicy"
+    netPol2["apiVersion"] = "networking.k8s.io/v1"
+    netPol2MetaData = {}
+    netPol2MetaData["name"] = "allow-external-traffic"
+    netPol2MetaData["namespace"] = namespace
+    netPol2["metadata"] = netPol2MetaData
+    netPol2Spec = {}
+    netPol2PodSelector = {}
+    netPol2MatchLabels = {}
+    netPol2MatchLabels["partof"] = helmrelease
+    netPol2PodSelector["matchLabels"] = netPol2MatchLabels
+    netPol2Spec["podSelector"] = netPol2PodSelector
+
+    netPol2Spec["ingress"] = [{}]
+    netPol2["spec"] = netPol2Spec
+
+    app.logger.info("Network Policy:" + str(netPol2))
+
+    json_file = json.dumps(netPol2)
+    fileName =  "allow-external-traffic.json"
+
+    fp = open(os.getenv("HOME") + "/" + fileName, "w")
+    fp.write(json_file)
+    fp.close()
+
+    cmd = "kubectl create -f " + os.getenv("HOME") + "/" + fileName
+    out, err = run_command(cmd)
+
+    err_string = str(err)
+    return err_string
+
+
 @app.route("/resource_quota")
 def create_resource_quota():
     app.logger.info("Inside create_resource_quota..")
@@ -700,6 +780,7 @@ def create_resource_quota():
 
     err_string = str(err)
     return err_string
+
 
 @app.route("/update_provider_rbac")
 def apply_rbac():
