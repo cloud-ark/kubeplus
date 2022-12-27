@@ -46,12 +46,43 @@ class AppResourcesFinder(CRBase):
         cmd = 'kubectl get ' + kind + ' ' + instance + " -n " + kubeplus_ns + ' -o json ' + kubeconfig 
         out, err = self._run_command(cmd)
         targetNS = ''
-        if out != '':
+        releaseName = ''
+        out = out.strip()
+        if out != '' and out != None:
             json_obj = json.loads(out)
-            helmrelease = json_obj['status']['helmrelease'].strip()
-            parts = helmrelease.split(":")
-            targetNS = parts[0].strip()
-            return targetNS
+            if 'status' in json_obj and 'helmrelease' in json_obj['status']:
+                helmrelease = json_obj['status']['helmrelease'].strip()
+                parts = helmrelease.split(":")
+                targetNS = parts[0].strip()
+                releaseName = parts[1].strip()
+                return targetNS, releaseName
+        return targetNS, releaseName 
+
+    def get_helm_resources(self, targetNS, helmrelease, kubeconfig):
+        #print("Inside helm_resources")
+        cmd = "helm get all " + helmrelease + " -n " + targetNS + ' ' + kubeconfig
+        out, err = self._run_command(cmd)
+
+        resources = []
+        kind = ''
+        res_name = ''
+        new_resource = False
+        for line in out.split("\n"):
+            if new_resource:
+                if 'name' in line:
+                    res_name = (line.split(":")[1]).strip()
+                    res_details = {}
+                    res_details['name'] = res_name
+                    res_details['namespace'] = targetNS
+                    res_details['kind'] = kind 
+                    resources.append(res_details)
+
+                    new_resource = False
+            if 'kind' in line:
+                kind = (line.split(":")[1]).strip()
+                new_resource = True
+
+        return resources
 
     def get_networkpolicies(self, targetNS, kind, instance, kubeconfig):
         resources = self._get_resources('NetworkPolicy', 'networkpolicies', targetNS, kubeconfig)
@@ -65,6 +96,31 @@ class AppResourcesFinder(CRBase):
         resources = self._get_resources('Pod', 'pods', targetNS, kubeconfig)
         return resources
 
+    def check_res_exists(self, kind, instance, kubeconfig):
+        cmd = 'kubectl get ' + kind + ' ' + instance + ' ' + kubeconfig
+        out, err = self._run_command(cmd)
+        if err != '':
+            return False, err
+        else:
+            return True, ''
+
+    def verify_kind_is_consumerapi(self, kind, kubeconfig):
+
+        if kind.lower() in 'resourcecompositions':
+            return False
+
+        cmd = 'kubectl get crds ' + kubeconfig
+        out, err = self._run_command(cmd)
+        for line in out.split("\n"):
+            parts = line.split(" ")
+            fqn = parts[0].strip()
+            parts1 = fqn.split(".")
+            plural = parts1[0]
+            singular = plural[0:len(plural)-1]
+            if kind.lower() == singular:
+                return True
+        return False
+
 if __name__ == '__main__':
     appResourcesFinder = AppResourcesFinder()
     kind = sys.argv[1]
@@ -73,24 +129,38 @@ if __name__ == '__main__':
 
     #print("kind:" + kind + " instance:" + instance + " kubeconfig:" + kubeconfig)
 
+    valid_consumer_api = appResourcesFinder.verify_kind_is_consumerapi(kind, kubeconfig)
+    if not valid_consumer_api:
+        print(("{} is not a valid Consumer API.").format(kind))
+        exit(0)
+
+    res_exists, err = appResourcesFinder.check_res_exists(kind, instance, kubeconfig)
+    if not res_exists:
+        print(err)
+        exit(0)
+
     kubeplus_ns = appResourcesFinder.get_kubeplus_ns(kubeconfig)    
-    targetNS = appResourcesFinder.get_target_ns(kubeplus_ns, kind, instance, kubeconfig)
+    targetNS, helmrelease = appResourcesFinder.get_target_ns(kubeplus_ns, kind, instance, kubeconfig)
+    if targetNS == '' and helmrelease == '':
+        print("No Helm release found for {} resource {}".format(kind, instance))
+    #print(targetNS + " " + helmrelease)
     pods = appResourcesFinder.get_pods(targetNS, kind, instance, kubeconfig)
     networkpolicies = appResourcesFinder.get_networkpolicies(targetNS, kind, instance, kubeconfig)
     resourcequotas = appResourcesFinder.get_resourcequotas(targetNS, kind, instance, kubeconfig)
+    helmresources = appResourcesFinder.get_helm_resources(targetNS, helmrelease, kubeconfig)
 
     allresources = []
+    allresources.extend(helmresources)
     allresources.extend(pods)
     allresources.extend(networkpolicies)
     allresources.extend(resourcequotas)
 
-    print("NAMESPACE\tKIND\t\t\tNAME")
-
-    line = kubeplus_ns + '\t\t' + kind + '\t' + instance
-    print(line)
+    # Ref: https://www.educba.com/python-print-table/
+    # https://stackoverflow.com/questions/20309255/how-to-pad-a-string-to-a-fixed-length-with-spaces-in-python
+    print ("{:<25} {:<25} {:<25} ".format("NAMESPACE", "KIND", "NAME"))
+    print ("{:<25} {:<25} {:<25} ".format(kubeplus_ns, kind, instance))
     for res in allresources:
-        tabs = '\t\t'
-        if res['kind'] == 'Pod':
-            tabs = '\t\t\t'
-        line = res['namespace'] + '\t' + res['kind'] + tabs + res['name']
-        print(line)
+        ns = res['namespace']
+        kind = res['kind']
+        name = res['name']
+        print ("{:<25} {:<25} {:<25} ".format(ns, kind, name))
