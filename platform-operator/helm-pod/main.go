@@ -851,12 +851,18 @@ func testChartDeployment(request *restful.Request, response *restful.Response) {
 
   	//parsedChartName := downloadChart(chartURL, cmdRunnerPod, namespace)
  	parsedChartName := downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace)
- 	releaseName := kind + "-" + parsedChartName
+ 	releaseName := strings.ToLower(kind) + "-" + parsedChartName
 
-	helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -n " + namespace + " --dry-run" 
+	//helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -n " + namespace + " --dry-run" 
+	helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -n " + namespace
 	fmt.Printf("helm install cmd:%s\n", helmInstallCmd)
 	_, execOutput := executeExecCall(cmdRunnerPod, helmInstallCmd)
-	fmt.Printf("DRY RUN - DEF:%s\n", execOutput)
+	fmt.Printf("Test chart deployment - DEF:%s\n", execOutput)
+
+	helmDeleteCmd := "./root/helm delete " + releaseName + " -n " + namespace
+	fmt.Printf("helm delete cmd:%s\n", helmDeleteCmd)
+	executeExecCall(cmdRunnerPod, helmDeleteCmd)
+
 	response.Write([]byte(execOutput))
 }
 
