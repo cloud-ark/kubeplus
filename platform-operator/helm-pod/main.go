@@ -760,8 +760,10 @@ func deployChart(request *restful.Request, response *restful.Response) {
 				 						fmt.Printf("ReleaseName:%s\n", releaseName)
 		 								releaseName = strings.TrimSpace(releaseName)
 		 								fmt.Printf("RN:%s\n", releaseName)
-		 								go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseName)
+		 								go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseName)							
+										if (cpu_req != "" && cpu_lim != "" && mem_req != "" && mem_lim != "") {
 										createResourceQuota(targetNSName, releaseName, cpu_req, cpu_lim, mem_req, mem_lim)
+									}
 										createNetworkPolicy(targetNSName, releaseName)
 		 							}
 	 							}

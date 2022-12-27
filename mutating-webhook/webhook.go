@@ -767,7 +767,7 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	var platformWorkflow platformworkflowv1alpha1.ResourceComposition
 	err := json.Unmarshal(body, &platformWorkflow)
 	if err != nil {
-	    fmt.Println(err)	
+	    fmt.Println(err)
 	}
 
 	platformWorkflowName, _ := jsonparser.GetUnsafeString(body, "metadata", "name")
@@ -796,11 +796,11 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	version := platformWorkflow.Spec.NewResource.Resource.Version
 	chartURL := platformWorkflow.Spec.NewResource.ChartURL
 	chartName := platformWorkflow.Spec.NewResource.ChartName
- 	fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
- 	
- 	customAPI := group + "/" + version + "/" + kind
- 	customAPIPlatformWorkflowMap[customAPI] = platformWorkflowName
- 	customKindPluralMap[customAPI] = plural
+	fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
+
+	customAPI := group + "/" + version + "/" + kind
+	customAPIPlatformWorkflowMap[customAPI] = platformWorkflowName
+	customKindPluralMap[customAPI] = plural
 
 	// Ensure that the consumer Kind name does not already exist in the cluster.
 	failed := checkResourceExists(kind, plural)
@@ -852,6 +852,30 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	quota_memory_limits, _ := jsonparser.GetUnsafeString(body, "spec","respolicy","spec","policy","quota","limits.memory")
 	fmt.Printf("Memory limits(quota):%s\n", quota_memory_limits)
 
+	empty_quota_fields := 0
+	if (quota_cpu_requests == "") {
+		empty_quota_fields = empty_quota_fields + 1
+	}
+
+	if (quota_memory_requests == "") {
+		empty_quota_fields = empty_quota_fields + 1
+	}
+
+	if (quota_cpu_limits == "") {
+		empty_quota_fields = empty_quota_fields + 1
+	}
+
+	if (quota_memory_limits == "") {
+		empty_quota_fields = empty_quota_fields + 1
+	}
+
+	if ( empty_quota_fields < 4 && empty_quota_fields > 0 ) {
+		return &v1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: "If quota is specified, specify all four values: requests.cpu, requests.memory, limits.cpu, limits.memory",
+			},
+		}
+	}
 
 	_, message2 := CheckClusterCapacity(quota_cpu_requests, quota_cpu_limits, quota_memory_requests, quota_memory_limits)
 	fmt.Printf("After CheckClusterCapacity - message:%s\n", message2)
@@ -870,10 +894,10 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	quota_map["requests.memory"] = quota_memory_requests
 	quota_map["limits.memory"] = quota_memory_limits
 
- 	customAPIQuotaMap[customAPI] = quota_map
+	customAPIQuotaMap[customAPI] = quota_map
 
 	fmt.Printf("10101010101\n")
- 	return nil
+	return nil
 }
 
 func checkResourceExists(kind, plural string) string {
