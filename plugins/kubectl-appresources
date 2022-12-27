@@ -40,4 +40,9 @@ kubeconfig="--kubeconfig="$kubeconfig1
 
 canonicalKind=$(get_canonical_kind $kind)
 
+if [[ $canonicalKind == *"Unknown"* ]]; then
+	echo "$canonicalKind"
+	exit 0
+fi
+
 python3 /$KUBEPLUS_HOME/plugins/appresources.py $canonicalKind $instance $kubeconfig 
