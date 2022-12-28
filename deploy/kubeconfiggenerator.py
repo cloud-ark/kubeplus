@@ -147,7 +147,7 @@ class KubeconfigGenerator(object):
 			cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getenv("HOME") + "/" + fileName
 			self.run_command(cmd)
 			get_cmd = "kubectl get configmap " + configmapName + " -n "  + namespace
-			output = self.run_command(cmd)
+			output = self.run_command(get_cmd)
 			output = output.decode('utf-8')    
 			if 'Error from server (NotFound)' in output:
 				time.sleep(2)
@@ -909,19 +909,13 @@ if __name__ == '__main__':
 	kubeconfigGenerator = KubeconfigGenerator()
 	namespace = sys.argv[1]
 
-        # Generate kubeplus-sa kubeconfig
-        #sa = 'kubeplus-sa'
-        #kubeconfigGenerator._generate_kubeconfig(sa, namespace)
-
         # Note that the reason we are not applying RBAC to consumer and provider
         # kubeconfigs here is because the RBAC policies are applied when the SA
         # is created (in the Helm chart)
 
-	# 2. Generate Consumer kubeconfig
-        # TODO: Generating consumer kubeconfig is getting stuck - may be permisison issue.
-        #       Need to debug.
-	#sa = 'kubeplus-saas-consumer'
-	#kubeconfigGenerator._generate_kubeconfig(sa, namespace)
+	# 2. Generate/Retrieve Consumer kubeconfig
+	sa = 'kubeplus-saas-consumer'
+	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
 	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')
 	
         # We are commenting out retrieval of Provider kubeconfig here as we have
@@ -933,6 +927,4 @@ if __name__ == '__main__':
 	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider')
         
 	app.run(host='0.0.0.0', port=5005)
-
-	#time.sleep(10)
 

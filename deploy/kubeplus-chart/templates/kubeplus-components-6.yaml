@@ -317,7 +317,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: kubeconfiggenerator
-        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.4
+        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.5
         imagePullPolicy: IfNotPresent 
         env:
           - name: KUBEPLUS_NAMESPACE
@@ -329,8 +329,7 @@ spec:
         args:
           - "$(KUBEPLUS_NAMESPACE)"
       - name: crd-hook
-        #image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:0.5.13
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.0
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.1
         imagePullPolicy: IfNotPresent 
         args:
           - -tlsCertFile=/etc/webhook/certs/cert.pem
@@ -342,12 +341,8 @@ spec:
         - name: webhook-certs
           mountPath: /etc/webhook/certs
           readOnly: true
-          #- name: mutating-webhook-helper
-          ##image: gcr.io/cloudark-kubeplus/mutating-webhook-helper:0.2.1
-          #image: gcr.io/cloudark-kubeplus/mutating-webhook-helper:latest
-          #imagePullPolicy: IfNotPresent 
       - name: platform-operator
-        image: gcr.io/cloudark-kubeplus/platform-operator:3.0.0
+        image: gcr.io/cloudark-kubeplus/platform-operator:3.0.1
         imagePullPolicy: IfNotPresent
         command: [ "/platform-operator"]
       - name: consumerui
@@ -355,9 +350,7 @@ spec:
         imagePullPolicy: Always
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
-        #image: gcr.io/cloudark-kubeplus/helm-pod:0.1.4
-        #image: gcr.io/cloudark-kubeplus/helm-pod:3.0.0
-        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.3
+        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.4
         imagePullPolicy: IfNotPresent
         command: ["/root/helm-pod"]
         volumeMounts:

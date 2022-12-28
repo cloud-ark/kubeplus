@@ -15,7 +15,7 @@ if [ "$artifacttype" = "versioned" ]; then
     version=`tail -1 versions.txt`
     echo "Building version $version"
     export GO111MODULE=on; export GOOS=linux; go build .
-    docker build --no-cache -t gcr.io/cloudark-kubeplus/helm-pod:$version .
+    docker build -t gcr.io/cloudark-kubeplus/helm-pod:$version .
     docker push gcr.io/cloudark-kubeplus/helm-pod:$version
 fi
 

@@ -104,7 +104,7 @@ class AppResourcesFinder(CRBase):
                 parts = line.split(" ")
                 ns = parts[0].strip()
                 return True, ns, ''
-        return False, '', ''
+        return False, '', kind + ' ' + instance + ' not found.'  
 
     def verify_kind_is_consumerapi(self, kind, kubeconfig):
 
