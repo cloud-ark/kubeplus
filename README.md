@@ -11,7 +11,7 @@ Multi-instance multi-tenancy (MIMT) is a software architecture pattern in which 
 KubePlus takes an application Helm chart and wraps it under a Kubernetes API (CRD). Whenever an application instance is created using this API, KubePlus ensures that every instance is created in a separate namespace and the required multi-tenancy policies are applied in order to ensure isolation between instances. The API also supports RBAC, version upgrades and additional customizations for each instance. 
 
 <p align="center">
-<img src="./docs/kubeplus-with-properties.png" width="700" height="150" class="center">
+<img src="./docs/kubeplus-with-properties.png" width="700" height="250" class="center">
 </p>
 
 
@@ -38,44 +38,62 @@ The spec properties of the Kubernetes API wrapping the application Helm chart ar
 Let’s look at an example of creating a multi-instance WordPress Service using KubePlus. The WordPress service provider goes through the following steps towards this:
 
 1) Set the Namespace in which to deploy KubePlus
+
 ``export KUBEPLUS_NS=<namespace in which you want to run KubePlus>``
 
-1) Create provider kubeconfig using the provider-kubeconfig.py utility that we provide.
+2) Create provider kubeconfig using the provider-kubeconfig.py utility that we provide
+
 ``python provider-kubeconfig.py create $KUBEPLUS_NS``
 
-2) Install KubePlus Operator using the generated provider kubeconfig 
+3) Install KubePlus Operator using the generated provider kubeconfig 
+
 ``helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.5.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS``
 
-3) Create API wrapping WordPress Helm chart
+Wait till KubePlus Pod is in 'Running' state: ``kubectl get pods -A | grep kubeplus``
+
+4) Create API wrapping WordPress Helm chart
+
 ``kubectl create -f ./examples/multitenancy/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json``
 
-4) Create WordpressService instance1
+5) Create WordpressService instance1
+
 ``kubectl create -f ./examples/multitenancy/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json``
 
-5) Create WordpressService instance2
+6) Create WordpressService instance2
+
 ``kubectl create -f ./examples/multitenancy/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json``
 
-6) Check created WordpressService instances
+7) Check created WordpressService instances
+
 ``kubectl get wordpressservices``
 
-7) Check created application resources
+```
+NAME             AGE
+wp-for-tenant1   86s
+wp-for-tenant2   26s
+```
+
+8) Check created application resources
+
 ``kubectl appresources WordpressService tenant1 –k kubeplus-saas-provider.json``
 
 <p align="center">
-<img src="./docs/app-resources.png" width="700" height="150" class="center">
+<img src="./docs/app-resources.png" width="700" height="250" class="center">
 </p>
 
-8) Check application resource consumption
+9) Check application resource consumption
 ``kubectl metrics WordpressService tenant1 default -k kubeplus-saas-provider.json``
 
 <p align="center">
-<img src="./docs/app-metrics.png" width="700" height="150" class="center">
+<img src="./docs/app-metrics.png" width="700" height="250" class="center">
 </p>
 
 ## Try
 
 1) Create minikube cluster
+
 ``$ minikube start --kubernetes-version=v1.24.3``
+
 2) Download KubePlus plugins and set up the PATH
 ```
   wget https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-kubectl-plugins.tar.gz
@@ -89,15 +107,15 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 ## CNCF Landscape
 
-KubePlus is part of CNCF landscape's [Application Definition section](https://landscape.cncf.io/card-mode?category=application-definition-image-build&grouping
-=category).
+KubePlus is part of CNCF landscape's
+[Application Definition section](https://landscape.cncf.io/card-mode?category=application-definition-image-build&grouping=category).
 
 
 ## Operator Maturity Model
 
 As enterprise teams build their custom Kubernetes platforms using community or in house developed Operators, they need a set of guidelines for Operator readin
-ess in multi-Operator and multi-tenant environments. We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guideli
-nes.md) for this purpose. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready
+ess in multi-Operator and multi-tenant environments.
+We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) for this purpose. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready
  to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators for curating community Operators towards building their custom pl
 atforms.
 
@@ -110,11 +128,10 @@ atforms.
 
 3. [Operators and Helm: It takes two to Tango, Helm Summit 2019](https://youtu.be/F_Dgz1V5Q2g)
 
-4. [KubePlus presentation at community meetings (CNCF sig-app-delivery, Kubernetes sig-apps, Helm)](https://github.com/cloud-ark/kubeplus/blob/master/KubePlus
--presentation.pdf)
+4. [KubePlus presentation at community meetings (CNCF sig-app-delivery, Kubernetes sig-apps, Helm)](https://github.com/cloud-ark/kubeplus/blob/master/KubePlus-presentation.pdf)
 
 
 ## Contact
 
-For support and new features [reach out to us](https://cloudark.io/kubeplus-saas-manager) or contact our team on [Slack](https://join.slack.com/t/cloudark/sha
-red_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw).
+For support and new features [reach out to us](https://cloudark.io/kubeplus-saas-manager)
+or contact our team on [Slack](https://join.slack.com/t/cloudark/shared_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw).
