@@ -136,6 +136,17 @@ spec:
                                       type: string
                                 nodeSelector:
                                   type: string
+                            quota:
+                              type: object
+                              properties:
+                                requests.cpu:
+                                  type: string
+                                requests.memory:
+                                  type: string
+                                limits.cpu:
+                                  type: string
+                                limits.memory:
+                                  type: string
                 resmonitor:
                   type: object
                   properties:

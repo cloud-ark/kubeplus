@@ -135,7 +135,7 @@ class KubeconfigGenerator(object):
 			cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getcwd() + "/" + fileName
 			self.run_command(cmd)
 			get_cmd = "kubectl get configmap " + configmapName + " -n "  + namespace
-			output = self.run_command(cmd)
+			output = self.run_command(get_cmd)
 			output = output.decode('utf-8')    
 			if 'Error from server (NotFound)' in output:
 				time.sleep(2)
@@ -584,7 +584,7 @@ if __name__ == '__main__':
 	kubeconfigGenerator = KubeconfigGenerator()
 	sa = 'kubeplus-saas-provider'
 	if action == "create":
-		out, err = run_command("kubectl get ns namespace")
+		out, err = run_command("kubectl get ns " + namespace)
 		if 'not found' in out or 'not found' in err:
 			run_command("kubectl create ns " + namespace)
 
