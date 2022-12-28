@@ -1,147 +1,105 @@
-## KubePlus - Kubernetes Operator to create Multi-instance SaaS from Helm charts
+## KubePlus - Kubernetes Operator for Multi-Instance Multi-tenancy
 
-KubePlus is a turn-key solution to transform any containerized application into a SaaS. It takes an application Helm chart and turns it into a SaaS by automating multi-tenancy management and day2 operations such as monitoring, troubleshooting and application upgrades. 
+KubePlus is a turn-key solution to transform any containerized application into a SaaS.
 
 <p align="center">
 <img src="./docs/application-stacks-1.png" width="700" height="150" class="center">
 </p>
 
-KubePlus offers following benefits towards deploying a Kubernetes-native application (Helm chart) in SaaS form:
-- Seamless support for [Namespace-based multi-tenancy](https://kubernetes.io/docs/concepts/security/multi-tenancy/) where each application instance (Helm release) is created in a separate namespace.
-- Tracking consumption metrics (cpu, memory, storage and network) at Helm release level in Prometheus. Application providers can use these metrics to define consumption-based chargeback models.
-- Application-specific provider and consumer APIs for role-based access to application instances.
-- Troubleshooting and governance of application instances.
+Multi-instance multi-tenancy (MIMT) is a software architecture pattern in which a dedicated instance of an application is provided per tenant. The typical adopters of this pattern are organizations that need to host and manage multiple instances of a software application for different tenants and effectively deliver that application as-a-service. KubePlus is a turn-key solution to build a multi-instance multi-tenancy (MIMT) pattern on Kubernetes and comes with end to end automation to help you deploy and manage your MIMT application on Kubernetes. This includes isolation and security between instances along with easy to use APIs for managing upgrades, customization and resource utilization. 
 
-
-## Overview
-
-The typical requirements in creating Kubernetes-based SaaS are as follows:
-- Isolate different application instances from one another on the cluster.
-- Easily govern, monitor, troubleshoot, and upgrade application instances. 
-- Enable self-service provisioning of application instances.
-
-KubePlus achieves these goals as follows. KubePlus defines a Custom Resource (```provider API```) to create application-specific ```consumer APIs```.
-The ```provider API``` (named ``ResourceComposition``) enables registering an application Helm chart in the cluster by defining a new Kubernetes API (CRD) representing the chart. The new CRD is the ```consumer API``` which the application consumers use to instantiate the registered Helm chart in a self-service manner. Through ``ResourceComposition``application providers can define application-level policies, such as cpu and memory to be provided for application Pods. KubePlus enforces these policies when instantiating the registered chart as part of handling the consumer APIs. The architecture details of KubePlus are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html).
+KubePlus takes an application Helm chart and wraps it under a Kubernetes API (CRD). Whenever an application instance is created using this API, KubePlus ensures that every instance is created in a separate namespace and the required multi-tenancy policies are applied in order to ensure isolation between instances. The API also supports RBAC, version upgrades and additional customizations for each instance. 
 
 <p align="center">
-<img src="./docs/provider-consumer.png" width="600" height="200" class="center">
+<img src="./docs/kubeplus-with-properties.png" width="700" height="150" class="center">
 </p>
 
-We have built a [control center](https://cloudark.io/kubeplus-saas-manager) to manage application SaaS across multiple Kubernetes clusters. The control center contains embedded Prometheus to track application resource consumption. You can host the control center yourself. For support, you can purchase our [subscription](https://cloudark.io/contact). See the control center in action [here](https://youtu.be/ZVhTE6WSjVI).
+
+### Isolation
+
+KubePlus takes an application Helm chart and wraps it in a Kubernetes API. Application providers use this API to provision application instances on a cluster. KubePlus isolates each application instance in a separate Namespace. It adds a safety perimeter around such Namespaces using Kubernetes Network Policies and non-shared persistent volumes ensuring that each application instance is appropriately isolated from other instances. Additionally, it provides controls for application providers to deploy different tenant application instances on different worker nodes for node isolation. 
+
+### Security
+
+The KubePlus Operator does not need any admin-level permissions on a cluster for application providers. This allows application providers to offer their managed services on any K8s clusters including those owned by their customers. KubePlus comes with a small utility that allows you to create provider specific kubeconfig on a cluster in order to enable this RBAC. Application providers have an ability to create a consumer specific further limited kubeconfig to allow for self service provisioning of the instance as well. 
+
+### Resource utilization
+KubePlus provides controls to set per-namespace resource quotas. It also monitors usage of CPU, memory, storage, and network traffic at the application instance level. The collected metrics are available in different formats and can be pulled into Prometheus for historical usage tracking.
+
+### Upgrades
+A new version of an application can be deployed by updating the application Helm chart under the existing Kubernetes API or registering the new chart under a new Kubernetes API. If the existing Kubernetes API object is updated, KubePlus will deploy the new application instances using the new version of the application Helm chart.
+
+### Customization
+The spec properties of the Kubernetes API wrapping the application Helm chart are the fields defined in the chart’s values.yaml file. Application deployments can be customized by specifying different values for these spec properties.
+
+
+## Example
+
+Let’s look at an example of creating a multi-instance WordPress Service using KubePlus. The WordPress service provider goes through the following steps towards this:
+
+1) Set the Namespace in which to deploy KubePlus
+``export KUBEPLUS_NS=<namespace in which you want to run KubePlus>``
+
+1) Create provider kubeconfig using the provider-kubeconfig.py utility that we provide.
+``python provider-kubeconfig.py create $KUBEPLUS_NS``
+
+2) Install KubePlus Operator using the generated provider kubeconfig 
+``helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.5.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS``
+
+3) Create API wrapping WordPress Helm chart
+``kubectl create -f ./examples/multitenancy/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json``
+
+4) Create WordpressService instance1
+``kubectl create -f ./examples/multitenancy/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json``
+
+5) Create WordpressService instance2
+``kubectl create -f ./examples/multitenancy/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json``
+
+6) Check created WordpressService instances
+``kubectl get wordpressservices``
+
+7) Check created application resources
+``kubectl appresources WordpressService tenant1 –k kubeplus-saas-provider.json``
+
+<p align="center">
+<img src="./docs/app-resources.png" width="700" height="150" class="center">
+</p>
+
+8) Check application resource consumption
+``kubectl metrics WordpressService tenant1 default -k kubeplus-saas-provider.json``
+
+<p align="center">
+<img src="./docs/app-metrics.png" width="700" height="150" class="center">
+</p>
 
 ## Try
 
-- Create a minikube cluster:
+1) Create minikube cluster
+``$ minikube start --kubernetes-version=v1.24.3``
+2) Download KubePlus plugins and set up the PATH
 ```
-    $ minikube start --kubernetes-version=v1.24.3
+  wget https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-kubectl-plugins.tar.gz
+  gunzip kubeplus-kubectl-plugins.tar.gz
+  tar -xvf kubeplus-kubectl-plugins
+  export KUBEPLUS_HOME=`pwd`
+  export PATH=$KUBEPLUS_HOME/plugins:$PATH
 ```
+3) Go through the steps given [here](./examples/multitenancy/wordpress/steps.txt)
 
-- Install KubePlus Operator and retrieve provider and consumer kubeconfig.
-KubePlus generates kubeconfig files for providers and consumers.
-Use the provider kubeconfig to register the cluster in the control center. 
-```
-   $ KUBEPLUS_NS=default
-   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.3.tgz?raw=true" -n $KUBEPLUS_NS
-   $ kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider.conf
-   $ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
-```
-
-- Start the control center. For the first time you will be asked to setup user credentials.
-```
-Usage: ./kubeplus-control-center.sh <start|stop> <http|https> <domain_name> [<inet_ip>]
-```
-```
-   $ ./kubeplus-control-center.sh start http localhost localhost
-```
-
-<p align="center">
-<img src="./docs/kubeplus-saas-manager-login-screen.png" style="width:75%; height:75%" class="center">
-</p>
-
-
-- Register the cluster by adding the provider kubeconfig 
-
-<p align="center">
-<img src="./docs/kubeplus-saas-manager-register-cluster.png" style="width:75%; height:75%" class="center">
-</p>
-
-- Register Wordpress Service
-
-Use following helm chart:
-```
-https://github.com/cloud-ark/k8s-workshop/blob/master/wordpress-deployment-chart/wordpress-chart-0.0.3.tgz?raw=true
-```
-
-<p align="center">
-<img src="./docs/kubeplus-saas-manager-register-service.png" style="width:75%; height:75%" class="center">
-</p>
-
-- Add the service to the cluster
-
-<p align="center">
-<img src="./docs/kubeplus-saas-manager-add-service-to-cluster.png" style="width:75%; height:75%" class="center">
-</p>
-
-- Create application instance
-
-Either the provider kubeconfig or consumer kubeconfig can be used to instantiate application.
-Here we show instantiating the application from the control center (which contains the provider kubeconfig).
-You can distribute the consumer kubeconfig to your customer teams for self-service creation of application instances.
-
-<p align="center">
-<img src="./docs/kubeplus-saas-manager-create-instance1.png" style="width:75%; height:75%" class="center">
-</p>
-
-
-- Check application resource consumption in the Prometheus
-
-<p align="center">
-<img src="./docs/kubeplus-saas-manager-running-instance.png" style="width:75%; height:75%" class="center">
-</p>
-
-
-<p align="center">
-<img src="./docs/kubeplus-saas-manager-prometheus.png" style="width:75%; height:75%" class="center">
-</p>
-
-
-- Check application topology
-
-<p align="center">
-<img src="./docs/kubeplus-saas-manager-topology.png" style="width:75%; height:75%" class="center">
-</p>
-
-
-- Troubleshoot application resources 
-
-<p align="center">
-<img src="./docs/kubeplus-saas-manager-kubectl-access.png" style="width:75%; height:75%" class="center">
-</p>
-
-## Troubleshoot KubePlus
-
-```
-  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c kubeconfiggenerator
-  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c crd-hook
-  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c helmer
-  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c platform-operator
-  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c webhook-cert-setup
-  - kubectl logs <kubeplus-pod> $KUBEPLUS_NS -c consumerui
-```
-
-- Cleanup:
-  ```
-  - helm delete kubeplus -n $KUBEPLUS_NS
-  ```
 
 ## CNCF Landscape
 
-KubePlus is part of CNCF landscape's [Application Definition section](https://landscape.cncf.io/card-mode?category=application-definition-image-build&grouping=category).
+KubePlus is part of CNCF landscape's [Application Definition section](https://landscape.cncf.io/card-mode?category=application-definition-image-build&grouping
+=category).
 
 
 ## Operator Maturity Model
 
-As enterprise teams build their custom Kubernetes platforms using community or in house developed Operators, they need a set of guidelines for Operator readiness in multi-Operator and multi-tenant environments. We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) for this purpose. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators for curating community Operators towards building their custom platforms.
+As enterprise teams build their custom Kubernetes platforms using community or in house developed Operators, they need a set of guidelines for Operator readin
+ess in multi-Operator and multi-tenant environments. We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guideli
+nes.md) for this purpose. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready
+ to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators for curating community Operators towards building their custom pl
+atforms.
 
 
 ## Presentations
@@ -152,9 +110,11 @@ As enterprise teams build their custom Kubernetes platforms using community or i
 
 3. [Operators and Helm: It takes two to Tango, Helm Summit 2019](https://youtu.be/F_Dgz1V5Q2g)
 
-4. [KubePlus presentation at community meetings (CNCF sig-app-delivery, Kubernetes sig-apps, Helm)](https://github.com/cloud-ark/kubeplus/blob/master/KubePlus-presentation.pdf)
+4. [KubePlus presentation at community meetings (CNCF sig-app-delivery, Kubernetes sig-apps, Helm)](https://github.com/cloud-ark/kubeplus/blob/master/KubePlus
+-presentation.pdf)
 
 
 ## Contact
 
-For support and new features [reach out to us](https://cloudark.io/kubeplus-saas-manager) or contact our team on [Slack](https://join.slack.com/t/cloudark/shared_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw).
+For support and new features [reach out to us](https://cloudark.io/kubeplus-saas-manager) or contact our team on [Slack](https://join.slack.com/t/cloudark/sha
+red_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw).
