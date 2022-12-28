@@ -97,12 +97,14 @@ class AppResourcesFinder(CRBase):
         return resources
 
     def check_res_exists(self, kind, instance, kubeconfig):
-        cmd = 'kubectl get ' + kind + ' ' + instance + ' ' + kubeconfig
+        cmd = 'kubectl get ' + kind + ' -A ' + kubeconfig
         out, err = self._run_command(cmd)
-        if err != '':
-            return False, err
-        else:
-            return True, ''
+        for line in out.split("\n"):
+            if instance in line:
+                parts = line.split(" ")
+                ns = parts[0].strip()
+                return True, ns, ''
+        return False, '', ''
 
     def verify_kind_is_consumerapi(self, kind, kubeconfig):
 
@@ -134,13 +136,16 @@ if __name__ == '__main__':
         print(("{} is not a valid Consumer API.").format(kind))
         exit(0)
 
-    res_exists, err = appResourcesFinder.check_res_exists(kind, instance, kubeconfig)
+    res_exists, ns, err = appResourcesFinder.check_res_exists(kind, instance, kubeconfig)
     if not res_exists:
         print(err)
         exit(0)
 
-    kubeplus_ns = appResourcesFinder.get_kubeplus_ns(kubeconfig)    
-    targetNS, helmrelease = appResourcesFinder.get_target_ns(kubeplus_ns, kind, instance, kubeconfig)
+    kubeplus_ns = appResourcesFinder.get_kubeplus_ns(kubeconfig)
+    res_ns = kubeplus_ns
+    if ns != res_ns and ns != '':
+        res_ns = ns
+    targetNS, helmrelease = appResourcesFinder.get_target_ns(res_ns, kind, instance, kubeconfig)
     if targetNS == '' and helmrelease == '':
         print("No Helm release found for {} resource {}".format(kind, instance))
     #print(targetNS + " " + helmrelease)
