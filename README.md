@@ -39,50 +39,51 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 1) Set the Namespace in which to deploy KubePlus
 
-``export KUBEPLUS_NS=<namespace in which you want to run KubePlus>``
+   ``export KUBEPLUS_NS=<namespace in which you want to run KubePlus>``
 
 2) Create provider kubeconfig using the provider-kubeconfig.py utility that we provide
 
-``python provider-kubeconfig.py create $KUBEPLUS_NS``
+   ``python provider-kubeconfig.py create $KUBEPLUS_NS``
 
 3) Install KubePlus Operator using the generated provider kubeconfig 
 
-``helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.5.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS``
+   ``helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.5.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS``
 
 Wait till KubePlus Pod is in 'Running' state: ``kubectl get pods -A | grep kubeplus``
 
 4) Create API wrapping WordPress Helm chart
 
-``kubectl create -f ./examples/multitenancy/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json``
+   ``kubectl create -f ./examples/multitenancy/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json``
 
 5) Create WordpressService instance1
 
-``kubectl create -f ./examples/multitenancy/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json``
+   ``kubectl create -f ./examples/multitenancy/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json``
 
 6) Create WordpressService instance2
 
-``kubectl create -f ./examples/multitenancy/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json``
+   ``kubectl create -f ./examples/multitenancy/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json``
 
 7) Check created WordpressService instances
 
-``kubectl get wordpressservices``
+   ``kubectl get wordpressservices``
 
-```
-NAME             AGE
-wp-for-tenant1   86s
-wp-for-tenant2   26s
-```
+   ```
+   NAME             AGE
+   wp-for-tenant1   86s
+   wp-for-tenant2   26s
+   ```
 
 8) Check created application resources
 
-``kubectl appresources WordpressService tenant1 –k kubeplus-saas-provider.json``
+   ``kubectl appresources WordpressService wp-for-tenant1 –k kubeplus-saas-provider.json``
 
 <p align="center">
 <img src="./docs/app-resources.png" width="700" height="250" class="center">
 </p>
 
 9) Check application resource consumption
-``kubectl metrics WordpressService tenant1 default -k kubeplus-saas-provider.json``
+
+   ``kubectl metrics WordpressService wp-for-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json``
 
 <p align="center">
 <img src="./docs/app-metrics.png" width="700" height="250" class="center">
@@ -92,7 +93,7 @@ wp-for-tenant2   26s
 
 1) Create minikube cluster
 
-``$ minikube start --kubernetes-version=v1.24.3``
+   ``$ minikube start --kubernetes-version=v1.24.3``
 
 2) Download KubePlus plugins and set up the PATH
 ```
@@ -102,6 +103,7 @@ wp-for-tenant2   26s
   export KUBEPLUS_HOME=`pwd`
   export PATH=$KUBEPLUS_HOME/plugins:$PATH
 ```
+
 3) Go through the steps given [here](./examples/multitenancy/wordpress/steps.txt)
 
 
