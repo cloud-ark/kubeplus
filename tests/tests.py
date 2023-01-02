@@ -28,6 +28,14 @@ class TestKubePlus(unittest.TestCase):
                 return True
         return False
 
+    def _is_kyverno_running(self):
+        cmd = 'kubectl get pods -A'
+        out, err = self._run_command(cmd)
+        for line in out.split("\n"):
+            if 'kyverno' in line and 'Running' in line:
+                return True
+        return False
+
     def test_create_res_comp_for_chart_with_ns(self):
         if not self._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
@@ -64,6 +72,31 @@ class TestKubePlus(unittest.TestCase):
         print("Err:" + err)
         self.assertTrue('If quota is specified, specify all four values: requests.cpu, requests.memory, limits.cpu, limits.memory' in err)
 
+    def test_kyverno_policies(self):
+        if not self._is_kubeplus_running():
+            print("KubePlus is not running. Deploy KubePlus and then run tests")
+            sys.exit(0)
+
+        if not self._is_kyverno_running():
+            print("Kyverno is not running. Deploy Kyverno and then run this test.")
+            sys.exit(0)
+
+        cmd = "kubectl create -f block-stale-images.yaml"
+        self._run_command(cmd)
+
+        cmd = "kubectl create -f resource-quota/wordpress-service-composition.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = self._run_command(cmd)
+        print("Out:" + out)
+        print("Err:" + err)
+
+        for line in err.split("\n"):
+            if 'block-stale-images' in line.strip():
+                self.assertTrue(True)
+                cmd = "kubectl delete -f block-stale-images.yaml"
+                self._run_command(cmd)
+                return
+        self.assertTrue(False)
+
 
 if __name__ == '__main__':
     #unittest.main()
@@ -71,3 +104,5 @@ if __name__ == '__main__':
     testKubePlus.test_create_res_comp_for_chart_with_ns()
     testKubePlus.test_create_res_comp_for_chart_with_shared_storage()
     testKubePlus.test_create_res_comp_with_incomplete_resource_quota()
+
+    testKubePlus.test_kyverno_policies()
