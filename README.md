@@ -33,7 +33,7 @@ A new version of an application can be deployed by updating the application Helm
 ### Customization
 The spec properties of the Kubernetes API wrapping the application Helm chart are the fields defined in the chart’s values.yaml file. Application deployments can be customized by specifying different values for these spec properties.
 
-KubePlus architecture details are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html)
+KubePlus architecture details are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html).
 KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](https://kubernetes.io/docs/concepts/security/multi-tenancy/#multi-customer-tenancy).
 
 
@@ -126,6 +126,15 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    ---------------------------------------------------------- 
    ```
 
+10) Cleanup
+
+    ```
+    kubectl delete -f ./examples/multitenancy/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
+    kubectl delete -f ./examples/multitenancy/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json
+    kubectl delete -f ./examples/multitenancy/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
+    helm delete kubeplus -n $KUBEPLUS_NS
+    python provider-kubeconfig.py delete $KUBEPLUS_NS
+    ```
 
 <!--
 <p align="center">
