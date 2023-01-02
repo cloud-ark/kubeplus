@@ -10,6 +10,7 @@ Multi-instance multi-tenancy (MIMT) is a software architecture pattern in which 
 
 KubePlus takes an application Helm chart and wraps it under a Kubernetes API (CRD). Whenever an application instance is created using this API, KubePlus ensures that every instance is created in a separate namespace and the required multi-tenancy policies are applied in order to ensure isolation between instances. The API also supports RBAC, version upgrades and additional customizations for each instance. 
 
+
 <p align="center">
 <img src="./docs/kubeplus-with-properties.png" width="700" height="250" class="center">
 </p>
@@ -32,6 +33,9 @@ A new version of an application can be deployed by updating the application Helm
 ### Customization
 The spec properties of the Kubernetes API wrapping the application Helm chart are the fields defined in the chart’s values.yaml file. Application deployments can be customized by specifying different values for these spec properties.
 
+KubePlus architecture details are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html)
+KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](https://kubernetes.io/docs/concepts/security/multi-tenancy/#multi-customer-tenancy).
+
 
 ## Example
 
@@ -47,13 +51,17 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 3) Install KubePlus Operator using the generated provider kubeconfig 
 
-   ``helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.5.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS``
-
-Wait till KubePlus Pod is in 'Running' state: ``kubectl get pods -A | grep kubeplus``
+   ```
+   helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.5.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+   until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done
+   ```
 
 4) Create API wrapping WordPress Helm chart
 
-   ``kubectl create -f ./examples/multitenancy/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json``
+   ```
+   kubectl create -f ./examples/multitenancy/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
+   until kubectl get crds --kubeconfig=kubeplus-saas-provider.json | grep wordpressservices  ; do echo "Waiting for WordPressService CRD to be registered.."; sleep 1; done
+   ```
 
 5) Create WordpressService instance1
 
@@ -77,17 +85,52 @@ Wait till KubePlus Pod is in 'Running' state: ``kubectl get pods -A | grep kubep
 
    ``kubectl appresources WordpressService wp-for-tenant1 –k kubeplus-saas-provider.json``
 
+    ```
+     NAMESPACE                 KIND                      NAME                      
+     default                   WordpressService          wp-for-tenant1            
+     wp-for-tenant1            PersistentVolumeClaim     mysql-pv-claim            
+     wp-for-tenant1            PersistentVolumeClaim     wp-for-tenant1            
+     wp-for-tenant1            Service                   wordpress-mysql           
+     wp-for-tenant1            Service                   wp-for-tenant1            
+     wp-for-tenant1            Deployment                mysql                     
+     wp-for-tenant1            Deployment                wp-for-tenant1            
+     wp-for-tenant1            Pod                       mysql-76d6d9bdfd-7ffhx    
+     wp-for-tenant1            Pod                       wp-for-tenant1-87c4c954-7n9rk 
+     wp-for-tenant1            NetworkPolicy             allow-external-traffic    
+     wp-for-tenant1            NetworkPolicy             restrict-cross-ns-traffic 
+     wp-for-tenant1            ResourceQuota             wordpressservice-wp-for-tenant1 
+    ```
+<!--
 <p align="center">
 <img src="./docs/app-resources.png" width="700" height="250" class="center">
-</p>
+</p>-->
 
 9) Check application resource consumption
 
    ``kubectl metrics WordpressService wp-for-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json``
+   
+   ```
+   ---------------------------------------------------------- 
+   Kubernetes Resources created:
+       Number of Sub-resources: -
+       Number of Pods: 2
+           Number of Containers: 2
+           Number of Nodes: 1
+           Number of Not Running Pods: 0
+   Underlying Physical Resoures consumed:
+       Total CPU(cores): 0.773497m
+       Total MEMORY(bytes): 516.30859375Mi
+       Total Storage(bytes): 40Gi
+       Total Network bytes received: 0
+       Total Network bytes transferred: 0
+   ---------------------------------------------------------- 
+   ```
 
+
+<!--
 <p align="center">
 <img src="./docs/app-metrics.png" width="700" height="250" class="center">
-</p>
+</p>-->
 
 ## Try
 
