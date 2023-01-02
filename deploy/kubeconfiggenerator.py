@@ -546,22 +546,35 @@ def dryrunchart():
     else:
         return "Error - chart Path is empty"
 
-    testChartName = "kubeplus-customerapi-reg-testchart"
+    #testChartName = "kubeplus-customerapi-reg-testchart"
+    testChartName = "wordpressservice-wordpress-chart-with-ns"
     cmd = "helm install " + testChartName + " " + chartLoc + " --dry-run"
+    app.logger.info(cmd)
     out, err = run_command(cmd)
     print(out)
     app.logger.info("Helm install output:" + out)
     print(err)
     app.logger.info("Helm install error:" + err)
 
+    if err:
+        return err
+
     # Check storage class used by pvc; the reclaim policy needs to be delete
     storage_classes = []
     pvc_count = 0
     storage_classname_count = 0
+
+    # Check if chart contains Namespace object; Namespace object is not allowed in the chart.
+    kinds = []
     for line in out.split("\n"):
-        if 'PersistentVolumeClaim' in line.strip():
+        line = line.strip()
+        if 'kind' in line:
+            parts = line.split(":")
+            kind = parts[1].strip()
+            kinds.append(kind)
+        if 'PersistentVolumeClaim' in line:
             pvc_count = pvc_count + 1
-        if 'storageClassName' in line.strip():
+        if 'storageClassName' in line:
             storage_classname_count = storage_classname_count + 1
             parts = line.split(":")
             storage_class = parts[1].strip()
@@ -572,8 +585,9 @@ def dryrunchart():
         if 'standard' not in storage_classes:# it means the pvc defaults to the 'default' storageClassName; so add that.
             storage_classes.append('standard')
     app.logger.info("Storage classes:" + str(storage_classes))
+    app.logger.info("Kinds:" + str(kinds))
 
-    chartStatus = 'Chart is good.'
+    chartStatus = ''
     for storageClass in storage_classes:
         cmd = "kubectl get storageclass " + storageClass + " -o json "
         out, err = run_command(cmd)
@@ -583,6 +597,12 @@ def dryrunchart():
         if reclaim_policy.lower() != "delete":
             chartStatus = "Storage class with reclaim policy " + reclaim_policy + " not allowed."
             break
+
+    if 'Namespace' in kinds:
+        chartStatus = chartStatus + ' Namespace object is not allowed in the chart.'
+
+    if chartStatus == '':
+        chartStatus = 'Chart is good.'
 
     return chartStatus
 
