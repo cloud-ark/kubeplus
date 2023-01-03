@@ -776,23 +776,18 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 								kindName := parts[1]
 	 								kindName = strings.TrimSpace(kindName)
 	 								kindName = strings.TrimSuffix(kindName, "\n")
-	 								//fmt.Printf("Found Kind:%s\n", kindName)
 	 								kinds = append(kinds, kindName)
 	 							}
 	 						}
 	 					}
 	 				}
-				       //Update the kubeplus-saas-consumer and kubeplus-saas-provider roles
-				       /*roleUpdateCmd := "python /root/roleupdater.py " + KUBEPLUS_NAMESPACE + " " + plural
-				       fmt.Printf("Role Update Cmd:%s\n", roleUpdateCmd)
-	 			       ok, execOutput = executeExecCall(cmdRunnerPod, roleUpdateCmd)
-				       fmt.Printf("O/P:%s\n",ok)
-				       fmt.Printf("ExecO/P:%s\n",execOutput)*/
 	 			} else {
 		 			go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, execOutput)
+					deleteNSCmd := "./root/kubectl delete ns " + customresource
+					_, execOutput = executeExecCall(cmdRunnerPod, deleteNSCmd)
+					fmt.Printf("Output of delete NS Cmd:%v\n", execOutput)
 	 			}
 	    	}
- 		//}
 	}
 	if dryrun == "true" {
 		fmt.Printf("DRY RUN - ABC:%s\n", dryrun)
