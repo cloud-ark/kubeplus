@@ -156,7 +156,13 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
   export PATH=$KUBEPLUS_HOME/plugins:$PATH
 ```
 
-3) Go through the steps given [here](./examples/multitenancy/wordpress/steps.txt)
+3) Go through the steps given [here](./examples/multitenancy/wordpress/steps.txt).
+
+4) Run tests
+```
+   cd tests
+   python3 -m unittest -v tests
+```
 
 
 ## CNCF Landscape
