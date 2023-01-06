@@ -546,15 +546,23 @@ def dryrunchart():
     else:
         return "Error - chart Path is empty"
 
-    #testChartName = "kubeplus-customerapi-reg-testchart"
-    testChartName = "wordpressservice-wordpress-chart-with-ns"
-    cmd = "helm install " + testChartName + " " + chartLoc + " --dry-run"
-    app.logger.info(cmd)
-    out, err = run_command(cmd)
-    print(out)
-    app.logger.info("Helm install output:" + out)
-    print(err)
-    app.logger.info("Helm install error:" + err)
+    testChartName = "kubeplus-customerapi-reg-testchart"
+    dryRunSuccess = False
+    count = 0
+    while not dryRunSuccess and count < 3:
+        cmd = "helm install " + testChartName + " " + chartLoc + " --dry-run"
+        app.logger.info(cmd)
+        out, err = run_command(cmd)
+        print(out)
+        app.logger.info("Helm install output:" + out)
+        print(err)
+        app.logger.info("Helm install error:" + err)
+
+        if err.strip() == '':
+            dryRunSuccess = True
+        else:
+            time.sleep(2)
+            count = count + 1
 
     if err:
         return err
@@ -603,6 +611,14 @@ def dryrunchart():
 
     if chartStatus == '':
         chartStatus = 'Chart is good.'
+
+        # Append the list of kinds to chartStatus;
+        # Also, include Namespace in the list of kinds to return.
+        # We don't want Namespace in the chart but we do want it in the list of kinds
+        # as KubePlus puts an annotation on all the kinds belonging to an app instance.
+        kinds.append('Namespace')
+        kindString = '-'.join(kinds)
+        chartStatus = chartStatus + "\n" + kindString
 
     return chartStatus
 

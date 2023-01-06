@@ -905,31 +905,31 @@ func CheckClusterCapacity(cpuRequests, cpuLimits, memRequests, memLimits string)
 	//bodyString: total_allocatable_cpu:123,total_allocatable_memory_gb:2
 	parts := strings.Split(bodyString,",")
 	cpuParts := strings.Split(parts[0],":")
-	totalAllocatableCPU := strings.TrimSpace(cpuParts[1])
+	totalAllocatableCPU, _ := strconv.Atoi(strings.TrimSpace(cpuParts[1]))
 
 	memParts := strings.Split(parts[1],":")
-	totalAllocatableMemoryGB := strings.TrimSpace(memParts[1])
+	totalAllocatableMemoryGB, _ := strconv.ParseFloat(strings.TrimSpace(memParts[1]), 64)
 	
-	fmt.Printf("Total Allocatable CPU:%s\n", totalAllocatableCPU)
-	fmt.Printf("Total Allocatable Memory:%s\n", totalAllocatableMemoryGB)
+	fmt.Printf("Total Allocatable CPU:%d\n", totalAllocatableCPU)
+	fmt.Printf("Total Allocatable Memory:%f\n", totalAllocatableMemoryGB)
 
-	cpuRequests = strings.TrimSpace(strings.ReplaceAll(cpuRequests, "m", ""))
-	cpuLimits = strings.TrimSpace(strings.ReplaceAll(cpuLimits, "m", ""))
+	cpuRequestsI, _ := strconv.Atoi(strings.TrimSpace(strings.ReplaceAll(cpuRequests, "m", "")))
+	cpuLimitsI, _ := strconv.Atoi(strings.TrimSpace(strings.ReplaceAll(cpuLimits, "m", "")))
 
-	memRequests = strings.TrimSpace(strings.ReplaceAll(memRequests, "Gi", ""))
-	memLimits = strings.TrimSpace(strings.ReplaceAll(memLimits, "Gi", ""))
+	memRequestsI, _ := strconv.ParseFloat(strings.TrimSpace(strings.ReplaceAll(memRequests, "Gi", "")), 64)
+	memLimitsI, _ := strconv.ParseFloat(strings.TrimSpace(strings.ReplaceAll(memLimits, "Gi", "")), 64)
 
 	result := true
 	message := "Quota is within limits."
-	if totalAllocatableCPU < cpuRequests || totalAllocatableCPU < cpuLimits {
+	if totalAllocatableCPU < cpuRequestsI || totalAllocatableCPU < cpuLimitsI {
 		result = false
-		message = fmt.Sprintf("Specified CPU quota values are more than CPU capacity: %s %s - %s", cpuRequests, cpuLimits, totalAllocatableCPU)
+		message = fmt.Sprintf("Specified CPU quota values are more than CPU capacity: %d %d - %d", cpuRequestsI, cpuLimitsI, totalAllocatableCPU)
 		return result, message
 	}
 
-	if totalAllocatableMemoryGB < memRequests || totalAllocatableMemoryGB < memLimits {
+	if totalAllocatableMemoryGB < memRequestsI || totalAllocatableMemoryGB < memLimitsI {
 		result = false
-		message = fmt.Sprintf("Specified Memory quota values are more than Memory capacity: %s %s - %s", memRequests, memLimits, totalAllocatableMemoryGB)
+		message = fmt.Sprintf("Specified Memory quota values are more than Memory capacity: %d %d - %d", memRequestsI, memLimitsI, totalAllocatableMemoryGB)
 		return result, message
 	}
 

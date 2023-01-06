@@ -88,14 +88,16 @@ class TestKubePlus(unittest.TestCase):
 
         installed = False
         cmd = "kubectl get crds"
-        while not installed:
+        timer = 0
+        while not installed and timer < 30:
             out, err = TestKubePlus.run_command(cmd)
             if 'wordpressservices.platformapi.kubeplus' in out:
                 installed = True
             else:
                 time.sleep(1)
+                timer = timer + 1
 
-        cmd = "kubectl create -f tenant1.yaml"
+        cmd = "kubectl create -f tenant1.yaml --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)
 
         all_running = False
@@ -135,7 +137,7 @@ class TestKubePlus(unittest.TestCase):
                     self.assertTrue(False)
 
         #clean up
-        cmd = "kubectl delete -f tenant1.yaml"
+        cmd = "kubectl delete -f tenant1.yaml --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)
 
         cmd = "kubectl delete -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"

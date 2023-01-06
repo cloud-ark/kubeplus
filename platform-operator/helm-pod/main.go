@@ -267,7 +267,7 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 			fmt.Printf("Error:%v\n", err)
 		}
 	}
-	fmt.Printf("CRDObjList:%v\n", crdObjList)
+	//fmt.Printf("CRDObjList:%v\n", crdObjList)
 
 	execOutput := ""
 
@@ -920,13 +920,13 @@ func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, re
 	res := schema.GroupVersionResource{Group: group,
 									   Version: version,
 									   Resource: plural}
-        fmt.Printf("Res:%v\n",res)
-	fmt.Printf("kind:%s, group: %s, version:%s, plural:%s, instance:%s, crdObjNS:%s, targetNS:%s, releaseName:%s",
-		   kind, group, version, plural, instance, crdObjNS, targetNS, releaseName)
+        //fmt.Printf("Res:%v\n",res)
+	//fmt.Printf("kind:%s, group: %s, version:%s, plural:%s, instance:%s, crdObjNS:%s, targetNS:%s, releaseName:%s",
+	//	   kind, group, version, plural, instance, crdObjNS, targetNS, releaseName)
 	for {
 		obj, err := dynamicClient.Resource(res).Namespace(crdObjNS).Get(context.Background(), instance, metav1.GetOptions{})
-		fmt.Printf("Error:%v\n", err)
-		fmt.Printf("Obj:%v\n",obj)
+		//fmt.Printf("Error:%v\n", err)
+		//fmt.Printf("Obj:%v\n",obj)
 		if err == nil {
 			objData := obj.UnstructuredContent()
 			helmrelease := make(map[string]interface{},0)
@@ -934,10 +934,10 @@ func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, re
 			// is deployed.
 			helmrelease["helmrelease"] = targetNS + ":" + releaseName
 			objData["status"] = helmrelease
-			fmt.Printf("objData:%v\n",objData)
+			//fmt.Printf("objData:%v\n",objData)
 			obj.SetUnstructuredContent(objData)
-			updatedObj, err1 := dynamicClient.Resource(res).Namespace(crdObjNS).Update(context.Background(), obj, metav1.UpdateOptions{})
-			fmt.Printf("UpdatedObj:%v, err1:%v\n",updatedObj, err1) 
+			dynamicClient.Resource(res).Namespace(crdObjNS).Update(context.Background(), obj, metav1.UpdateOptions{})
+			//fmt.Printf("UpdatedObj:%v, err1:%v\n",updatedObj, err1) //add the respective variables if want to print.
 			// break out of the for loop
 			break 
 		} else {

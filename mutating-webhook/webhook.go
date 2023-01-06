@@ -49,6 +49,7 @@ var (
 	customAPIInstanceUIDMap map[string]string
 	customAPIQuotaMap map[string]interface{}
 	kindPluralMap map[string]string
+	chartKindMap map[string]string
 	resourcePolicyMap map[string]interface{}
 	resourceNameObjMap map[string]interface{}
 	namespaceHelmAnnotationMap map[string]string
@@ -97,6 +98,7 @@ func init() {
 	customKindPluralMap = make(map[string]string,0)
 	customAPIQuotaMap = make(map[string]interface{}, 0)
 	kindPluralMap = make(map[string]string,0)
+	chartKindMap = make(map[string]string,0)
 	resourcePolicyMap = make(map[string]interface{}, 0)
 	resourceNameObjMap = make(map[string]interface{}, 0)
 	namespaceHelmAnnotationMap = make(map[string]string, 0)
@@ -608,11 +610,13 @@ func getAPIDetailsFromHelmReleaseAnnotation(releaseName string) (string, string,
 			}
 		}
 		fmt.Printf("CustomAPI:%s\n", customAPI)
-		capiParts := strings.Split(customAPI, "/")
-		capiGroup = capiParts[0]
-		capiVersion = capiParts[1]
-		capiKind = capiParts[2]
-		fmt.Printf("capiGroup:%s capiVersion:%s capiKind:%s\n", capiGroup, capiVersion, capiKind)
+		if customAPI != "" {
+			capiParts := strings.Split(customAPI, "/")
+			capiGroup = capiParts[0]
+			capiVersion = capiParts[1]
+			capiKind = capiParts[2]
+			fmt.Printf("capiGroup:%s capiVersion:%s capiKind:%s\n", capiGroup, capiVersion, capiKind)
+		}
 	} else {
 		return "","","",""
 	}
@@ -626,6 +630,15 @@ func applyPolicies(ar *v1.AdmissionReview, customAPI, rootKind, rootName, rootNa
 	podName, _ := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
 
 	fmt.Printf("Pod Name:%s\n", podName)
+
+	/*
+	res1, _, _, _ := jsonparser.Get(body, "spec", "containers")
+	var containers map[string]any
+	json.Unmarshal(res1, &containers)
+	for key, value := range containers {
+		mapval := value.(map[string]any)
+		fmt.Printf("%v %v\n", key, mapval["name"])
+	}*/
 
 	// TODO: Defaulting to the first container. Take input for additional containers
 	res, dataType, _, err1 := jsonparser.Get(body, "spec", "containers", "[0]", "resources")
@@ -819,6 +832,22 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 		}
 	}
 
+	message1 := string(LintChart(chartURL))
+	fmt.Printf("After LintChart - message:%s\n", message1)
+	if !strings.Contains(message1, "Chart is good") {
+		return &v1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: message1,
+			},
+		}
+	}
+
+	parts := strings.Split(message1, "\n")
+	kindString := parts[1]
+	fmt.Printf("Kind string:%s\n", kindString)
+	chartKindMap[platformWorkflowName] = kindString
+
+
 	message := string(TestChartDeployment(kind, namespace, chartName, chartURL))
 	fmt.Printf("After TestChartDeployment - message:%s\n", message)
 	if strings.Contains(message, "Error") {
@@ -826,16 +855,6 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 		return &v1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: message,
-			},
-		}
-	}
-
-	message1 := string(LintChart(chartURL))
-	fmt.Printf("After LintChart - message:%s\n", message1)
-	if !strings.Contains(message1, "Chart is good") {
-		return &v1.AdmissionResponse{
-			Result: &metav1.Status{
-				Message: message1,
 			},
 		}
 	}
@@ -972,8 +991,10 @@ func getPaCAnnotation(ar *v1.AdmissionReview) map[string]string {
 	if ok {
 
 			namespace := GetNamespace()
+			/**
 	 		chartKindsB := DryRunChart(platformWorkflowName, namespace)
-	 		chartKinds = string(chartKindsB)
+	 		chartKinds = string(chartKindsB)*/
+			chartKinds = chartKindMap[platformWorkflowName]
 	 		fmt.Printf("Chart Kinds:%v\n", chartKinds)
 
 	 		// If no kinds are found in the dry run then there is nothing to be done.
@@ -1062,7 +1083,7 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 
 	overridesBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "spec")
 	overrides := string(overridesBytes)
-	fmt.Printf("Overrides:%s\n", overrides)
+	//fmt.Printf("Overrides:%s\n", overrides)
 
 	nodeName, err := jsonparser.GetUnsafeString(req.Object.Raw, "spec", "nodeName")
 	fmt.Printf("nodeName in Spec:%s\n", nodeName)
@@ -1113,13 +1134,20 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 		chartName := platformWorkflow1.Spec.NewResource.ChartName
  		fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s, ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
 
+		cpu_requests_q := ""
+		cpu_limits_q := ""
+		mem_requests_q := ""
+		mem_limits_q := ""
+		if customAPIQuotaMap[customAPI] != nil {
+
 		quota_map := customAPIQuotaMap[customAPI].(map[string]string)
-		cpu_requests_q := quota_map["requests.cpu"]
-		cpu_limits_q := quota_map["limits.cpu"]
-		mem_requests_q := quota_map["requests.memory"]
-		mem_limits_q := quota_map["limits.memory"]
+		cpu_requests_q = quota_map["requests.cpu"]
+		cpu_limits_q = quota_map["limits.cpu"]
+		mem_requests_q = quota_map["requests.memory"]
+		mem_limits_q = quota_map["limits.memory"]
 
 		fmt.Printf("cpu_req:%s cpu_lim:%s mem_req:%s mem_lim:%s\n", cpu_requests_q, cpu_limits_q, mem_requests_q, mem_limits_q)
+	}
 
  		QueryDeployEndpoint(platformWorkflowName, crname, namespace, overrides, cpu_requests_q,
 	                           cpu_limits_q, mem_requests_q, mem_limits_q)
@@ -1413,7 +1441,7 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 	} else {
-		fmt.Printf("%v\n", ar.Request)
+		//fmt.Printf("%v\n", ar.Request)
 		fmt.Printf("####### METHOD:%s #######\n", ar.Request.Operation)
 		fmt.Println(r.URL.Path)
 		if r.URL.Path == "/mutate" {
