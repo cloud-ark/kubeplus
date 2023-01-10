@@ -13,11 +13,7 @@ dictConfig({
     'formatters': {'default': {
         'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
     }},
-    'handlers': {'wsgi': {
-        'class': 'logging.StreamHandler',
-        'stream': 'ext://flask.logging.wsgi_errors_stream',
-        'formatter': 'default'
-    },
+    'handlers': {
      'file.handler': {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': 'provider-kubeconfig.log',
