@@ -7,14 +7,14 @@ print_help () {
     echo "        kubectl applogs"
     echo ""
     echo "SYNOPSIS"
-    echo "        kubectl applogs <Kind> <Instance> <Namespace> [-k <Absolute path to kubeconfig>]"
+    echo "        kubectl applogs <Kind> <Instance> <Namespace> -k <Absolute path to kubeconfig>"
     echo ""
     echo "DESCRIPTION"
     echo "        kubectl applogs shows container logs for all the containers of all the Pods that are related to the input Kubernetes resource."
     exit 0
 }
 
-if (( $# < 3 )); then
+if (( $# < 5 )); then
   print_help
 fi
 
@@ -49,6 +49,20 @@ check_namespace $namespace $kubeconfig
 #echo "$kind $instance $namespace"
 
 canonicalKind=$(get_canonical_kind $kind)
+
+if [[ $canonicalKind == *"Unknown"* ]]; then
+	echo "$canonicalKind"
+	exit 0
+fi
+
+resStatus=`kubectl $kubeconfig get $kind $instance -n $namespace -o json 2>&1`
+if [[ $resStatus =~ 'Error' ]]; then
+#  echo "Instance $instance of $kind not deployed properly."
+  echo $resStatus
+  exit 0
+fi
+
+
 
 python /$KUBEPLUS_HOME/plugins/crlogs.py connections $canonicalKind $instance $namespace $kubeconfig
 

@@ -7,6 +7,10 @@ check_namespace() {
      echo "Namespace $ns not found."
      exit 0
   fi
+  if [[ $ns_output =~ 'error' ]]; then
+     echo $ns_output
+     exit 0
+  fi
   if [[ $ns_output =~ 'Unable' ]]; then
      echo $ns_output
      exit 0

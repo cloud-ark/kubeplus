@@ -154,6 +154,26 @@ class TestKubePlus(unittest.TestCase):
             else:
                 time.sleep(1)
 
+    # TODO: Add tests for
+    # kubectl connections
+    # kubectl appresources
+    # kubectl appurl
+    # kubectl applogs
+    # kubectl metrics
+    @unittest.skip("Skipping CLI test")
+    def test_kubeplus_cli(self):
+        kubeplus_home = os.getenv("KUBEPLUS_HOME")
+        print("KubePlus home:" + kubeplus_home)
+        path = os.getenv("PATH")
+        print("Path:" + path)
+
+        instance = ""
+        kind = "wp"
+        ns = "default"
+        kubeplus_saas_provider = kubeplus_home + "/kubeplus-saas-provider.json"
+        cmdsuffix = kind + " " + instance + " " + ns + " -k " + kubeplus_saas_provider 
+        cmd = "kubectl connections " + cmdsuffix
+
     @unittest.skip("Skipping Kyverno integration test")
     def test_kyverno_policies(self):
         if not TestKubePlus._is_kubeplus_running():

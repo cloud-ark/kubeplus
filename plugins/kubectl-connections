@@ -151,10 +151,23 @@ kubeconfig="--kubeconfig="$kubeconfig1
 check_namespace $namespace $kubeconfig
 
 canonicalKind=$(get_canonical_kind $kind)
+if [[ $canonicalKind =~ 'Unknown Kind' ]]; then
+  echo "$canonicalKind"
+  exit 0
+fi
 
 # Check if the resource was deployed without errors
+resStatus=`kubectl $kubeconfig get $kind $instance -n $namespace -o json 2>&1` 
+#echo "Res Status:$resStatus"
+if [[ $resStatus =~ 'Error' ]]; then
+  echo "Instance $instance of $kind not deployed properly."
+  echo $resStatus
+  exit 0
+fi
+
 resStatus=`kubectl $kubeconfig get $kind $instance -n $namespace -o json | grep helmrelease | grep -v "f:helmrelease"`
-if [[ $resStatus =~ "Error" ]]; then
+echo "Res Status:$resStatus"
+if [[ $resStatus =~ 'Error' ]]; then
   echo "Instance $instance of $kind not deployed properly."
   echo $resStatus
   exit 0
