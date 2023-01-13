@@ -7,7 +7,7 @@ print_help () {
     echo "        kubectl appurl"
     echo ""
     echo "SYNOPSIS"
-    echo "        kubectl appurl <Kind> <Instance> <Namespace> [-k <Absolute path to kubeconfig>]"
+    echo "        kubectl appurl <Kind> <Instance> <Namespace> -k <Absolute path to kubeconfig>"
     echo ""
     echo "DESCRIPTION"
     echo "        kubectl appurl shows application url. For this it searches for Service object with type NodePort or LoadBalancer in "
@@ -15,7 +15,7 @@ print_help () {
     exit 0
 }
 
-if (( $# < 3 )); then
+if (( $# < 5 )); then
   print_help
 fi
 
@@ -48,6 +48,19 @@ kubeconfig="--kubeconfig="$kubeconfig1
 check_namespace $namespace $kubeconfig
 
 canonicalKind=$(get_canonical_kind $kind)
+
+if [[ $canonicalKind == *"Unknown"* ]]; then
+	echo "$canonicalKind"
+	exit 0
+fi
+
+resStatus=`kubectl $kubeconfig get $kind $instance -n $namespace -o json 2>&1`
+if [[ $resStatus =~ 'Error' ]]; then
+#  echo "Instance $instance of $kind not deployed properly."
+  echo $resStatus
+  exit 0
+fi
+
 
 python3 /$KUBEPLUS_HOME/plugins/appurl.py connections $canonicalKind $instance $namespace $kubeconfig
 
