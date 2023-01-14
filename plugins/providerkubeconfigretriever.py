@@ -9,7 +9,7 @@ class ProviderKubeconfigRetriever(object):
 	def retrieve_kubeconfig(self, kubeplusNS, serverURL, kubeconfigFor, kubeconfig):
 
 		if kubeconfigFor == 'provider':
-			cmd = "kubectl get configmaps kubeplus-saas-provider-kubeconfig -n " + kubeplusNS + " -o jsonpath=\"{.data.kubeplus-saas-provider\.json}\""
+			cmd = "kubectl get configmaps kubeplus-saas-provider -n " + kubeplusNS + " -o jsonpath=\"{.data.kubeplus-saas-provider\.json}\""
 		if kubeconfigFor == 'consumer':
 			cmd = "kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n " + kubeplusNS + " -o jsonpath=\"{.data.kubeplus-saas-consumer\.json}\""			
 

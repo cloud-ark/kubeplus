@@ -166,7 +166,7 @@ if [[ $resStatus =~ 'Error' ]]; then
 fi
 
 resStatus=`kubectl $kubeconfig get $kind $instance -n $namespace -o json | grep helmrelease | grep -v "f:helmrelease"`
-echo "Res Status:$resStatus"
+#echo "Res Status:$resStatus"
 if [[ $resStatus =~ 'Error' ]]; then
   echo "Instance $instance of $kind not deployed properly."
   echo $resStatus
