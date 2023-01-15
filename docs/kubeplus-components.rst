@@ -38,12 +38,10 @@ The platform workflow requirements are:
 
 - Create a PersistentVolume of required type for MySQL instance. 
 - Create Secret objects for MySQL instance and for storing backups of a MySQL instance on AWS.
-- Setup a policy to provide specified resource requests and limits to all the
-Pods that are created under this service.  
-- Get aggregated cpu, memory, storage and network metrics for all the Pods that are
-part of a MySQL instance.
+- Setup a policy to provide specified resource requests and limits to all the Pods that are created under this service.  
+- Get aggregated cpu, memory, storage and network metrics for all the Pods that are part of a MySQL instance.
 
-Platform team defines a Helm chart that defines the required resources to be created (MySQL Custom Resource, PersistentVolume object, Secret objects).
+Platform team creates a Helm chart that defines the required resources to be created (MySQL Custom Resource, PersistentVolume object, Secret objects).
 
 Here is a new platform service named MysqlService created using 
 :code:`ResourceComposition`. 
@@ -144,7 +142,7 @@ Currently two mutations are supported as part of ``podconfig`` spec attribute:
 - requests and limits: These fields are used to define cpu and memory resource request and limits for containers defined in a Pod. If a Pod is made of several containers currently only first container's spec is mutated. Also, currently initContainers are not supported.
 - nodeSelector: This field is used to specify Node name on which a Pod needs to run. KubePlus updates the Pod's spec to include ``nodeSelector`` attribute based on the provided value.
 
-The values for above fields can be statically defined, or they can be customized per resource instance of the new API. If it is the latter then the value needs to be specified to be input from the underlying ``values.yaml``. In the above example, requests and limits are statically defined, whereas ``nodeSelector`` is defined to be different per resource instance of the new API. Hence its value is specified to be ingested from the ``nodeName`` field from the underlying ``values.yaml``. Note that if ``nodeName`` field is not defined in ``values.yaml`` then this mutation will be a noop.
+The values for above fields can be statically defined, or they can be customized per resource instance of the new API. If it is the latter then the value needs to be specified to be input from the underlying ``values.yaml``. In the above example, requests and limits are statically defined, whereas ``nodeSelector`` is defined to be different per resource instance of the new API. Hence its value is specified to be ingested from a special field (``nodeName``) that can be included in the new API YAML.
 
 **ResourceMonitor**
 
@@ -191,6 +189,8 @@ Check the available KubePlus kubectl plugins by running: ``kubectl kubeplus comm
               kubectl connections
               kubectl metrics
               kubectl applogs
+              kubectl appurl
+	      kubectl appresources
               kubectl retrieve kubeconfig provider
               kubectl retrieve kubeconfig consumer
               kubectl grantpermission consumer
@@ -198,11 +198,12 @@ Check the available KubePlus kubectl plugins by running: ``kubectl kubeplus comm
       DESCRIPTION
               KubePlus provides a suite of kubectl plugins to discover, monitor and troubleshoot Kubernetes applications.
 
-              The discovery plugins (kubectl man and kubectl connections) help with discovering the static and runtime
+              The discovery plugins (kubectl man, kubectl connections, kubectl appresources) help with discovering the static and runtime
               information about an application.
               - kubectl man provides the ability to discover man page like information about Kubernetes Custom Resources.
               - kubectl connections provides the ability to discover Kubernetes resources that are related to one another
                 through one of the following relationships - ownerReferences, label, annotations, spec properties.
+              - kubectl appresources displays all the resources that have been created for an application.
               The monitoring and troubleshooting plugins (kubectl metrics and kubectl applogs) enable collecting application metrics and logs.
               - kubectl metrics collects CPU, Memory, Storage, and Network metrics for an application. These are available in Prometheus format.
               - kubectl applogs collects logs for all the containers of all the Pods in an application.
@@ -244,8 +245,7 @@ resource topologies. It does that by discovering Kubernetes Resource relationshi
 
 These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable.
 
-The 'composition' annotation is used to specify the list of Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance.
-The three relationship annotations are used to declare label, spec-property, and annotation based relationships that instances of a Custom Resource can have with other Kubernetes resources.
+The 'composition' annotation is used to specify the list of Kubernetes's built-in resources that are created as part of instantiating a Custom Resource instance. Three relationship annotations are used to declare label, spec-property, and annotation based relationships that instances of a Custom Resource can have with other Kubernetes resources.
 
 KubePlus adds the ``annotation-relationship`` annotation to the CRD of the new API that is registered via ``ResourceComposition``. Here is an example of this annotation added by KubePlus on WordpressService CRD.
 

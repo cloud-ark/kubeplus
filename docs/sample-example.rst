@@ -60,16 +60,15 @@ If KubePlus Pod is not running then `install KubePlus first`_.
 
 *2. Get provider and consumer kubeconfigs*
 
-KubePlus generates separate kubeconfig files for provider and consumers with appropriate permissions. Retrieve them as follows:
+KubePlus generates separate kubeconfig files for provider and consumers with appropriate permissions.
+You would have generated provider kubeconfig (kubeplus-saas-provider.json) as part of installing KubePlus Operator.
+Retrieve KubePlus consumer kubeconfig as follows:
 
 .. code-block:: bash
 
-	$ kubectl retrieve kubeconfig provider $KUBEPLUS_NS > provider.conf
 	$ kubectl retrieve kubeconfig consumer $KUBEPLUS_NS > consumer.conf
 
-Distribute the kubeconfig files to providers and consumers.
-
-In the steps below, use the appropriate kubeconfig in the provider and consumer actions by passing the ``--kubeconfig=<provider/consumer>.conf`` flag.
+In the steps below, use the appropriate kubeconfig in the provider and consumer actions by passing the ``--kubeconfig=<provider/consumer kubeconfig file>`` flag.
 
 
 Provider action
@@ -143,33 +142,33 @@ Create hello-world-resource-composition as follows:
 
 .. code-block:: bash
 
-    kubectl create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS --kubeconfig=provider.conf
+    kubectl create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS --kubeconfig=kubeplus-saas-provider.json
 
 or
 
 .. code-block:: bash
 
-    oc create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS --kubeconfig=provider.conf
+    oc create -f hello-world-resource-composition.yaml -n $KUBEPLUS_NS --kubeconfig=kubeplus-saas-provider.json
 
 
 - Wait till HelloWorldService CRD is registered in the cluster.
 
 .. code-block:: bash
 
-    until kubectl get crds --kubeconfig=provider.conf | grep hello  ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
+    until kubectl get crds --kubeconfig=kubeplus-saas-provider.json | grep hello  ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
 
 or
 
 .. code-block:: bash
 
-    until oc get crds --kubeconfig=provider.conf | grep hello  ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
+    until oc get crds --kubeconfig=kubeplus-saas-provider.json | grep hello  ; do echo "Waiting for HelloworldService CRD to be registered.."; sleep 1; done
 
 
 - Grant permission to the consumer to create service instances.
 
 .. code-block:: bash
 
-	kubectl grantpermission consumer helloworldservices provider.conf $KUBEPLUS_NS
+	kubectl grantpermission consumer helloworldservices kubeplus-saas-provider.json $KUBEPLUS_NS
 
 
 
@@ -204,7 +203,26 @@ If you are working with the KubePlus Vagrant VM, access the service at following
 
 	$ http://192.168.33.10:5000/service/HelloWorldService
 
-The UI provides a form to input values that need to be provided when creating a service instance. You can also check the API documentation for the service on the UI. Because the cluster admin has granted permission to the consumer to create the HelloWorldService instances, you will be able to create an instance of HelloWorldService through the UI.
+The UI provides a form to input values that need to be provided when creating a service instance. You can also check the API documentation for the service on the UI. Because the cluster admin has granted permission to the consumer to create the HelloWorldService instances, you will be able to create an instance of HelloWorldService through the UI. Here are the screenshots of using Consumer UI.
+
+- Check API Doc
+
+.. image:: consumer-ui-helloworld-api-doc.png 
+   :align: center
+
+- Create instance - KubePlus generates a form corresponding to the fields defined in the underlying chart's values.yaml file.
+
+.. image:: consumer-ui-helloworld-create-instance.png 
+   :align: center
+
+
+- Created instance details
+
+.. image:: consumer-ui-helloworld-app-details.png 
+   :align: center
+
+
+
 
 **Using CLI**
 
@@ -212,7 +230,7 @@ The UI provides a form to input values that need to be provided when creating a 
 
 .. code-block:: bash
 
-	kubectl man HelloWorldService
+	kubectl man HelloWorldService -k consumer.conf
 
 You should see following output:
 
@@ -320,17 +338,17 @@ This should return without any errors.
 
 .. code-block:: bash
 
-    HELLOWORLD_NS=`kubectl get pods -A --kubeconfig=provider.conf | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
+    HELLOWORLD_NS=`kubectl get pods -A --kubeconfig=kubeplus-saas-provider.json | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
 
 or
 
 .. code-block:: bash
 
-    HELLOWORLD_NS=`oc get pods -A --kubeconfig=provider.conf | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
+    HELLOWORLD_NS=`oc get pods -A --kubeconfig=kubeplus-saas-provider.json | grep hello-world-deployment-helloworldservice | awk '{print $1}'`
 
 .. code-block:: bash
 
-	kubectl metrics HelloWorldService hs1 $HELLOWORLD_NS -k provider.conf
+	kubectl metrics HelloWorldService hs1 $HELLOWORLD_NS -k kubeplus-saas-provider.json -o prometheus
 
 You should see output of the following form:
 
@@ -342,13 +360,13 @@ You should see output of the following form:
 
 .. code-block:: bash
 
-	kubectl get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json --kubeconfig=provider.conf | jq -r '.spec.containers[0].resources'
+	kubectl get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json --kubeconfig=kubeplus-saas-provider.json | jq -r '.spec.containers[0].resources'
 
 or
 
 .. code-block:: bash
    
-    oc get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json --kubeconfig=provider.conf | jq -r '.spec.containers[0].resources'
+    oc get pods $HELLOWORLD_POD -n $HELLOWORLD_NS -o json --kubeconfig=kubeplus-saas-provider.json | jq -r '.spec.containers[0].resources'
 
 
 You should see following output:
@@ -362,31 +380,31 @@ You should see following output:
 
 .. code-block:: bash
 
-    kubectl connections HelloWorldService hs1 $HELLOWORLD_NS -k provider.conf
+    kubectl connections HelloWorldService hs1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
 
 or
 
 .. code-block:: bash
 
-    oc connections HelloWorldService hs1 $HELLOWORLD_NS
+    oc connections HelloWorldService hs1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
 
 You should see following output:
 
-.. image:: hello-world-connections-flat.png
+.. image:: hello-world-flat.png
    :align: center
 
 *4. Visualize the relationship graph*
 
 .. code-block:: bash
 
-    kubectl connections HelloWorldService hs1 $HELLOWORLD_NS -o png -k provider.conf
+    kubectl connections HelloWorldService hs1 $KUBEPLUS_NS -o png -k kubeplus-saas-provider.json
 
 or
 
 .. code-block:: bash
 
-    oc connections HelloWorldService hs1 $HELLOWORLD_NS -o png
+    oc connections HelloWorldService hs1 $KUBEPLUS_NS -o png -k kubeplus-saas-provider.json
 
 
-.. image:: hello-world-connections-png.png
+.. image:: hello-world-tree.png
    :align: center
