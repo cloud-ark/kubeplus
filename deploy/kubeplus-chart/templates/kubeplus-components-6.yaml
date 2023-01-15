@@ -346,8 +346,8 @@ spec:
         imagePullPolicy: IfNotPresent
         command: [ "/platform-operator"]
       - name: consumerui
-        image: gcr.io/cloudark-kubeplus/consumerui:0.0.5
-        imagePullPolicy: Always
+        image: gcr.io/cloudark-kubeplus/consumerui:0.0.6
+        imagePullPolicy: IfNotPresent
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
         image: gcr.io/cloudark-kubeplus/helm-pod:3.0.6
