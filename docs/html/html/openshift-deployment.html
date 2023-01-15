@@ -2,18 +2,21 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>OpenShift Deployment &#8212; KubePlus 1.0.0 documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
     
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/bizstyle.js"></script>
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Sample Example - HelloWorldService" href="sample-example.html" />
@@ -42,29 +45,29 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="openshift-deployment">
-<h1>OpenShift Deployment</h1>
-<div class="section" id="setup">
-<h2>Setup</h2>
+  <section id="openshift-deployment">
+<h1>OpenShift Deployment<a class="headerlink" href="#openshift-deployment" title="Permalink to this heading">¶</a></h1>
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this heading">¶</a></h2>
 <ol class="arabic simple">
 <li><p>Make sure your Openshift Cluster is registered with Redhat Marketplace. Follow <a class="reference external" href="https://marketplace.redhat.com/en-us/documentation/clusters#register-openshift-cluster-with-red-hat-marketplace">cluster registration link</a> for reference:</p></li>
 </ol>
 <ol class="arabic simple" start="2">
 <li><p>Delete any previous installed resources of KubePlus</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl -L https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/delete-kubeplus-components-oc.sh -o delete-kubeplus-components-oc.sh
-chmod +x delete-kubeplus-components-oc.sh
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-L<span class="w"> </span>https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/delete-kubeplus-components-oc.sh<span class="w"> </span>-o<span class="w"> </span>delete-kubeplus-components-oc.sh
+chmod<span class="w"> </span>+x<span class="w"> </span>delete-kubeplus-components-oc.sh
 ./delete-kubeplus-components-oc.sh
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
 <li><p>Install KubePlus Pre-requisite resources. You can use either oc cli or kubectl cli. The commands are exactly the same.</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml -n openshift-operators
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kubectl<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml<span class="w"> </span>-n<span class="w"> </span>openshift-operators
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml -n openshift-operators
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>https://raw.githubusercontent.com/cloud-ark/kubeplus/master/deploy/kubeplus-openshift-prereqs.yaml<span class="w"> </span>-n<span class="w"> </span>openshift-operators
 </pre></div>
 </div>
 <ol class="arabic simple" start="4">
@@ -79,24 +82,24 @@ Customer can do free trial signup or Purchase.</p></li>
 <ol class="arabic simple" start="6">
 <li><p>Debug:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nv">KUBEPLUS_NS</span><span class="o">=</span>openshift-operators
-$ <span class="nv">KUBEPLUS</span><span class="o">=</span><span class="sb">`</span>kubectl get pods -A <span class="p">|</span> grep kubeplus <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
-$ kubectl logs <span class="nv">$KUBEPLUS</span> -n <span class="nv">$KUBEPLUS_NS</span> -c crd-hook
-$ kubectl logs <span class="nv">$KUBEPLUS</span> -n <span class="nv">$KUBEPLUS_NS</span> -c helmer
-$ kubectl logs <span class="nv">$KUBEPLUS</span> -n <span class="nv">$KUBEPLUS_NS</span> -c platform-operator
-$ kubectl logs <span class="nv">$KUBEPLUS</span> -n <span class="nv">$KUBEPLUS_NS</span> -c webhook-cert-setup
-$ kubectl logs <span class="nv">$KUBEPLUS</span> -n <span class="nv">$KUBEPLUS_NS</span> -c consumerui
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nv">KUBEPLUS_NS</span><span class="o">=</span>openshift-operators
+$<span class="w"> </span><span class="nv">KUBEPLUS</span><span class="o">=</span><span class="sb">`</span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-A<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>kubeplus<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>logs<span class="w"> </span><span class="nv">$KUBEPLUS</span><span class="w"> </span>-n<span class="w"> </span><span class="nv">$KUBEPLUS_NS</span><span class="w"> </span>-c<span class="w"> </span>crd-hook
+$<span class="w"> </span>kubectl<span class="w"> </span>logs<span class="w"> </span><span class="nv">$KUBEPLUS</span><span class="w"> </span>-n<span class="w"> </span><span class="nv">$KUBEPLUS_NS</span><span class="w"> </span>-c<span class="w"> </span>helmer
+$<span class="w"> </span>kubectl<span class="w"> </span>logs<span class="w"> </span><span class="nv">$KUBEPLUS</span><span class="w"> </span>-n<span class="w"> </span><span class="nv">$KUBEPLUS_NS</span><span class="w"> </span>-c<span class="w"> </span>platform-operator
+$<span class="w"> </span>kubectl<span class="w"> </span>logs<span class="w"> </span><span class="nv">$KUBEPLUS</span><span class="w"> </span>-n<span class="w"> </span><span class="nv">$KUBEPLUS_NS</span><span class="w"> </span>-c<span class="w"> </span>webhook-cert-setup
+$<span class="w"> </span>kubectl<span class="w"> </span>logs<span class="w"> </span><span class="nv">$KUBEPLUS</span><span class="w"> </span>-n<span class="w"> </span><span class="nv">$KUBEPLUS_NS</span><span class="w"> </span>-c<span class="w"> </span>consumerui
 </pre></div>
 </div>
 <ol class="arabic simple" start="7">
 <li><p>Cleanup:</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget https://github.com/cloud-ark/kubeplus/raw/master/deploy/delete-kubeplus-components-oc.sh
-$ ./delete-kubeplus-components-oc.sh
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>wget<span class="w"> </span>https://github.com/cloud-ark/kubeplus/raw/master/deploy/delete-kubeplus-components-oc.sh
+$<span class="w"> </span>./delete-kubeplus-components-oc.sh
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -109,12 +112,12 @@ $ ./delete-kubeplus-components-oc.sh
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>

@@ -2,18 +2,21 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
     <title>KubePlus Components &#8212; KubePlus 1.0.0 documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css" />
     
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/bizstyle.js"></script>
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Getting Started" href="getting-started.html" />
@@ -42,12 +45,12 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="kubeplus-components">
-<h1>KubePlus Components</h1>
+  <section id="kubeplus-components">
+<h1>KubePlus Components<a class="headerlink" href="#kubeplus-components" title="Permalink to this heading">¶</a></h1>
 <p>KubePlus consists of a Kubernetes Operator and a set of kubectl plugins. The KubePlus Kubernetes Operator consists of a Kubernetes Controller, a MutatingWebHook, and a module that knows how to deploy Helm charts. KubePlus requires that the Helm charts be defined using Helm 3.0.</p>
 <a class="reference internal image-reference" href="_images/KubePlus-components2.jpg"><img alt="_images/KubePlus-components2.jpg" class="align-center" src="_images/KubePlus-components2.jpg" style="width: 800px; height: 300px;" /></a>
-<div class="section" id="kubeplus-kubernetes-operator">
-<h2>KubePlus Kubernetes Operator</h2>
+<section id="kubeplus-kubernetes-operator">
+<h2>KubePlus Kubernetes Operator<a class="headerlink" href="#kubeplus-kubernetes-operator" title="Permalink to this heading">¶</a></h2>
 <p>KubePlus offers a CRD named ResourceComposition to</p>
 <ul class="simple">
 <li><p>Create new CRDs (Custom Resource Definition) to publish platform services from Helm charts</p></li>
@@ -62,71 +65,69 @@
 <ul class="simple">
 <li><p>Create a PersistentVolume of required type for MySQL instance.</p></li>
 <li><p>Create Secret objects for MySQL instance and for storing backups of a MySQL instance on AWS.</p></li>
-<li><p>Setup a policy to provide specified resource requests and limits to all the</p></li>
+<li><p>Setup a policy to provide specified resource requests and limits to all the Pods that are created under this service.</p></li>
+<li><p>Get aggregated cpu, memory, storage and network metrics for all the Pods that are part of a MySQL instance.</p></li>
 </ul>
-<p>Pods that are created under this service.
-- Get aggregated cpu, memory, storage and network metrics for all the Pods that are
-part of a MySQL instance.</p>
-<p>Platform team defines a Helm chart that defines the required resources to be created (MySQL Custom Resource, PersistentVolume object, Secret objects).</p>
+<p>Platform team creates a Helm chart that defines the required resources to be created (MySQL Custom Resource, PersistentVolume object, Secret objects).</p>
 <p>Here is a new platform service named MysqlService created using
 <code class="code docutils literal notranslate"><span class="pre">ResourceComposition</span></code>.</p>
 <p>A new CRD named MysqlService has been created here using ResourceComposition. You provide a platform workflow Helm chart that creates required underlying resources.
 When defining the new <code class="code docutils literal notranslate"><span class="pre">Kind</span></code>, make sure that you define the group as <code class="code docutils literal notranslate"><span class="pre">platformapi.kubeplus</span></code> and version as <code class="code docutils literal notranslate"><span class="pre">v1alpha1</span></code>.
 Additionally provide any policy and monitoring inputs for the workflow as part of <code class="code docutils literal notranslate"><span class="pre">ResourceComposition</span></code> definition. The Spec Properties of MysqlService come from values.yaml of the Helm chart. Product teams can use this service to get MySQL database for their application.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apiVersion: workflows.kubeplus/v1alpha1
-kind: ResourceComposition
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>apiVersion:<span class="w"> </span>workflows.kubeplus/v1alpha1
+kind:<span class="w"> </span>ResourceComposition
 metadata:
-  name: mysqlservicecrd
+<span class="w">  </span>name:<span class="w"> </span>mysqlservicecrd
 spec:
-  <span class="c1"># newResource defines the new CRD to be installed define a workflow.</span>
-  newResource:
-    resource:
-      kind: MysqlService
-      group: platformapi.kubeplus
-      version: v1alpha1
-      plural: mysqlservices
-    <span class="c1"># URL of the Helm chart that contains Kubernetes resources that represent a workflow.</span>
-    chartURL: https://github.com/cloud-ark/operatorcharts/blob/master/mysqlcluster-stack-0.0.1.tgz?raw<span class="o">=</span><span class="nb">true</span>
-    chartName: mysqlcluster-stack
-  <span class="c1"># respolicy defines the resource policy to be applied to instances of the specified custom resource.</span>
-  respolicy:
-    apiVersion: workflows.kubeplus/v1alpha1
-    kind: ResourcePolicy
-    metadata:
-      name: mysqlservice-policy
-    spec:
-      resource:
-        kind: MysqlService
-        group: platformapi.kubeplus
-        version: v1alpha1
-      policy:
-        <span class="c1"># Add following requests and limits for the first container of all the  Pods that are related via</span>
-        <span class="c1"># owner reference relationship to instances of resources specified above.</span>
-        podconfig:
-          limits:
-            cpu: 200m
-            memory: 4Gi
-          requests:
-            cpu: 100m
-            memory: 2Gi
-          nodeSelector: values.nodeName
-  <span class="c1"># resmonitor identifies the resource instances that should be monitored for CPU/Memory/Storage.</span>
-  <span class="c1"># All the Pods that are related to the resource instance through either ownerReference relationship, or all the relationships</span>
-  <span class="c1"># (ownerReference, label, annotation, spec properties) are considered in calculating the statistics.</span>
-  <span class="c1"># The generated output is in Prometheus format.</span>
-  resmonitor:
-    apiVersion: workflows.kubeplus/v1alpha1
-    kind: ResourceMonitor
-    metadata:
-      name: mysqlservice-monitor
-    spec:
-      resource:
-        kind: MysqlService
-        group: platformapi.kubeplus
-        version: v1alpha1
-      <span class="c1"># This attribute indicates that Pods that are reachable through all the   relationships should be used</span>
-      <span class="c1"># as part of calculating the monitoring statistics.</span>
-      monitorRelationships: all
+<span class="w">  </span><span class="c1"># newResource defines the new CRD to be installed define a workflow.</span>
+<span class="w">  </span>newResource:
+<span class="w">    </span>resource:
+<span class="w">      </span>kind:<span class="w"> </span>MysqlService
+<span class="w">      </span>group:<span class="w"> </span>platformapi.kubeplus
+<span class="w">      </span>version:<span class="w"> </span>v1alpha1
+<span class="w">      </span>plural:<span class="w"> </span>mysqlservices
+<span class="w">    </span><span class="c1"># URL of the Helm chart that contains Kubernetes resources that represent a workflow.</span>
+<span class="w">    </span>chartURL:<span class="w"> </span>https://github.com/cloud-ark/operatorcharts/blob/master/mysqlcluster-stack-0.0.1.tgz?raw<span class="o">=</span><span class="nb">true</span>
+<span class="w">    </span>chartName:<span class="w"> </span>mysqlcluster-stack
+<span class="w">  </span><span class="c1"># respolicy defines the resource policy to be applied to instances of the specified custom resource.</span>
+<span class="w">  </span>respolicy:
+<span class="w">    </span>apiVersion:<span class="w"> </span>workflows.kubeplus/v1alpha1
+<span class="w">    </span>kind:<span class="w"> </span>ResourcePolicy
+<span class="w">    </span>metadata:
+<span class="w">      </span>name:<span class="w"> </span>mysqlservice-policy
+<span class="w">    </span>spec:
+<span class="w">      </span>resource:
+<span class="w">        </span>kind:<span class="w"> </span>MysqlService
+<span class="w">        </span>group:<span class="w"> </span>platformapi.kubeplus
+<span class="w">        </span>version:<span class="w"> </span>v1alpha1
+<span class="w">      </span>policy:
+<span class="w">        </span><span class="c1"># Add following requests and limits for the first container of all the  Pods that are related via</span>
+<span class="w">        </span><span class="c1"># owner reference relationship to instances of resources specified above.</span>
+<span class="w">        </span>podconfig:
+<span class="w">          </span>limits:
+<span class="w">            </span>cpu:<span class="w"> </span>200m
+<span class="w">            </span>memory:<span class="w"> </span>4Gi
+<span class="w">          </span>requests:
+<span class="w">            </span>cpu:<span class="w"> </span>100m
+<span class="w">            </span>memory:<span class="w"> </span>2Gi
+<span class="w">          </span>nodeSelector:<span class="w"> </span>values.nodeName
+<span class="w">  </span><span class="c1"># resmonitor identifies the resource instances that should be monitored for CPU/Memory/Storage.</span>
+<span class="w">  </span><span class="c1"># All the Pods that are related to the resource instance through either ownerReference relationship, or all the relationships</span>
+<span class="w">  </span><span class="c1"># (ownerReference, label, annotation, spec properties) are considered in calculating the statistics.</span>
+<span class="w">  </span><span class="c1"># The generated output is in Prometheus format.</span>
+<span class="w">  </span>resmonitor:
+<span class="w">    </span>apiVersion:<span class="w"> </span>workflows.kubeplus/v1alpha1
+<span class="w">    </span>kind:<span class="w"> </span>ResourceMonitor
+<span class="w">    </span>metadata:
+<span class="w">      </span>name:<span class="w"> </span>mysqlservice-monitor
+<span class="w">    </span>spec:
+<span class="w">      </span>resource:
+<span class="w">        </span>kind:<span class="w"> </span>MysqlService
+<span class="w">        </span>group:<span class="w"> </span>platformapi.kubeplus
+<span class="w">        </span>version:<span class="w"> </span>v1alpha1
+<span class="w">      </span><span class="c1"># This attribute indicates that Pods that are reachable through all the   relationships should be used</span>
+<span class="w">      </span><span class="c1"># as part of calculating the monitoring statistics.</span>
+<span class="w">      </span>monitorRelationships:<span class="w"> </span>all
 </pre></div>
 </div>
 <p><strong>ResourceComposition</strong></p>
@@ -152,62 +153,65 @@ spec:
 <li><p>requests and limits: These fields are used to define cpu and memory resource request and limits for containers defined in a Pod. If a Pod is made of several containers currently only first container’s spec is mutated. Also, currently initContainers are not supported.</p></li>
 <li><p>nodeSelector: This field is used to specify Node name on which a Pod needs to run. KubePlus updates the Pod’s spec to include <code class="docutils literal notranslate"><span class="pre">nodeSelector</span></code> attribute based on the provided value.</p></li>
 </ul>
-<p>The values for above fields can be statically defined, or they can be customized per resource instance of the new API. If it is the latter then the value needs to be specified to be input from the underlying <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code>. In the above example, requests and limits are statically defined, whereas <code class="docutils literal notranslate"><span class="pre">nodeSelector</span></code> is defined to be different per resource instance of the new API. Hence its value is specified to be ingested from the <code class="docutils literal notranslate"><span class="pre">nodeName</span></code> field from the underlying <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code>. Note that if <code class="docutils literal notranslate"><span class="pre">nodeName</span></code> field is not defined in <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code> then this mutation will be a noop.</p>
+<p>The values for above fields can be statically defined, or they can be customized per resource instance of the new API. If it is the latter then the value needs to be specified to be input from the underlying <code class="docutils literal notranslate"><span class="pre">values.yaml</span></code>. In the above example, requests and limits are statically defined, whereas <code class="docutils literal notranslate"><span class="pre">nodeSelector</span></code> is defined to be different per resource instance of the new API. Hence its value is specified to be ingested from a special field (<code class="docutils literal notranslate"><span class="pre">nodeName</span></code>) that can be included in the new API YAML.</p>
 <p><strong>ResourceMonitor</strong></p>
 <p>ResourcMonitor defines the monitoring requirements. The monitoring metrics that are collected consist of cpu, memory, storage and network (ingress/egress) for all the Pods that are related to a resource instance. The <code class="docutils literal notranslate"><span class="pre">monitorRelationships</span></code> attribute defines what all relationships to track to build the monitoring metrics. The supported values for it are <code class="docutils literal notranslate"><span class="pre">all</span></code> and <code class="docutils literal notranslate"><span class="pre">owner</span></code>. In Kubernetes, resources are related to one another through four different relationships - ownerReferences, labels, spec properties, and annotations.
 Attribute value <code class="docutils literal notranslate"><span class="pre">all</span></code> indicates that all these relationships be used to discover the Pods. Attribute value <code class="docutils literal notranslate"><span class="pre">owner</span></code> indicates that only ownerReference relationship be used to discover the Pods. When <code class="docutils literal notranslate"><span class="pre">ResourceMonitor</span></code> is used as part of <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code> definition like above, <code class="docutils literal notranslate"><span class="pre">monitorRelationships</span></code> should be set to <code class="docutils literal notranslate"><span class="pre">all</span></code> so that we use all the Pods that are created as part of the underlying Helm chart when calculating the metrics.
 Collected metrics are output in Prometheus format.</p>
 <p>The resource section in both <code class="docutils literal notranslate"><span class="pre">ResourcePolicy</span></code> and <code class="docutils literal notranslate"><span class="pre">ResourceMonitor</span></code> specifies the GVK (group, version, kind) of the resource for which policy needs to be enforced or that needs to be monitored. Set these to be the same as resource that is defined as part of <code class="docutils literal notranslate"><span class="pre">ResourceComposition.newResource.resource</span></code> section.
 In the future we plan to support creation of <code class="docutils literal notranslate"><span class="pre">ResourcePolicy</span></code> and <code class="docutils literal notranslate"><span class="pre">ResourceMonitor</span></code> separately from <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code> for general purpose policy and monitoring. At that time the resource section can contain the coordinates (GVK) for any resource present in a cluster.</p>
-</div>
-<div class="section" id="kubeplus-kubectl-plugins-for-monitoring-and-troubleshooting">
-<h2>KubePlus kubectl plugins for monitoring and troubleshooting</h2>
+</section>
+<section id="kubeplus-kubectl-plugins-for-monitoring-and-troubleshooting">
+<h2>KubePlus kubectl plugins for monitoring and troubleshooting<a class="headerlink" href="#kubeplus-kubectl-plugins-for-monitoring-and-troubleshooting" title="Permalink to this heading">¶</a></h2>
 <p>KubePlus kubectl plugins enable users to discover, monitor and troubleshoot service instances. In order to use these plugins you need to add KubePlus folder to your PATH variable.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span>&lt;Full path where kubeplus is cloned&gt;
-$ <span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins:<span class="nv">$PATH</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">KUBEPLUS_HOME</span><span class="o">=</span>&lt;Full<span class="w"> </span>path<span class="w"> </span>where<span class="w"> </span>kubeplus<span class="w"> </span>is<span class="w"> </span>cloned&gt;
+$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins:<span class="nv">$PATH</span>
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl -L https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz -o kubeplus-kubectl-plugins.tar.gz
-gunzip kubeplus-kubectl-plugins.tar.gz
-tar -xvf kubeplus-kubectl-plugins.tar
-<span class="nb">export</span> <span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
-<span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-L<span class="w"> </span>https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz<span class="w"> </span>-o<span class="w"> </span>kubeplus-kubectl-plugins.tar.gz
+gunzip<span class="w"> </span>kubeplus-kubectl-plugins.tar.gz
+tar<span class="w"> </span>-xvf<span class="w"> </span>kubeplus-kubectl-plugins.tar
+<span class="nb">export</span><span class="w"> </span><span class="nv">KUBEPLUS_HOME</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$KUBEPLUS_HOME</span>/plugins/:<span class="nv">$PATH</span>
 </pre></div>
 </div>
 <p>Check the available KubePlus kubectl plugins by running: <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">kubeplus</span> <span class="pre">commands</span></code></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$  kubectl kubeplus commands
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w">  </span>kubectl<span class="w"> </span>kubeplus<span class="w"> </span>commands
 
 
-   NAME
-           kubectl kubeplus commands
+<span class="w">   </span>NAME
+<span class="w">           </span>kubectl<span class="w"> </span>kubeplus<span class="w"> </span>commands
 
-   SYNOPSIS
-           kubectl man
-           kubectl connections
-           kubectl metrics
-           kubectl applogs
-           kubectl retrieve kubeconfig provider
-           kubectl retrieve kubeconfig consumer
-           kubectl grantpermission consumer
+<span class="w">   </span>SYNOPSIS
+<span class="w">           </span>kubectl<span class="w"> </span>man
+<span class="w">           </span>kubectl<span class="w"> </span>connections
+<span class="w">           </span>kubectl<span class="w"> </span>metrics
+<span class="w">           </span>kubectl<span class="w"> </span>applogs
+<span class="w">           </span>kubectl<span class="w"> </span>appurl
+<span class="w">           </span>kubectl<span class="w"> </span>appresources
+<span class="w">           </span>kubectl<span class="w"> </span>retrieve<span class="w"> </span>kubeconfig<span class="w"> </span>provider
+<span class="w">           </span>kubectl<span class="w"> </span>retrieve<span class="w"> </span>kubeconfig<span class="w"> </span>consumer
+<span class="w">           </span>kubectl<span class="w"> </span>grantpermission<span class="w"> </span>consumer
 
-   DESCRIPTION
-           KubePlus provides a suite of kubectl plugins to discover, monitor and troubleshoot Kubernetes applications.
+<span class="w">   </span>DESCRIPTION
+<span class="w">           </span>KubePlus<span class="w"> </span>provides<span class="w"> </span>a<span class="w"> </span>suite<span class="w"> </span>of<span class="w"> </span>kubectl<span class="w"> </span>plugins<span class="w"> </span>to<span class="w"> </span>discover,<span class="w"> </span>monitor<span class="w"> </span>and<span class="w"> </span>troubleshoot<span class="w"> </span>Kubernetes<span class="w"> </span>applications.
 
-           The discovery plugins <span class="o">(</span>kubectl man and kubectl connections<span class="o">)</span> <span class="nb">help</span> with discovering the static and runtime
-           information about an application.
-           - kubectl man provides the ability to discover man page like information about Kubernetes Custom Resources.
-           - kubectl connections provides the ability to discover Kubernetes resources that are related to one another
-             through one of the following relationships - ownerReferences, label, annotations, spec properties.
-           The monitoring and troubleshooting plugins <span class="o">(</span>kubectl metrics and kubectl applogs<span class="o">)</span> <span class="nb">enable</span> collecting application metrics and logs.
-           - kubectl metrics collects CPU, Memory, Storage, and Network metrics <span class="k">for</span> an application. These are available <span class="k">in</span> Prometheus format.
-           - kubectl applogs collects logs <span class="k">for</span> all the containers of all the Pods <span class="k">in</span> an application.
-           The kubeconfig files that are meant to be used by SaaS provider and SaaS consumers are available through:
-           - kubectl retrieve kubeconfig provider
-           - kubectl retrieve kubeconfig consumer
-           These kubeconfig files are provided with limited RBAC permissions appropriate <span class="k">for</span> the persona.
-           - kubectl grantpermission consumer
-           This plugin enables provider to grant permission <span class="k">for</span> the created service to the consumer. A consumer will be able to create service instances only after that.
+<span class="w">           </span>The<span class="w"> </span>discovery<span class="w"> </span>plugins<span class="w"> </span><span class="o">(</span>kubectl<span class="w"> </span>man,<span class="w"> </span>kubectl<span class="w"> </span>connections,<span class="w"> </span>kubectl<span class="w"> </span>appresources<span class="o">)</span><span class="w"> </span><span class="nb">help</span><span class="w"> </span>with<span class="w"> </span>discovering<span class="w"> </span>the<span class="w"> </span>static<span class="w"> </span>and<span class="w"> </span>runtime
+<span class="w">           </span>information<span class="w"> </span>about<span class="w"> </span>an<span class="w"> </span>application.
+<span class="w">           </span>-<span class="w"> </span>kubectl<span class="w"> </span>man<span class="w"> </span>provides<span class="w"> </span>the<span class="w"> </span>ability<span class="w"> </span>to<span class="w"> </span>discover<span class="w"> </span>man<span class="w"> </span>page<span class="w"> </span>like<span class="w"> </span>information<span class="w"> </span>about<span class="w"> </span>Kubernetes<span class="w"> </span>Custom<span class="w"> </span>Resources.
+<span class="w">           </span>-<span class="w"> </span>kubectl<span class="w"> </span>connections<span class="w"> </span>provides<span class="w"> </span>the<span class="w"> </span>ability<span class="w"> </span>to<span class="w"> </span>discover<span class="w"> </span>Kubernetes<span class="w"> </span>resources<span class="w"> </span>that<span class="w"> </span>are<span class="w"> </span>related<span class="w"> </span>to<span class="w"> </span>one<span class="w"> </span>another
+<span class="w">             </span>through<span class="w"> </span>one<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>following<span class="w"> </span>relationships<span class="w"> </span>-<span class="w"> </span>ownerReferences,<span class="w"> </span>label,<span class="w"> </span>annotations,<span class="w"> </span>spec<span class="w"> </span>properties.
+<span class="w">           </span>-<span class="w"> </span>kubectl<span class="w"> </span>appresources<span class="w"> </span>displays<span class="w"> </span>all<span class="w"> </span>the<span class="w"> </span>resources<span class="w"> </span>that<span class="w"> </span>have<span class="w"> </span>been<span class="w"> </span>created<span class="w"> </span><span class="k">for</span><span class="w"> </span>an<span class="w"> </span>application.
+<span class="w">           </span>The<span class="w"> </span>monitoring<span class="w"> </span>and<span class="w"> </span>troubleshooting<span class="w"> </span>plugins<span class="w"> </span><span class="o">(</span>kubectl<span class="w"> </span>metrics<span class="w"> </span>and<span class="w"> </span>kubectl<span class="w"> </span>applogs<span class="o">)</span><span class="w"> </span><span class="nb">enable</span><span class="w"> </span>collecting<span class="w"> </span>application<span class="w"> </span>metrics<span class="w"> </span>and<span class="w"> </span>logs.
+<span class="w">           </span>-<span class="w"> </span>kubectl<span class="w"> </span>metrics<span class="w"> </span>collects<span class="w"> </span>CPU,<span class="w"> </span>Memory,<span class="w"> </span>Storage,<span class="w"> </span>and<span class="w"> </span>Network<span class="w"> </span>metrics<span class="w"> </span><span class="k">for</span><span class="w"> </span>an<span class="w"> </span>application.<span class="w"> </span>These<span class="w"> </span>are<span class="w"> </span>available<span class="w"> </span><span class="k">in</span><span class="w"> </span>Prometheus<span class="w"> </span>format.
+<span class="w">           </span>-<span class="w"> </span>kubectl<span class="w"> </span>applogs<span class="w"> </span>collects<span class="w"> </span>logs<span class="w"> </span><span class="k">for</span><span class="w"> </span>all<span class="w"> </span>the<span class="w"> </span>containers<span class="w"> </span>of<span class="w"> </span>all<span class="w"> </span>the<span class="w"> </span>Pods<span class="w"> </span><span class="k">in</span><span class="w"> </span>an<span class="w"> </span>application.
+<span class="w">           </span>The<span class="w"> </span>kubeconfig<span class="w"> </span>files<span class="w"> </span>that<span class="w"> </span>are<span class="w"> </span>meant<span class="w"> </span>to<span class="w"> </span>be<span class="w"> </span>used<span class="w"> </span>by<span class="w"> </span>SaaS<span class="w"> </span>provider<span class="w"> </span>and<span class="w"> </span>SaaS<span class="w"> </span>consumers<span class="w"> </span>are<span class="w"> </span>available<span class="w"> </span>through:
+<span class="w">           </span>-<span class="w"> </span>kubectl<span class="w"> </span>retrieve<span class="w"> </span>kubeconfig<span class="w"> </span>provider
+<span class="w">           </span>-<span class="w"> </span>kubectl<span class="w"> </span>retrieve<span class="w"> </span>kubeconfig<span class="w"> </span>consumer
+<span class="w">           </span>These<span class="w"> </span>kubeconfig<span class="w"> </span>files<span class="w"> </span>are<span class="w"> </span>provided<span class="w"> </span>with<span class="w"> </span>limited<span class="w"> </span>RBAC<span class="w"> </span>permissions<span class="w"> </span>appropriate<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>persona.
+<span class="w">           </span>-<span class="w"> </span>kubectl<span class="w"> </span>grantpermission<span class="w"> </span>consumer
+<span class="w">           </span>This<span class="w"> </span>plugin<span class="w"> </span>enables<span class="w"> </span>provider<span class="w"> </span>to<span class="w"> </span>grant<span class="w"> </span>permission<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>created<span class="w"> </span>service<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>consumer.<span class="w"> </span>A<span class="w"> </span>consumer<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>able<span class="w"> </span>to<span class="w"> </span>create<span class="w"> </span>service<span class="w"> </span>instances<span class="w"> </span>only<span class="w"> </span>after<span class="w"> </span>that.
 </pre></div>
 </div>
 <p>The primary plugin is: <code class="docutils literal notranslate"><span class="pre">`kubectl</span> <span class="pre">connections`</span></code>. It provides information about relationships of a Kubernetes resource instance (custom or built-in) with other resources (custom or built-in) via owner references, labels, annotations, and spec properties. KubePlus constructs Kubernetes Resource relationship graphs at runtime providing it the ability to offer fine grained visibility and control over the application service instances.</p>
@@ -215,9 +219,9 @@ tar -xvf kubeplus-kubectl-plugins.tar
 <p><code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">connections</span> <span class="pre">MysqlService</span> <span class="pre">mysql1</span></code></p>
 <a class="reference internal image-reference" href="_images/mysqlservice-connections.png"><img alt="_images/mysqlservice-connections.png" class="align-center" src="_images/mysqlservice-connections.png" style="width: 1000px; height: 350px;" /></a>
 <p>KubePlus Operator bundles these plugins as part of the <code class="docutils literal notranslate"><span class="pre">Helmer</span></code> module.</p>
-</div>
-<div class="section" id="resource-relationship-graphs">
-<h2>Resource relationship graphs</h2>
+</section>
+<section id="resource-relationship-graphs">
+<h2>Resource relationship graphs<a class="headerlink" href="#resource-relationship-graphs" title="Permalink to this heading">¶</a></h2>
 <p>For resource policy enforcement and monitoring, KubePlus needs to discover
 resource topologies. It does that by discovering Kubernetes Resource relationship graphs. In order to do this, KubePlus depends on the following annotations:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>resource/composition
@@ -227,57 +231,56 @@ resource/annotation-relationship
 </pre></div>
 </div>
 <p>These annotations need to be defined on the Custom Resource Definition (CRD) YAMLs of Operators in order to make Custom Resources discoverable.</p>
-<p>The ‘composition’ annotation is used to specify the list of Kubernetes’s built-in resources that are created as part of instantiating a Custom Resource instance.
-The three relationship annotations are used to declare label, spec-property, and annotation based relationships that instances of a Custom Resource can have with other Kubernetes resources.</p>
+<p>The ‘composition’ annotation is used to specify the list of Kubernetes’s built-in resources that are created as part of instantiating a Custom Resource instance. Three relationship annotations are used to declare label, spec-property, and annotation based relationships that instances of a Custom Resource can have with other Kubernetes resources.</p>
 <p>KubePlus adds the <code class="docutils literal notranslate"><span class="pre">annotation-relationship</span></code> annotation to the CRD of the new API that is registered via <code class="docutils literal notranslate"><span class="pre">ResourceComposition</span></code>. Here is an example of this annotation added by KubePlus on WordpressService CRD.</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">resource/annotation-relationship</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">on:Secret;PersistentVolumeClaim;Role;RoleBinding;ServiceAccount;Service;Pod;MysqlCluster;Namespace, key:meta.helm.sh/release-name, value:wordpressservice-INSTANCE.metadata.name</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">resource/annotation-relationship</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">on:Secret;PersistentVolumeClaim;Role;RoleBinding;ServiceAccount;Service;Pod;MysqlCluster;Namespace, key:meta.helm.sh/release-name, value:wordpressservice-INSTANCE.metadata.name</span>
 </pre></div>
 </div>
 <p>This annotation relationship definition indicates that an instance of WordpressService is related to instances of Secret, PersistentVolumeClaim, Role, RoleBinding, ServiceAccount, Service, Pod, MysqlCluster, and Namespace resources through the <code class="docutils literal notranslate"><span class="pre">meta.helm.sh/release-name</span></code> annotation. The value of the annotation will have the following structure <code class="docutils literal notranslate"><span class="pre">wordpresservice-&lt;name</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">WordpressService</span> <span class="pre">instance&gt;</span></code>. When deploying Helm charts, KubePlus creates the Helm releases with following naming scheme <code class="docutils literal notranslate"><span class="pre">&lt;service-name&gt;-&lt;resource-name&gt;</span></code>. The value of the annotation is based on this naming scheme. The list of resources listed in the <code class="docutils literal notranslate"><span class="pre">on</span></code> section of the resource/annotation-relationship annotation are discovered by KubePlus by performing a dry-run on the registered Helm chart.</p>
-</div>
-<div class="section" id="crd-annotations-on-community-operators">
-<h2>CRD annotations on community Operators</h2>
+</section>
+<section id="crd-annotations-on-community-operators">
+<h2>CRD annotations on community Operators<a class="headerlink" href="#crd-annotations-on-community-operators" title="Permalink to this heading">¶</a></h2>
 <p>KubePlus kubectl plugins are general purpose and can be used with any other Operator as long as the CRDs managed by that Operator are annotated with above annotations. Here are some examples of community Operators annotated with above annotations.</p>
 <p><strong>Moodle Operator</strong></p>
 <p><a class="reference external" href="https://github.com/cloud-ark/kubeplus-operators">Moodle Operator</a> defines and manages Moodle CRD.</p>
 <p>Annotations on Moodle Custom Resource Definition (CRD) are shown below:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">apiextensions.k8s.io/v1beta1</span>
-<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CustomResourceDefinition</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apiextensions.k8s.io/v1beta1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CustomResourceDefinition</span>
 <span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">moodles.moodlecontroller.kubeplus</span>
-  <span class="nt">annotations</span><span class="p">:</span>
-    <span class="nt">resource/composition</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress</span>
-    <span class="nt">resource/specproperty-relationship</span><span class="p">:</span> <span class="s">&quot;on:INSTANCE.spec.mySQLServiceName,</span><span class="nv"> </span><span class="s">value:Service.spec.metadata.name&quot;</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">moodles.moodlecontroller.kubeplus</span>
+<span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">resource/composition</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment, Service, PersistentVolume, PersistentVolumeClaim, Secret, Ingress</span>
+<span class="w">    </span><span class="nt">resource/specproperty-relationship</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;on:INSTANCE.spec.mySQLServiceName,</span><span class="nv"> </span><span class="s">value:Service.spec.metadata.name&quot;</span>
 <span class="nt">spec</span><span class="p">:</span>
-  <span class="nt">group</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">moodlecontroller.kubeplus</span>
-  <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
-  <span class="nt">names</span><span class="p">:</span>
-    <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Moodle</span>
-    <span class="nt">plural</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">moodles</span>
-  <span class="nt">scope</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Namespaced</span>
+<span class="w">  </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">moodlecontroller.kubeplus</span>
+<span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="w">  </span><span class="nt">names</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Moodle</span>
+<span class="w">    </span><span class="nt">plural</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">moodles</span>
+<span class="w">  </span><span class="nt">scope</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Namespaced</span>
 </pre></div>
 </div>
 <p>The composition annotation declares the set of Kubernetes resources that are created by the Moodle Operator when instantiating a Moodle Custom Resource instance. The specproperty relationship defines that an instance of Moodle Custom Resource is connected through it’s mySQLServiceName spec attribute to an instance of a Service resource through that resource’s name (metadata.name). Once this relationship is defined, here is how kubectl connections plugin helps discover the resource relationship graph for a Moodle Custom resource instance named moodle1.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span> Devs-MacBook:kubeplus devdatta$ kubectl connections Moodle moodle1 namespace1
-Level:0 kind:Moodle name:moodle1 Owner:/
-Level:1 kind:Service name:cluster1-mysql-master Owner:MysqlCluster/cluster1
-Level:2 kind:Pod name:cluster1-mysql-0 Owner:MysqlCluster/cluster1
-Level:3 kind:Service name:cluster1-mysql-nodes Owner:MysqlCluster/cluster1
-Level:3 kind:Service name:cluster1-mysql Owner:MysqlCluster/cluster1
-Level:2 kind:Pod name:moodle1-5847c6b69c-mtwg8 Owner:Moodle/moodle1
-Level:3 kind:Service name:moodle1 Owner:Moodle/moodle1
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">(</span>venv<span class="o">)</span><span class="w"> </span>Devs-MacBook:kubeplus<span class="w"> </span>devdatta$<span class="w"> </span>kubectl<span class="w"> </span>connections<span class="w"> </span>Moodle<span class="w"> </span>moodle1<span class="w"> </span>namespace1
+Level:0<span class="w"> </span>kind:Moodle<span class="w"> </span>name:moodle1<span class="w"> </span>Owner:/
+Level:1<span class="w"> </span>kind:Service<span class="w"> </span>name:cluster1-mysql-master<span class="w"> </span>Owner:MysqlCluster/cluster1
+Level:2<span class="w"> </span>kind:Pod<span class="w"> </span>name:cluster1-mysql-0<span class="w"> </span>Owner:MysqlCluster/cluster1
+Level:3<span class="w"> </span>kind:Service<span class="w"> </span>name:cluster1-mysql-nodes<span class="w"> </span>Owner:MysqlCluster/cluster1
+Level:3<span class="w"> </span>kind:Service<span class="w"> </span>name:cluster1-mysql<span class="w"> </span>Owner:MysqlCluster/cluster1
+Level:2<span class="w"> </span>kind:Pod<span class="w"> </span>name:moodle1-5847c6b69c-mtwg8<span class="w"> </span>Owner:Moodle/moodle1
+Level:3<span class="w"> </span>kind:Service<span class="w"> </span>name:moodle1<span class="w"> </span>Owner:Moodle/moodle1
 </pre></div>
 </div>
 <p><strong>Multus Operator</strong></p>
 <p>The <a class="reference external" href="https://github.com/k8snetworkplumbingwg/multus-cni">Multus Operator</a> defines and manages NetworkAttachmentDefinition CRD.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>resource/annotation-relationship: on:Pod, key:k8s.v1.cni.cncf.io/networks, value:INSTANCE.metadata.name
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>resource/annotation-relationship:<span class="w"> </span>on:Pod,<span class="w"> </span>key:k8s.v1.cni.cncf.io/networks,<span class="w"> </span>value:INSTANCE.metadata.name
 </pre></div>
 </div>
 <p>The annotation-relationship annotation is defined on the NetworkAttachmentDefinition CRD. It defines that the relationship between a Pod and an instance of NetworkAttachmentDefinition Custom Resource instance is through the <code class="docutils literal notranslate"><span class="pre">k8s.v1.cni.cncf.io/networks</span></code> annotation. This annotation needs to be defined on a Pod and the value of the annotation is the name of a NetworkAttachmentDefinition Custom resource instance.</p>
 <p><strong>Stash Operator</strong></p>
 <p>The <a class="reference external" href="https://github.com/stashed/stash">Stash Operator</a> defines and manages Restic CRD.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>resource/specproperty-relationship: <span class="s2">&quot;on:INSTANCE.spec.volumeMounts, value:Deployment.spec.containers.volumemounts.mountpath&quot;</span>
-resource/label-relationship: <span class="s2">&quot;on:Deployment, value:INSTANCE.spec.selector&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>resource/specproperty-relationship:<span class="w"> </span><span class="s2">&quot;on:INSTANCE.spec.volumeMounts, value:Deployment.spec.containers.volumemounts.mountpath&quot;</span>
+resource/label-relationship:<span class="w"> </span><span class="s2">&quot;on:Deployment, value:INSTANCE.spec.selector&quot;</span>
 </pre></div>
 </div>
 <p>Above annotations are defined on the Restic CRD. Restic Custom Resource needs two things as input. First, the mount path of the Volume that needs to be backed up. Second, the Deployment in which the Volume is mounted needs to be given some label and that label needs to be specified in the Restic Custom Resource’s selector.</p>
@@ -285,8 +288,8 @@ resource/label-relationship: <span class="s2">&quot;on:Deployment, value:INSTANC
 <p>We maintain a listing of annotated community Operators. Check it out <a class="reference external" href="https://github.com/cloud-ark/kubeplus/blob/master/Operator-annotations.md">here</a>.</p>
 <p>We will be happy to include your annotated Operator in this list.
 Just submit a PR to KubePlus repo with details about the CRDs that your Operator manages and all the relationships that it depends on when handling its custom resource instances. We will help you define these relationships on your CRDs.</p>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -299,12 +302,12 @@ Just submit a PR to KubePlus repo with details about the CRDs that your Operator
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
