@@ -45,7 +45,7 @@ or
 
 Try `hello world service`_
 
-.. _hello world service: https://cloud-ark.github.io/kubeplus/docs/html/html/sample-example.html
+.. _hello world service: http://kubeplus-docs.s3-website-us-west-2.amazonaws.com/html/sample-example.html
 
 
 6. Debug:
