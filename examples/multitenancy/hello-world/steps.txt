@@ -17,7 +17,7 @@ Create minikube cluster
 
 Install KubePlus Operator 
 $ KUBEPLUS_NS=default
-$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.0.tgz?raw=true" -n $KUBEPLUS_NS
+$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.9.tgz?raw=true" -n $KUBEPLUS_NS
 
 Install KubePlus kubectl plugins
 $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
