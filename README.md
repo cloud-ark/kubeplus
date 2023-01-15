@@ -33,7 +33,7 @@ A new version of an application can be deployed by updating the application Helm
 ### Customization
 The spec properties of the Kubernetes API wrapping the application Helm chart are the fields defined in the chart’s values.yaml file. Application deployments can be customized by specifying different values for these spec properties.
 
-KubePlus architecture details are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html).
+KubePlus architecture details are available [here](http://kubeplus-docs.s3-website-us-west-2.amazonaws.com/html/index.html).
 KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](https://kubernetes.io/docs/concepts/security/multi-tenancy/#multi-customer-tenancy).
 
 
