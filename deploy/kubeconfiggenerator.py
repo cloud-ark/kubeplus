@@ -75,402 +75,402 @@ def run_command(cmd):
 
 class KubeconfigGenerator(object):
 
-	def run_command(self, cmd):
-		#print("Inside run_command")
-		print(cmd)
-		cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
-		out = cmdOut[0]
-		err = cmdOut[1]
-		print(out)
-		if out != '':
-			return out
-			#printlines(out.decode('utf-8'))
-		#print("Error:")
-		#print(err)
-		if err != '':
-			return err
-			#printlines(err.decode('utf-8'))
+        def run_command(self, cmd):
+                #print("Inside run_command")
+                print(cmd)
+                cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
+                out = cmdOut[0]
+                err = cmdOut[1]
+                print(out)
+                if out != '':
+                        return out
+                        #printlines(out.decode('utf-8'))
+                #print("Error:")
+                #print(err)
+                if err != '':
+                        return err
+                        #printlines(err.decode('utf-8'))
 
-	def _create_kubecfg_file(self, sa, namespace, token, ca, server):
-		top_level_dict = {}
-		top_level_dict["apiVersion"] = "v1"
-		top_level_dict["kind"] = "Config"
+        def _create_kubecfg_file(self, sa, namespace, token, ca, server):
+                top_level_dict = {}
+                top_level_dict["apiVersion"] = "v1"
+                top_level_dict["kind"] = "Config"
 
-		contextName = sa
+                contextName = sa
 
-		usersList = []
-		usertoken = {}
-		usertoken["token"] = token
-		userInfo = {}
-		userInfo["name"] = sa
-		userInfo["user"] = usertoken
-		usersList.append(userInfo)
-		top_level_dict["users"] = usersList
+                usersList = []
+                usertoken = {}
+                usertoken["token"] = token
+                userInfo = {}
+                userInfo["name"] = sa
+                userInfo["user"] = usertoken
+                usersList.append(userInfo)
+                top_level_dict["users"] = usersList
 
-		clustersList = []
-		cluster_details = {}
-		cluster_details["server"] = server
-		
-		# TODO: Use the certificate authority to perform tls 
-		# cluster_details["certificate-authority-data"] = ca
-		cluster_details["insecure-skip-tls-verify"] = True
+                clustersList = []
+                cluster_details = {}
+                cluster_details["server"] = server
+                
+                # TODO: Use the certificate authority to perform tls 
+                # cluster_details["certificate-authority-data"] = ca
+                cluster_details["insecure-skip-tls-verify"] = True
 
-		clusterInfo = {}
-		clusterInfo["cluster"] = cluster_details
-		clusterInfo["name"] = sa
-		clustersList.append(clusterInfo)
-		top_level_dict["clusters"] = clustersList
+                clusterInfo = {}
+                clusterInfo["cluster"] = cluster_details
+                clusterInfo["name"] = sa
+                clustersList.append(clusterInfo)
+                top_level_dict["clusters"] = clustersList
 
-		context_details = {}
-		context_details["cluster"] = sa
-		context_details["user"] = sa
-		context_details["namespace"] = namespace
-		contextInfo = {}
-		contextInfo["context"] = context_details
-		contextInfo["name"] = contextName
-		contextList = []
-		contextList.append(contextInfo)
-		top_level_dict["contexts"] = contextList
+                context_details = {}
+                context_details["cluster"] = sa
+                context_details["user"] = sa
+                context_details["namespace"] = namespace
+                contextInfo = {}
+                contextInfo["context"] = context_details
+                contextInfo["name"] = contextName
+                contextList = []
+                contextList.append(contextInfo)
+                top_level_dict["contexts"] = contextList
 
-		top_level_dict["current-context"] = contextName
+                top_level_dict["current-context"] = contextName
 
-		json_file = json.dumps(top_level_dict)
-		fileName =  sa + ".json"
+                json_file = json.dumps(top_level_dict)
+                fileName =  sa + ".json"
 
-		fp = open(os.getenv("HOME") + "/" + fileName, "w")
-		fp.write(json_file)
-		fp.close()
+                fp = open(os.getenv("HOME") + "/" + fileName, "w")
+                fp.write(json_file)
+                fp.close()
 
-		configmapName = sa + "-kubeconfig"
-		created = False 
-		while not created:        
-			cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getenv("HOME") + "/" + fileName
-			self.run_command(cmd)
-			get_cmd = "kubectl get configmap " + configmapName + " -n "  + namespace
-			output = self.run_command(get_cmd)
-			output = output.decode('utf-8')    
-			if 'Error from server (NotFound)' in output:
-				time.sleep(2)
-				print("Trying again..")
-			else:
-				created = True
+                configmapName = sa + "-kubeconfig"
+                created = False 
+                while not created:        
+                        cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getenv("HOME") + "/" + fileName
+                        self.run_command(cmd)
+                        get_cmd = "kubectl get configmap " + configmapName + " -n "  + namespace
+                        output = self.run_command(get_cmd)
+                        output = output.decode('utf-8')    
+                        if 'Error from server (NotFound)' in output:
+                                time.sleep(2)
+                                print("Trying again..")
+                        else:
+                                created = True
 
 
-	def _apply_consumer_rbac(self, sa, namespace):
-		role = {}
-		role["apiVersion"] = "rbac.authorization.k8s.io/v1"
-		role["kind"] = "ClusterRole"
-		metadata = {}
-		metadata["name"] = sa
-		role["metadata"] = metadata
+        def _apply_consumer_rbac(self, sa, namespace):
+                role = {}
+                role["apiVersion"] = "rbac.authorization.k8s.io/v1"
+                role["kind"] = "ClusterRole"
+                metadata = {}
+                metadata["name"] = sa
+                role["metadata"] = metadata
 
-		# Read all resources
-		ruleGroup1 = {}
-		apiGroup1 = ["*",""]
-		resourceGroup1 = ["*"]
-		verbsGroup1 = ["get","watch","list"]
-		ruleGroup1["apiGroups"] = apiGroup1
-		ruleGroup1["resources"] = resourceGroup1
-		ruleGroup1["verbs"] = verbsGroup1
+                # Read all resources
+                ruleGroup1 = {}
+                apiGroup1 = ["*",""]
+                resourceGroup1 = ["*"]
+                verbsGroup1 = ["get","watch","list"]
+                ruleGroup1["apiGroups"] = apiGroup1
+                ruleGroup1["resources"] = resourceGroup1
+                ruleGroup1["verbs"] = verbsGroup1
 
-		# Impersonate users, groups, serviceaccounts
-		ruleGroup9 = {}
-		apiGroup9 = [""]
-		resourceGroup9 = ["users","groups","serviceaccounts"]
-		verbsGroup9 = ["impersonate"]
-		ruleGroup9["apiGroups"] = apiGroup9
-		ruleGroup9["resources"] = resourceGroup9
-		ruleGroup9["verbs"] = verbsGroup9
+                # Impersonate users, groups, serviceaccounts
+                ruleGroup9 = {}
+                apiGroup9 = [""]
+                resourceGroup9 = ["users","groups","serviceaccounts"]
+                verbsGroup9 = ["impersonate"]
+                ruleGroup9["apiGroups"] = apiGroup9
+                ruleGroup9["resources"] = resourceGroup9
+                ruleGroup9["verbs"] = verbsGroup9
 
-		# Pod/portforward to open consumerui
-		ruleGroup10 = {}
-		apiGroup10 = [""]
-		resourceGroup10 = ["pods/portforward"]
-		verbsGroup10 = ["create","get"]
-		ruleGroup10["apiGroups"] = apiGroup10
-		ruleGroup10["resources"] = resourceGroup10
-		ruleGroup10["verbs"] = verbsGroup10
+                # Pod/portforward to open consumerui
+                ruleGroup10 = {}
+                apiGroup10 = [""]
+                resourceGroup10 = ["pods/portforward"]
+                verbsGroup10 = ["create","get"]
+                ruleGroup10["apiGroups"] = apiGroup10
+                ruleGroup10["resources"] = resourceGroup10
+                ruleGroup10["verbs"] = verbsGroup10
 
-		ruleList = []
-		ruleList.append(ruleGroup1)
-		ruleList.append(ruleGroup9)
-		ruleList.append(ruleGroup10)
-		role["rules"] = ruleList
+                ruleList = []
+                ruleList.append(ruleGroup1)
+                ruleList.append(ruleGroup9)
+                ruleList.append(ruleGroup10)
+                role["rules"] = ruleList
 
-		roleName = sa + "-role-impersonate.yaml"
-		create_role_rolebinding(role, roleName)
+                roleName = sa + "-role-impersonate.yaml"
+                create_role_rolebinding(role, roleName)
 
-		roleBinding = {}
-		roleBinding["apiVersion"] = "rbac.authorization.k8s.io/v1"
-		roleBinding["kind"] = "ClusterRoleBinding"
-		metadata = {}
-		metadata["name"] = sa
-		roleBinding["metadata"] = metadata
+                roleBinding = {}
+                roleBinding["apiVersion"] = "rbac.authorization.k8s.io/v1"
+                roleBinding["kind"] = "ClusterRoleBinding"
+                metadata = {}
+                metadata["name"] = sa
+                roleBinding["metadata"] = metadata
 
-		subject = {}
-		subject["kind"] = "ServiceAccount"
-		subject["name"] = sa
-		subject["apiGroup"] = ""
-		subject["namespace"] = namespace
-		subjectList = []
-		subjectList.append(subject)
-		roleBinding["subjects"] = subjectList
+                subject = {}
+                subject["kind"] = "ServiceAccount"
+                subject["name"] = sa
+                subject["apiGroup"] = ""
+                subject["namespace"] = namespace
+                subjectList = []
+                subjectList.append(subject)
+                roleBinding["subjects"] = subjectList
 
-		roleRef = {}
-		roleRef["kind"] = "ClusterRole"
-		roleRef["name"] = sa
-		roleRef["apiGroup"] = "rbac.authorization.k8s.io"
-		roleBinding["roleRef"] = roleRef
+                roleRef = {}
+                roleRef["kind"] = "ClusterRole"
+                roleRef["name"] = sa
+                roleRef["apiGroup"] = "rbac.authorization.k8s.io"
+                roleBinding["roleRef"] = roleRef
 
-		roleBindingName = sa + "-rolebinding-impersonate.yaml"
-		create_role_rolebinding(roleBinding, roleBindingName)
+                roleBindingName = sa + "-rolebinding-impersonate.yaml"
+                create_role_rolebinding(roleBinding, roleBindingName)
 
-	def _apply_provider_rbac(self, sa, namespace):
-		role = {}
-		role["apiVersion"] = "rbac.authorization.k8s.io/v1"
-		role["kind"] = "ClusterRole"
-		metadata = {}
-		metadata["name"] = sa
-		role["metadata"] = metadata
+        def _apply_provider_rbac(self, sa, namespace):
+                role = {}
+                role["apiVersion"] = "rbac.authorization.k8s.io/v1"
+                role["kind"] = "ClusterRole"
+                metadata = {}
+                metadata["name"] = sa
+                role["metadata"] = metadata
 
-		# Read all resources
-		ruleGroup1 = {}
-		apiGroup1 = ["*",""]
-		resourceGroup1 = ["*"]
-		verbsGroup1 = ["get","watch","list"]
-		ruleGroup1["apiGroups"] = apiGroup1
-		ruleGroup1["resources"] = resourceGroup1
-		ruleGroup1["verbs"] = verbsGroup1
+                # Read all resources
+                ruleGroup1 = {}
+                apiGroup1 = ["*",""]
+                resourceGroup1 = ["*"]
+                verbsGroup1 = ["get","watch","list"]
+                ruleGroup1["apiGroups"] = apiGroup1
+                ruleGroup1["resources"] = resourceGroup1
+                ruleGroup1["verbs"] = verbsGroup1
 
-		# CRUD on resourcecompositions et. al.
-		ruleGroup2 = {}
-		apiGroup2 = ["workflows.kubeplus"]
-		resourceGroup2 = ["resourcecompositions","resourcemonitors","resourcepolicies","resourceevents"]
-		verbsGroup2 = ["get","watch","list","create","delete","update","patch"]
-		ruleGroup2["apiGroups"] = apiGroup2
-		ruleGroup2["resources"] = resourceGroup2
-		ruleGroup2["verbs"] = verbsGroup2
+                # CRUD on resourcecompositions et. al.
+                ruleGroup2 = {}
+                apiGroup2 = ["workflows.kubeplus"]
+                resourceGroup2 = ["resourcecompositions","resourcemonitors","resourcepolicies","resourceevents"]
+                verbsGroup2 = ["get","watch","list","create","delete","update","patch"]
+                ruleGroup2["apiGroups"] = apiGroup2
+                ruleGroup2["resources"] = resourceGroup2
+                ruleGroup2["verbs"] = verbsGroup2
 
-		# CRUD on clusterroles and clusterrolebindings
-		ruleGroup3 = {}
-		apiGroup3 = ["rbac.authorization.k8s.io"]
-		resourceGroup3 = ["clusterroles","clusterrolebindings"]
-		verbsGroup3 = ["get","watch","list","create","delete","update","patch"]
-		ruleGroup3["apiGroups"] = apiGroup3
-		ruleGroup3["resources"] = resourceGroup3
-		ruleGroup3["verbs"] = verbsGroup3
+                # CRUD on clusterroles and clusterrolebindings
+                ruleGroup3 = {}
+                apiGroup3 = ["rbac.authorization.k8s.io"]
+                resourceGroup3 = ["clusterroles","clusterrolebindings"]
+                verbsGroup3 = ["get","watch","list","create","delete","update","patch"]
+                ruleGroup3["apiGroups"] = apiGroup3
+                ruleGroup3["resources"] = resourceGroup3
+                ruleGroup3["verbs"] = verbsGroup3
 
-		# CRUD on Port forward
-		ruleGroup4 = {}
-		apiGroup4 = [""]
-		resourceGroup4 = ["pods/portforward"]
-		verbsGroup4 = ["get","watch","list","create","delete","update","patch"]
-		ruleGroup4["apiGroups"] = apiGroup4
-		ruleGroup4["resources"] = resourceGroup4
-		ruleGroup4["verbs"] = verbsGroup4
+                # CRUD on Port forward
+                ruleGroup4 = {}
+                apiGroup4 = [""]
+                resourceGroup4 = ["pods/portforward"]
+                verbsGroup4 = ["get","watch","list","create","delete","update","patch"]
+                ruleGroup4["apiGroups"] = apiGroup4
+                ruleGroup4["resources"] = resourceGroup4
+                ruleGroup4["verbs"] = verbsGroup4
 
-		# CRUD on platformapi.kubeplus
-		ruleGroup5 = {}
-		apiGroup5 = ["platformapi.kubeplus"]
-		resourceGroup5 = ["*"]
-		verbsGroup5 = ["get","watch","list","create","delete","update","patch"]
-		ruleGroup5["apiGroups"] = apiGroup5
-		ruleGroup5["resources"] = resourceGroup5
-		ruleGroup5["verbs"] = verbsGroup5
+                # CRUD on platformapi.kubeplus
+                ruleGroup5 = {}
+                apiGroup5 = ["platformapi.kubeplus"]
+                resourceGroup5 = ["*"]
+                verbsGroup5 = ["get","watch","list","create","delete","update","patch"]
+                ruleGroup5["apiGroups"] = apiGroup5
+                ruleGroup5["resources"] = resourceGroup5
+                ruleGroup5["verbs"] = verbsGroup5
 
-		# CRUD on networkpolicies
-		ruleGroup6 = {}
-		apiGroup6 = ["networking.k8s.io"]
-		resourceGroup6 = ["networkpolicies"]
-		verbsGroup6 = ["get","watch","list","create","delete","update","patch"]
-		ruleGroup6["apiGroups"] = apiGroup6
-		ruleGroup6["resources"] = resourceGroup6
-		ruleGroup6["verbs"] = verbsGroup6
+                # CRUD on networkpolicies
+                ruleGroup6 = {}
+                apiGroup6 = ["networking.k8s.io"]
+                resourceGroup6 = ["networkpolicies"]
+                verbsGroup6 = ["get","watch","list","create","delete","update","patch"]
+                ruleGroup6["apiGroups"] = apiGroup6
+                ruleGroup6["resources"] = resourceGroup6
+                ruleGroup6["verbs"] = verbsGroup6
 
-		# CRUD on namespaces
-		ruleGroup7 = {}
-		apiGroup7 = [""]
-		resourceGroup7 = ["namespaces"]
-		verbsGroup7 = ["get","watch","list","create","delete","update","patch"]
-		ruleGroup7["apiGroups"] = apiGroup7
-		ruleGroup7["resources"] = resourceGroup7
-		ruleGroup7["verbs"] = verbsGroup7
+                # CRUD on namespaces
+                ruleGroup7 = {}
+                apiGroup7 = [""]
+                resourceGroup7 = ["namespaces"]
+                verbsGroup7 = ["get","watch","list","create","delete","update","patch"]
+                ruleGroup7["apiGroups"] = apiGroup7
+                ruleGroup7["resources"] = resourceGroup7
+                ruleGroup7["verbs"] = verbsGroup7
 
-		# CRUD on HPA
-		ruleGroup8 = {}
-		apiGroup8 = ["autoscaling"]
-		resourceGroup8 = ["horizontalpodautoscalers"]
-		verbsGroup8 = ["get","watch","list","create","delete","update","patch"]
-		ruleGroup8["apiGroups"] = apiGroup8
-		ruleGroup8["resources"] = resourceGroup8
-		ruleGroup8["verbs"] = verbsGroup8
+                # CRUD on HPA
+                ruleGroup8 = {}
+                apiGroup8 = ["autoscaling"]
+                resourceGroup8 = ["horizontalpodautoscalers"]
+                verbsGroup8 = ["get","watch","list","create","delete","update","patch"]
+                ruleGroup8["apiGroups"] = apiGroup8
+                ruleGroup8["resources"] = resourceGroup8
+                ruleGroup8["verbs"] = verbsGroup8
 
-		# Impersonate users, groups, serviceaccounts
-		ruleGroup9 = {}
-		apiGroup9 = [""]
-		resourceGroup9 = ["users","groups","serviceaccounts"]
-		verbsGroup9 = ["impersonate"]
-		ruleGroup9["apiGroups"] = apiGroup9
-		ruleGroup9["resources"] = resourceGroup9
-		ruleGroup9["verbs"] = verbsGroup9
+                # Impersonate users, groups, serviceaccounts
+                ruleGroup9 = {}
+                apiGroup9 = [""]
+                resourceGroup9 = ["users","groups","serviceaccounts"]
+                verbsGroup9 = ["impersonate"]
+                ruleGroup9["apiGroups"] = apiGroup9
+                ruleGroup9["resources"] = resourceGroup9
+                ruleGroup9["verbs"] = verbsGroup9
 
-		# Exec into the Pods
-		ruleGroup10 = {}
-		apiGroup10 = [""]
-		resourceGroup10 = ["pods/exec"]
-		verbsGroup10 = ["get","create"]
-		ruleGroup10["apiGroups"] = apiGroup10
-		ruleGroup10["resources"] = resourceGroup10
-		ruleGroup10["verbs"] = verbsGroup10
+                # Exec into the Pods
+                ruleGroup10 = {}
+                apiGroup10 = [""]
+                resourceGroup10 = ["pods/exec"]
+                verbsGroup10 = ["get","create"]
+                ruleGroup10["apiGroups"] = apiGroup10
+                ruleGroup10["resources"] = resourceGroup10
+                ruleGroup10["verbs"] = verbsGroup10
 
-		ruleList = []
-		ruleList.append(ruleGroup1)
-		ruleList.append(ruleGroup2)
-		ruleList.append(ruleGroup3)
-		ruleList.append(ruleGroup4)
-		ruleList.append(ruleGroup5)
-		ruleList.append(ruleGroup6)
-		ruleList.append(ruleGroup7)
-		ruleList.append(ruleGroup8)
-		ruleList.append(ruleGroup9)
-		ruleList.append(ruleGroup10)
-		role["rules"] = ruleList
+                ruleList = []
+                ruleList.append(ruleGroup1)
+                ruleList.append(ruleGroup2)
+                ruleList.append(ruleGroup3)
+                ruleList.append(ruleGroup4)
+                ruleList.append(ruleGroup5)
+                ruleList.append(ruleGroup6)
+                ruleList.append(ruleGroup7)
+                ruleList.append(ruleGroup8)
+                ruleList.append(ruleGroup9)
+                ruleList.append(ruleGroup10)
+                role["rules"] = ruleList
 
-		roleName = sa + "-role.yaml"
-		create_role_rolebinding(role, roleName)
+                roleName = sa + "-role.yaml"
+                create_role_rolebinding(role, roleName)
 
-		roleBinding = {}
-		roleBinding["apiVersion"] = "rbac.authorization.k8s.io/v1"
-		roleBinding["kind"] = "ClusterRoleBinding"
-		metadata = {}
-		metadata["name"] = sa
-		roleBinding["metadata"] = metadata
+                roleBinding = {}
+                roleBinding["apiVersion"] = "rbac.authorization.k8s.io/v1"
+                roleBinding["kind"] = "ClusterRoleBinding"
+                metadata = {}
+                metadata["name"] = sa
+                roleBinding["metadata"] = metadata
 
-		subject = {}
-		subject["kind"] = "ServiceAccount"
-		subject["name"] = sa
-		subject["apiGroup"] = ""
-		subject["namespace"] = namespace
-		subjectList = []
-		subjectList.append(subject)
-		roleBinding["subjects"] = subjectList
+                subject = {}
+                subject["kind"] = "ServiceAccount"
+                subject["name"] = sa
+                subject["apiGroup"] = ""
+                subject["namespace"] = namespace
+                subjectList = []
+                subjectList.append(subject)
+                roleBinding["subjects"] = subjectList
 
-		roleRef = {}
-		roleRef["kind"] = "ClusterRole"
-		roleRef["name"] = sa
-		roleRef["apiGroup"] = "rbac.authorization.k8s.io"
-		roleBinding["roleRef"] = roleRef
+                roleRef = {}
+                roleRef["kind"] = "ClusterRole"
+                roleRef["name"] = sa
+                roleRef["apiGroup"] = "rbac.authorization.k8s.io"
+                roleBinding["roleRef"] = roleRef
 
-		roleBindingName = sa + "-rolebinding.yaml"
-		create_role_rolebinding(roleBinding, roleBindingName)
+                roleBindingName = sa + "-rolebinding.yaml"
+                create_role_rolebinding(roleBinding, roleBindingName)
 
-	def _apply_rbac(self, sa, namespace, entity=''):
-		if entity == 'provider':
-			self._apply_provider_rbac(sa, namespace)
-		if entity == 'consumer':
-			self._apply_consumer_rbac(sa, namespace)
+        def _apply_rbac(self, sa, namespace, entity=''):
+                if entity == 'provider':
+                        self._apply_provider_rbac(sa, namespace)
+                if entity == 'consumer':
+                        self._apply_consumer_rbac(sa, namespace)
 
-	def _create_secret(self, sa, namespace):
+        def _create_secret(self, sa, namespace):
 
-		annotations = {}
-		annotations['kubernetes.io/service-account.name'] = sa
+                annotations = {}
+                annotations['kubernetes.io/service-account.name'] = sa
 
-		metadata = {}
-		metadata['name'] = sa
-		metadata['namespace'] = namespace
-		metadata['annotations'] = annotations
+                metadata = {}
+                metadata['name'] = sa
+                metadata['namespace'] = namespace
+                metadata['annotations'] = annotations
 
-		secret = {}
-		secret['apiVersion'] = "v1"
-		secret['kind'] = "Secret"
-		secret['metadata'] = metadata
-		secret['type'] = 'kubernetes.io/service-account-token'
+                secret = {}
+                secret['apiVersion'] = "v1"
+                secret['kind'] = "Secret"
+                secret['metadata'] = metadata
+                secret['type'] = 'kubernetes.io/service-account-token'
 
-		secretName = sa + "-secret.yaml"
+                secretName = sa + "-secret.yaml"
 
-		filePath = os.getenv("HOME") + "/" + secretName
-		fp = open(filePath, "w")
-		yaml_content = yaml.dump(secret)
-		fp.write(yaml_content)
-		fp.close()
-		print("---")
-		print(yaml_content)
-		print("---")
-		created = False
-		while not created:
-			cmd = " kubectl create -f " + filePath
-			out = self.run_command(cmd)
-			if out != '':
-				out = out.decode('utf-8').strip()
-				print(out)
-				if 'created' in out:
-					created = True
-			else:
-				time.sleep(2)
-		print("Create secret:" + out)
-		return out
+                filePath = os.getenv("HOME") + "/" + secretName
+                fp = open(filePath, "w")
+                yaml_content = yaml.dump(secret)
+                fp.write(yaml_content)
+                fp.close()
+                print("---")
+                print(yaml_content)
+                print("---")
+                created = False
+                while not created:
+                        cmd = " kubectl create -f " + filePath
+                        out = self.run_command(cmd)
+                        if out != '':
+                                out = out.decode('utf-8').strip()
+                                print(out)
+                                if 'created' in out:
+                                        created = True
+                        else:
+                                time.sleep(2)
+                print("Create secret:" + out)
+                return out
 
-	def _generate_kubeconfig(self, sa, namespace):
-		cmdprefix = ""
-		#cmd = " kubectl create sa " + sa + " -n " + namespace
-		#cmdToRun = cmdprefix + " " + cmd
-		#self.run_command(cmdToRun)
+        def _generate_kubeconfig(self, sa, namespace):
+                cmdprefix = ""
+                #cmd = " kubectl create sa " + sa + " -n " + namespace
+                #cmdToRun = cmdprefix + " " + cmd
+                #self.run_command(cmdToRun)
 
-		#cmd = " kubectl get sa " + sa + " -n " + namespace + " -o json "
-		#cmdToRun = cmdprefix + " " + cmd
-		#out = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+                #cmd = " kubectl get sa " + sa + " -n " + namespace + " -o json "
+                #cmdToRun = cmdprefix + " " + cmd
+                #out = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
 
-		secretName = sa
-		out = self._create_secret(secretName, namespace)
-		print("Create secret:" + out)
-		if 'secret/' + sa + ' created' in out:
-			#json_output = json.loads(out)
-			#secretName = json_output["secrets"][0]["name"]
-			#print("Secret Name:" + secretName)
+                secretName = sa
+                out = self._create_secret(secretName, namespace)
+                print("Create secret:" + out)
+                if 'secret/' + sa + ' created' in out:
+                        #json_output = json.loads(out)
+                        #secretName = json_output["secrets"][0]["name"]
+                        #print("Secret Name:" + secretName)
 
-			tokenFound = False
-			while not tokenFound:
-				cmd1 = " kubectl describe secret " + secretName + " -n " + namespace
-				cmdToRun = cmdprefix + " " + cmd1
-				out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
-				out1 = out1.decode('utf-8')
-				print(out1)
-				token = ''
-				for line in out1.split("\n"):
-					if 'token' in line:
-						parts = line.split(":")
-						token = parts[1].strip()
-				if token != '':
-					tokenFound = True
-				else:
-					time.sleep(2)
+                        tokenFound = False
+                        while not tokenFound:
+                                cmd1 = " kubectl describe secret " + secretName + " -n " + namespace
+                                cmdToRun = cmdprefix + " " + cmd1
+                                out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+                                out1 = out1.decode('utf-8')
+                                print(out1)
+                                token = ''
+                                for line in out1.split("\n"):
+                                        if 'token' in line:
+                                                parts = line.split(":")
+                                                token = parts[1].strip()
+                                if token != '':
+                                        tokenFound = True
+                                else:
+                                        time.sleep(2)
 
-			print("Got secret token")
-			cmd1 = " kubectl get secret " + secretName + " -n " + namespace + " -o json "
-			cmdToRun = cmdprefix + " " + cmd1
-			out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
-			out1 = out1.decode('utf-8')
-			json_output1 = json.loads(out1)
-			ca_cert = json_output1["data"]["ca.crt"].strip()
-			#print("CA Cert:" + ca_cert)
+                        print("Got secret token")
+                        cmd1 = " kubectl get secret " + secretName + " -n " + namespace + " -o json "
+                        cmdToRun = cmdprefix + " " + cmd1
+                        out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+                        out1 = out1.decode('utf-8')
+                        json_output1 = json.loads(out1)
+                        ca_cert = json_output1["data"]["ca.crt"].strip()
+                        #print("CA Cert:" + ca_cert)
 
-			#cmd2 = " kubectl config view --minify -o json "
-			cmd2 = "kubectl -n default get endpoints kubernetes | awk '{print $2}' | grep -v ENDPOINTS"
-			cmdToRun = cmdprefix + " " + cmd2
-			out2 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
-			#print("Config view Minify:")
-			print(out2)
-			out2 = out2.decode('utf-8')
-			#json_output2 = json.loads(out2)
-			#server = json_output2["clusters"][0]["cluster"]["server"].strip()
-			server = out2.strip()
-			server = "https://" + server
-			print("Kube API Server:" + server)
-			self._create_kubecfg_file(sa, namespace, token, ca_cert, server)
+                        #cmd2 = " kubectl config view --minify -o json "
+                        cmd2 = "kubectl -n default get endpoints kubernetes | awk '{print $2}' | grep -v ENDPOINTS"
+                        cmdToRun = cmdprefix + " " + cmd2
+                        out2 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+                        #print("Config view Minify:")
+                        print(out2)
+                        out2 = out2.decode('utf-8')
+                        #json_output2 = json.loads(out2)
+                        #server = json_output2["clusters"][0]["cluster"]["server"].strip()
+                        server = out2.strip()
+                        server = "https://" + server
+                        print("Kube API Server:" + server)
+                        self._create_kubecfg_file(sa, namespace, token, ca_cert, server)
 
 @app.route("/hello")
 def index():
-	return "hello world"
+        return "hello world"
 
 @app.route("/nodes")
 def get_nodes():
@@ -545,6 +545,16 @@ def dryrunchart():
         chartLoc = chartPath
     else:
         return "Error - chart Path is empty"
+
+    if chartLoc.startswith("file"):
+        parts = chartLoc.split("file:///")
+        charttgz = parts[1].strip()
+        chartLoc = "/" + charttgz
+
+    if not os.path.exists(chartLoc):
+        message = "Chart " + chartLoc + " not found.\n"
+        message = message + "Use kubectl upload chart <charttgz> to upload the chart first."
+        return message 
 
     testChartName = "kubeplus-customerapi-reg-testchart"
     dryRunSuccess = False
@@ -942,25 +952,25 @@ def apply_rbac():
     return "abc"
 
 if __name__ == '__main__':
-	kubeconfigGenerator = KubeconfigGenerator()
-	namespace = sys.argv[1]
+        kubeconfigGenerator = KubeconfigGenerator()
+        namespace = sys.argv[1]
 
         # Note that the reason we are not applying RBAC to consumer and provider
         # kubeconfigs here is because the RBAC policies are applied when the SA
         # is created (in the Helm chart)
 
-	# 2. Generate/Retrieve Consumer kubeconfig
-	sa = 'kubeplus-saas-consumer'
-	kubeconfigGenerator._generate_kubeconfig(sa, namespace)
-	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')
-	
+        # 2. Generate/Retrieve Consumer kubeconfig
+        sa = 'kubeplus-saas-consumer'
+        kubeconfigGenerator._generate_kubeconfig(sa, namespace)
+        #kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')
+        
         # We are commenting out retrieval of Provider kubeconfig here as we have
         # now extracted out Provider kubeconfig generation in a step that will 
         # have to be run first.
-	# 1. Generate Provider kubeconfig
-	#sa = 'kubeplus-saas-provider'
-	#kubeconfigGenerator._generate_kubeconfig(sa, namespace)
-	#kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider')
+        # 1. Generate Provider kubeconfig
+        #sa = 'kubeplus-saas-provider'
+        #kubeconfigGenerator._generate_kubeconfig(sa, namespace)
+        #kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider')
         
-	app.run(host='0.0.0.0', port=5005)
+        app.run(host='0.0.0.0', port=5005)
 
