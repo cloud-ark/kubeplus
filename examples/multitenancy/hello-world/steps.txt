@@ -1,8 +1,7 @@
 Hello World as-a-Service
 -------------------------
 
-This example shows a basic Hello World Service creation.
-The provider creates HelloWorldService from the Hello World Helm chart.
+This example shows a basic Hello World Service creation. The provider creates HelloWorldService from the Hello World Helm chart.
 While creating the HelloWorldService, provider defines the resource requests and limits for cpu and memory resources for the Pods
 that will be created as part of this service's instances. The node on which the Pod(s) should be deployed is also
 defined as part of instance  creation. The consumer creates instances of HelloWorldService to run a Pod that displays Hello World. 
@@ -15,9 +14,12 @@ Install minikube
 Create minikube cluster
 - minikube start --kubernetes-version=v1.24.3
 
-Install KubePlus Operator 
+Install KubePlus Operator
 $ KUBEPLUS_NS=default
-$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.9.tgz?raw=true" -n $KUBEPLUS_NS
+$ python ../../../provider-kubeconfig.py create $KUBEPLUS_NS
+$ cp kubeplus-saas-provider.json provider.conf
+$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.9.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=provider.conf
+$ kubectl get pods (wait till kubeplus pod is Running)
 
 Install KubePlus kubectl plugins
 $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
@@ -27,11 +29,8 @@ $ export KUBEPLUS_HOME=`pwd`
 $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
 $ kubectl kubeplus commands
 
-Get Provider and Consumer kubeconfigs:
+Get Consumer kubeconfig:
 ---------------------------------------
-Extract provider kubeconfig:
-- kubectl get configmaps kubeplus-saas-provider-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider.conf
-
 Extract consumer kubeconfig:
 - kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
 
@@ -55,34 +54,68 @@ You can use either the provider.conf or consumer.conf in below commands.
 2. Create a hello world instance
    - kubectl create -f hs1.yaml --kubeconfig=consumer.conf
 
-3. Verify that resource requests and limits for cpu and memory have been set
+3. Check that the application instance Pods are created in a new namespace
+   - kubectl get pods -A --kubeconfig=consumer.conf
+     - should see the hello world pod in hs1 namespace
+
+4. Verify that resource requests and limits for cpu and memory have been set
    on the hello world Pod as defined in the ResourceComposition definition in hello-world-service-composition.yaml
    - HELLOWORLD_POD=`kubectl get pods -A --kubeconfig=consumer.conf | grep hello | awk '{print $2}'`
    - HELLOWORLD_NS=`kubectl get pods -A --kubeconfig=consumer.conf | grep hello | awk '{print $1}'`
    - kubectl get pods $HELLOWORLD_POD --kubeconfig=consumer.conf -n $HELLOWORLD_NS -o json | jq -r '.spec.containers[0].resources'
 
-4. Retrievel application url
-   - kubectl appurl HelloWorldService hs1  default -k consumer.conf
+5. Check the Kubernetes resources created by KubePlus for the application
+   - kubectl appresources HelloWorldService hs1 default -k consumer.conf
+     - Should see output of following nature:
+    
+	NAMESPACE                 KIND                      NAME                      
+	default                   HelloWorldService         hs1                       
+	hs1                       Service                   hello-world-service-helloworldservice-hs1 
+	hs1                       Deployment                hello-world-deployment-helloworldservice-hs1 
+	hs1                       Pod                       hello-world-deployment-helloworldservice-hs1-55bff47d58-dh5qg 
+	hs1                       NetworkPolicy             allow-external-traffic    
+	hs1                       NetworkPolicy             restrict-cross-ns-traffic 
+
+
+6. Retrievel application url
+   - kubectl appurl HelloWorldService hs1 default -k consumer.conf
    - curl <app-url> from above output
      - should see "Hello hello hello" displayed
 
-5. Retrievel application logs
+7. Retrievel application logs
    - kubectl applogs HelloWorldService hs1 default -k consumer.conf
 
-6. Retrievel application metrics
+8. Retrievel application metrics
    - kubectl metrics HelloWorldService hs1 default -k consumer.conf
+     - Should see output of following nature:
+	---------------------------------------------------------- 
+	Kubernetes Resources created:
+    		Number of Sub-resources: -
+    		Number of Pods: 1
+        	Number of Containers: 1
+        	Number of Nodes: 1
+        	Number of Not Running Pods: 0
+	Underlying Physical Resoures consumed:
+    		Total CPU(cores): 0.572175m
+    		Total MEMORY(bytes): 20.8671875Mi
+    		Total Storage(bytes): 0Gi
+    		Total Network bytes received: 0
+    		Total Network bytes transferred: 0
+	---------------------------------------------------------- 
 
-7. Check resource connectivity graph
+9. Check resource connectivity graph
    - kubectl connections HelloWorldService hs1 default -k consumer.conf -o png
 
-8. Check that the application instance Pods are created in a new namespace
-   - kubectl get pods --kubeconfig=consumer.conf
-     - should see the hello world pod in hs1 namespace
 
 Clean up:
 -----------
 - As consumer:
   - kubectl delete -f hs1.yaml --kubeconfig=consumer.conf
+  - kubectl delete -f hello-world-service-composition.yaml --kubeconfig=consumer.conf
+    - should get permission denied error, like below:
+	Error from server (Forbidden): error when deleting "hello-world-service-composition.yaml": resourcecompositions.workflows.kubeplus "hello-world-service-composition" is forbidden: User "system:serviceaccount:default:kubeplus-saas-consumer" cannot delete resource "resourcecompositions" in API group "workflows.kubeplus" in the namespace "default"
 
 - As provider:
   - kubectl delete -f hello-world-service-composition.yaml --kubeconfig=provider.conf
+  - kubectl get crds
+    - should see that helloworldservices.platformapi.kubeplus crd is gone
