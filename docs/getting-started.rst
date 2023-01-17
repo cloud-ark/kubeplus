@@ -13,7 +13,7 @@ KubePlus can be installed in any Namespace.
     $ wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/provider-kubeconfig.py
     $ KUBEPLUS_NS=default (or any namespace in which you want to install KubePlus)
     $ python provider-kubeconfig.py create $KUBEPLUS_NS
-    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.8.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.10.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
     $ until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done
 
 Examples

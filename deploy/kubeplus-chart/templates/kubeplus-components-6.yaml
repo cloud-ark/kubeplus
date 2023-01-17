@@ -317,7 +317,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: kubeconfiggenerator
-        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.7
+        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.8
         imagePullPolicy: IfNotPresent 
         env:
           - name: KUBEPLUS_NAMESPACE
