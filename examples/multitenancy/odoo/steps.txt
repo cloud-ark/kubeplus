@@ -1,0 +1,65 @@
+Odoo as-a-Service
+-------------------
+This is an example of delivering a Bitnami Odoo Helm chart as-a-service using KubePlus
+
+
+1. Download Odoo helm chart from Bitnami:
+   - helm repo add bitnami https://charts.bitnami.com/bitnami
+   - helm pull bitnami/odoo
+
+2. Install KubePlus and setup KubePlus kubectl plugins
+   - python ../../../provider-kubeconfig.py create default
+   - helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.11.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json --set CHECK_KYVERNO_POLICIES=NO
+   - Wait till KubePlus Pod is Running
+
+   - Setup KubePlus kubectl plugins
+     wget https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-kubectl-plugins.tar.gz
+     gunzip kubeplus-kubectl-plugins.tar.gz
+     tar -xvf kubeplus-kubectl-plugins
+     export KUBEPLUS_HOME=`pwd`
+     export PATH=$KUBEPLUS_HOME/plugins:$PATH
+
+3. Create OdooService API wrapping the Helm chart
+   - kubectl upload chart odoo-23.0.4.tgz 
+   - kubectl create -f odoo-service-composition-localhcart.yaml --kubeconfig=kubeplus-saas-provider.json 
+   - kubectl get crds
+     - verify that odooservice crd has been created
+     - check that OpenAPISchema has been defined on the CRD corresponding to the attributes in the values.yaml of the Odoo Helm chart. 
+
+4. Download the consumer kubeconfig file
+   - kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
+
+5. Check the man page for OdooService API
+   - kubectl man OdooService -k consumer.conf
+     - this will show the Odoo Helm chart's values.yaml file
+
+6. Create Odoo instance
+   - kubectl create -f odoo1.yaml --kubeconfig=consumer.conf
+     - verify that the application Pods are created in a new namespace (kubectl get pods -A)
+
+7. Check the created resources
+   - kubectl appresources OdooService odoo1 -k consumer.conf
+     - this will show all the resources that KubePlus has created for the odoo instance
+
+8. Check logs
+   - kubectl applogs OdooService odoo1 default -k consumer.conf
+
+9. Check application URL
+    - appurl=`kubectl appurl OdooService odoo1 default -k consumer.conf`
+    - curl $appurl/web/login
+      - if the installation is successful, the curl call should return 200 OK.
+
+10. Check metrics
+    - kubectl metrics OdooService odoo1 default -k consumer.conf  
+    - kubectl metrics OdooService odoo1 default -k consumer.conf -o prometheus
+
+11. Check resource topology
+    - kubectl connections OdooService odoo1 default -k consumer.conf -o png
+
+
+Clean up:
+- kubectl delete -f odoo1.yaml --kubeconfig=consumer.conf
+- kubectl delete -f odoo-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json
+
+
+

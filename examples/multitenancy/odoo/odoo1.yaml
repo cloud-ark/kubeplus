@@ -1,0 +1,10 @@
+apiVersion: platformapi.kubeplus/v1alpha1
+kind: OdooService
+metadata:
+  name: odoo1
+spec:
+  service:
+    type: NodePort
+    nodePorts:
+      http: "30001"
+
