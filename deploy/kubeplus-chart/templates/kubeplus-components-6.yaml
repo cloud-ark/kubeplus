@@ -317,7 +317,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: kubeconfiggenerator
-        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.8
+        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.9
         imagePullPolicy: IfNotPresent 
         env:
           - name: KUBEPLUS_NAMESPACE
@@ -329,8 +329,11 @@ spec:
         args:
           - "$(KUBEPLUS_NAMESPACE)"
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.2
-        imagePullPolicy: IfNotPresent 
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.3
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: CHECK_KYVERNO_POLICIES
+            value: "{{ .Values.CHECK_KYVERNO_POLICIES }}"
         args:
           - -tlsCertFile=/etc/webhook/certs/cert.pem
           - -tlsKeyFile=/etc/webhook/certs/key.pem
@@ -342,7 +345,7 @@ spec:
           mountPath: /etc/webhook/certs
           readOnly: true
       - name: platform-operator
-        image: gcr.io/cloudark-kubeplus/platform-operator:3.0.1
+        image: gcr.io/cloudark-kubeplus/platform-operator:3.0.2
         imagePullPolicy: IfNotPresent
         command: [ "/platform-operator"]
       - name: consumerui
@@ -350,7 +353,7 @@ spec:
         imagePullPolicy: IfNotPresent
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
-        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.6
+        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.7
         imagePullPolicy: IfNotPresent
         command: ["/root/helm-pod"]
         volumeMounts:
