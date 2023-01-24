@@ -176,8 +176,8 @@ func getChartValues(request *restful.Request, response *restful.Response) {
  			parsedChartName := downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace)
  			chartValuesPath := "/" + parsedChartName + "/values.yaml"
  			fmt.Printf("Chart Values Path:%s\n",chartValuesPath)
- 			readCmd := "more " + chartValuesPath
- 			fmt.Printf("More cmd:%s\n", readCmd)
+ 			readCmd := "cat " + chartValuesPath
+ 			fmt.Printf("cat cmd:%s\n", readCmd)
  			_, valuesToReturn = executeExecCall(cmdRunnerPod, readCmd)
  			fmt.Printf("valuesToReturn:%v\n",valuesToReturn)
 		}
@@ -749,10 +749,11 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 			if ok {
 	 				helmReleaseOP := execOutput
 	 				lines := strings.Split(helmReleaseOP, "\n")
+					var releaseFound bool = false
 	 				for _, line := range lines {
 	 					if dryrun == "" {
 		 					present := strings.Contains(line, "NAME:")
-		 					if present {
+		 					if present && !releaseFound {
 	 							parts := strings.Split(line, ":")
 	 							for _, part := range parts {
 		 							if part != "" && part != " " && part != "NAME" {
@@ -760,11 +761,12 @@ func deployChart(request *restful.Request, response *restful.Response) {
 				 						fmt.Printf("ReleaseName:%s\n", releaseName)
 		 								releaseName = strings.TrimSpace(releaseName)
 		 								fmt.Printf("RN:%s\n", releaseName)
+										releaseFound = true
 		 								go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseName)							
 										if (cpu_req != "" && cpu_lim != "" && mem_req != "" && mem_lim != "") {
-										createResourceQuota(targetNSName, releaseName, cpu_req, cpu_lim, mem_req, mem_lim)
+										go createResourceQuota(targetNSName, releaseName, cpu_req, cpu_lim, mem_req, mem_lim)
 									}
-										createNetworkPolicy(targetNSName, releaseName)
+										go createNetworkPolicy(targetNSName, releaseName)
 		 							}
 	 							}
 	 						}
@@ -920,13 +922,13 @@ func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, re
 	res := schema.GroupVersionResource{Group: group,
 									   Version: version,
 									   Resource: plural}
-        //fmt.Printf("Res:%v\n",res)
-	//fmt.Printf("kind:%s, group: %s, version:%s, plural:%s, instance:%s, crdObjNS:%s, targetNS:%s, releaseName:%s",
-	//	   kind, group, version, plural, instance, crdObjNS, targetNS, releaseName)
+        fmt.Printf("Res:%v\n",res)
+	fmt.Printf("kind:%s, group: %s, version:%s, plural:%s, instance:%s, crdObjNS:%s, targetNS:%s, releaseName:%s",
+		   kind, group, version, plural, instance, crdObjNS, targetNS, releaseName)
 	for {
 		obj, err := dynamicClient.Resource(res).Namespace(crdObjNS).Get(context.Background(), instance, metav1.GetOptions{})
-		//fmt.Printf("Error:%v\n", err)
-		//fmt.Printf("Obj:%v\n",obj)
+		fmt.Printf("Error:%v\n", err)
+		fmt.Printf("Obj:%v\n",obj)
 		if err == nil {
 			objData := obj.UnstructuredContent()
 			helmrelease := make(map[string]interface{},0)
@@ -939,10 +941,10 @@ func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, re
 			dynamicClient.Resource(res).Namespace(crdObjNS).Update(context.Background(), obj, metav1.UpdateOptions{})
 			//fmt.Printf("UpdatedObj:%v, err1:%v\n",updatedObj, err1) //add the respective variables if want to print.
 			// break out of the for loop
-			break 
-		} else {
-			time.Sleep(2 * time.Second)
-		}
+			break
+		} /*else {
+			time.Sleep(1 * time.Second)
+		}*/
 	}
 	fmt.Printf("Done updating status of the CR instance:%s\n", instance)
 }

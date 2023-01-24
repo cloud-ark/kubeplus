@@ -472,6 +472,145 @@ class KubeconfigGenerator(object):
 def index():
         return "hello world"
 
+
+
+def flatten(yaml_contents, flattened, types_dict, prefix=''):
+    for key in yaml_contents:
+        value = yaml_contents[key]
+        if isinstance(value, str):
+            flattened[prefix + key] = value
+            types_dict[key] = {'type': 'string'}
+        if isinstance(value, bool):
+            flattened[prefix + key] = value
+            types_dict[key] = {'type': 'boolean'}
+        elif isinstance(value, int):
+            flattened[prefix + key] = value
+            types_dict[key] = {'type': 'integer'}
+        if isinstance(value, dict):
+            inner_prop_dict = {}
+            prop_dict = {'properties': inner_prop_dict}
+            prop_dict['type'] = 'object'
+            types_dict[key] = prop_dict
+            if value:
+                flatten(value, flattened, inner_prop_dict, prefix=prefix + key + ".")
+                flattened[prefix + key] = value
+            else:
+                flattened[prefix + key] = {}
+        if isinstance(value, list):
+            types_dict[key] = {'type': 'array', 'items': {'type': 'string'}}
+            if len(value) == 0:
+                flattened[prefix + key] = []
+            else:
+                for l in value:
+                    if isinstance(l, dict) or isinstance(l, list):
+                        if isinstance(l, dict):
+                            inner_prop_dict = {}
+                            prop_dict = {'properties': inner_prop_dict}
+                            prop_dict['type'] = 'object'
+                            types_dict[key] = prop_dict
+                        if isinstance(l, list):
+                            inner_prop_dict = {}
+                            prop_dict = {'items': inner_prop_dict}
+                            prop_dict['type'] = 'array'
+                            types_dict[key] = prop_dict
+                        flatten(l, flattened, inner_prop_dict, prefix=prefix + key + ".")
+                    else:
+                        flattened[prefix + key] = l
+
+
+def get_chart_yaml(chartLoc, chartName):
+
+    if chartLoc.startswith("file"):
+        parts = chartLoc.split("file:///")
+        charttgz = parts[1].strip()
+        chartLoc = "/" + charttgz
+        app.logger.info("Chart Name:" + chartName)
+        
+        cmd = "tar -xvzf " + chartLoc
+        out, err = run_command(cmd)
+
+        app.logger.info("Output:" + out)
+        app.logger.info("Error:" + err)
+
+        fp = open("/" + chartName + "/values.yaml", "r")
+        data = fp.read()
+        yaml_contents = yaml.safe_load(data)
+        return yaml_contents
+
+
+@app.route("/registercrd")
+def registercrd():
+    app.logger.info("Inside registercrd")
+    kind = request.args.get("kind")
+    version = request.args.get("version")
+    group = request.args.get("group")
+    plural = request.args.get("plural")
+    chartURL = request.args.get("chartURL")
+    chartName = request.args.get("chartName")
+
+    app.logger.info("kind:" + kind)
+    app.logger.info("version:" + version)
+    app.logger.info("group:" + group)
+    app.logger.info("plural:" + plural)
+    app.logger.info("chartURL:" + chartURL)
+
+    yaml_contents = get_chart_yaml(chartURL, chartName)
+    app.logger.info("Values YAML:" + str(yaml_contents))
+
+    flattened = {}
+    attr_types = {}
+    openAPIV3SchemaObj = {}
+    openAPIV3SchemaProperties = {}
+    openAPIV3SchemaPropertiesInner = {}
+    openAPIV3SchemaPropertiesInnerDetails = {}
+    openAPIV3SchemaPropertiesInner['type'] = 'object'
+    openAPIV3SchemaPropertiesInner['properties'] = openAPIV3SchemaPropertiesInnerDetails
+    openAPIV3SchemaProperties['spec'] = openAPIV3SchemaPropertiesInner
+    openAPIV3SchemaProperties['status'] = {"type": "object", "properties": {"helmrelease": {"type": "string"}}}
+    openAPIV3SchemaObj['type'] = 'object'
+    openAPIV3SchemaObj['properties'] = openAPIV3SchemaProperties
+    attr_types['openAPIV3Schema'] = openAPIV3SchemaObj
+    flatten(yaml_contents, flattened, openAPIV3SchemaPropertiesInnerDetails)
+    openAPIV3SchemaPropertiesInnerDetails["nodeName"] = {"type": "string"}
+
+    json_contents = json.dumps(flattened)
+
+    #print(json_contents)
+    #print("===")
+    attr_types_json = json.dumps(attr_types)
+    #print(attr_types_json)
+
+    crd = {}
+    crd['apiVersion'] = "apiextensions.k8s.io/v1"
+    crd['kind'] = "CustomResourceDefinition"
+    crd['metadata'] = {'name':plural + "." + group}
+    crd['spec'] = {"group":group, "names":{"kind": kind, "listKind": kind + "List","plural":plural,"singular":kind.lower()}, "scope": "Namespaced", "versions": [{"name": "v1alpha1", "schema": attr_types, "served": True, "storage": True}]}
+
+#"status": {
+#                                "properties": {
+#                                    "helmrelease": {
+#                                        "type": "string"
+#                                    }
+#                                },
+#                                "type": "object"
+#                            }
+
+
+    crd_json = json.dumps(crd)
+    app.logger.info("CRD JSON")
+    app.logger.info(crd_json)
+
+    crd_file_name = kind + ".json"
+    fp = open("/" + crd_file_name, "w")
+    fp.write(crd_json)
+    fp.close()
+
+    cmd = "kubectl create -f /" + crd_file_name
+    out, err = run_command(cmd)
+    app.logger.info("Output:" + out)
+    app.logger.info("Error:" + err)
+    return out
+
 @app.route("/nodes")
 def get_nodes():
     cmd = "kubectl get nodes "
