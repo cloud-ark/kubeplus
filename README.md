@@ -161,7 +161,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 3) Try following examples:
    - [Hello world](./examples/multitenancy/hello-world/steps.txt)
    - [Wordpress](./examples/multitenancy/wordpress/steps.txt)
-   - [Odoo](./examples/multitenancy/odoo)
+   - [Odoo](./examples/multitenancy/odoo/steps.txt)
 
 4) Run tests
 ```
