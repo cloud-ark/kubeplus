@@ -12,6 +12,8 @@ import (
 	_ "github.com/lib/pq"
 	"net/http"
 	"net/url"
+	
+	"gopkg.in/yaml.v3"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -326,7 +328,7 @@ func (c *Controller) deleteFoo(obj interface{}) {
 	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
 
 	action := "delete"
-	handleCRD(foo.Name, kind, version, group, plural, action, namespace)
+	handleCRD(foo.Name, kind, version, group, plural, action, namespace, chartURL, chartName)
 
  	resPolicySpec := foo.Spec.ResPolicy
  	//fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
@@ -388,7 +390,7 @@ func (c *Controller) syncHandler(key string) error {
 	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
 	// Check if CRD is present or not. Create it only if it is not present.
 	action := "create"
-	handleCRD(name, kind, version, group, plural, action, namespace)
+	handleCRD(name, kind, version, group, plural, action, namespace, chartURL, chartName)
 
  	resPolicySpec := foo.Spec.ResPolicy
  	fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
@@ -518,7 +520,92 @@ func deleteResourcePolicy(resPolicySpec interface{}, namespace string) {
 	}
 }
 
-func handleCRD(rescomposition, kind, version, group, plural, action, namespace string) error {
+func flatten(yaml_contents map[string]interface{}, types_dict map[string]apiextensionsv1beta1.JSONSchemaProps) map[string]apiextensionsv1beta1.JSONSchemaProps {
+	for key, value := range yaml_contents {
+		//fmt.Printf("Key:%s ", key)
+		//fmt.Printf("Value:%s Type:%T\n", value, value)
+		_, ok := value.(string)
+		if ok {
+			//str_dict := map[string]apiextensionsv1beta1.JSONSchemaProps{"type": apiextensionsv1beta1.JSONSchemaProps{Type: "string"}}
+			types_dict[key] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
+		}
+		_, ok = value.(int)
+		if ok {
+			//str_dict := map[string]apiextensionsv1beta1.JSONSchemaProps{"type": apiextensionsv1beta1.JSONSchemaProps{Type: "integer"}}
+			types_dict[key] = apiextensionsv1beta1.JSONSchemaProps{Type: "integer"}
+		}
+		_, ok = value.(bool)
+		if ok {
+			//str_dict := map[string]apiextensionsv1beta1.JSONSchemaProps{"type": apiextensionsv1beta1.JSONSchemaProps{Type: "boolean"}}
+			types_dict[key] = apiextensionsv1beta1.JSONSchemaProps{Type: "boolean"} 
+		}
+		_, ok = value.(map[string]interface{})
+		if ok {
+			value1, _ := value.(map[string]interface{})
+			inner_prop_dict := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
+			inner_prop_dict = flatten(value1, inner_prop_dict)
+		        
+			var jsonSchemaInner apiextensionsv1beta1.JSONSchemaProps
+        		jsonSchemaInner.Type = "object"
+        		jsonSchemaInner.Properties = inner_prop_dict
+
+			types_dict[key] = jsonSchemaInner
+		}
+		_, ok = value.([]interface{})
+		if ok {
+			items_dict := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
+			items_dict["type"] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
+			//prop_dict["items"] = items_dict
+		        
+			var jsonSchemaInner apiextensionsv1beta1.JSONSchemaProps
+        		jsonSchemaInner.Type = "array"
+        		jsonSchemaInner.Properties = items_dict
+
+			types_dict[key] = jsonSchemaInner
+		}
+
+	}
+	//fmt.Println(types_dict)
+	return types_dict
+}
+
+func getChartValueTypes(data []byte) map[string]apiextensionsv1beta1.JSONSchemaProps {
+
+	// Create a map to hold the YAML data
+	var yaml_contents  map[string]interface{}
+
+	openAPIV3SchemaPropertiesInnerDetails := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
+
+	// Unmarshal the YAML data into the map
+	err := yaml.Unmarshal(data, &yaml_contents)
+	if err != nil {
+		fmt.Println(err)
+		return openAPIV3SchemaPropertiesInnerDetails
+	}
+
+	/*attr_types := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
+	openAPIV3SchemaObj := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
+	openAPIV3SchemaProperties := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
+	openAPIV3SchemaPropertiesInner := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
+	*/
+
+	openAPIV3SchemaPropertiesInnerDetails = flatten(yaml_contents, openAPIV3SchemaPropertiesInnerDetails)
+	//fmt.Println(openAPIV3SchemaPropertiesInnerDetails)
+	//fmt.Println("=====")
+
+	/*openAPIV3SchemaPropertiesInner["type"] = apiextensionsv1beta1.JSONSchemaProps{Type: "object"}
+	openAPIV3SchemaPropertiesInner["properties"] = openAPIV3SchemaPropertiesInnerDetails
+	openAPIV3SchemaProperties["spec"] = openAPIV3SchemaPropertiesInner
+	openAPIV3SchemaObj["type"] = apiextensionsv1beta1.JSONSchemaProps{Type: "object"}
+	openAPIV3SchemaObj["properties"] = openAPIV3SchemaProperties
+	attr_types["openAPIV3Schema"] = openAPIV3SchemaObj
+
+	attr_types_json, _ := json.Marshal(attr_types)*/
+	return openAPIV3SchemaPropertiesInnerDetails
+
+}
+
+func handleCRD(rescomposition, kind, version, group, plural, action, namespace, chartURL, chartName string) error {
 	fmt.Printf("Inside handleCRD %s\n", action)
 	cfg, err := rest.InClusterConfig()
 	if err != nil {
@@ -531,7 +618,9 @@ func handleCRD(rescomposition, kind, version, group, plural, action, namespace s
 	kubePlusAnnotation[CREATED_BY_KEY] = CREATED_BY_VALUE
 
 	fmt.Printf("Getting values.yaml of the service Helm chart\n")
-	chartValuesBytes := GetValuesYaml(rescomposition, namespace)
+
+	//chartValuesBytes := GetValuesYaml(rescomposition, namespace)
+	/*
 	valuesYaml := string(chartValuesBytes)
 	fmt.Printf("%v\n", valuesYaml)
 	lines := strings.Split(valuesYaml, "\n")
@@ -552,15 +641,23 @@ func handleCRD(rescomposition, kind, version, group, plural, action, namespace s
 	fmt.Printf("=====================\n")
 	fmt.Printf("%v\n", properties)
 	fmt.Printf("=====================\n")
-
-	specProperties := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
+	*/
+	/*
 	for i:=0; i<len(properties); i++ {
 		fieldName := properties[i]
 		specProperties[fieldName] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
-	}
+	}*/
+
+	//chartValuesTypes := GetValuesTypes(rescomposition, namespace)
+
+	/*
+	specProperties := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
+	specProperties = getChartValueTypes(chartValuesBytes)
 
 	// Add "nodeName" to the specProperties to support node isolation.
 	specProperties["nodeName"] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
+
+	fmt.Printf("SpecProperties:%v\n", specProperties)
 
 	var jsonSchemaInner apiextensionsv1beta1.JSONSchemaProps
 	jsonSchemaInner.Type = "object"
@@ -602,6 +699,7 @@ func handleCRD(rescomposition, kind, version, group, plural, action, namespace s
 			Scope: "Namespaced",
 		},
 	}
+	*/
 
 	crdPresent := false
 	crdList, err := crdClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{})
@@ -632,10 +730,12 @@ func handleCRD(rescomposition, kind, version, group, plural, action, namespace s
 
 	if !crdPresent {
 		if action == "create" {
-			_, err1 := crdClient.CustomResourceDefinitions().Create(context.Background(), crd, metav1.CreateOptions{})
+		/*	_, err1 := crdClient.CustomResourceDefinitions().Create(context.Background(), crd, metav1.CreateOptions{})
 			if err1 != nil {
 				panic(err1.Error())
 			}
+		*/
+		CreateCRD(kind, version, group, plural, chartURL, chartName)
 		}
 	} else {
 		fmt.Printf("CRD Group:%s Version:%s Kind:%s Plural:%s found.\n", group, version, kind, plural)
@@ -664,6 +764,30 @@ func GetValuesYaml(platformworkflow, namespace string) []byte {
         body := queryKubeDiscoveryService(url1)
         return body
 }
+
+func CreateCRD(kind, version, group, plural, chartURL, chartName string) []byte {
+        args := fmt.Sprintf("kind=%s&version=%s&group=%s&plural=%s&chartURL=%s&chartName=%s",kind, version, group, plural, chartURL, chartName)
+        fmt.Printf("Inside CreateCRD...\n")
+        var url1 string
+	url1 = fmt.Sprintf("http://localhost:5005/registercrd?%s", args)
+        fmt.Printf("Url:%s\n", url1)
+        body := queryKubeDiscoveryService(url1)
+        return body
+}
+
+
+func GetValuesTypes(platformworkflow, namespace string) []byte {
+        args := fmt.Sprintf("platformworkflow=%s&namespace=%s", platformworkflow, namespace)
+        fmt.Printf("Inside GetValuesTypes...\n")
+        //serviceHost, servicePort := getServiceEndpoint("kubeplus")
+        //fmt.Printf("After getServiceEndpoint...\n")
+        var url1 string
+        url1 = fmt.Sprintf("http://localhost:5005/getchartvaluetypes?%s", args)
+        fmt.Printf("Url:%s\n", url1)
+        body := queryKubeDiscoveryService(url1)
+        return body
+}
+
 
 
 func deleteCRDInstances(kind, group, version, plural, namespace string) []byte {

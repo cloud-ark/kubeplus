@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 	"context"
+	"os"
 
 	"github.com/buger/jsonparser"
 	guuid "github.com/google/uuid"
@@ -113,6 +114,7 @@ func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v
 	fmt.Println(req.Name)
 	fmt.Println(req.Namespace)
 	fmt.Println(httpMethod)
+	fmt.Printf("%s\n", string(req.Object.Raw))
 	fmt.Println("=== Request ===")
 
 	fmt.Println("=== User ===")
@@ -847,15 +849,17 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	fmt.Printf("Kind string:%s\n", kindString)
 	chartKindMap[platformWorkflowName] = kindString
 
-
-	message := string(TestChartDeployment(kind, namespace, chartName, chartURL))
-	fmt.Printf("After TestChartDeployment - message:%s\n", message)
-	if strings.Contains(message, "Error") {
-		fmt.Printf("99999999\n")
-		return &v1.AdmissionResponse{
-			Result: &metav1.Status{
-				Message: message,
-			},
+	check_kyverno_policies := os.Getenv("CHECK_KYVERNO_POLICIES")
+	if strings.EqualFold(check_kyverno_policies, "yes") {
+		message := string(TestChartDeployment(kind, namespace, chartName, chartURL))
+		fmt.Printf("After TestChartDeployment - message:%s\n", message)
+		if strings.Contains(message, "Error") {
+			fmt.Printf("99999999\n")
+			return &v1.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: message,
+				},
+			}
 		}
 	}
 
@@ -1083,7 +1087,7 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 
 	overridesBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "spec")
 	overrides := string(overridesBytes)
-	//fmt.Printf("Overrides:%s\n", overrides)
+	fmt.Printf("Overrides:%s\n", overrides)
 
 	nodeName, err := jsonparser.GetUnsafeString(req.Object.Raw, "spec", "nodeName")
 	fmt.Printf("nodeName in Spec:%s\n", nodeName)
