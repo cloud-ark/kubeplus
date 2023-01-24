@@ -158,7 +158,10 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
   export PATH=$KUBEPLUS_HOME/plugins:$PATH
 ```
 
-3) Go through the steps given [here](./examples/multitenancy/wordpress/steps.txt).
+3) Try following examples:
+   - [Hello world](./examples/multitenancy/hello-world/steps.txt)
+   - [Wordpress](./examples/multitenancy/wordpress/steps.txt)
+   - [Odoo](./examples/multitenancy/odoo)
 
 4) Run tests
 ```
