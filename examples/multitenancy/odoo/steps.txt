@@ -9,7 +9,7 @@ This is an example of delivering a Bitnami Odoo Helm chart as-a-service using Ku
 
 2. Install KubePlus and setup KubePlus kubectl plugins
    - python ../../../provider-kubeconfig.py create default
-   - helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.11.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json --set CHECK_KYVERNO_POLICIES=NO
+   - helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.12.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json --set CHECK_KYVERNO_POLICIES=NO
    - Wait till KubePlus Pod is Running
 
    - Setup KubePlus kubectl plugins
