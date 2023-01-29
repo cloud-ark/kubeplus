@@ -21,7 +21,7 @@ This is an example of delivering a Bitnami Odoo Helm chart as-a-service using Ku
 
 3. Create OdooService API wrapping the Helm chart
    - kubectl upload chart odoo-23.0.4.tgz 
-   - kubectl create -f odoo-service-composition-localhcart.yaml --kubeconfig=kubeplus-saas-provider.json 
+   - kubectl create -f odoo-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json 
    - kubectl get crds
      - verify that odooservice crd has been created
      - check that OpenAPISchema has been defined on the CRD corresponding to the attributes in the values.yaml of the Odoo Helm chart. 
@@ -35,7 +35,8 @@ In the below commands you can use consumer.conf or kubeplus-saas-provider.json
    - kubectl explain OdooService
    - kubectl explain OdooService.spec
    - kubectl man OdooService -k kubeplus-saas-provider.json
-     - this will show the Odoo Helm chart's values.yaml file
+     - this will show a sample odooservice object in which the spec properties are 
+       attributes in the Odoo Helm chart's values.yaml file
 
 6. Create Odoo instance
    - kubectl man OdooService -k kubeplus-saas-provider.json > sample-odooservice.yaml
