@@ -38,22 +38,22 @@ def create_role_rolebinding(contents, name):
     yaml_content = yaml.dump(contents)
     fp.write(yaml_content)
     fp.close()
-    print("---")
-    print(yaml_content)
-    print("---")
+    #print("---")
+    #print(yaml_content)
+    #print("---")
     cmd = " kubectl create -f " + filePath
     run_command(cmd)
 
 
 def run_command(cmd):
     #print("Inside run_command")
-    print(cmd)
+    #print(cmd)
     cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
     out = cmdOut[0].decode('utf-8')
     err = cmdOut[1].decode('utf-8')
-    print(out)
-    print("---")
-    print(err)
+    #print(out)
+    #print("---")
+    #print(err)
     return out, err
 
 
@@ -61,13 +61,13 @@ class KubeconfigGenerator(object):
 
         def run_command(self, cmd):
                 #print("Inside run_command")
-                print(cmd)
+                #print(cmd)
                 cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
                 out = cmdOut[0]
                 err = cmdOut[1]
-                print(out)
-                print("---")
-                print(err)
+                #print(out)
+                #print("---")
+                #print(err)
                 return out, err
 
         def _create_kubecfg_file(self, sa, namespace, token, ca, server):
@@ -487,9 +487,9 @@ class KubeconfigGenerator(object):
                 yaml_content = yaml.dump(secret)
                 fp.write(yaml_content)
                 fp.close()
-                print("---")
-                print(yaml_content)
-                print("---")
+                #print("---")
+                #print(yaml_content)
+                #print("---")
                 created = False
                 count = 0
                 while not created and count < 5:
@@ -497,13 +497,13 @@ class KubeconfigGenerator(object):
                         out, err = self.run_command(cmd)
                         if out != '':
                                 out = out.decode('utf-8').strip()
-                                print(out)
+                                #print(out)
                                 if 'created' in out:
                                     created = True
                                 else:
                                     time.sleep(2)
                                     count = count + 1
-                print("Create secret:" + out)
+                #print("Create secret:" + out)
                 if not created and count >= 5:
                     print(err)
                     sys.exit()
@@ -521,7 +521,7 @@ class KubeconfigGenerator(object):
 
                 secretName = sa
                 out = self._create_secret(secretName, namespace)
-                print("Create secret:" + out)
+                #print("Create secret:" + out)
                 if 'secret/' + sa + ' created' in out:
                         #json_output = json.loads(out)
                         #secretName = json_output["secrets"][0]["name"]
@@ -533,7 +533,7 @@ class KubeconfigGenerator(object):
                                 cmdToRun = cmdprefix + " " + cmd1
                                 out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
                                 out1 = out1.decode('utf-8')
-                                print(out1)
+                                #print(out1)
                                 token = ''
                                 for line in out1.split("\n"):
                                         if 'token' in line:
@@ -544,7 +544,7 @@ class KubeconfigGenerator(object):
                                 else:
                                         time.sleep(2)
 
-                        print("Got secret token")
+                        #print("Got secret token")
                         cmd1 = " kubectl get secret " + secretName + " -n " + namespace + " -o json "
                         cmdToRun = cmdprefix + " " + cmd1
                         out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
@@ -558,13 +558,13 @@ class KubeconfigGenerator(object):
                         cmdToRun = cmdprefix + " " + cmd2
                         out2 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
                         #print("Config view Minify:")
-                        print(out2)
+                        #print(out2)
                         out2 = out2.decode('utf-8')
                         #json_output2 = json.loads(out2)
                         #server = json_output2["clusters"][0]["cluster"]["server"].strip()
                         server = out2.strip()
                         server = "https://" + server
-                        print("Kube API Server:" + server)
+                        #print("Kube API Server:" + server)
                         self._create_kubecfg_file(sa, namespace, token, ca_cert, server)
 
 
@@ -590,6 +590,7 @@ if __name__ == '__main__':
                 # 1. Generate Provider kubeconfig
                 kubeconfigGenerator._generate_kubeconfig(sa, namespace)
                 kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider')
+                print("Provider kubeconfig created: kubeplus-saas-provider.json")
 
         if action == "delete":
                 run_command("kubectl delete sa " + sa + " -n " + namespace)

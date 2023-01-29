@@ -834,15 +834,18 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 		}
 	}
 
-	message1 := string(LintChart(chartURL))
-	fmt.Printf("After LintChart - message:%s\n", message1)
-	if !strings.Contains(message1, "Chart is good") {
-		return &v1.AdmissionResponse{
-			Result: &metav1.Status{
-				Message: message1,
-			},
+	//lint_chart := os.Getenv("LINT_CHART")
+	//if strings.EqualFold(lint_chart, "yes") {
+		message1 := string(LintChart(chartURL))
+		fmt.Printf("After LintChart - message:%s\n", message1)
+		if !strings.Contains(message1, "Chart is good") {
+			return &v1.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: message1,
+				},
+			}
 		}
-	}
+	//}
 
 	parts := strings.Split(message1, "\n")
 	kindString := parts[1]
@@ -928,14 +931,40 @@ func checkResourceExists(kind, plural string) string {
 	return kindPlural
 }
 
-func registerManPage(kind, platformworkflow, namespace string) string {
+func registerManPage(kind, apiVersion, platformworkflow, namespace string) string {
 	lowercaseKind := strings.ToLower(kind)
 
     valuesYamlbytes := GetValuesYaml(platformworkflow, namespace)
-    valuesYaml := string(valuesYamlbytes)
-    introString := "Here is the values.yaml for the underlying Helm chart representing this resource.\n"
+    valuesYamlStr := string(valuesYamlbytes)
+    /*introString := "Here is the values.yaml for the underlying Helm chart representing this resource.\n"
     introString = introString + "The attributes in values.yaml become the Spec properties of the resource.\n\n"
-    valuesYaml = introString + valuesYaml
+    valuesYaml = introString + valuesYaml*/
+
+    /*valuesYamlDict := make(map[string]interface{})
+    metadata := make(map[string]string)
+    spec := make(map[string]interface{})
+    valuesYamlDict["apiVersion"] = apiVersion
+    valuesYamlDict["kind"] = kind
+    metadata["name"] = "sample-" + lowercaseKind
+    spec["spec"] = valuesYamlStr
+    valuesYamlDict["metadata"] = metadata
+    valuesYamlDict["spec"] = spec
+
+    valuesYaml := fmt.Sprintf("%v", valuesYamlDict)*/
+
+    prefix := "apiVersion: " + apiVersion + "\n"
+    prefix = prefix + "kind: " + kind + "\n"
+    prefix = prefix + "metadata:\n"
+    prefix = prefix + "  name: sample-" + lowercaseKind + "\n"
+    prefix = prefix + "spec:\n"
+
+    lines := strings.Split(valuesYamlStr, "\n")
+    for _, line := range lines {
+	    prefix = prefix + "  " + line + "\n"
+    }
+
+    valuesYaml := prefix
+
     fmt.Printf("Values YAML:%s\n",valuesYaml)
 
 	configMapName := lowercaseKind + "-usage"
@@ -989,6 +1018,7 @@ func getPaCAnnotation(ar *v1.AdmissionReview) map[string]string {
 	crdgroup, _ := jsonparser.GetUnsafeString(body, "spec", "group")
 	fmt.Printf("CRDKind:%s, CRDPlural:%s, CRDVersion:%s\n", crdkind, crdplural, crdversion)
 	customAPI := crdgroup + "/" + crdversion + "/" + crdkind
+	apiVersion := crdgroup + "/" + crdversion
 	platformWorkflowName, ok := customAPIPlatformWorkflowMap[customAPI]
 	fmt.Printf("PlatformWorkflowName:%s, ok:%v\n", platformWorkflowName, ok)
 	chartKinds := ""
@@ -1042,7 +1072,7 @@ func getPaCAnnotation(ar *v1.AdmissionReview) map[string]string {
 		annotations1[annotateRel] = annotateVal
 
 	 	namespace = GetNamespace()
-	 	manpageConfigMapName := registerManPage(crdkind, platformWorkflowName, namespace)
+	 	manpageConfigMapName := registerManPage(crdkind, apiVersion, platformWorkflowName, namespace)
 	 	fmt.Printf("### ManPage ConfigMap Name:%s ####\n", manpageConfigMapName)
 
 	    manPageAnnotation := "resource/usage"
