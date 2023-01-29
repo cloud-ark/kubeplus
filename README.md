@@ -52,7 +52,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 3) Install KubePlus Operator using the generated provider kubeconfig 
 
    ```
-   helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.11.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+   helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.13.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
    until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done
    ```
 
@@ -161,7 +161,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 3) Try following examples:
    - [Hello world](./examples/multitenancy/hello-world/steps.txt)
    - [Wordpress](./examples/multitenancy/wordpress/steps.txt)
-   - [Odoo](./examples/multitenancy/odoo/steps.txt)
+   - [Bitnami Odoo chart](./examples/multitenancy/odoo/steps.txt)
 
 4) Run tests
 ```

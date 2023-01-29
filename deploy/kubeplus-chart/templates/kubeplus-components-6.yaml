@@ -329,7 +329,7 @@ spec:
         args:
           - "$(KUBEPLUS_NAMESPACE)"
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.3
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.4
         imagePullPolicy: IfNotPresent
         env:
           - name: CHECK_KYVERNO_POLICIES
