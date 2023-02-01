@@ -353,7 +353,7 @@ spec:
         imagePullPolicy: IfNotPresent
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
-        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.7
+        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.8
         imagePullPolicy: IfNotPresent
         command: ["/root/helm-pod"]
         volumeMounts:
