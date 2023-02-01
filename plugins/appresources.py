@@ -54,7 +54,7 @@ class AppResourcesFinder(CRBase):
                 helmrelease = json_obj['status']['helmrelease'].strip()
                 parts = helmrelease.split(":")
                 targetNS = parts[0].strip()
-                releaseName = parts[1].strip()
+                releaseName = parts[1].strip().split("\n")[0]
                 return targetNS, releaseName
         return targetNS, releaseName 
 
