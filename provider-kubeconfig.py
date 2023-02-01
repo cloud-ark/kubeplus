@@ -509,7 +509,7 @@ class KubeconfigGenerator(object):
                     sys.exit()
                 return out
 
-        def _generate_kubeconfig(self, sa, namespace):
+        def _generate_kubeconfig(self, sa, namespace, api_server_ip=''):
                 cmdprefix = ""
                 cmd = " kubectl create sa " + sa + " -n " + namespace
                 cmdToRun = cmdprefix + " " + cmd
@@ -554,16 +554,19 @@ class KubeconfigGenerator(object):
                         #print("CA Cert:" + ca_cert)
 
                         #cmd2 = " kubectl config view --minify -o json "
-                        cmd2 = "kubectl -n default get endpoints kubernetes | awk '{print $2}' | grep -v ENDPOINTS"
-                        cmdToRun = cmdprefix + " " + cmd2
-                        out2 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
-                        #print("Config view Minify:")
-                        #print(out2)
-                        out2 = out2.decode('utf-8')
-                        #json_output2 = json.loads(out2)
-                        #server = json_output2["clusters"][0]["cluster"]["server"].strip()
-                        server = out2.strip()
-                        server = "https://" + server
+                        if api_server_ip == '':
+                            cmd2 = "kubectl -n default get endpoints kubernetes | awk '{print $2}' | grep -v ENDPOINTS"
+                            cmdToRun = cmdprefix + " " + cmd2
+                            out2 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+                            #print("Config view Minify:")
+                            #print(out2)
+                            out2 = out2.decode('utf-8')
+                            #json_output2 = json.loads(out2)
+                            #server = json_output2["clusters"][0]["cluster"]["server"].strip()
+                            server = out2.strip()
+                            server = "https://" + server
+                        else:
+                            server = "https://" + api_server_ip
                         #print("Kube API Server:" + server)
                         self._create_kubecfg_file(sa, namespace, token, ca_cert, server)
 
@@ -571,11 +574,17 @@ class KubeconfigGenerator(object):
 if __name__ == '__main__':
 
         if len(sys.argv) < 3:
-                print("python provider-kubeconfig.py <create|delete> <namespace>")
+                print("python provider-kubeconfig.py <create|delete> <namespace> [<api server ip>]")
                 exit()
 
-        action = sys.argv[1]
-        namespace = sys.argv[2]
+        api_s_ip = ''
+        if len(sys.argv) == 3:
+            action = sys.argv[1]
+            namespace = sys.argv[2]
+        if len(sys.argv) == 4:
+            action = sys.argv[1]
+            namespace = sys.argv[2]
+            api_s_ip = sys.argv[3]
 
         kubeconfigGenerator = KubeconfigGenerator()
         sa = 'kubeplus-saas-provider'
@@ -588,7 +597,7 @@ if __name__ == '__main__':
                 run_command(cmd)
 
                 # 1. Generate Provider kubeconfig
-                kubeconfigGenerator._generate_kubeconfig(sa, namespace)
+                kubeconfigGenerator._generate_kubeconfig(sa, namespace, api_server_ip=api_s_ip)
                 kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider')
                 print("Provider kubeconfig created: kubeplus-saas-provider.json")
 

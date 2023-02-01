@@ -750,24 +750,28 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 				helmReleaseOP := execOutput
 	 				lines := strings.Split(helmReleaseOP, "\n")
 					var releaseFound bool = false
+					releaseName := ""
+					notes := ""
+					var notesStart bool = false
 	 				for _, line := range lines {
 	 					if dryrun == "" {
+							if notesStart {
+								notes = notes + line + "\n"
+							}
+							if strings.Contains(line, "NOTES") {
+								notesStart = true
+							}
 		 					present := strings.Contains(line, "NAME:")
 		 					if present && !releaseFound {
 	 							parts := strings.Split(line, ":")
 	 							for _, part := range parts {
 		 							if part != "" && part != " " && part != "NAME" {
-				 						releaseName := part
+				 						releaseName = part
 				 						fmt.Printf("ReleaseName:%s\n", releaseName)
 		 								releaseName = strings.TrimSpace(releaseName)
 		 								fmt.Printf("RN:%s\n", releaseName)
 										releaseFound = true
-		 								go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseName)							
-										if (cpu_req != "" && cpu_lim != "" && mem_req != "" && mem_lim != "") {
-										go createResourceQuota(targetNSName, releaseName, cpu_req, cpu_lim, mem_req, mem_lim)
 									}
-										go createNetworkPolicy(targetNSName, releaseName)
-		 							}
 	 							}
 	 						}
 	 					} else {
@@ -783,6 +787,14 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 						}
 	 					}
 	 				}
+					if releaseFound {
+						statusToUpdate := releaseName + "\n" + notes
+						go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, statusToUpdate)
+						if (cpu_req != "" && cpu_lim != "" && mem_req != "" && mem_lim != "") {
+							go createResourceQuota(targetNSName, releaseName, cpu_req, cpu_lim, mem_req, mem_lim)
+						}
+						go createNetworkPolicy(targetNSName, releaseName)
+		 			}
 	 			} else {
 		 			go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, execOutput)
 					deleteNSCmd := "./root/kubectl delete ns " + customresource
