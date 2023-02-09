@@ -30,7 +30,7 @@ dictConfig({
 
 
 
-def create_role_rolebinding(contents, name):
+def create_role_rolebinding(contents, name, kubeconfig):
     filePath = os.getcwd() + "/" + name
     fp = open(filePath, "w")
     #json_content = json.dumps(contents)
@@ -41,7 +41,7 @@ def create_role_rolebinding(contents, name):
     #print("---")
     #print(yaml_content)
     #print("---")
-    cmd = " kubectl create -f " + filePath
+    cmd = " kubectl create -f " + filePath + kubeconfig
     run_command(cmd)
 
 
@@ -70,7 +70,7 @@ class KubeconfigGenerator(object):
                 #print(err)
                 return out, err
 
-        def _create_kubecfg_file(self, sa, namespace, token, ca, server):
+        def _create_kubecfg_file(self, sa, namespace, token, ca, server, kubeconfig):
                 top_level_dict = {}
                 top_level_dict["apiVersion"] = "v1"
                 top_level_dict["kind"] = "Config"
@@ -123,9 +123,9 @@ class KubeconfigGenerator(object):
                 configmapName = sa
                 created = False 
                 while not created:        
-                        cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getcwd() + "/" + fileName
+                        cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getcwd() + "/" + fileName + kubeconfig
                         self.run_command(cmd)
-                        get_cmd = "kubectl get configmap " + configmapName + " -n "  + namespace
+                        get_cmd = "kubectl get configmap " + configmapName + " -n "  + namespace + kubeconfig
                         output, err = self.run_command(get_cmd)
                         output = output.decode('utf-8')    
                         if 'Error from server (NotFound)' in output:
@@ -135,7 +135,7 @@ class KubeconfigGenerator(object):
                                 created = True
 
 
-        def _apply_consumer_rbac(self, sa, namespace):
+        def _apply_consumer_rbac(self, sa, namespace, kubeconfig):
                 role = {}
                 role["apiVersion"] = "rbac.authorization.k8s.io/v1"
                 role["kind"] = "ClusterRole"
@@ -177,7 +177,7 @@ class KubeconfigGenerator(object):
                 role["rules"] = ruleList
 
                 roleName = sa + "-role-impersonate.yaml"
-                create_role_rolebinding(role, roleName)
+                create_role_rolebinding(role, roleName, kubeconfig)
 
                 roleBinding = {}
                 roleBinding["apiVersion"] = "rbac.authorization.k8s.io/v1"
@@ -202,9 +202,9 @@ class KubeconfigGenerator(object):
                 roleBinding["roleRef"] = roleRef
 
                 roleBindingName = sa + "-rolebinding-impersonate.yaml"
-                create_role_rolebinding(roleBinding, roleBindingName)
+                create_role_rolebinding(roleBinding, roleBindingName, kubeconfig)
 
-        def _apply_provider_rbac(self, sa, namespace):
+        def _apply_provider_rbac(self, sa, namespace, kubeconfig):
                 role = {}
                 role["apiVersion"] = "rbac.authorization.k8s.io/v1"
                 role["kind"] = "ClusterRole"
@@ -431,7 +431,7 @@ class KubeconfigGenerator(object):
                 role["rules"] = ruleList
 
                 roleName = sa + "-role.yaml"
-                create_role_rolebinding(role, roleName)
+                create_role_rolebinding(role, roleName, kubeconfig)
 
                 roleBinding = {}
                 roleBinding["apiVersion"] = "rbac.authorization.k8s.io/v1"
@@ -456,15 +456,15 @@ class KubeconfigGenerator(object):
                 roleBinding["roleRef"] = roleRef
 
                 roleBindingName = sa + "-rolebinding.yaml"
-                create_role_rolebinding(roleBinding, roleBindingName)
+                create_role_rolebinding(roleBinding, roleBindingName, kubeconfig)
 
-        def _apply_rbac(self, sa, namespace, entity=''):
+        def _apply_rbac(self, sa, namespace, entity='', kubeconfig=''):
                 if entity == 'provider':
-                        self._apply_provider_rbac(sa, namespace)
+                        self._apply_provider_rbac(sa, namespace, kubeconfig)
                 if entity == 'consumer':
-                        self._apply_consumer_rbac(sa, namespace)
+                        self._apply_consumer_rbac(sa, namespace, kubeconfig)
 
-        def _create_secret(self, sa, namespace):
+        def _create_secret(self, sa, namespace, kubeconfig):
 
                 annotations = {}
                 annotations['kubernetes.io/service-account.name'] = sa
@@ -493,7 +493,7 @@ class KubeconfigGenerator(object):
                 created = False
                 count = 0
                 while not created and count < 5:
-                        cmd = " kubectl create -f " + filePath
+                        cmd = " kubectl create -f " + filePath + kubeconfig
                         out, err = self.run_command(cmd)
                         if out != '':
                                 out = out.decode('utf-8').strip()
@@ -509,9 +509,9 @@ class KubeconfigGenerator(object):
                     sys.exit()
                 return out
 
-        def _generate_kubeconfig(self, sa, namespace, api_server_ip=''):
+        def _generate_kubeconfig(self, sa, namespace, api_server_ip='', kubeconfig=''):
                 cmdprefix = ""
-                cmd = " kubectl create sa " + sa + " -n " + namespace
+                cmd = " kubectl create sa " + sa + " -n " + namespace + kubeconfig
                 cmdToRun = cmdprefix + " " + cmd
                 self.run_command(cmdToRun)
 
@@ -520,7 +520,7 @@ class KubeconfigGenerator(object):
                 #out = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
 
                 secretName = sa
-                out = self._create_secret(secretName, namespace)
+                out = self._create_secret(secretName, namespace, kubeconfig)
                 #print("Create secret:" + out)
                 if 'secret/' + sa + ' created' in out:
                         #json_output = json.loads(out)
@@ -529,7 +529,7 @@ class KubeconfigGenerator(object):
 
                         tokenFound = False
                         while not tokenFound:
-                                cmd1 = " kubectl describe secret " + secretName + " -n " + namespace
+                                cmd1 = " kubectl describe secret " + secretName + " -n " + namespace + kubeconfig
                                 cmdToRun = cmdprefix + " " + cmd1
                                 out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
                                 out1 = out1.decode('utf-8')
@@ -545,7 +545,7 @@ class KubeconfigGenerator(object):
                                         time.sleep(2)
 
                         #print("Got secret token")
-                        cmd1 = " kubectl get secret " + secretName + " -n " + namespace + " -o json "
+                        cmd1 = " kubectl get secret " + secretName + " -n " + namespace + " -o json " + kubeconfig
                         cmdToRun = cmdprefix + " " + cmd1
                         out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
                         out1 = out1.decode('utf-8')
@@ -555,7 +555,7 @@ class KubeconfigGenerator(object):
 
                         #cmd2 = " kubectl config view --minify -o json "
                         if api_server_ip == '':
-                            cmd2 = "kubectl -n default get endpoints kubernetes | awk '{print $2}' | grep -v ENDPOINTS"
+                            cmd2 = "kubectl -n default get endpoints kubernetes " + kubeconfig + " | awk '{print $2}' | grep -v ENDPOINTS"
                             cmdToRun = cmdprefix + " " + cmd2
                             out2 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
                             #print("Config view Minify:")
@@ -568,16 +568,17 @@ class KubeconfigGenerator(object):
                         else:
                             server = "https://" + api_server_ip
                         #print("Kube API Server:" + server)
-                        self._create_kubecfg_file(sa, namespace, token, ca_cert, server)
+                        self._create_kubecfg_file(sa, namespace, token, ca_cert, server, kubeconfig)
 
 
 if __name__ == '__main__':
 
         if len(sys.argv) < 3:
-                print("python provider-kubeconfig.py <create|delete> <namespace> [<api server ip>]")
+                print("python provider-kubeconfig.py <create|delete> <namespace> [<api server ip>] [<kubeconfig-file>]")
                 exit()
 
         api_s_ip = ''
+        kubeconfigPath = os.getenv("HOME") + "/.kube/config"
         if len(sys.argv) == 3:
             action = sys.argv[1]
             namespace = sys.argv[2]
@@ -585,27 +586,34 @@ if __name__ == '__main__':
             action = sys.argv[1]
             namespace = sys.argv[2]
             api_s_ip = sys.argv[3]
+        if len(sys.argv) == 5:
+            action = sys.argv[1]
+            namespace = sys.argv[2]
+            api_s_ip = sys.argv[3]
+            kubeconfigPath = sys.argv[4]
 
+        kubeconfigString = " --kubeconfig=" + kubeconfigPath
         kubeconfigGenerator = KubeconfigGenerator()
         sa = 'kubeplus-saas-provider'
         if action == "create":
-                out, err = run_command("kubectl get ns " + namespace)
+                create_ns = "kubectl get ns " + namespace + kubeconfigString
+                out, err = run_command(create_ns)
                 if 'not found' in out or 'not found' in err:
-                        run_command("kubectl create ns " + namespace)
+                        run_command(create_ns)
 
-                cmd = "kubectl label --overwrite=true ns " + namespace + " managedby=kubeplus"
+                cmd = "kubectl label --overwrite=true ns " + namespace + " managedby=kubeplus " + kubeconfigString
                 run_command(cmd)
 
                 # 1. Generate Provider kubeconfig
-                kubeconfigGenerator._generate_kubeconfig(sa, namespace, api_server_ip=api_s_ip)
-                kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider')
+                kubeconfigGenerator._generate_kubeconfig(sa, namespace, api_server_ip=api_s_ip, kubeconfig=kubeconfigString)
+                kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider', kubeconfig=kubeconfigString)
                 print("Provider kubeconfig created: kubeplus-saas-provider.json")
 
         if action == "delete":
-                run_command("kubectl delete sa " + sa + " -n " + namespace)
-                run_command("kubectl delete configmap " + sa + " -n " + namespace)
-                run_command("kubectl delete clusterrole " + sa + " -n " + namespace)
-                run_command("kubectl delete clusterrolebinding " + sa + " -n " + namespace)
+                run_command("kubectl delete sa " + sa + " -n " + namespace + kubeconfigString)
+                run_command("kubectl delete configmap " + sa + " -n " + namespace + kubeconfigString)
+                run_command("kubectl delete clusterrole " + sa + " -n " + namespace + kubeconfigString)
+                run_command("kubectl delete clusterrolebinding " + sa + " -n " + namespace + kubeconfigString)
                 cwd = os.getcwd()
                 run_command("rm " + cwd + "/kubeplus-saas-provider-secret.yaml")
                 run_command("rm " + cwd + "/kubeplus-saas-provider.json")
