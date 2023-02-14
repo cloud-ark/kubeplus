@@ -169,6 +169,13 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    python3 -m unittest -v tests
 ```
 
+5) Troubleshoot
+```
+   kubectl logs <kubeplus-pod> -c crd-hook
+   kubectl logs <kubeplus-pod> -c helmer
+   kubectl exec -it <kubeplus-pod> -c kubeconfiggenerator /bin/bash; tail -100 /root/kubeconfiggenerator.log
+```
+
 
 ## CNCF Landscape
 
