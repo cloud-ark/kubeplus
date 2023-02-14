@@ -486,6 +486,9 @@ def flatten(yaml_contents, flattened, types_dict, prefix=''):
         elif isinstance(value, int):
             flattened[prefix + key] = value
             types_dict[key] = {'type': 'integer'}
+        elif isinstance(value, float):
+            flattened[prefix + key] = value
+            types_dict[key] = {'type': 'float'}
         if isinstance(value, dict):
             inner_prop_dict = {}
             prop_dict = {'properties': inner_prop_dict}
@@ -507,12 +510,14 @@ def flatten(yaml_contents, flattened, types_dict, prefix=''):
                             inner_prop_dict = {}
                             prop_dict = {'properties': inner_prop_dict}
                             prop_dict['type'] = 'object'
-                            types_dict[key] = prop_dict
+                            types_dict[key]['items'] = prop_dict
+                            types_dict[key]['type'] = 'array'
                         if isinstance(l, list):
                             inner_prop_dict = {}
                             prop_dict = {'items': inner_prop_dict}
                             prop_dict['type'] = 'array'
-                            types_dict[key] = prop_dict
+                            types_dict[key]['items'] = prop_dict
+                            types_dict[key]['type'] = 'array'
                         flatten(l, flattened, inner_prop_dict, prefix=prefix + key + ".")
                     else:
                         flattened[prefix + key] = l
