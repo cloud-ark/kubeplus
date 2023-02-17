@@ -56,6 +56,9 @@ var (
 	namespaceHelmAnnotationMap map[string]string
 	kindReqMap map[string]interface{}
 
+	maxAllowedLength int
+	maxLengthKind int
+
 )
 
 type WebhookServer struct {
@@ -103,6 +106,9 @@ func init() {
 	resourcePolicyMap = make(map[string]interface{}, 0)
 	resourceNameObjMap = make(map[string]interface{}, 0)
 	namespaceHelmAnnotationMap = make(map[string]string, 0)
+
+	maxAllowedLength = 30
+	maxLengthKind = 28
 }
 
 // main mutation process
@@ -114,7 +120,7 @@ func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v
 	fmt.Println(req.Name)
 	fmt.Println(req.Namespace)
 	fmt.Println(httpMethod)
-	fmt.Printf("%s\n", string(req.Object.Raw))
+	//fmt.Printf("%s\n", string(req.Object.Raw))
 	fmt.Println("=== Request ===")
 
 	fmt.Println("=== User ===")
@@ -141,7 +147,7 @@ func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v
 		if strings.Contains(user, "kubeplus-saas-provider") {
 			errResponse := trackCustomAPIs(ar)
 			if errResponse != nil {
-				fmt.Printf("111222333")
+				//fmt.Printf("111222333")
 				return errResponse
 			}
 		} else {
@@ -813,6 +819,16 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	chartName := platformWorkflow.Spec.NewResource.ChartName
 	fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
 
+	if len(kind) > maxLengthKind {
+		msg := fmt.Sprintf("Kind name cannot be more than %d characters. Consider changing Kind name.\n", maxLengthKind)
+		fmt.Printf(msg + "\n")
+		return &v1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: msg,
+			},
+		}
+	}
+
 	customAPI := group + "/" + version + "/" + kind
 	customAPIPlatformWorkflowMap[customAPI] = platformWorkflowName
 	customKindPluralMap[customAPI] = plural
@@ -1087,7 +1103,7 @@ func getPaCAnnotation(ar *v1.AdmissionReview) map[string]string {
 }
 
 func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
-	//fmt.Printf("Inside handleCustomAPIs...\n")
+	fmt.Printf("Inside handleCustomAPIs...\n")
 	req := ar.Request
 	body := req.Object.Raw
 	//fmt.Printf("%v\n", req)
@@ -1106,7 +1122,9 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	}
 	//fmt.Printf("Namespace:%s\n", namespace)
 	crname, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
-	//fmt.Printf("CR Name:%s\n", crname)
+	fmt.Printf("CR Name:%s\n", crname)
+	fmt.Printf("Kind:%s\n", kind)
+
 
 	//cruid, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "uid")
 	// We have to generate a uid as when the request is received there is no uid yet.
@@ -1145,6 +1163,19 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	platformWorkflowName := customAPIPlatformWorkflowMap[customAPI]
 	if platformWorkflowName != "" {
 		//fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
+
+		lengthCheck := kind + "-" + crname
+		if len(lengthCheck) > maxAllowedLength {
+			kindLength := len(kind)
+			// helm releases are named: <kind>-<instance>; maxAllowedLength is this combined length
+			allowedInstanceLength := maxAllowedLength - kindLength - 1
+			msg := fmt.Sprintf("Instance name exceeds the allowed limit of %d. Consider changing instance name.\n", allowedInstanceLength)
+			return &v1.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: msg,
+				},
+			}
+		}
 
 		config, err := rest.InClusterConfig()
 		if err != nil {
