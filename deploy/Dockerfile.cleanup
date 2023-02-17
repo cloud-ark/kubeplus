@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
-ADD delete-kubeplus-components.sh /root/.
-COPY kubectl /root/
-RUN apt-get update && apt-get install -y openssl jq python3 python3-pip && pip3 install pyyaml
+ADD deploy/delete-kubeplus-components.sh /root/.
+RUN apt-get update && apt-get install -y openssl curl jq python3 python3-pip && pip3 install pyyaml
+RUN arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/) && cd /root/ && curl -LO "https://dl.k8s.io/release/v1.26.0/bin/linux/${arch}/kubectl"
 RUN cp /root/kubectl bin/. && chmod +x /root/kubectl && chmod +x bin/kubectl 
 ENTRYPOINT ["/root/delete-kubeplus-components.sh"]
