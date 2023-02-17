@@ -34,9 +34,9 @@ This example shows delivering Bitnami Odoo Helm chart as-a-service using KubePlu
      So first we have to upload this chart to KubePlus Pod.
    - kubectl upload chart odoo-23.0.4.tgz 
    - kubectl create -f odoo-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json 
-   - kubectl get crds
+   - kubectl get crds --kubeconfig=kubeplus-saas-provider.json
      - verify that odooservice crd has been created
-   - kubectl describe crd odooservices.platformapi.kubeplus
+   - kubectl describe crd odooservices.platformapi.kubeplus --kubeconfig=kubeplus-saas-provider.json
      - check that OpenAPISchema has been defined on the CRD corresponding to the attributes in the values.yaml of the Odoo Helm chart. 
 
 4. Download the consumer kubeconfig file
@@ -52,8 +52,8 @@ This example shows delivering Bitnami Odoo Helm chart as-a-service using KubePlu
    In the below steps you can use either consumer.conf or kubeplus-saas-provider.json
 
 6. Check details of OdooService API
-   - kubectl explain OdooService
-   - kubectl explain OdooService.spec
+   - kubectl explain OdooService --kubeconfig=kubeplus-saas-provider.json
+   - kubectl explain OdooService.spec --kubeconfig=kubeplus-saas-provider.json
 
 7. Retrieve sample OdooService resource
    - kubectl man OdooService -k kubeplus-saas-provider.json

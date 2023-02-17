@@ -653,10 +653,16 @@ def testchart():
     else:
         return "Error - chart Path is empty"
 
-    testChartName = "kubeplus-customerapi-reg-testchart"
-    cmd = "helm install " + testChartName + " " + chartLoc
+    #testChartName = "kubeplus-customerapi-reg-testchart"
+    testChartName = "kptc"
+    cmd = "helm install kptc " + chartLoc
     out, err = run_command(cmd)
     print(out)
+    for line in out.split("\n"):
+        if 'NAME' in line:
+            parts = line.split(":")
+            testChartName = parts[1].strip()
+            break
     app.logger.info("Helm install output:" + out)
     print(err)
     app.logger.info("Helm install error:" + err)
@@ -700,11 +706,12 @@ def dryrunchart():
         message = message + "Use kubectl upload chart <charttgz> to upload the chart first."
         return message 
 
-    testChartName = "kubeplus-customerapi-reg-testchart"
+    #testChartName = "kubeplus-customerapi-reg-testchart"
+    testChartName = "kptc"
     dryRunSuccess = False
     count = 0
     while not dryRunSuccess and count < 3:
-        cmd = "helm install " + testChartName + " " + chartLoc + " --dry-run"
+        cmd = "helm install kptc " + chartLoc + " --dry-run"
         app.logger.info(cmd)
         out, err = run_command(cmd)
         print(out)
@@ -985,7 +992,7 @@ def apply_rbac():
     print("Helm chart:" + helm_chart)
     app.logger.info("Helm chart:" + helm_chart)
 
-    cmd = '/root/helm install testchart ' + helm_chart + ' --dry-run'
+    cmd = '/root/helm install kptc ' + helm_chart + ' --dry-run'
     out1, _ = run_command(cmd)
     kinds = []
     for line in out1.split("\n"):
