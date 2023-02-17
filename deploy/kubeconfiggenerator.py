@@ -715,9 +715,9 @@ def dryrunchart():
         app.logger.info(cmd)
         out, err = run_command(cmd)
         print(out)
-        app.logger.info("Helm install output:" + out)
+        #app.logger.info("Helm install output:" + out)
         print(err)
-        app.logger.info("Helm install error:" + err)
+        #app.logger.info("Helm install error:" + err)
 
         if err.strip() == '':
             dryRunSuccess = True
@@ -737,10 +737,12 @@ def dryrunchart():
     kinds = []
     for line in out.split("\n"):
         line = line.strip()
-        if 'kind' in line:
+        if line.startswith("kind:"):
+            app.logger.info("Helm op:" + line)
             parts = line.split(":")
             kind = parts[1].strip()
-            kinds.append(kind)
+            if kind != '' and kind != "":
+                kinds.append(kind)
         if 'PersistentVolumeClaim' in line:
             pvc_count = pvc_count + 1
         if 'storageClassName' in line:
@@ -748,7 +750,7 @@ def dryrunchart():
             parts = line.split(":")
             storage_class = parts[1].strip()
             app.logger.info("Storage class:" + storage_class)
-            if storage_class not in storage_classes:
+            if storage_class not in storage_classes and storage_class != '' and storage_class != "":
                 storage_classes.append(storage_class)
     if storage_classname_count < pvc_count: # this means there is a pvc with no storageClassName explicitly specified
         if 'standard' not in storage_classes:# it means the pvc defaults to the 'default' storageClassName; so add that.
@@ -760,12 +762,16 @@ def dryrunchart():
     for storageClass in storage_classes:
         cmd = "kubectl get storageclass " + storageClass + " -o json "
         out, err = run_command(cmd)
-        json_obj = json.loads(out)
-        reclaim_policy = json_obj['reclaimPolicy']
-        app.logger.info("Reclaim policy:" + reclaim_policy)
-        if reclaim_policy.lower() != "delete":
-            chartStatus = "Storage class with reclaim policy " + reclaim_policy + " not allowed."
-            break
+        try:
+            json_obj = json.loads(out)
+            if 'reclaimPolicy' in json_obj:
+                reclaim_policy = json_obj['reclaimPolicy']
+                app.logger.info("Reclaim policy:" + reclaim_policy)
+                if reclaim_policy.lower() != "delete":
+                    chartStatus = "Storage class with reclaim policy " + reclaim_policy + " not allowed."
+                    break
+        except Exception as e:
+            app.logger.info(str(e))
 
     if 'Namespace' in kinds:
         chartStatus = chartStatus + ' Namespace object is not allowed in the chart.'
