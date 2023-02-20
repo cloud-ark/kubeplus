@@ -207,14 +207,16 @@ func trackKindAPIDetails() {
 				parseCRDAnnotions(crdObj)
 			}*/
 
-			group := crdObj.Spec.Group
-			version := crdObj.Spec.Versions[0].Name
-			endpoint := "apis/" + group + "/" + version
-			kind := crdObj.Spec.Names.Kind
-			plural := crdObj.Spec.Names.Plural
-			KindPluralMap[kind] = plural
-			kindVersionMap[kind] = endpoint
-			kindGroupMap[kind] = group
+			if len(crdObj.Spec.Versions) == 1 {
+				group := crdObj.Spec.Group
+				version := crdObj.Spec.Versions[0].Name
+				endpoint := "apis/" + group + "/" + version
+				kind := crdObj.Spec.Names.Kind
+				plural := crdObj.Spec.Names.Plural
+				KindPluralMap[kind] = plural
+				kindVersionMap[kind] = endpoint
+				kindGroupMap[kind] = group
+			}
 		}
 		time.Sleep(1)	
 	}

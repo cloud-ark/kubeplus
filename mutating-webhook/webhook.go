@@ -1214,8 +1214,20 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 		fmt.Printf("cpu_req:%s cpu_lim:%s mem_req:%s mem_lim:%s\n", cpu_requests_q, cpu_limits_q, mem_requests_q, mem_limits_q)
 	}
 
- 		QueryDeployEndpoint(platformWorkflowName, crname, namespace, overrides, cpu_requests_q,
+		deploymentStatus := QueryDeployEndpoint(platformWorkflowName, crname, namespace, overrides, cpu_requests_q,
 	                           cpu_limits_q, mem_requests_q, mem_limits_q)
+
+
+		if string(deploymentStatus) != "" {
+			msg := fmt.Sprintf("Error in deploying instance: %s\n", string(deploymentStatus))
+			return &v1.AdmissionResponse{
+				Result: &metav1.Status{
+					Message: msg,
+				},
+			}
+		}
+
+
 	}
 	return nil
 }
