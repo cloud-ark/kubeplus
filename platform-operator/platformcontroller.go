@@ -742,6 +742,9 @@ func handleCRD(rescomposition, kind, version, group, plural, action, namespace, 
 		if action == "delete" {
 			deleteCRDInstances(kind, group, version, plural, namespace)
 			err := crdClient.CustomResourceDefinitions().Delete(context.Background(), crdToHandle, metav1.DeleteOptions{})
+			// Check and delete any installed crds
+			fmt.Printf("Check and delete any chart CRDs..")
+			deleteChartCRDs(chartName)
 			if err != nil {
 				fmt.Errorf("Error:%s\n", err)
 				return err
@@ -801,6 +804,21 @@ func deleteCRDInstances(kind, group, version, plural, namespace string) []byte {
 	body := queryKubeDiscoveryService(url1)
 	return body
 }
+
+
+
+func deleteChartCRDs(chartName string) []byte {
+	fmt.Printf("Inside deleteChartCRDs...\n")
+	args := fmt.Sprintf("chartName=%s", chartName)
+	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	//fmt.Printf("After getServiceEndpoint...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deletechartcrds?%s", HELMER_HOST, HELMER_PORT, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
 
 func getServiceEndpoint(servicename string) (string, string) {
 	fmt.Printf("..Inside getServiceEndpoint...\n")

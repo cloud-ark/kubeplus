@@ -523,24 +523,47 @@ def flatten(yaml_contents, flattened, types_dict, prefix=''):
                         flattened[prefix + key] = l
 
 
-def get_chart_yaml(chartLoc, chartName):
+def download_and_untar_chart(chartLoc, chartName):
+    app.logger.info("download_and_untar_chart")
 
     if chartLoc.startswith("file"):
         parts = chartLoc.split("file:///")
         charttgz = parts[1].strip()
         chartLoc = "/" + charttgz
         app.logger.info("Chart Name:" + chartName)
+
+    if chartLoc.startswith("https"):
+        charttgz = chartName + ".tgz"
+        wget = "wget -O /" + charttgz + " --no-check-certificate " + chartLoc
+        app.logger.info("wget command:" + wget)
+        out, err = run_command(wget)
+        app.logger.info("wget output:" + out)
+        app.logger.info("wget error:" + err)
         
-        cmd = "tar -xvzf " + chartLoc
+    cmd = "tar -xvzf /" + charttgz
+    out, err = run_command(cmd)
+
+    app.logger.info("Output:" + out)
+    app.logger.info("Error:" + err)
+
+
+def get_chart_yaml(chartLoc, chartName):
+
+    download_and_untar_chart(chartLoc, chartName)
+    fp = open("/" + chartName + "/values.yaml", "r")
+    data = fp.read()
+    yaml_contents = yaml.safe_load(data)
+    return yaml_contents
+
+
+def check_and_install_crds(chartLoc, chartName):
+    app.logger.info("Inside check_and_install_crds")
+    download_and_untar_chart(chartLoc, chartName)
+    crdLoc = '/' + chartName + '/crds'
+    if os.path.exists(crdLoc):
+        app.logger.info("CRDs exist in this chart. Installing them")
+        cmd = 'kubectl create -f ' + crdLoc
         out, err = run_command(cmd)
-
-        app.logger.info("Output:" + out)
-        app.logger.info("Error:" + err)
-
-        fp = open("/" + chartName + "/values.yaml", "r")
-        data = fp.read()
-        yaml_contents = yaml.safe_load(data)
-        return yaml_contents
 
 
 @app.route("/registercrd")
@@ -614,6 +637,9 @@ def registercrd():
     out, err = run_command(cmd)
     app.logger.info("Output:" + out)
     app.logger.info("Error:" + err)
+
+    check_and_install_crds(chartURL, chartName)
+
     return out
 
 @app.route("/nodes")
@@ -701,17 +727,17 @@ def dryrunchart():
         charttgz = parts[1].strip()
         chartLoc = "/" + charttgz
 
-    if not os.path.exists(chartLoc):
-        message = "Chart " + chartLoc + " not found.\n"
-        message = message + "Use kubectl upload chart <charttgz> to upload the chart first."
-        return message 
+        if not os.path.exists(chartLoc):
+            message = "Chart " + chartLoc + " not found.\n"
+            message = message + "Use kubectl upload chart <charttgz> to upload the chart first."
+            return message 
 
     #testChartName = "kubeplus-customerapi-reg-testchart"
     testChartName = "kptc"
     dryRunSuccess = False
     count = 0
     while not dryRunSuccess and count < 3:
-        cmd = "helm install kptc " + chartLoc + " --dry-run"
+        cmd = "helm template kptc " + chartLoc 
         app.logger.info(cmd)
         out, err = run_command(cmd)
         print(out)
@@ -998,7 +1024,7 @@ def apply_rbac():
     print("Helm chart:" + helm_chart)
     app.logger.info("Helm chart:" + helm_chart)
 
-    cmd = '/root/helm install kptc ' + helm_chart + ' --dry-run'
+    cmd = '/root/helm template kptc ' + helm_chart 
     out1, _ = run_command(cmd)
     kinds = []
     for line in out1.split("\n"):

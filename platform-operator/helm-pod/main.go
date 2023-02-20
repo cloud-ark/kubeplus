@@ -113,6 +113,9 @@ func register() {
 	ws.Route(ws.GET("/deletecrdinstances").To(deleteCRDInstances).
 		Doc("Delete CRD Instances"))
 
+	ws.Route(ws.GET("/deletechartcrds").To(deleteChartCRDs).
+		Doc("Delete Chart CRDs"))
+
 	ws.Route(ws.GET("/getchartvalues").To(getChartValues).
 		Doc("Get Chart Values"))
 
@@ -226,6 +229,22 @@ func getKubePlusPod() string {
 	return podName
 }
 
+func deleteChartCRDs(request *restful.Request, response *restful.Response) {
+	fmt.Printf("-- Inside deleteChartCRDs...\n")
+	chartName := request.QueryParameter("chartName")
+
+        fmt.Printf("Chart Name:%s\n", chartName)
+        _, errF := os.Stat("/" + chartName)
+        fmt.Printf("Path checking:%v\n", errF)
+        if !os.IsNotExist(errF) {
+		cmd := "kubectl delete -f /" + chartName + "/crds"
+
+		cmdRunnerPod := getKubePlusPod()
+		// Do in the background as deleting crds can be a time consuming action
+		go executeExecCall(cmdRunnerPod, cmd)
+	}
+}
+
 func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 
 	//sync.Mutex.Lock()
@@ -246,7 +265,7 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 	apiVersion := group + "/" + version
 
 	fmt.Printf("APIVersion:%s\n", apiVersion)
-	
+
 	ownerRes := schema.GroupVersionResource{Group: group,
 									 		Version: version,
 									   		Resource: plural}
@@ -259,7 +278,7 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 	}
 	dynamicClient, _ := dynamic.NewForConfig(config)
 
-	crdObjList, err := dynamicClient.Resource(ownerRes).Namespace(namespace).List(context.Background(), metav1.ListOptions{})
+	crdObjList, err := dynamicClient.Resource(ownerRes).Namespace("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Printf("Error:%v\n...checking in non-namespace", err)
 		crdObjList, err = dynamicClient.Resource(ownerRes).List(context.Background(), metav1.ListOptions{})
@@ -289,8 +308,8 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 			helmreleaseNS, helmrelease := getHelmReleaseName(status)
 			fmt.Printf("Helm release:%s, %s\n", helmreleaseNS, helmrelease)
 			if helmreleaseNS != "" && helmrelease != "" {
-				ok := deleteHelmRelease(helmreleaseNS, helmrelease)
-				if ok {
+				deleteHelmRelease(helmreleaseNS, helmrelease)
+				//if ok {
 					fmt.Printf("Helm release deleted...\n")
 					fmt.Printf("Deleting the namespace...\n")
 					
@@ -309,7 +328,7 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 						fmt.Printf("Deleting the object %s\n", objName)
 						dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(context.Background(), objName, metav1.DeleteOptions{})
 					}
-				}
+				//}
 			}
 		}
 	}
@@ -596,7 +615,9 @@ func getHelmReleaseName(object interface{}) (string, string) {
 		if key == "helmrelease" {
 			helmrelease = element.(string)
 			fmt.Printf("Helm release1:%s\n", helmrelease)
-			parts := strings.Split(helmrelease,":")
+			lines := strings.Split(helmrelease, "\n")
+			releaseLine := strings.TrimSpace(lines[0])
+			parts := strings.Split(releaseLine,":")
 			helmreleaseNS = strings.TrimSpace(parts[0])
 			helmreleaseName = strings.TrimSpace(parts[1])
 			break
@@ -642,7 +663,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	if err != nil {
 		fmt.Printf("Error encountered in decoding overrides:%v\n", err)
 		fmt.Printf("Not continuing...")
-		return
+		response.Write([]byte(""))
 	}
 	dryrun := request.QueryParameter("dryrun")
 	fmt.Printf("PlatformWorkflowName:%s\n", platformWorkflowName)
@@ -653,7 +674,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Dryrun:%s\n", dryrun)
 
 	kinds := make([]string, 0)
-	ok := false
+	//ok := false
 	execOutput := ""
 
 	crObjNamespace := namespace
@@ -693,6 +714,10 @@ func deployChart(request *restful.Request, response *restful.Response) {
  			kindDetailsMap[kind + ":" + customresource] = kinddetails
 
  			cmdRunnerPod := getKubePlusPod()
+
+	 		lowercaseKind := strings.ToLower(kind)
+	 		releaseName := lowercaseKind + "-" + customresource
+	 		fmt.Printf("Release name:%s\n", releaseName)
  			if chartURL != "" {
 
  			parsedChartName := downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace)
@@ -715,9 +740,6 @@ func deployChart(request *restful.Request, response *restful.Response) {
 
 	 			// 6. Install the Chart
 	 			//fmt.Printf("ChartName to install:%s\n", chartName)
-	 			lowercaseKind := strings.ToLower(kind)
-	 			releaseName := lowercaseKind + "-" + customresource
-	 			fmt.Printf("Release name:%s\n", releaseName)
 
 				targetNSName := namespace
 				if dryrun == "" {
@@ -737,24 +759,62 @@ func deployChart(request *restful.Request, response *restful.Response) {
 					fmt.Printf("Label NS Cmd:%v\n", labelNSCmd)
 					_, execOutput = executeExecCall(cmdRunnerPod, labelNSCmd)
 					fmt.Printf("Output of Label NS Cmd:%v\n", execOutput)
+
+					// Install the Helm chart in the namespace that is created for that instance
+	 				helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + targetNSName
+	  				fmt.Printf("ABC helm install cmd:%s\n", helmInstallCmd)
+					go runHelmInstall(cmdRunnerPod, helmInstallCmd, releaseName, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim)
 				}
 
-				// Install the Helm chart in the namespace that is created for that instance
-	 			helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + targetNSName
-	 			if dryrun != "" {
-		 			helmInstallCmd = "./root/helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + namespace + " --dry-run" 		
-	 			}
-	  			fmt.Printf("ABC helm install cmd:%s\n", helmInstallCmd)
-	 			ok, execOutput = executeExecCall(cmdRunnerPod, helmInstallCmd)
+				if dryrun == "true" {
+					fmt.Printf("DRY RUN - ABC:%s\n", dryrun)
+					helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + namespace + " --dry-run"
+
+					_, execOutput := executeExecCall(cmdRunnerPod, helmInstallCmd)
+
+					if strings.Contains(execOutput, "Error") {
+						fmt.Printf("ExecOutput:%s\n", execOutput)
+						response.Write([]byte(execOutput))
+					} else {
+	 					lines := strings.Split(execOutput, "\n")
+	 					for _, line := range lines {
+	 						present := strings.Contains(line, "kind:")
+	 						if present {
+	 							parts := strings.Split(line, ":")
+	 							if len(parts) >= 2 {
+	 								kindName := parts[1]
+	 								kindName = strings.TrimSpace(kindName)
+	 								kindName = strings.TrimSuffix(kindName, "\n")
+									kinds = append(kinds, kindName)
+	 							}
+	 						}
+	 					}
+						//fmt.Printf("Kinds:%v\n", kinds)
+						// Appending the Namespace to the list of Kinds since we are creating NS corresponding to
+						// each Helm release.
+						kinds = append(kinds, "Namespace")
+						kindsString := strings.Join(kinds, "-")
+						fmt.Printf("KindString:%s\n", kindsString)
+						response.Write([]byte(kindsString))
+					}
+				}
+	    	}
+	}
+	// Everything went fine
+	response.Write([]byte(string("")))
+}
+
+func runHelmInstall(cmdRunnerPod, helmInstallCmd, releaseNameInCmd, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim string) {
+
+	ok, execOutput := executeExecCall(cmdRunnerPod, helmInstallCmd)
 	 			if ok {
 	 				helmReleaseOP := execOutput
 	 				lines := strings.Split(helmReleaseOP, "\n")
 					var releaseFound bool = false
-					releaseName := ""
+					releaseName := "" //should be same as releaseNameInCmd
 					notes := ""
 					var notesStart bool = false
 	 				for _, line := range lines {
-	 					if dryrun == "" {
 							if notesStart {
 								notes = notes + line + "\n"
 							}
@@ -774,18 +834,6 @@ func deployChart(request *restful.Request, response *restful.Response) {
 									}
 	 							}
 	 						}
-	 					} else {
-	 						present := strings.Contains(line, "kind:")
-	 						if present {
-	 							parts := strings.Split(line, ":")
-	 							if len(parts) >= 2 {
-	 								kindName := parts[1]
-	 								kindName = strings.TrimSpace(kindName)
-	 								kindName = strings.TrimSuffix(kindName, "\n")
-	 								kinds = append(kinds, kindName)
-	 							}
-	 						}
-	 					}
 	 				}
 					if releaseFound {
 						statusToUpdate := releaseName + "\n" + notes
@@ -796,28 +844,18 @@ func deployChart(request *restful.Request, response *restful.Response) {
 						go createNetworkPolicy(targetNSName, releaseName)
 		 			}
 	 			} else {
-		 			go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, execOutput)
-					deleteNSCmd := "./root/kubectl delete ns " + customresource
-					_, execOutput = executeExecCall(cmdRunnerPod, deleteNSCmd)
-					fmt.Printf("Output of delete NS Cmd:%v\n", execOutput)
+					statusToUpdate := releaseNameInCmd + "\n" + execOutput
+		 			go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, statusToUpdate)
+					errOp := string(execOutput)
+					instanceExists := strings.Contains(errOp, "cannot re-use a name that is still in use")
+					if !instanceExists {
+						deleteNSCmd := "./root/kubectl delete ns " + customresource
+						_, execOutput1 := executeExecCall(cmdRunnerPod, deleteNSCmd)
+						fmt.Printf("Output of delete NS Cmd:%v\n", execOutput1)
+					}
+					// there was some error
+					/*response.Write([]byte(string(execOutput)))*/
 	 			}
-	    	}
-	}
-	if dryrun == "true" {
-		fmt.Printf("DRY RUN - ABC:%s\n", dryrun)
-		//fmt.Printf("Kinds:%v\n", kinds)
-		if strings.Contains(execOutput, "Error") {
-			fmt.Printf("ExecOutput:%s\n", execOutput)
-			response.Write([]byte(execOutput))
-		} else {
-			// Appending the Namespace to the list of Kinds since we are creating NS corresponding to
-			// each Helm release.
-			kinds = append(kinds, "Namespace")
-			kindsString := strings.Join(kinds, "-")
-			fmt.Printf("KindString:%s\n", kindsString)
-			response.Write([]byte(kindsString))
-		}
-	}
 }
 
 func createResourceQuota(targetNS, helmRelease, cpu_req, cpu_lim, mem_req, mem_lim string) {
