@@ -651,11 +651,14 @@ func downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace string) stri
 func deployChart(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Inside deployChart...\n")
 
-    platformWorkflowName := request.QueryParameter("platformworkflow")
+	platformWorkflowName := request.QueryParameter("platformworkflow")
 	customresource := request.QueryParameter("customresource")
 	namespace := request.QueryParameter("namespace")
-	encodedoverrides := request.QueryParameter("overrides")
-	overrides, err := url.QueryUnescape(encodedoverrides)
+	//encodedoverrides := request.QueryParameter("overrides")
+	//overrides, err := url.QueryUnescape(encodedoverrides)
+	overrideBytes, _ := os.ReadFile("/crdinstances/" + platformWorkflowName + "-" + customresource)
+	overrides := string(overrideBytes)
+
 	cpu_req := request.QueryParameter("cpu_req")
 	cpu_lim := request.QueryParameter("cpu_lim")
 	mem_req := request.QueryParameter("mem_req")
@@ -975,6 +978,9 @@ func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, re
         fmt.Printf("Res:%v\n",res)
 	fmt.Printf("kind:%s, group: %s, version:%s, plural:%s, instance:%s, crdObjNS:%s, targetNS:%s, releaseName:%s",
 		   kind, group, version, plural, instance, crdObjNS, targetNS, releaseName)
+	
+	timeout := 300 // try for 5 minutes;
+	count := 0
 	for {
 		obj, err := dynamicClient.Resource(res).Namespace(crdObjNS).Get(context.Background(), instance, metav1.GetOptions{})
 		fmt.Printf("Error:%v\n", err)
@@ -992,9 +998,14 @@ func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, re
 			//fmt.Printf("UpdatedObj:%v, err1:%v\n",updatedObj, err1) //add the respective variables if want to print.
 			// break out of the for loop
 			break
-		} /*else {
+		} else {
 			time.Sleep(1 * time.Second)
-		}*/
+			count = count + 1
+		}
+	    if count >= timeout {
+		fmt.Printf("CR instance %s not ready till timeout\n.", instance)
+		break
+	    }
 	}
 	fmt.Printf("Done updating status of the CR instance:%s\n", instance)
 }
