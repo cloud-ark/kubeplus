@@ -329,7 +329,7 @@ spec:
         args:
           - "$(KUBEPLUS_NAMESPACE)"
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.5
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.6
         imagePullPolicy: IfNotPresent
         env:
           - name: CHECK_KYVERNO_POLICIES
@@ -344,6 +344,8 @@ spec:
         - name: webhook-certs
           mountPath: /etc/webhook/certs
           readOnly: true
+        - name: shared-data
+          mountPath: /crdinstances
       - name: platform-operator
         image: gcr.io/cloudark-kubeplus/platform-operator:3.0.3
         imagePullPolicy: IfNotPresent
@@ -353,13 +355,17 @@ spec:
         imagePullPolicy: IfNotPresent
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
-        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.9
+        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.10
         imagePullPolicy: IfNotPresent
         command: ["/root/helm-pod"]
         volumeMounts:
         - mountPath: /chart
           name: chart-volume
+        - name: shared-data
+          mountPath: /crdinstances
       volumes:
+        - name: shared-data
+          emptyDir: {}
         - name: chart-volume
           emptyDir: {}
         - name: webhook-certs
