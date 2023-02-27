@@ -556,9 +556,20 @@ def get_chart_yaml(chartLoc, chartName):
     return yaml_contents
 
 
-def check_and_install_crds(chartLoc, chartName):
+def check_and_install_crds(chartLoc, chartName=''):
     app.logger.info("Inside check_and_install_crds")
     download_and_untar_chart(chartLoc, chartName)
+    crdLoc = '/' + chartName + '/crds'
+    if os.path.exists(crdLoc):
+        app.logger.info("CRDs exist in this chart. Installing them")
+        cmd = 'kubectl create -f ' + crdLoc
+        out, err = run_command(cmd)
+        return True
+    return False
+
+
+def delete_chart_crds(chartName=''):
+    app.logger.info("Inside delete_chart_crds")
     crdLoc = '/' + chartName + '/crds'
     if os.path.exists(crdLoc):
         app.logger.info("CRDs exist in this chart. Installing them")
@@ -638,7 +649,7 @@ def registercrd():
     app.logger.info("Output:" + out)
     app.logger.info("Error:" + err)
 
-    check_and_install_crds(chartURL, chartName)
+    check_and_install_crds(chartURL, chartName=chartName)
 
     return out
 
@@ -722,6 +733,7 @@ def dryrunchart():
     else:
         return "Error - chart Path is empty"
 
+    origChartLoc = chartLoc
     if chartLoc.startswith("file"):
         parts = chartLoc.split("file:///")
         charttgz = parts[1].strip()
@@ -736,10 +748,23 @@ def dryrunchart():
     testChartName = "kptc"
     dryRunSuccess = False
     count = 0
-    while not dryRunSuccess and count < 3:
+    helmtemplate_op = ''
+
+    chartStatus = ''
+
+    #chart_crd_exist = check_and_install_crds(origChartLoc, chartName='kptc')
+    #if chart_crd_exist and chartStatus != '':
+    #    delete_chart_crds(chartName='kptc')
+         
+
+    chart_rbac_resources = []
+    chart_perms = {}
+    chart_perms_list = []
+    while not dryRunSuccess and count < 1:
         cmd = "helm template kptc " + chartLoc 
         app.logger.info(cmd)
         out, err = run_command(cmd)
+
         print(out)
         #app.logger.info("Helm install output:" + out)
         print(err)
@@ -747,6 +772,66 @@ def dryrunchart():
 
         if err.strip() == '':
             dryRunSuccess = True
+
+            helmtemplate_op = out
+            app.logger.info("Helm template OP:" + helmtemplate_op)
+            yaml_contents = yaml.safe_load_all(helmtemplate_op)
+
+            for doc in yaml_contents:
+                if doc and (doc['kind'] == 'Role' or doc['kind'] == 'ClusterRole'):
+                    rules = doc['rules']
+                    app.logger.info(str(rules))
+                    app.logger.info("------")
+                    for r in rules:
+                        app.logger.info(str(r))
+                        apiGroups = []
+                        if 'apiGroups' in r:
+                            apiGroups = r['apiGroups']
+                        resources = []
+                        if 'resources' in r:
+                            resources = r['resources']
+                        resourceNames = []
+                        if 'resourceNames' in r:
+                            resourceNames = r['resourceNames']
+                        nonResourceURLs = []
+                        if 'nonResourceURLs' in r:
+                            nonResourceURLs = r['nonResourceURLs']
+                        verbs = []
+                        if 'verbs' in r:
+                            verbs = r['verbs']
+                        res_action_list = []
+                        for apiGroup in apiGroups:
+                            if apiGroup in chart_perms:
+                                res_action_list = chart_perms[apiGroup]
+                            for res in resources:
+                                res_action = {}
+
+                                new_verbs = []
+                                found_index = -1
+                                for index, chart_res in enumerate(res_action_list):
+                                    if res in chart_res:
+                                        new_verbs = chart_res[res]
+                                        found_index = index
+                                        break
+
+                                for v in verbs:
+                                    if v not in new_verbs:
+                                        new_verbs.append(v)
+                                    if len(resourceNames) > 0:
+                                        for resName in resourceNames:
+                                            res_action[res + "/resourceName::" + resName] = new_verbs
+                                    else:
+                                        res_action[res] = new_verbs
+                                if found_index >= 0:
+                                    del res_action_list[found_index]
+                                res_action_list.append(res_action)
+
+                            chart_perms[apiGroup] = res_action_list
+                        for nonResUrl in nonResourceURLs:
+                            res_action = {}
+                            res_action['nonResourceURL::' + nonResUrl] = verbs
+                            res_action_list.append(res_action)
+                            chart_perms['non-apigroup'] = [res_action]
         else:
             time.sleep(2)
             count = count + 1
@@ -754,12 +839,56 @@ def dryrunchart():
     if err:
         return err
 
+    chart_perms_dict = {}
+    chart_perms_dict['chart_perms'] = chart_perms
+    app.logger.info("Chart perms:" + json.dumps(str(chart_perms_dict)))
+
+    # Check permissions
+    cmd = "kubectl get configmap kubeplus-saas-provider-perms -o json -n " + namespace
+    out1, err1 = run_command(cmd)
+    app.logger.info("Perms Out:" + str(out1))
+    app.logger.info("Perms Err:" + str(err1))
+    kubeplus_perms = []
+    if err1 == '' and out1 != '':
+        json_op = json.loads(out1)
+        perms = json_op['data']['kubeplus-saas-provider-perms.txt']
+        app.logger.info(perms)
+        k_perms = perms.split(",")
+        for p in k_perms:
+            p = p.replace("'","")
+            p = p.replace("[","")
+            p = p.replace("]","")
+            p = p.strip()
+            kubeplus_perms.append(p)
+
+    # We don't want to compare signers as CRD like cert-manager have signers resource
+    ignore_list = ['signers','certificatesigningrequests','localsubjectaccessreviews']
+
+    missing_perms = {}
+    for apiGroup, res_action_list in chart_perms.items():
+        missing_res_action_list = []
+        for res_perm in res_action_list:
+            for res in res_perm.keys():
+                if res not in kubeplus_perms or res in ignore_list:
+                    missing_res_action_list.append(res_perm)
+        if len(missing_res_action_list) > 0:
+            missing_perms[apiGroup] = missing_res_action_list
+
+    print("****")
+    print(json.dumps(missing_perms))
+
+    if missing_perms:
+        missing_perms_json = {}
+        missing_perms_json['perms'] = missing_perms
+        missing_perms_json_obj = json.dumps(missing_perms_json)
+        chartStatus = "KubePlus does not have the following permissions required by the Chart. Use provider-kubeconfig.py to add the missing permissions.\n"
+        chartStatus = chartStatus + str(missing_perms_json_obj)
+
     # Check storage class used by pvc; the reclaim policy needs to be delete
     storage_classes = []
     pvc_count = 0
     storage_classname_count = 0
 
-    # Check if chart contains Namespace object; Namespace object is not allowed in the chart.
     kinds = []
     for line in out.split("\n"):
         line = line.strip()
@@ -784,7 +913,6 @@ def dryrunchart():
     app.logger.info("Storage classes:" + str(storage_classes))
     app.logger.info("Kinds:" + str(kinds))
 
-    chartStatus = ''
     for storageClass in storage_classes:
         cmd = "kubectl get storageclass " + storageClass + " -o json "
         out, err = run_command(cmd)
@@ -799,6 +927,7 @@ def dryrunchart():
         except Exception as e:
             app.logger.info(str(e))
 
+    # Check if chart contains Namespace object; Namespace object is not allowed in the chart.
     if 'Namespace' in kinds:
         chartStatus = chartStatus + ' Namespace object is not allowed in the chart.'
 
@@ -1009,7 +1138,6 @@ def create_resource_quota():
 
     err_string = str(err)
     return err_string
-
 
 @app.route("/update_provider_rbac")
 def apply_rbac():
