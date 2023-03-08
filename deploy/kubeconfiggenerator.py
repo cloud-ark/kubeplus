@@ -79,16 +79,19 @@ class KubeconfigGenerator(object):
                 #print("Inside run_command")
                 print(cmd)
                 cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
-                out = cmdOut[0]
-                err = cmdOut[1]
+                out = cmdOut[0].decode('utf-8')
+                err = cmdOut[1].decode('utf-8')
                 print(out)
-                if out != '':
-                        return out
-                        #printlines(out.decode('utf-8'))
+                print("---")
+                print(err)
+                return out, err
+                #if out != '':
+                #        return out
+                #        #printlines(out.decode('utf-8'))
                 #print("Error:")
                 #print(err)
-                if err != '':
-                        return err
+                #if err != '':
+                #        return err
                         #printlines(err.decode('utf-8'))
 
         def _create_kubecfg_file(self, sa, namespace, token, ca, server):
@@ -147,8 +150,7 @@ class KubeconfigGenerator(object):
                         cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getenv("HOME") + "/" + fileName
                         self.run_command(cmd)
                         get_cmd = "kubectl get configmap " + configmapName + " -n "  + namespace
-                        output = self.run_command(get_cmd)
-                        output = output.decode('utf-8')    
+                        output, error = self.run_command(get_cmd)
                         if 'Error from server (NotFound)' in output:
                                 time.sleep(2)
                                 print("Trying again..")
@@ -398,16 +400,13 @@ class KubeconfigGenerator(object):
                 print("---")
                 created = False
                 while not created:
-                        cmd = " kubectl create -f " + filePath
-                        out = self.run_command(cmd)
-                        if out != '':
-                                out = out.decode('utf-8').strip()
-                                print(out)
-                                if 'created' in out:
-                                        created = True
-                        else:
-                                time.sleep(2)
-                print("Create secret:" + out)
+                    cmd = " kubectl create -f " + filePath
+                    out, err = self.run_command(cmd)
+                    if 'created' in out or 'AlreadyExists' in err:
+                        created = True
+                    else:
+                        time.sleep(2)
+                #print("Create secret:" + out)
                 return out
 
         def _generate_kubeconfig(self, sa, namespace):
@@ -423,7 +422,8 @@ class KubeconfigGenerator(object):
                 secretName = sa
                 out = self._create_secret(secretName, namespace)
                 print("Create secret:" + out)
-                if 'secret/' + sa + ' created' in out:
+                #if 'secret/' + sa + ' created' in out:
+                if True: # do this always
                         #json_output = json.loads(out)
                         #secretName = json_output["secrets"][0]["name"]
                         #print("Secret Name:" + secretName)

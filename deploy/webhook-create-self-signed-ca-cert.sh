@@ -57,6 +57,13 @@ echo $secret
 echo $service
 csrName=${service}.${namespace}
 
+# Check if mutatingwebhookconfiguration object is present; if so, we can assume that the webhook has been installed;
+op=$(kubectl get mutatingwebhookconfigurations platform-as-code.crd-binding 2>&1 || true) 
+if [[ $op == *"AGE"* ]]; then
+   echo "Mutating webhook is already configured."
+   exit
+fi
+
 # Source: https://www.funkypenguin.co.nz/blog/self-signed-certificate-on-mutating-webhook-requires-double-encryption/
 # 1. Create CA key and CA cert
 openssl genrsa -out rootCA.key 4096
