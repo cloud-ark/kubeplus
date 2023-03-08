@@ -21,7 +21,7 @@ Extract provider kubeconfig:
 - python ../../../provider-kubeconfig.py create $KUBEPLUS_NS
 
 Install KubePlus Operator 
-$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.18.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=kubeplus-saas-provider.json
+$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.19.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=kubeplus-saas-provider.json
 
 
 Extract consumer kubeconfig:
