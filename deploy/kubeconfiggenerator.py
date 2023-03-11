@@ -1139,6 +1139,65 @@ def create_resource_quota():
     err_string = str(err)
     return err_string
 
+
+@app.route("/resourcecompositions")
+def kp_state_restore():
+    app.logger.info("Inside kp_state_restore...")
+    cmd = "kubectl get resourcecompositions -A"
+    out, err = run_command(cmd)
+    app.logger.info(out)
+    res_compositions = []
+    if out != '':
+        for line in out.split("\n"):
+            line = line.strip()
+            res_comp = {}
+            if line and 'NAME' not in line:
+                line1 = ' '.join(line.split())
+                parts = line1.split(" ")
+                ns = parts[0].strip()
+                name = parts[1].strip()
+
+                cmd1 = "kubectl get resourcecomposition " + name + " -n " + ns + " -o json"
+                out1, err1 = run_command(cmd1)
+                json_op = json.loads(out1)
+                chartName = json_op['spec']['newResource']['chartName']
+                chartURL = json_op['spec']['newResource']['chartURL']
+                group = json_op['spec']['newResource']['resource']['group']
+                kind = json_op['spec']['newResource']['resource']['kind']
+                plural = json_op['spec']['newResource']['resource']['plural']
+                version = json_op['spec']['newResource']['resource']['version']
+
+                if 'respolicy' in json_op['spec']:
+                    if 'podconfig' in json_op['spec']['respolicy']['spec']['policy']:
+                        podconfig = json_op['spec']['respolicy']['spec']['policy']['podconfig']
+                        res_comp['policy'] = json_op['spec']['respolicy']['spec']['policy']
+                        if 'limits' in podconfig:
+                            if 'cpu' in podconfig['limits']:
+                                res_comp['cpu_limits'] = podconfig['limits']['cpu']
+                            if 'memory' in podconfig['limits']:
+                                res_comp['mem_limits'] = podconfig['limits']['memory']
+                        if 'requests' in podconfig:
+                            if 'cpu' in podconfig['requests']:
+                                res_comp['cpu_requests'] = podconfig['requests']['cpu']
+                            if 'memory' in podconfig['requests']:
+                                res_comp['mem_requests'] = podconfig['requests']['memory']
+
+
+                res_comp['name'] = name
+                res_comp['namespace'] = ns
+                res_comp['chartName'] = chartName
+                res_comp['chartURL'] = chartURL
+                res_comp['group'] = group
+                res_comp['kind'] = kind
+                res_comp['plural'] = plural
+                res_comp['version'] = version
+                res_compositions.append(res_comp)
+
+                #output = "{} % {} % {} % {} % {} % {} % {} % {}".format(name, ns, chartName, chartURL, group, kind, plural, version)
+        op = str(json.dumps(res_compositions))
+        app.logger.info(op)
+        return op 
+
 @app.route("/update_provider_rbac")
 def apply_rbac():
     namespace = request.args.get('kubeplusnamespace')
