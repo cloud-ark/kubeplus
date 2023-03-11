@@ -18,7 +18,7 @@ Install KubePlus Operator
 $ KUBEPLUS_NS=default
 $ python ../../../provider-kubeconfig.py create $KUBEPLUS_NS
 $ cp kubeplus-saas-provider.json provider.conf
-$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.19.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=provider.conf
+$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.20.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=provider.conf
 $ kubectl get pods (wait till kubeplus pod is Running)
 
 Install KubePlus kubectl plugins

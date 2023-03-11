@@ -317,7 +317,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: kubeconfiggenerator
-        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.13
+        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.14
         imagePullPolicy: IfNotPresent
         env:
           - name: KUBEPLUS_NAMESPACE
@@ -329,7 +329,7 @@ spec:
         args:
           - "$(KUBEPLUS_NAMESPACE)"
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.6
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.7
         imagePullPolicy: IfNotPresent
         env:
           - name: CHECK_KYVERNO_POLICIES
