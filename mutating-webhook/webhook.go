@@ -29,43 +29,10 @@ import (
 	platformworkflowv1alpha1 "github.com/cloud-ark/kubeplus/platform-operator/pkg/apis/workflowcontroller/v1alpha1"
 )
 
-var (
-	runtimeScheme = runtime.NewScheme()
-	codecs        = serializer.NewCodecFactory(runtimeScheme)
-	deserializer  = codecs.UniversalDeserializer()
-
-	// (https://github.com/kubernetes/kubernetes/issues/57982)
-	defaulter = runtime.ObjectDefaulter(runtimeScheme)
-
-	accountidentity = "accountidentity"
-	accountidentities = "accountidentities"
-	webhook_namespace = GetNamespace()
- 
-	kubeclientset *kubernetes.Clientset
-
-	helper chan string
-
-	customAPIPlatformWorkflowMap map[string]string
-	customKindPluralMap map[string]string
-	customAPIInstanceUIDMap map[string]string
-	customAPIQuotaMap map[string]interface{}
-	kindPluralMap map[string]string
-	chartKindMap map[string]string
-	resourcePolicyMap map[string]interface{}
-	resourceNameObjMap map[string]interface{}
-	namespaceHelmAnnotationMap map[string]string
-	kindReqMap map[string]interface{}
-
-	maxAllowedLength int
-	maxLengthKind int
-
-)
-
 type WebhookServer struct {
 	server *http.Server
 }
 
-var annotations StoredAnnotations = StoredAnnotations{}
 
 // WhSvrParameters ...
 // Webhook Server parameters
@@ -86,6 +53,48 @@ type label struct {
 	value string
 }
 
+type ResourceComposition struct {
+    CPU_limits    string
+    Mem_limits string
+    CPU_requests string
+    Mem_requests string
+    Name string
+    Namespace string
+    ChartName string
+    ChartURL string
+    Group string
+    Kind string
+    Plural string
+    Version string
+    Policy platformworkflowv1alpha1.Pol
+}
+
+var (
+	runtimeScheme = runtime.NewScheme()
+	codecs        = serializer.NewCodecFactory(runtimeScheme)
+	deserializer  = codecs.UniversalDeserializer()
+
+	accountidentity = "accountidentity"
+	webhook_namespace = GetNamespace()
+
+	annotations StoredAnnotations = StoredAnnotations{}
+	customAPIPlatformWorkflowMap map[string]string
+	customKindPluralMap map[string]string
+	customAPIInstanceUIDMap map[string]string
+	customAPIQuotaMap map[string]interface{}
+	kindPluralMap map[string]string
+	chartKindMap map[string]string
+	resourcePolicyMap map[string]interface{}
+	resourceNameObjMap map[string]interface{}
+	namespaceHelmAnnotationMap map[string]string
+
+	maxAllowedLength int
+	maxLengthKind int
+
+	resCompositions []ResourceComposition
+)
+
+
 func init() {
 	_ = corev1.AddToScheme(runtimeScheme)
 	_ = admissionregistrationv1beta1.AddToScheme(runtimeScheme)
@@ -93,9 +102,6 @@ func init() {
 	// https://github.com/kubernetes/kubernetes/issues/57982
 	_ = v1.AddToScheme(runtimeScheme)
 	annotations.KindToEntry = make(map[string][]Entry, 0)
-
-	cfg, _ := rest.InClusterConfig()
-	kubeclientset, _ = kubernetes.NewForConfig(cfg)
 
 	customAPIPlatformWorkflowMap = make(map[string]string,0)
 	customAPIInstanceUIDMap = make(map[string]string,0)
@@ -109,6 +115,68 @@ func init() {
 
 	maxAllowedLength = 30
 	maxLengthKind = 28
+
+	go setup()
+}
+
+func setup() {
+	fmt.Println("Inside setup")
+
+	var resCompositionsArr []byte
+	var resString string
+	for {
+		resCompositionsArr = GetExistingResourceCompositions()
+		resString = string(resCompositionsArr)
+		fmt.Printf("ExistingResCompositions:%s\n", resString)
+		if strings.Contains(resString, "connection refused") {
+			time.Sleep(1 * time.Second)
+		} else {
+			break
+		}
+	}
+
+	fmt.Printf("ExistingResCompositions1:%s\n", resString)
+	err := json.Unmarshal([]byte(resString), &resCompositions)
+	if err != nil {
+		fmt.Printf("Unmarshalling error:%s\n", err.Error())
+	}
+	fmt.Printf("Rescompositions:%v\n", resCompositions)
+
+	for _, res := range resCompositions {
+		name := res.Name
+		ns := res.Namespace
+		group := res.Group
+		version := res.Version
+		kind := res.Kind
+		plural := res.Plural
+		chartName := res.ChartName
+		chartURL := res.ChartURL
+		cpu_limits := res.CPU_limits
+		mem_limits := res.Mem_limits
+		cpu_requests := res.CPU_requests
+		mem_requests := res.Mem_requests
+		podPolicy := res.Policy
+
+		customAPI := group + "/" + version + "/" + kind
+		fmt.Printf("%s %s %s %s %s %s %s %s %s %s %s %s %s\n", name, ns, group, version, kind, plural, chartName, chartURL, cpu_limits, mem_limits, cpu_requests, mem_requests, customAPI)
+
+		customAPIPlatformWorkflowMap[customAPI] = name
+		customKindPluralMap[customAPI] = plural
+
+		var quota_map map[string]string
+        	quota_map = make(map[string]string)
+        	quota_map["requests.cpu"] = cpu_requests
+        	quota_map["limits.cpu"] = cpu_limits
+        	quota_map["requests.memory"] = mem_requests
+        	quota_map["limits.memory"] = mem_limits
+        	customAPIQuotaMap[customAPI] = quota_map
+
+                lowercaseKind := strings.ToLower(kind)
+                kindPluralMap[lowercaseKind] = plural
+
+	        customAPI1 := group + "/" + version + "/" + lowercaseKind
+        	resourcePolicyMap[customAPI1] = podPolicy
+	}
 }
 
 // main mutation process
@@ -1161,8 +1229,9 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	customAPIInstanceUIDMap[customAPIInstance] = cruid
 
 	platformWorkflowName := customAPIPlatformWorkflowMap[customAPI]
+
+	fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
 	if platformWorkflowName != "" {
-		//fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
 
 		lengthCheck := kind + "-" + crname
 		if len(lengthCheck) > maxAllowedLength {
@@ -1449,8 +1518,6 @@ func getSpecResolvedPatch(ar *v1.AdmissionReview) ([]patchOperation, *v1.Admissi
 					},
 				}
 			}
-			// TODO: Helper to put the label if the resource is not yet created.
-		 	//helper <- resolveObj.Value
 		}
 		if resolveObj.FunctionType == AddAnnotation {
 		 	fmt.Printf("Path to resolve:%s\n",resolveObj.JSONTreePath)
@@ -1464,8 +1531,6 @@ func getSpecResolvedPatch(ar *v1.AdmissionReview) ([]patchOperation, *v1.Admissi
 					},
 				}
 			}
-			// TODO: Helper to put the label if the resource is not yet created.
-		 	//helper <- resolveObj.Value
 		}
 	}
 	return patchOperations, nil

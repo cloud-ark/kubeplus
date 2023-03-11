@@ -939,6 +939,15 @@ func CheckClusterCapacity(cpuRequests, cpuLimits, memRequests, memLimits string)
 	return result, message
 }
 
+func GetExistingResourceCompositions() []byte {
+	fmt.Printf("Inside GetExistingResourceCompositions...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/resourcecompositions", serviceHost, verificationServicePort)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
 func LintChart(chartURL string) []byte {
 	fmt.Printf("Inside LintChart...\n")
 	encodedChartURL := url.QueryEscape(chartURL)
@@ -1036,6 +1045,7 @@ func queryKubeDiscoveryService(url1 string) []byte {
 	if err != nil {
 		log.Printf("sending request failed: %s", err.Error())
 		fmt.Println(err)
+		return []byte(err.Error())
 	}
 	defer resp.Body.Close()
 	resp_body, _ := ioutil.ReadAll(resp.Body)
