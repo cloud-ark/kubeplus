@@ -134,11 +134,12 @@ while getopts ":k:o:i:n:h" opt; do
       IFS=$OLDIFS;;
     #\? ) print_help;;
     h ) print_help;;
-    : )
-      echo "Invalid option: $OPTARG requires an argument" 1>&2
+    ? )
+      echo "Invalid option: ${1} " 1>&2
+      print_help
+      exit 0
       ;;
   esac
-#  shift $((OPTIND -2))
 done
 
 #echo "---"
