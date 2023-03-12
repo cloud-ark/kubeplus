@@ -2,13 +2,40 @@
 
 source utils.sh
 
-if (( $# < 1 )); then
+print_help () {
     echo "kubectl man <Custom Resource Kind> -k <Full path to kubeconfig file>"
     exit 0
+}
+
+if (( $# < 3 )); then
+    print_help
 fi
 
 kind=$1
-kubeconfig=$3
+shift;
+#echo "$@"
+
+while getopts ":k:h" opt; do
+  case ${opt} in
+    k ) 
+      kubeconfig=$OPTARG
+#      echo $kubeconfig
+      if [ ! -f $kubeconfig ]; then
+        echo "Kubeconfig $kubeconfig does not exist."
+        exit 0
+      fi;;
+    h ) print_help;;
+    ? )
+      echo "Invalid option: ${1} " 1>&2
+      print_help
+      exit 0
+      ;;
+  esac
+done
+
+
+
+#kubeconfig=$3
 namespace=`cat $kubeconfig | python -m json.tool | grep namespace | awk '{print $2}' | sed 's/"//'g | sed 's/,//'g`
 
 check_kind $kind $kubeconfig

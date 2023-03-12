@@ -33,6 +33,11 @@ while getopts ":k:" opt; do
         echo "Kubeconfig $kubeconfig1 does not exist."
         exit 0
       fi;;
+    ? )
+      echo "Invalid option: ${1} " 1>&2
+      print_help
+      exit 0
+      ;;
   esac
 done
 
