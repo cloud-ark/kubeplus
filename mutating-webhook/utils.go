@@ -948,6 +948,17 @@ func GetExistingResourceCompositions() []byte {
 	return body
 }
 
+func CheckChartExists(chartURL string) []byte {
+	fmt.Printf("Inside CheckChartExists...\n")
+	encodedChartURL := url.QueryEscape(chartURL)
+	args := fmt.Sprintf("chartURL=%s", encodedChartURL)
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/checkchartexists?%s", serviceHost, verificationServicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
 func LintChart(chartURL string) []byte {
 	fmt.Printf("Inside LintChart...\n")
 	encodedChartURL := url.QueryEscape(chartURL)
