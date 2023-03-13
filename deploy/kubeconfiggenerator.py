@@ -714,13 +714,10 @@ def testchart():
     run_command(cmd)
     return chartStatus
 
-@app.route("/dryrunchart")
-def dryrunchart():
-    chartURL = request.args.get('chartURL')
+def check_chart(chartURL, chartPath):
     if chartURL:
         print("Chart URL:" + chartURL)
         app.logger.info("Chart URL:" + chartURL)
-    chartPath = request.args.get('chartPath')
     if chartPath:
         print("Chart Path:" + chartPath)
         app.logger.info("Chart Path:" + chartPath)
@@ -734,6 +731,7 @@ def dryrunchart():
         return "Error - chart Path is empty"
 
     origChartLoc = chartLoc
+    message = ""
     if chartLoc.startswith("file"):
         parts = chartLoc.split("file:///")
         charttgz = parts[1].strip()
@@ -743,6 +741,25 @@ def dryrunchart():
             message = "Chart " + chartLoc + " not found.\n"
             message = message + "Use kubectl upload chart <charttgz> to upload the chart first."
             return message 
+    return message
+
+
+@app.route("/checkchartexists")
+def checkchartexists():
+    app.logger.info("Inside checkchartexists")
+    chartURL = request.args.get('chartURL')
+    chartPath = request.args.get('chartPath')
+    message = check_chart(chartURL, chartPath)
+    return message
+
+
+@app.route("/dryrunchart")
+def dryrunchart():
+    chartURL = request.args.get('chartURL')
+    chartPath = request.args.get('chartPath')
+    message = check_chart(chartURL, chartPath)
+    if message != "":
+        return message
 
     #testChartName = "kubeplus-customerapi-reg-testchart"
     testChartName = "kptc"
@@ -756,6 +773,18 @@ def dryrunchart():
     #if chart_crd_exist and chartStatus != '':
     #    delete_chart_crds(chartName='kptc')
          
+    chartLoc = ''
+    if chartURL != None:
+        chartLoc = chartURL
+    elif chartPath != None:
+        chartLoc = chartPath
+    else:
+        return "Error - chart Path is empty"
+
+    if chartLoc.startswith("file"):
+        parts = chartLoc.split("file:///")
+        charttgz = parts[1].strip()
+        chartLoc = "/" + charttgz
 
     chart_rbac_resources = []
     chart_perms = {}
@@ -1168,19 +1197,20 @@ def kp_state_restore():
                 version = json_op['spec']['newResource']['resource']['version']
 
                 if 'respolicy' in json_op['spec']:
-                    if 'podconfig' in json_op['spec']['respolicy']['spec']['policy']:
-                        podconfig = json_op['spec']['respolicy']['spec']['policy']['podconfig']
-                        res_comp['policy'] = json_op['spec']['respolicy']['spec']['policy']
-                        if 'limits' in podconfig:
-                            if 'cpu' in podconfig['limits']:
-                                res_comp['cpu_limits'] = podconfig['limits']['cpu']
-                            if 'memory' in podconfig['limits']:
-                                res_comp['mem_limits'] = podconfig['limits']['memory']
-                        if 'requests' in podconfig:
-                            if 'cpu' in podconfig['requests']:
-                                res_comp['cpu_requests'] = podconfig['requests']['cpu']
-                            if 'memory' in podconfig['requests']:
-                                res_comp['mem_requests'] = podconfig['requests']['memory']
+                    if 'policy' in json_op['spec']['respolicy']['spec']:
+                        if 'podconfig' in json_op['spec']['respolicy']['spec']['policy']:
+                            podconfig = json_op['spec']['respolicy']['spec']['policy']['podconfig']
+                            res_comp['policy'] = json_op['spec']['respolicy']['spec']['policy']
+                            if 'limits' in podconfig:
+                                if 'cpu' in podconfig['limits']:
+                                    res_comp['cpu_limits'] = podconfig['limits']['cpu']
+                                if 'memory' in podconfig['limits']:
+                                    res_comp['mem_limits'] = podconfig['limits']['memory']
+                            if 'requests' in podconfig:
+                                if 'cpu' in podconfig['requests']:
+                                    res_comp['cpu_requests'] = podconfig['requests']['cpu']
+                                if 'memory' in podconfig['requests']:
+                                    res_comp['mem_requests'] = podconfig['requests']['memory']
 
 
                 res_comp['name'] = name
@@ -1194,9 +1224,9 @@ def kp_state_restore():
                 res_compositions.append(res_comp)
 
                 #output = "{} % {} % {} % {} % {} % {} % {} % {}".format(name, ns, chartName, chartURL, group, kind, plural, version)
-        op = str(json.dumps(res_compositions))
-        app.logger.info(op)
-        return op 
+    op = str(json.dumps(res_compositions))
+    app.logger.info(op)
+    return op 
 
 @app.route("/update_provider_rbac")
 def apply_rbac():

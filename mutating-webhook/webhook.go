@@ -1268,6 +1268,17 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 		chartName := platformWorkflow1.Spec.NewResource.ChartName
  		fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s, ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
 
+		// If chart is local, check if it exists - it will not if KubePlus Pod has restarted due to cluster restart
+                message1 := string(CheckChartExists(chartURL))
+                fmt.Printf("After CheckChartExists - message:%s\n", message1)
+                if message1 != "" {
+                        return &v1.AdmissionResponse{
+                                Result: &metav1.Status{
+                                        Message: message1,
+                                },
+                        }
+                }
+
 		cpu_requests_q := ""
 		cpu_limits_q := ""
 		mem_requests_q := ""
