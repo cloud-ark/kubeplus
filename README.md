@@ -151,9 +151,10 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 2) Download KubePlus plugins and set up the PATH
 ```
-  wget https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-kubectl-plugins.tar.gz
+  wget "https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-kubectl-plugins.tar.gz?raw=true"
+  mv kubeplus-kubectl-plugins.tar.gz\?raw\=true kubeplus-kubectl-plugins.tar.gz
   gunzip kubeplus-kubectl-plugins.tar.gz
-  tar -xvf kubeplus-kubectl-plugins
+  tar -xvf kubeplus-kubectl-plugins.tar
   export KUBEPLUS_HOME=`pwd`
   export PATH=$KUBEPLUS_HOME/plugins:$PATH
 ```
