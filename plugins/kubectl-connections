@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 source utils.sh
 
@@ -89,7 +89,10 @@ kind=$1
 instance=$2
 namespace=$3
 output="flat"
-kubeconfig1="$HOME/.kube/config" #default value
+kubeconfig1=""
+if [[ -z "${INSIDE_DOCKER}" ]]; then
+	kubeconfig1="$HOME/.kube/config" #default value
+fi
 ignorelist1=""
 hidedetails=""
 
@@ -181,7 +184,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
       docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
       if [[ "$output" == "png" ]]; then
         echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
-        show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+        #show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
       fi
       if [[ "$output" == "html" ]]; then
         gen_html connections-op.json.gv $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
@@ -201,12 +204,19 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
         gen_html connections-op.json.gv $KUBEPLUS_HOME/root/connections-op.json.gv.png
     else
       if [[ "$output" == "png" ]] || [[ "$output" == "html" ]]; then
-        check_docker
+        #check_docker
         /$KUBEPLUS_HOME/plugins/kubediscovery-linux connections $canonicalKind $instance $namespace --output=json $kubeconfig $ignorelist > "$KUBEPLUS_HOME/plugins/connections-op.json"
-        docker run -v /$KUBEPLUS_HOME/plugins:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root/ $hidedetails
+
+	if [[ -z "${INSIDE_DOCKER}" ]]; then
+         docker run -v $KUBEPLUS_HOME/plugins/:/root gcr.io/cloudark-kubeplus/grapher:1.2 connections-op.json /root $hidedetails
+	else
+	 # Invoke the grapher
+         python3  /$KUBEPLUS_HOME/plugins/grapher.py "connections-op.json" $KUBEPLUS_HOME/plugins/ $hidedetails
+	fi
+
         if [[ "$output" == "png" ]]; then
           echo "Output available in: $KUBEPLUS_HOME/plugins/connections-op.json.gv.png"
-          show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
+          #show_image $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
         fi
         if [[ "$output" == "html" ]]; then
           gen_html connections-op.json.gv $KUBEPLUS_HOME/plugins/connections-op.json.gv.png
