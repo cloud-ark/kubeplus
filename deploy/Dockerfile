@@ -1,10 +1,7 @@
 FROM ubuntu:20.04
-USER root
-RUN apt-get update && apt-get upgrade && apt-get install -y curl openssl jq python3 python3-pip && pip3 install pyyaml
+RUN apt-get update && apt-get install -y openssl curl jq python3 python3-pip && pip3 install pyyaml
 ADD webhook-create-self-signed-ca-cert.sh /
-RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-RUN install -o root -g root -m 0755 kubectl bin/kubectl
-RUN cp bin/kubectl /root/kubectl
+RUN arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/) && cd /root/ && curl -LO "https://dl.k8s.io/release/v1.26.0/bin/linux/${arch}/kubectl"
 COPY kubeplus-non-pod-resources.yaml /root/.
 COPY mutatingwebhook.yaml /root/.
 #COPY webhook-patch-ca-bundle-new.sh /root/.

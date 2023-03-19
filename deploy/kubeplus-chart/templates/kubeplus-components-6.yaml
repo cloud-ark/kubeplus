@@ -302,8 +302,8 @@ spec:
       initContainers:
       #containers:
       - name: webhook-cert-setup
-        image: {{ .Values.WEBHOOK_INIT_CONTAINER }}  #gcr.io/cloudark-kubeplus/webhook-tls-getter:3.0.26
-        imagePullPolicy: IfNotPresent 
+        image: {{ template "webhooktlsGetterImage" . }}
+        imagePullPolicy: {{ .Values.webhooktlsGetter.image.pullPolicy | quote }}
         env:
           - name: KUBEPLUS_NAMESPACE
             valueFrom:
@@ -319,11 +319,8 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: kubeconfiggenerator
-        image: {{ .Values.CRD_REGISTRATION_HELPER }}  #gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.27
-        imagePullPolicy: IfNotPresent
-        resources:
-          requests:
-            ephemeral-storage: "70Mi"
+        image: {{ template "kubeconfiggeneratorImage" . }}
+        imagePullPolicy: {{ .Values.kubeconfiggenerator.image.pullPolicy | quote }}
         env:
           - name: KUBEPLUS_NAMESPACE
             valueFrom:
@@ -337,11 +334,8 @@ spec:
         - name: shared-data
           mountPath: /crdinstances
       - name: crd-hook
-        image: {{ .Values.MUTATING_WEBHOOK }}    #gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.14
-        imagePullPolicy: IfNotPresent
-        resources:
-          requests:
-            ephemeral-storage: "10Mi"
+        image: {{ template "mutatingAdmissionWebhookImage" . }}
+        imagePullPolicy: {{ .Values.mutatingAdmissionWebhook.image.pullPolicy | quote }}
         env:
           - name: CHECK_KYVERNO_POLICIES
             value: "{{ .Values.CHECK_KYVERNO_POLICIES }}"
@@ -358,25 +352,16 @@ spec:
         - name: shared-data
           mountPath: /crdinstances
       - name: platform-operator
-        image: {{ .Values.PLATFORM_OPERATOR }}   #gcr.io/cloudark-kubeplus/platform-operator:3.0.6
-        imagePullPolicy: IfNotPresent
-        resources:
-          requests:
-            ephemeral-storage: "5Mi"
+        image: {{ template "platformOperatorImage" . }}
+        imagePullPolicy: {{ .Values.platformOperator.image.pullPolicy | quote }}
         command: [ "/platform-operator"]
       - name: consumerui
-        image: {{ .Values.CONSUMERUI }}   #gcr.io/cloudark-kubeplus/consumerui:0.0.6
-        imagePullPolicy: IfNotPresent
-        resources:
-          requests:
-            ephemeral-storage: "10Mi"
+        image: {{ template "consumeruiImage" . }}
+        imagePullPolicy: {{ .Values.consumerui.image.pullPolicy | quote }}
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
-        image: {{ .Values.HELMER  }}  #gcr.io/cloudark-kubeplus/helm-pod:3.0.17
-        imagePullPolicy: IfNotPresent
-        resources:
-          requests:
-            ephemeral-storage: "10Mi"
+        image: {{ template "helmerImage" . }}
+        imagePullPolicy: {{ .Values.helmer.image.pullPolicy | quote }}
         command: ["/root/helm-pod"]
         volumeMounts:
         - mountPath: /chart
@@ -420,9 +405,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-        image: {{ .Values.RESOURCE_CLEANER }}  #gcr.io/cloudark-kubeplus/delete-kubeplus-resources:3.0.12
-        imagePullPolicy: IfNotPresent
+        image: {{ template "cleanupKubeplusComponentsImage" . }}
+        imagePullPolicy: {{ .Values.cleanupKubeplusComponents.image.pullPolicy | quote }}
         command: ["./root/delete-kubeplus-components.sh"]
         args:
           - "$(KUBEPLUS_NAMESPACE)"
-

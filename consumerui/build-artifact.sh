@@ -13,7 +13,7 @@ fi
 if [ "$artifacttype" = "versioned" ]; then
     version=`tail -1 versions.txt`
     echo "Building version $version"
-    docker build --no-cache -t gcr.io/cloudark-kubeplus/consumerui:$version .
+    docker build --no-cache -t gcr.io/cloudark-kubeplus/consumerui:$version  .
     docker push gcr.io/cloudark-kubeplus/consumerui:$version
 fi
 
