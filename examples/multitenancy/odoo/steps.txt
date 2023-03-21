@@ -17,7 +17,7 @@ This example shows delivering Bitnami Odoo Helm chart as-a-service using KubePlu
        - export KUBECONFIG=<location-to-store-admin-kubeconfig-file>
        - gcloud container clusters get-credentials <cluster-name>
        - server=`more $KUBECONFIG | grep server | cut -d '/' -f 3`
-       - python ../../../provider-kubeconfig.py create default $server
+       - python ../../../provider-kubeconfig.py create default -s $server
    - Install KubePlus
      - helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.22.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json 
      - Wait till KubePlus Pod is Running (kubectl get pods -A)
