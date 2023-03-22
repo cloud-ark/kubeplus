@@ -1,0 +1,44 @@
+CHECK_KYVERNO_POLICIES: NO
+webhooktlsGetter:
+  image:
+    registry: gcr.io
+    repository: cloudark-kubeplus/webhook-tls-getter
+    tag: latest
+    pullPolicy: Never
+kubeconfiggenerator:
+  image:
+    registry: gcr.io
+    repository: cloudark-kubeplus/kubeconfiggenerator
+    tag: latest
+    pullPolicy: Never
+mutatingAdmissionWebhook:
+  image:
+    registry: gcr.io
+    repository: cloudark-kubeplus/pac-mutating-admission-webhook
+    tag: latest
+    pullPolicy: Never
+platformOperator:
+  image:
+    registry: gcr.io
+    repository: cloudark-kubeplus/platform-operator
+    tag: latest
+    pullPolicy: Never
+consumerui:
+  image:
+    registry: gcr.io
+    repository: cloudark-kubeplus/consumerui
+    tag: latest
+    pullPolicy: Never
+helmer:
+  image:
+    registry: gcr.io
+    repository: cloudark-kubeplus/helm-pod
+    tag: latest
+    pullPolicy: Never
+
+cleanupKubeplusComponents:
+  image:
+    registry: gcr.io
+    repository: cloudark-kubeplus/delete-kubeplus-resources
+    tag: latest
+    pullPolicy: Never
