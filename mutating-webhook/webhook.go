@@ -473,11 +473,18 @@ func getReleaseName(ar *v1.AdmissionReview) string {
 }
 
 func saveResource(ar *v1.AdmissionReview) {
+	fmt.Printf("Inside saveResource")
 	kind, resName, _ := getObjectDetails(ar)
 	//key := kind + "/" + namespace + "/" + resName
 	key := kind + "-" + resName
-	//fmt.Printf("Res Key:%s\n", key)
-	resourceNameObjMap[key] = ar
+	fmt.Printf("Res Key:%s\n", key)
+	val, ok := resourceNameObjMap[key]
+	if !ok {
+		resourceNameObjMap[key] = ar
+	} else {
+		fmt.Printf("Key %s already present in resourceNameObjMap\n", key)
+		fmt.Printf("%v\n", val)
+	}
 }
 
 func saveResourcePolicy(ar *v1.AdmissionReview) {
