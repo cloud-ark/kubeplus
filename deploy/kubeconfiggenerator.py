@@ -501,6 +501,7 @@ def flatten(yaml_contents, flattened, types_dict, prefix=''):
             else:
                 flattened[prefix + key] = {}
         if isinstance(value, list):
+            #types_dict[key] = {'type': 'array', 'items': []}
             types_dict[key] = {'type': 'array', 'items': {'type': 'string'}}
             if len(value) == 0:
                 flattened[prefix + key] = []
@@ -511,11 +512,16 @@ def flatten(yaml_contents, flattened, types_dict, prefix=''):
                             inner_prop_dict = {}
                             prop_dict = {'properties': inner_prop_dict}
                             prop_dict['type'] = 'object'
+                            #types_dict[key]['items'].append(prop_dict)
+                            #types_dict[key]['type'] = 'object'
                             types_dict[key]['items'] = prop_dict
                             types_dict[key]['type'] = 'array'
                         if isinstance(l, list):
                             inner_prop_dict = {}
                             prop_dict = {'items': inner_prop_dict}
+                            #prop_dict['type'] = 'object'
+                            #types_dict[key]['items'].append(prop_dict)
+                            #types_dict[key]['type'] = 'object'
                             prop_dict['type'] = 'array'
                             types_dict[key]['items'] = prop_dict
                             types_dict[key]['type'] = 'array'
