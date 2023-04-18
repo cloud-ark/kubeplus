@@ -805,9 +805,10 @@ class CRMetrics(CRBase):
 		#print(networkMetric)
 		return float(networkMetric)
 
-	def _get_network_usage(self, pod_list, kubecfg=''):
+	def _get_cadvisor_metrics(self, pod_list, kubecfg=''):
 		networkReceiveBytesTotal = 0
 		networkTransmitBytesTotal = 0
+                oom_events = 0
 
 		#print(pod_list)
 		platf = platform.system()
@@ -843,6 +844,7 @@ class CRMetrics(CRBase):
 
 			pod_found_network_receive_bytes = {}
 			pod_found_network_transmit_bytes = {}
+			pod_oom_events = {}
 			if output != '':
 				#print("-------\n")
 				#print(output)
@@ -861,11 +863,18 @@ class CRMetrics(CRBase):
 							pod_found_network_transmit_bytes[podName] = line
 							networkTransmitBytes = self._parse_network_bytes(line)
 							networkTransmitBytesTotal = networkTransmitBytesTotal + networkTransmitBytes
+					if 'container_oom_events_total' in line and podName in line:
+						if podName not in pod_oom_events:
+							#print("DEF ---\n")
+							#print(line)
+							pod_oom_events[podName] = line
+							parts = line.split(" ")
+							oom_events = parts[1].strip()
 				#print("--------\n")
 
 		#print("NetworkReceiveBytesTotal:" + str(networkReceiveBytesTotal))
 		#print("NetworkTransmitBytesTotal:" + str(networkTransmitBytesTotal))
-		return networkReceiveBytesTotal, networkTransmitBytesTotal
+		return networkReceiveBytesTotal, networkTransmitBytesTotal, oom_events
 
 	def _get_metrics_creator_account_with_connections(self, account):
 
@@ -996,9 +1005,10 @@ class CRMetrics(CRBase):
 		total_storage_conn = self._parse_persistentvolumeclaims(pod_list, kubecfg=kubeconfig)
 		num_of_hosts_conn = self._parse_number_of_hosts(pod_list, kubecfg=kubeconfig)
 		cpu_conn, memory_conn = self._get_cpu_memory_usage_kubelet(pod_list, kubecfg=kubeconfig)
-		networkReceiveBytesTotal, networkTransmitBytesTotal = self._get_network_usage(pod_list, kubecfg=kubeconfig)
+		networkReceiveBytesTotal, networkTransmitBytesTotal, oom_events = self._get_cadvisor_metrics(pod_list, kubecfg=kubeconfig)
 
 		num_of_not_running_pods = self._num_of_not_running_pods(pod_list, kubecfg=kubeconfig)
+
 		num_of_pods = len(pod_list)
 		num_of_containers = num_of_containers_conn
 		num_of_hosts = num_of_hosts_conn
@@ -1019,6 +1029,7 @@ class CRMetrics(CRBase):
 			op['networkReceiveBytes'] = str(networkReceiveBytesTotal) + " bytes"
 			op['networkTransmitBytes'] = str(networkTransmitBytesTotal) + " bytes"
 			op['notRunningPods'] = str(num_of_not_running_pods)
+			op['oom_events'] = str(oom_events)
 			json_op = json.dumps(op)
 			print(json_op)
 		elif opformat == 'prometheus':
@@ -1033,7 +1044,10 @@ class CRMetrics(CRBase):
 			numOfPods = 'pods{custom_resource="'+custom_res_instance+'"} ' + str(num_of_pods) + ' ' + timeInMillis
 			numOfContainers = 'containers{custom_resource="'+custom_res_instance+'"} ' + str(num_of_containers) + ' ' + timeInMillis
 			numOfNotRunningPods = 'not_running_pods{custom_resource="'+custom_res_instance+'"} ' + str(num_of_not_running_pods) + ' ' + timeInMillis
-			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers + "\n" + networkReceiveBytes + "\n" + networkTransmitBytes + "\n" + numOfNotRunningPods
+
+			oomEvents = 'oom_events{custom_resource="'+custom_res_instance+'"} ' + str(oom_events) + ' ' + timeInMillis
+                         
+			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers + "\n" + networkReceiveBytes + "\n" + networkTransmitBytes + "\n" + numOfNotRunningPods + "\n" + oomEvents
 			print(metricsToReturn)
 		elif opformat == 'pretty':
 			#print("---------------------------------------------------------- ")
