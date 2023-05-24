@@ -808,7 +808,7 @@ class CRMetrics(CRBase):
 	def _get_cadvisor_metrics(self, pod_list, kubecfg=''):
 		networkReceiveBytesTotal = 0
 		networkTransmitBytesTotal = 0
-                oom_events = 0
+		oom_events = 0
 
 		#print(pod_list)
 		platf = platform.system()
