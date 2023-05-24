@@ -51,7 +51,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    python3 -m venv venv
    source venv/bin/activate
    pip3 install -r requirements.txt
-   python provider-kubeconfig.py create $KUBEPLUS_NS
+   python3 provider-kubeconfig.py create $KUBEPLUS_NS
    ```
 
 3) Install KubePlus Operator using the generated provider kubeconfig 
@@ -140,7 +140,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
     kubectl delete -f ./examples/multitenancy/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json
     kubectl delete -f ./examples/multitenancy/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
     helm delete kubeplus -n $KUBEPLUS_NS
-    python provider-kubeconfig.py delete $KUBEPLUS_NS
+    python3 provider-kubeconfig.py delete $KUBEPLUS_NS
     ```
 
 <!--
