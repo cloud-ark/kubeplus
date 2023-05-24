@@ -47,7 +47,12 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 2) Create provider kubeconfig using the provider-kubeconfig.py utility that we provide
 
-   ``python provider-kubeconfig.py create $KUBEPLUS_NS``
+   ``
+     python3 -m venv venv
+     source venv/bin/activate
+     pip3 install -r requirements.txt
+     python provider-kubeconfig.py create $KUBEPLUS_NS
+   ``
 
 3) Install KubePlus Operator using the generated provider kubeconfig 
 
@@ -159,18 +164,25 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
   export PATH=$KUBEPLUS_HOME/plugins:$PATH
 ```
 
-3) Try following examples:
+3) Install requirements for generating provider kubeconfig.
+```
+  python3 -m venv venv
+  source venv/bin/activate
+  pip3 install -r requirements.txt
+```
+
+4) Try following examples:
    - [Hello world](./examples/multitenancy/hello-world/steps.txt)
    - [Wordpress](./examples/multitenancy/wordpress/steps.txt)
    - [Bitnami Odoo chart](./examples/multitenancy/odoo/steps.txt)
 
-4) Run tests
+5) Run tests
 ```
    cd tests
    python3 -m unittest -v tests
 ```
 
-5) Troubleshoot
+6) Troubleshoot
 ```
    kubectl logs <kubeplus-pod> -c crd-hook
    kubectl logs <kubeplus-pod> -c helmer
