@@ -39,13 +39,28 @@ KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](htt
 
 ## Example
 
-Let’s look at an example of creating a multi-instance WordPress Service using KubePlus. The WordPress service provider goes through the following steps towards this:
+Let’s look at an example of creating a multi-instance WordPress Service using KubePlus. The WordPress service provider goes through the following steps towards this on their cluster:
 
-1) Set the Namespace in which to deploy KubePlus
+1) Create cluster (or using existing cluster)
+   For testing purposes you can create a minikube cluster:
+
+   ``$ minikube start --kubernetes-version=v1.24.3``
+
+2) Download KubePlus plugins and set up the PATH
+```
+  wget "https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-kubectl-plugins.tar.gz?raw=true"
+  mv kubeplus-kubectl-plugins.tar.gz\?raw\=true kubeplus-kubectl-plugins.tar.gz
+  gunzip kubeplus-kubectl-plugins.tar.gz
+  tar -xvf kubeplus-kubectl-plugins.tar
+  export KUBEPLUS_HOME=`pwd`
+  export PATH=$KUBEPLUS_HOME/plugins:$PATH
+```
+
+3) Set the Namespace in which to deploy KubePlus
 
    ``export KUBEPLUS_NS=<namespace in which you want to run KubePlus>``
 
-2) Create provider kubeconfig using the provider-kubeconfig.py utility that we provide
+4) Create provider kubeconfig using the provider-kubeconfig.py utility that we provide
 
    ```
    python3 -m venv venv
@@ -54,31 +69,35 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    python3 provider-kubeconfig.py create $KUBEPLUS_NS
    ```
 
-3) Install KubePlus Operator using the generated provider kubeconfig 
+5) Install KubePlus Operator using the generated provider kubeconfig 
 
    ```
    helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.23.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
    until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done
    ```
 
-4) Create API wrapping WordPress Helm chart.
+6) Create API wrapping WordPress Helm chart.
    
    The WordPress Helm chart can be specified as a [public url](./examples/multitenancy/wordpress/wordpress-service-composition.yaml#L14) or can be [available locally](./examples/multitenancy/wordpress/wordpress-service-composition-localchart.yaml#L14).
 
    ```
-   kubectl create -f ./examples/multitenancy/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
+   kubectl create -f [./examples/multitenancy/wordpress/wordpress-service-composition.yaml](./examples/multitenancy/wordpress/wordpress-service-composition.yaml) --kubeconfig=kubeplus-saas-provider.json
    until kubectl get crds --kubeconfig=kubeplus-saas-provider.json | grep wordpressservices  ; do echo "Waiting for WordPressService CRD to be registered.."; sleep 1; done
    ```
 
-5) Create WordpressService instance1
+7) Create WordpressService instance1
 
-   ``kubectl create -f ./examples/multitenancy/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json``
+   ```
+   kubectl create -f [./examples/multitenancy/wordpress/tenant1.yaml](./examples/multitenancy/wordpress/tenant1.yaml) --kubeconfig=kubeplus-saas-provider.json
+   ```
 
-6) Create WordpressService instance2
+8) Create WordpressService instance2
 
-   ``kubectl create -f ./examples/multitenancy/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json``
+   ```
+   kubectl create -f [./examples/multitenancy/wordpress/tenant2.yaml](./examples/multitenancy/wordpress/tenant2.yaml) --kubeconfig=kubeplus-saas-provider.json
+   ```
 
-7) Check created WordpressService instances
+9) Check created WordpressService instances
 
    ``kubectl get wordpressservices``
 
@@ -88,7 +107,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    wp-for-tenant2   26s
    ```
 
-8) Check created application resources
+10) Check created application resources
 
    ``kubectl appresources WordpressService wp-for-tenant1 –k kubeplus-saas-provider.json``
 
@@ -112,7 +131,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 <img src="./docs/app-resources.png" width="700" height="250" class="center">
 </p>-->
 
-9) Check application resource consumption
+11) Check application resource consumption
 
    ``kubectl metrics WordpressService wp-for-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json``
    
@@ -133,12 +152,12 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    ---------------------------------------------------------- 
    ```
 
-10) Cleanup
+12) Cleanup
 
     ```
-    kubectl delete -f ./examples/multitenancy/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
-    kubectl delete -f ./examples/multitenancy/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json
-    kubectl delete -f ./examples/multitenancy/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
+    kubectl delete wordpressservice wp-for-tenant1 --kubeconfig=kubeplus-saas-provider.json
+    kubectl delete wordpressservice wp-for-tenant2 --kubeconfig=kubeplus-saas-provider.json
+    kubectl delete resourcecomposition wordpress-service-composition --kubeconfig=kubeplus-saas-provider.json
     helm delete kubeplus -n $KUBEPLUS_NS
     python3 provider-kubeconfig.py delete $KUBEPLUS_NS
     ```
@@ -150,39 +169,18 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 ## Try
 
-1) Create minikube cluster
-
-   ``$ minikube start --kubernetes-version=v1.24.3``
-
-2) Download KubePlus plugins and set up the PATH
-```
-  wget "https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-kubectl-plugins.tar.gz?raw=true"
-  mv kubeplus-kubectl-plugins.tar.gz\?raw\=true kubeplus-kubectl-plugins.tar.gz
-  gunzip kubeplus-kubectl-plugins.tar.gz
-  tar -xvf kubeplus-kubectl-plugins.tar
-  export KUBEPLUS_HOME=`pwd`
-  export PATH=$KUBEPLUS_HOME/plugins:$PATH
-```
-
-3) Install requirements for generating provider kubeconfig.
-```
-  python3 -m venv venv
-  source venv/bin/activate
-  pip3 install -r requirements.txt
-```
-
-4) Try following examples:
+1) Examples:
    - [Hello world](./examples/multitenancy/hello-world/steps.txt)
    - [Wordpress](./examples/multitenancy/wordpress/steps.txt)
    - [Bitnami Odoo chart](./examples/multitenancy/odoo/steps.txt)
 
-5) Run tests
+2) Run tests
 ```
    cd tests
    python3 -m unittest -v tests
 ```
 
-6) Troubleshoot
+3) Troubleshoot
 ```
    kubectl logs <kubeplus-pod> -c crd-hook
    kubectl logs <kubeplus-pod> -c helmer

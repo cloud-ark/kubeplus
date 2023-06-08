@@ -50,17 +50,17 @@ Deploy WordPressService for tenant1
 
 Verify that WP instance is created:
 - kubectl get ns --kubeconfig=kubeplus-saas-provider.json
-  -> verify that wp-tenant1 namespace is created
-- kubectl describe wordpressservice wp-tenant1 --kubeconfig=kubeplus-saas-provider.json
+  -> verify that wp-for-tenant1 namespace is created
+- kubectl describe wordpressservice wp-for-tenant1 --kubeconfig=kubeplus-saas-provider.json
   -> should see the name of the helm release in the status field
-- kubectl get pods -n wp-tenant1 --kubeconfig=kubeplus-saas-provider.json
+- kubectl get pods -n wp-for-tenant1 --kubeconfig=kubeplus-saas-provider.json
   -> should see 2 pods getting created
 
-Wait till all the wp-tenant1 instance pods are in 'Running' state.
+Wait till all the wp-for-tenant1 instance pods are in 'Running' state.
 Then perform following actions:
 
 Get Wordpress URL
-- kubectl appurl WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+- kubectl appurl WordpressService wp-for-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
 - curl -v <the app url output from above command>
   - Note that this IP:Port combination will be reachable through your browser only
     if you have opened up your Kubernetes cluster to traffic from outside world.
@@ -68,18 +68,18 @@ Get Wordpress URL
   - should see the Wordpress install page details with options for various languages
 
 Check created resources
-- kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
+- kubectl appresources WordpressService wp-for-tenant1 –k kubeplus-saas-provider.json
   - should see all the created Kubernetes objects for this application instance
 
 Get logs
-- kubectl applogs WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+- kubectl applogs WordpressService wp-for-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
   - should see logs for all the containers in both the Pods
 
 Get metrics
-- kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+- kubectl metrics WordpressService wp-for-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
 
 Visualize topology
-- kubectl connections WordpressService wp-tenant1 $KUBEPLUS_NS -o png -k kubeplus-saas-provider.json
+- kubectl connections WordpressService wp-for-tenant1 $KUBEPLUS_NS -o png -k kubeplus-saas-provider.json
   - Check the generated png file. For reference check wp-service-connections.png
 
 Cleanup

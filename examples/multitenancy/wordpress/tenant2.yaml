@@ -1,6 +1,7 @@
 apiVersion: platformapi.kubeplus/v1alpha1
 kind: WordpressService 
 metadata:
-  name: wp-for-tenant1
+  name: wp-for-tenant2
 spec:
-  resourceName: wp-for-tenant1
+  resourceName: wp-for-tenant2
+  nodeName: minikube
