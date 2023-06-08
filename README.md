@@ -41,7 +41,7 @@ KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](htt
 
 Let’s look at an example of creating a multi-instance WordPress Service using KubePlus. The WordPress service provider goes through the following steps towards this on their cluster:
 
-1) Create cluster (or using existing cluster)
+1) Create cluster (or using existing cluster).
    For testing purposes you can create a minikube cluster:
 
    ``$ minikube start --kubernetes-version=v1.24.3``
@@ -88,13 +88,13 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 7) Create WordpressService instance1
 
    ```
-   kubectl create -f [./examples/multitenancy/wordpress/tenant1.yaml](./examples/multitenancy/wordpress/tenant1.yaml) --kubeconfig=kubeplus-saas-provider.json
+   kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/wordpress/tenant1.yaml  --kubeconfig=kubeplus-saas-provider.json
    ```
 
 8) Create WordpressService instance2
 
    ```
-   kubectl create -f [./examples/multitenancy/wordpress/tenant2.yaml](./examples/multitenancy/wordpress/tenant2.yaml) --kubeconfig=kubeplus-saas-provider.json
+   kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json
    ```
 
 9) Check created WordpressService instances
