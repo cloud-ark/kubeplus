@@ -4,4 +4,3 @@ metadata:
   name: wp-for-tenant2
 spec:
   resourceName: wp-for-tenant2
-  nodeName: minikube
