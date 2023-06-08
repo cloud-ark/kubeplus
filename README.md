@@ -81,7 +81,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    The WordPress Helm chart can be specified as a [public url](./examples/multitenancy/wordpress/wordpress-service-composition.yaml#L14) or can be [available locally](./examples/multitenancy/wordpress/wordpress-service-composition-localchart.yaml#L14).
 
    ```
-   kubectl create -f [./examples/multitenancy/wordpress/wordpress-service-composition.yaml](./examples/multitenancy/wordpress/wordpress-service-composition.yaml) --kubeconfig=kubeplus-saas-provider.json
+   kubectl create -f  https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
    until kubectl get crds --kubeconfig=kubeplus-saas-provider.json | grep wordpressservices  ; do echo "Waiting for WordPressService CRD to be registered.."; sleep 1; done
    ```
 
@@ -186,6 +186,12 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    kubectl logs <kubeplus-pod> -c helmer
    kubectl exec -it <kubeplus-pod> -c kubeconfiggenerator /bin/bash; tail -100 /root/kubeconfiggenerator.log
 ```
+
+## Case studies
+
+1) [Bitnami Charts](https://cloudark.medium.com/kubeplus-verified-to-deliver-managed-services-with-100-bitnami-helm-charts-57eae3b9f6a6)
+
+2) [Managed Jenkins Service at UT Austin](https://cloudark.medium.com/building-a-managed-jenkins-service-for-ut-austin-a-case-study-with-kubeplus-bdc082032f73)
 
 
 ## CNCF Landscape
