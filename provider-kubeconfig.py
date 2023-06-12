@@ -71,7 +71,7 @@ class KubeconfigGenerator(object):
                 #print(err)
                 return out, err
 
-        def _create_kubecfg_file(self, sa, namespace, token, ca, server, kubeconfig):
+        def _create_kubecfg_file(self, sa, namespace, filename, token, ca, server, kubeconfig):
                 top_level_dict = {}
                 top_level_dict["apiVersion"] = "v1"
                 top_level_dict["kind"] = "Config"
@@ -115,16 +115,15 @@ class KubeconfigGenerator(object):
                 top_level_dict["current-context"] = contextName
 
                 json_file = json.dumps(top_level_dict)
-                fileName =  sa + ".json"
 
-                fp = open(os.getcwd() + "/" + fileName, "w")
+                fp = open(os.getcwd() + "/" + filename, "w")
                 fp.write(json_file)
                 fp.close()
 
                 configmapName = sa
                 created = False 
                 while not created:        
-                        cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getcwd() + "/" + fileName + kubeconfig
+                        cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getcwd() + "/" + filename + kubeconfig
                         self.run_command(cmd)
                         get_cmd = "kubectl get configmap " + configmapName + " -n "  + namespace + kubeconfig
                         output, err = self.run_command(get_cmd)
@@ -672,7 +671,7 @@ class KubeconfigGenerator(object):
                     sys.exit()
                 return out
 
-        def _generate_kubeconfig(self, sa, namespace, api_server_ip='', kubeconfig=''):
+        def _generate_kubeconfig(self, sa, namespace, filename, api_server_ip='', kubeconfig=''):
                 cmdprefix = ""
                 cmd = " kubectl create sa " + sa + " -n " + namespace + kubeconfig
                 cmdToRun = cmdprefix + " " + cmd
@@ -731,7 +730,7 @@ class KubeconfigGenerator(object):
                         else:
                             server = "https://" + api_server_ip
                         #print("Kube API Server:" + server)
-                        self._create_kubecfg_file(sa, namespace, token, ca_cert, server, kubeconfig)
+                        self._create_kubecfg_file(sa, namespace, filename, token, ca_cert, server, kubeconfig)
 
 
 if __name__ == '__main__':
@@ -759,6 +758,7 @@ if __name__ == '__main__':
         parser.add_argument("namespace", help="namespace in which KubePlus will be installed.")
         parser.add_argument("-k", "--kubeconfig", help="kubeconfig file")
         parser.add_argument("-s", "--serverip", help="api server ip address")
+        parser.add_argument("-f", "--filename", help="output file name (default name is kubeplus-saas-provider.json)")
         permission_help = "permissions file - use with update command.\n"
         permission_help = permission_help + "Should be a JSON file with the following structure:\n"
         permission_help = permission_help + "{perms:{<apiGroup1>:[{resource1|resource/resourceName::<resourceName>: [verb1, verb2, ...]}, {resource2: [..]}], {<apiGroup2>:[...]}}}"
@@ -793,6 +793,13 @@ if __name__ == '__main__':
 
         kubeconfigGenerator = KubeconfigGenerator()
         sa = 'kubeplus-saas-provider'
+
+        filename = sa
+        if args.filename:
+            filename = args.filename
+            if not filename.endswith(".json"):
+                filename += ".json"
+
         if action == "create":
                 create_ns = "kubectl get ns " + namespace + kubeconfigString
                 out, err = run_command(create_ns)
@@ -803,13 +810,13 @@ if __name__ == '__main__':
                 run_command(cmd)
 
                 # 1. Generate Provider kubeconfig
-                kubeconfigGenerator._generate_kubeconfig(sa, namespace, api_server_ip=api_s_ip, kubeconfig=kubeconfigString)
+                kubeconfigGenerator._generate_kubeconfig(sa, namespace, filename, api_server_ip=api_s_ip, kubeconfig=kubeconfigString)
                 kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider', kubeconfig=kubeconfigString)
-                print("Provider kubeconfig created: kubeplus-saas-provider.json")
+                print("Provider kubeconfig created: " + filename)
 
         if action == "update":
                 kubeconfigGenerator._update_rbac(permission_file, sa, namespace, kubeconfigString)
-                print("Provider kubeconfig permissions updated: kubeplus-saas-provider.json")
+                print("Provider kubeconfig permissions updated: " + filename)
 
 
         if action == "delete":
@@ -822,7 +829,7 @@ if __name__ == '__main__':
                 run_command("kubectl delete configmap kubeplus-saas-provider-perms -n " + namespace)
                 cwd = os.getcwd()
                 run_command("rm " + cwd + "/kubeplus-saas-provider-secret.yaml")
-                run_command("rm " + cwd + "/kubeplus-saas-provider.json")
+                run_command("rm " + cwd + "/" + filename)
                 run_command("rm " + cwd + "/kubeplus-saas-provider-role.yaml")
                 run_command("rm " + cwd + "/kubeplus-saas-provider-update-role.yaml")
                 run_command("rm " + cwd + "/kubeplus-saas-provider-rolebinding.yaml")
