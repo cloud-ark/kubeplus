@@ -797,10 +797,14 @@ if __name__ == '__main__':
         filename = sa
         if args.filename:
             filename = args.filename
-            if not filename.endswith(".json"):
-                filename += ".json"
+        if not filename.endswith(".json"):
+            filename += ".json"
 
         if action == "create":
+                if permission_file:
+                    print("Permissions file should be used with update command.")
+                    exit(1)
+
                 create_ns = "kubectl get ns " + namespace + kubeconfigString
                 out, err = run_command(create_ns)
                 if 'not found' in out or 'not found' in err:
