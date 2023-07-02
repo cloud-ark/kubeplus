@@ -493,41 +493,47 @@ def flatten(yaml_contents, flattened, types_dict, prefix=''):
             inner_prop_dict = {}
             prop_dict = {'properties': inner_prop_dict}
             prop_dict['type'] = 'object'
-            prop_dict['additionalProperties'] = True
             types_dict[key] = prop_dict
             if value:
                 flatten(value, flattened, inner_prop_dict, prefix=prefix + key + ".")
                 flattened[prefix + key] = value
             else:
                 flattened[prefix + key] = {}
+                prop_dict['additionalProperties'] = True
         if isinstance(value, list):
-            #types_dict[key] = {'type': 'array', 'items': []}
-            types_dict[key] = {'type': 'array', 'items': {'type': 'string'}}
+            types_dict[key] = {'type': 'array'}
             if len(value) == 0:
                 flattened[prefix + key] = []
+                # needed so this field isn't pruned
+                types_dict[key]['items'] = {'x-kubernetes-preserve-unknown-fields': True}
             else:
+                types_dict[key]['items'] = []
                 for l in value:
                     if isinstance(l, dict) or isinstance(l, list):
-                        if isinstance(l, dict):
-                            inner_prop_dict = {}
-                            prop_dict = {'properties': inner_prop_dict}
-                            prop_dict['type'] = 'object'
-                            #types_dict[key]['items'].append(prop_dict)
-                            #types_dict[key]['type'] = 'object'
-                            types_dict[key]['items'] = prop_dict
-                            types_dict[key]['type'] = 'array'
-                        if isinstance(l, list):
-                            inner_prop_dict = {}
-                            prop_dict = {'items': inner_prop_dict}
-                            #prop_dict['type'] = 'object'
-                            #types_dict[key]['items'].append(prop_dict)
-                            #types_dict[key]['type'] = 'object'
-                            prop_dict['type'] = 'array'
-                            types_dict[key]['items'] = prop_dict
-                            types_dict[key]['type'] = 'array'
+                        inner_prop_dict = {}
                         flatten(l, flattened, inner_prop_dict, prefix=prefix + key + ".")
+                        if isinstance(l, dict):
+                            prop_dict = {'type': 'object', 'properties': inner_prop_dict}
+                        elif isinstance(l, list):
+                            prop_dict = {'type': 'array', 'items': inner_prop_dict}
+                        types_dict[key]['items'].append(prop_dict)
                     else:
                         flattened[prefix + key] = l
+                        if isinstance(l, str):
+                            types_dict[key]['items'].append({'type': 'string'})
+                        elif isinstance(l, bool):
+                            types_dict[key]['items'].append({'type': 'boolean'})
+                        elif isinstance(l, int):
+                            types_dict[key]['items'].append({'type': 'integer'})
+                        elif isinstance(l, float):
+                            types_dict[key]['items'].append({'type': 'float'})
+                if types_dict[key]['items']:
+                    # check for varying types in array
+                    if not all(t == types_dict[key]['items'][0] for t in types_dict[key]['items']):
+                        # Kubernetes structural schema only allows arrays of one type
+                        types_dict[key]['items'] = {'x-kubernetes-preserve-unknown-fields': True}
+                    else:
+                        types_dict[key]['items'] = types_dict[key]['items'][0]
 
 
 def download_and_untar_chart(chartLoc, chartName):
