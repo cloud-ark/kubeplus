@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"context"
+	gerrors "errors" 
 
 	_ "github.com/lib/pq"
 	"net/http"
@@ -390,7 +391,12 @@ func (c *Controller) syncHandler(key string) error {
 	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
 	// Check if CRD is present or not. Create it only if it is not present.
 	action := "create"
-	handleCRD(name, kind, version, group, plural, action, namespace, chartURL, chartName)
+	crdCreationStatus := handleCRD(name, kind, version, group, plural, action, namespace, chartURL, chartName)
+
+	if crdCreationStatus != nil {
+		go c.updateResourceCompositionStatus(foo, crdCreationStatus.Error(), namespace)
+		return nil
+	}
 
  	resPolicySpec := foo.Spec.ResPolicy
  	fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
@@ -405,7 +411,37 @@ func (c *Controller) syncHandler(key string) error {
 	createResourceMonitor(resMonitorSpec, namespace)
 
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
+
+	creationStatus := "New CRD defined in ResourceComposition created successfully."
+	go c.updateResourceCompositionStatus(foo, creationStatus, namespace)
 	return nil
+}
+
+func (c *Controller) updateResourceCompositionStatus(foo *platformworkflowv1alpha1.ResourceComposition, status, namespace string) {
+	fmt.Printf("Inside updateResourceCompositionStatus")
+	fooCopy := foo.DeepCopy()
+	fooCopy.Status.Status = status
+
+	timeout := 300
+	count := 0
+	for {
+	_, err := c.platformStackclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Update(context.Background(), fooCopy, metav1.UpdateOptions{})
+	//_, err := c.sampleclientset.MoodlecontrollerV1().Moodles(foo.Namespace).Update(fooCopy)
+	if err != nil {
+		fmt.Printf("Platformcontroller.go  : ERROR in UpdateResourceCompositionStatus %e", err)
+		time.Sleep(1 * time.Second)
+		count = count + 1
+	} else {
+		fmt.Printf("Successfully updated Resource Composition status.")
+		break
+	}
+	if count >= timeout {
+		fmt.Printf("\n--")
+		fmt.Printf("CR instance %v not ready till timeout.\n", foo)
+		fmt.Printf("---")
+		break
+	}
+	}
 }
 
 func createResourceMonitor(resMonitorSpec interface{}, namespace string) {
@@ -735,7 +771,12 @@ func handleCRD(rescomposition, kind, version, group, plural, action, namespace, 
 				panic(err1.Error())
 			}
 		*/
-		CreateCRD(kind, version, group, plural, chartURL, chartName)
+		resp := CreateCRD(kind, version, group, plural, chartURL, chartName)
+		respString := string(resp)
+		fmt.Printf("\nCreate CRD response:%s\n", respString)
+		if strings.Contains(respString, "Error") {
+			return gerrors.New(respString)
+		 }
 		}
 	} else {
 		fmt.Printf("CRD Group:%s Version:%s Kind:%s Plural:%s found.\n", group, version, kind, plural)

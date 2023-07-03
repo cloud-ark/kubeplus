@@ -82,8 +82,16 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
    ```
    kubectl create -f  https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
-   until kubectl get crds --kubeconfig=kubeplus-saas-provider.json | grep wordpressservices  ; do echo "Waiting for WordPressService CRD to be registered.."; sleep 1; done
+   kubectl get resourcecompositions
+   kubectl describe resourcecomposition wordpress-service-composition
    ```
+   If the status of the wordpress-service-composition indicates that the new CRD has been created successfully, verify it:
+
+   ```
+   kubectl get crds
+   ```
+   
+   You should see ```wordpressservices.platformapi.kubeplus``` CRD registered.
 
 7) Create WordpressService instance1
 
