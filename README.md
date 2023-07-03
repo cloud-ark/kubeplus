@@ -111,29 +111,29 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
    ```
    NAME             AGE
-   wp-for-tenant1   86s
-   wp-for-tenant2   26s
+   wp-tenant1   86s
+   wp-tenant2   26s
    ```
 
 10) Check created application resources
 
-   ``kubectl appresources WordpressService wp-for-tenant1 –k kubeplus-saas-provider.json``
+   ``kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json``
 
     ```
-     NAMESPACE                 KIND                      NAME                      
-     default                   WordpressService          wp-for-tenant1            
-     wp-for-tenant1            PersistentVolumeClaim     mysql-pv-claim            
-     wp-for-tenant1            PersistentVolumeClaim     wp-for-tenant1            
-     wp-for-tenant1            Service                   wordpress-mysql           
-     wp-for-tenant1            Service                   wp-for-tenant1            
-     wp-for-tenant1            Deployment                mysql                     
-     wp-for-tenant1            Deployment                wp-for-tenant1            
-     wp-for-tenant1            Pod                       mysql-76d6d9bdfd-7ffhx    
-     wp-for-tenant1            Pod                       wp-for-tenant1-87c4c954-7n9rk 
-     wp-for-tenant1            NetworkPolicy             allow-external-traffic    
-     wp-for-tenant1            NetworkPolicy             restrict-cross-ns-traffic 
-     wp-for-tenant1            ResourceQuota             wordpressservice-wp-for-tenant1 
-    ```
+      NAMESPACE                 KIND                      NAME                      
+      default                   WordpressService          wp-tenant1                
+      wp-tenant1                PersistentVolumeClaim     mysql-pv-claim            
+      wp-tenant1                PersistentVolumeClaim     wp-for-tenant1            
+      wp-tenant1                Service                   wordpress-mysql           
+      wp-tenant1                Service                   wp-for-tenant1            
+      wp-tenant1                Deployment                mysql                     
+      wp-tenant1                Deployment                wp-for-tenant1            
+      wp-tenant1                Pod                       mysql-76d6d9bdfd-2wl2p    
+      wp-tenant1                Pod                       wp-for-tenant1-87c4c954-s2cct 
+      wp-tenant1                NetworkPolicy             allow-external-traffic    
+      wp-tenant1                NetworkPolicy             restrict-cross-ns-traffic 
+      wp-tenant1                ResourceQuota             wordpressservice-wp-tenant1 
+   ```
 <!--
 <p align="center">
 <img src="./docs/app-resources.png" width="700" height="250" class="center">
@@ -141,7 +141,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 11) Check application resource consumption
 
-   ``kubectl metrics WordpressService wp-for-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json``
+   ``kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json``
    
    ```
    ---------------------------------------------------------- 
@@ -163,8 +163,8 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 12) Cleanup
 
     ```
-    kubectl delete wordpressservice wp-for-tenant1 --kubeconfig=kubeplus-saas-provider.json
-    kubectl delete wordpressservice wp-for-tenant2 --kubeconfig=kubeplus-saas-provider.json
+    kubectl delete wordpressservice wp-tenant1 --kubeconfig=kubeplus-saas-provider.json
+    kubectl delete wordpressservice wp-tenant2 --kubeconfig=kubeplus-saas-provider.json
     kubectl delete resourcecomposition wordpress-service-composition --kubeconfig=kubeplus-saas-provider.json
     helm delete kubeplus -n $KUBEPLUS_NS
     python3 provider-kubeconfig.py delete $KUBEPLUS_NS
