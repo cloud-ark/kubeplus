@@ -120,20 +120,20 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    ``kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json``
 
     ```
-      NAMESPACE                 KIND                      NAME                      
-      default                   WordpressService          wp-tenant1                
-      wp-tenant1                PersistentVolumeClaim     mysql-pv-claim            
-      wp-tenant1                PersistentVolumeClaim     wp-for-tenant1            
-      wp-tenant1                Service                   wordpress-mysql           
-      wp-tenant1                Service                   wp-for-tenant1            
-      wp-tenant1                Deployment                mysql                     
-      wp-tenant1                Deployment                wp-for-tenant1            
-      wp-tenant1                Pod                       mysql-76d6d9bdfd-2wl2p    
-      wp-tenant1                Pod                       wp-for-tenant1-87c4c954-s2cct 
-      wp-tenant1                NetworkPolicy             allow-external-traffic    
-      wp-tenant1                NetworkPolicy             restrict-cross-ns-traffic 
-      wp-tenant1                ResourceQuota             wordpressservice-wp-tenant1 
-   ```
+    NAMESPACE                 KIND                      NAME                      
+    default                   WordpressService          wp-tenant1                
+    wp-tenant1                PersistentVolumeClaim     mysql-pv-claim            
+    wp-tenant1                PersistentVolumeClaim     wp-for-tenant1            
+    wp-tenant1                Service                   wordpress-mysql           
+    wp-tenant1                Service                   wp-for-tenant1            
+    wp-tenant1                Deployment                mysql                     
+    wp-tenant1                Deployment                wp-for-tenant1            
+    wp-tenant1                Pod                       mysql-76d6d9bdfd-2wl2p    
+    wp-tenant1                Pod                       wp-for-tenant1-87c4c954-s2cct 
+    wp-tenant1                NetworkPolicy             allow-external-traffic    
+    wp-tenant1                NetworkPolicy             restrict-cross-ns-traffic 
+    wp-tenant1                ResourceQuota             wordpressservice-wp-tenant1 
+    ```
 <!--
 <p align="center">
 <img src="./docs/app-resources.png" width="700" height="250" class="center">
