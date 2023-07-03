@@ -62,9 +62,9 @@ def run_command(cmd):
     cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
     out = cmdOut[0].decode('utf-8')
     err = cmdOut[1].decode('utf-8')
-    print(out)
-    print("---")
-    print(err)
+    #print(out)
+    #print("---")
+    #print(err)
     return out, err
     
     #if out != '':
@@ -81,9 +81,9 @@ class KubeconfigGenerator(object):
                 cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
                 out = cmdOut[0].decode('utf-8')
                 err = cmdOut[1].decode('utf-8')
-                print(out)
-                print("---")
-                print(err)
+                #print(out)
+                #print("---")
+                #print(err)
                 return out, err
                 #if out != '':
                 #        return out
@@ -501,33 +501,39 @@ def flatten(yaml_contents, flattened, types_dict, prefix=''):
             else:
                 flattened[prefix + key] = {}
         if isinstance(value, list):
-            #types_dict[key] = {'type': 'array', 'items': []}
-            types_dict[key] = {'type': 'array', 'items': {'type': 'string'}}
+            #types_dict[key] = {'type': 'array', 'items': {'type': 'string'}}
+            namelist = []
+            prop_list_dict = {}
+            types_dict[key] = {'type': 'object', 'properties': prop_list_dict, 'anyOf': []}
             if len(value) == 0:
                 flattened[prefix + key] = []
             else:
                 for l in value:
                     if isinstance(l, dict) or isinstance(l, list):
+                        namelist.append(l['name'])
                         if isinstance(l, dict):
                             inner_prop_dict = {}
                             prop_dict = {'properties': inner_prop_dict}
                             prop_dict['type'] = 'object'
-                            #types_dict[key]['items'].append(prop_dict)
-                            #types_dict[key]['type'] = 'object'
-                            types_dict[key]['items'] = prop_dict
-                            types_dict[key]['type'] = 'array'
+                            types_dict[key]['properties'][l['name']] = prop_dict
+                            #types_dict[key]['items'] = prop_dict
                         if isinstance(l, list):
                             inner_prop_dict = {}
                             prop_dict = {'items': inner_prop_dict}
-                            #prop_dict['type'] = 'object'
-                            #types_dict[key]['items'].append(prop_dict)
-                            #types_dict[key]['type'] = 'object'
                             prop_dict['type'] = 'array'
-                            types_dict[key]['items'] = prop_dict
-                            types_dict[key]['type'] = 'array'
+                            types_dict[key]['properties'][l['name']] = prop_dict
+                            #types_dict[key]['items'] = prop_dict
                         flatten(l, flattened, inner_prop_dict, prefix=prefix + key + ".")
                     else:
                         flattened[prefix + key] = l
+                for name in namelist:
+                    propNameDict = {}
+                    propNameDict['properties'] = None
+                    propNameDict['required'] = []
+                    propNameDict['required'].append(name)
+                    types_dict[key]['anyOf'].append(propNameDict)
+                for propName in types_dict[key]['properties']:
+                    del types_dict[key]['properties'][propName]['properties']['name']
 
 
 def download_and_untar_chart(chartLoc, chartName):
@@ -801,9 +807,9 @@ def dryrunchart():
         app.logger.info(cmd)
         out, err = run_command(cmd)
 
-        print(out)
+        #print(out)
         #app.logger.info("Helm install output:" + out)
-        print(err)
+        #print(err)
         #app.logger.info("Helm install error:" + err)
 
         if err.strip() == '':

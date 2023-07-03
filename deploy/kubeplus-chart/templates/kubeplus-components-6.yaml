@@ -317,7 +317,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: kubeconfiggenerator
-        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.18
+        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.19
         imagePullPolicy: IfNotPresent
         env:
           - name: KUBEPLUS_NAMESPACE
@@ -347,7 +347,7 @@ spec:
         - name: shared-data
           mountPath: /crdinstances
       - name: platform-operator
-        image: gcr.io/cloudark-kubeplus/platform-operator:3.0.3
+        image: gcr.io/cloudark-kubeplus/platform-operator:3.0.4
         imagePullPolicy: IfNotPresent
         command: [ "/platform-operator"]
       - name: consumerui
