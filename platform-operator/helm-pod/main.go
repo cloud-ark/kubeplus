@@ -218,12 +218,14 @@ func getKubePlusPod() string {
 		return podName
 	}
 	for _, podObj := range podList.Items {
-		ownerRefObj := podObj.ObjectMeta.OwnerReferences[0]
-		podOwnerName := ownerRefObj.Name
-		if podOwnerName == replicaSetName {
-			podName = podObj.ObjectMeta.Name
-			//fmt.Printf("RSSetName:%s, PodName:%s\n", replicaSetName, podName)
-			break
+		if podObj.ObjectMeta.OwnerReferences != nil {
+			ownerRefObj := podObj.ObjectMeta.OwnerReferences[0]
+			podOwnerName := ownerRefObj.Name
+			if podOwnerName == replicaSetName {
+				podName = podObj.ObjectMeta.Name
+				//fmt.Printf("RSSetName:%s, PodName:%s\n", replicaSetName, podName)
+				break
+			}
 		}
 	}
 	return podName
