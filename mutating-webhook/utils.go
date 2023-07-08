@@ -855,9 +855,12 @@ func CheckApplicationNodeName(nodeName string) bool  {
 // http://10.80.10.160:90/apis/kubeplus/deploy?platformworkflow=hello-world-service-composition&customresource=hello-world-tenant1&namespace=default&overrides={"greeting":"Hi"}
 func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides, cpu_req, cpu_lim, mem_req, mem_lim string) []byte {
 	encodedOverrides := url.QueryEscape(overrides)
-	fp, _ := os.Create("/crdinstances/" + platformworkflow + "-" + customresource)
-	fp.WriteString(overrides)
-	fp.Close()
+	//fp, _ := os.Create("/crdinstances/" + platformworkflow + "-" + customresource)
+	//fp.WriteString(encodedOverrides)
+	//fp.Close()
+
+        CreateOverrides(platformworkflow, customresource)
+
 	args := fmt.Sprintf("platformworkflow=%s&customresource=%s&namespace=%s&overrides=%s&cpu_req=%s&cpu_lim=%s&mem_req=%s&mem_lim=%s", platformworkflow, customresource, namespace, encodedOverrides, cpu_req, cpu_lim, mem_req, mem_lim)
 	fmt.Printf("Inside QueryDeployEndpoint...\n")
 	var url1 string
@@ -883,6 +886,16 @@ func TestChartDeployment(kind, namespace, chartName, chartURL string) []byte {
 	args := fmt.Sprintf("kind=%s&namespace=%s&chartName=%s&chartURL=%s", kind, namespace, chartName, encodedChartURL)
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/testChartDeployment?%s", serviceHost, servicePort, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
+func CreateOverrides(platformworkflow, customresource string) []byte {
+	fmt.Printf("Inside CreateOverrides...\n")
+	args := fmt.Sprintf("platformworkflow=%s&customresource=%s", platformworkflow, customresource)
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/overrides?%s", serviceHost, verificationServicePort, args)
 	fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body

@@ -501,39 +501,49 @@ def flatten(yaml_contents, flattened, types_dict, prefix=''):
             else:
                 flattened[prefix + key] = {}
         if isinstance(value, list):
-            #types_dict[key] = {'type': 'array', 'items': {'type': 'string'}}
-            namelist = []
-            prop_list_dict = {}
-            types_dict[key] = {'type': 'object', 'properties': prop_list_dict, 'anyOf': []}
+            types_dict[key] = {'type': 'array', 'items': {'type': 'string'}}
             if len(value) == 0:
                 flattened[prefix + key] = []
             else:
+                namelist = []
+                prop_list_dict = {}
                 for l in value:
                     if isinstance(l, dict) or isinstance(l, list):
-                        namelist.append(l['name'])
+                        if 'name' in l:
+                            types_dict[key] = {'type': 'array', 'properties': prop_list_dict, 'anyOf': [], 'items': {'type': 'object'}}
+                            #if 'items' in types_dict[key]:
+                            #    del types_dict[key]['items']
+                            namelist.append(l['name'])
                         if isinstance(l, dict):
                             inner_prop_dict = {}
                             prop_dict = {'properties': inner_prop_dict}
                             prop_dict['type'] = 'object'
-                            types_dict[key]['properties'][l['name']] = prop_dict
-                            #types_dict[key]['items'] = prop_dict
+                            if 'name' in l:
+                                types_dict[key]['properties'][l['name']] = prop_dict
+                            else:
+                                types_dict[key]['items'] = prop_dict
+                                types_dict[key]['type'] = 'array'
                         if isinstance(l, list):
                             inner_prop_dict = {}
                             prop_dict = {'items': inner_prop_dict}
                             prop_dict['type'] = 'array'
-                            types_dict[key]['properties'][l['name']] = prop_dict
-                            #types_dict[key]['items'] = prop_dict
+                            if 'name' in l:
+                                types_dict[key]['properties'][l['name']] = prop_dict
+                            else:
+                                types_dict[key]['items'] = prop_dict
+                                types_dict[key]['type'] = 'array'
                         flatten(l, flattened, inner_prop_dict, prefix=prefix + key + ".")
                     else:
                         flattened[prefix + key] = l
-                for name in namelist:
-                    propNameDict = {}
-                    propNameDict['properties'] = None
-                    propNameDict['required'] = []
-                    propNameDict['required'].append(name)
-                    types_dict[key]['anyOf'].append(propNameDict)
-                for propName in types_dict[key]['properties']:
-                    del types_dict[key]['properties'][propName]['properties']['name']
+                if len(namelist) > 0:
+                    for name in namelist:
+                        propNameDict = {}
+                        propNameDict['properties'] = None
+                        propNameDict['required'] = []
+                        propNameDict['required'].append(name)
+                        types_dict[key]['anyOf'].append(propNameDict)
+                    for propName in types_dict[key]['properties']:
+                        del types_dict[key]['properties'][propName]['properties']['name']
 
 
 def download_and_untar_chart(chartLoc, chartName):
@@ -589,6 +599,24 @@ def delete_chart_crds(chartName=''):
         cmd = 'kubectl create -f ' + crdLoc
         out, err = run_command(cmd)
 
+@app.route("/overrides")
+def overrides():
+    app.logger.info("Inside overrides")
+    platformworkflow = request.args.get("platformworkflow")
+    customresource = request.args.get("customresource")
+    overridesPath = "/crdinstances/" + platformworkflow + "-" + customresource 
+    fp = open(overridesPath + ".raw", "r")
+    reqObj = fp.read()
+    reqObjStr = str(reqObj, "utf-8")
+    app.logger.info("Request Object:" + reqObjStr)
+
+    fp1 = open(overridesPath, "w")
+    yaml_contents = yaml.safe_load(reqObjStr)
+    for key in yaml_contents:
+        if key == 'spec':
+            fp1.write(json.dumps(yaml_contents[key]))
+            break
+    app.logger.info("Created overrides file:" + fPath)
 
 @app.route("/registercrd")
 def registercrd():
@@ -662,7 +690,10 @@ def registercrd():
     app.logger.info("Output:" + out)
     app.logger.info("Error:" + err)
 
-    check_and_install_crds(chartURL, chartName=chartName)
+    if err == '':
+        check_and_install_crds(chartURL, chartName=chartName)
+    else:
+        return "Error:" + err
 
     return out
 
