@@ -1,0 +1,24 @@
+Pre-requisites:
+- Provider kubeconfig with the name kubeplus-saas-provider.json has been created
+- Latest version of the KubePlus Operator has been installed in the cluster
+- KubePlus kubectl plugins are available on PATH
+
+
+Test Supase creation:
+- helm repo add bitnami https://charts.bitnami.com/bitnami
+- helm pull bitnami/supabase
+- Open Supabase.yaml and change chartURL to the version of supabase tgz that you received from helm pull.
+- kubectl create -f Supabase.yaml --kubeconfig=kubeplus-saas-provider.json
+- kubectl get resourcecompositions
+- kubectl describe resourcecomposition supabase-res-composition
+- kubectl get crds
+- kubectl man Supabase -k kubeplus-saas-provider.json > sample-supabase.yaml
+- kubectl create -f sample-supabase.yaml
+- kubectl get supabases
+- kubectl describe supabase sample-supabase
+- kubectl get pods -A
+
+Cleanup:
+- kubectl delete supabase sample-supabase
+- kubectl get pods -A
+- kubectl delete -f Supabase.yaml --kubeconfig=kubeplus-saas-provider.json 
