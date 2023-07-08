@@ -317,7 +317,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: kubeconfiggenerator
-        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.19
+        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.20
         imagePullPolicy: IfNotPresent
         env:
           - name: KUBEPLUS_NAMESPACE
@@ -328,8 +328,11 @@ spec:
         command: [ "python3", "/root/kubeconfiggenerator.py"]
         args:
           - "$(KUBEPLUS_NAMESPACE)"
+        volumeMounts:
+        - name: shared-data
+          mountPath: /crdinstances
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.9
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.10
         imagePullPolicy: IfNotPresent
         env:
           - name: CHECK_KYVERNO_POLICIES

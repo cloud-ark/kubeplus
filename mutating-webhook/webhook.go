@@ -1210,7 +1210,9 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 
 	overridesBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "spec")
 	overrides := string(overridesBytes)
+	fmt.Printf("******\n")
 	fmt.Printf("Overrides:%s\n", overrides)
+	fmt.Printf("******\n")
 
 	nodeName, err := jsonparser.GetUnsafeString(req.Object.Raw, "spec", "nodeName")
 	fmt.Printf("nodeName in Spec:%s\n", nodeName)
@@ -1300,6 +1302,12 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 
 		fmt.Printf("cpu_req:%s cpu_lim:%s mem_req:%s mem_lim:%s\n", cpu_requests_q, cpu_limits_q, mem_requests_q, mem_limits_q)
 	}
+
+		//Save raw bytes of the request; We will create overrides in kubeconfiggenerator
+	        //encodedOverrides := url.QueryEscape(overrides)
+        	fp, _ := os.Create("/crdinstances/" + platformWorkflowName + "-" + crname + ".raw")
+        	fp.Write(req.Object.Raw)
+        	fp.Close()
 
 		deploymentStatus := QueryDeployEndpoint(platformWorkflowName, crname, namespace, overrides, cpu_requests_q,
 	                           cpu_limits_q, mem_requests_q, mem_limits_q)
