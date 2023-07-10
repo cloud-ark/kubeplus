@@ -1285,7 +1285,7 @@ def apply_rbac():
     print("Helm chart:" + helm_chart)
     app.logger.info("Helm chart:" + helm_chart)
 
-    cmd = '/root/helm template kptc ' + helm_chart 
+    cmd = 'helm template kptc ' + helm_chart 
     out1, _ = run_command(cmd)
     kinds = []
     for line in out1.split("\n"):
