@@ -29,15 +29,18 @@ RUN REPOLIST=ubi-7,ubi-7-optional \
 ### Install your application here -- add all other necessary items to build your image
 #RUN "ANY OTHER INSTRUCTIONS HERE"
 
-COPY helm /root/
 COPY kubectl /root/
 COPY helm-pod /root/
 RUN mkdir /.helm && mkdir -p /.helm/repository && \
     mkdir /.helm/repository/cache && mkdir -p /.helm/cache/archive && mkdir -p /.helm/cache/plugins && \ 
-    chmod +x /root/helm && chmod +x /root/kubectl && \ 
+    chmod +x /root/kubectl && \ 
     wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz && \ 
     gunzip kubeplus-kubectl-plugins.tar.gz && tar -xvf kubeplus-kubectl-plugins.tar && \ 
-    cp /plugins/* bin/ && cp /root/helm bin/. && cp /root/kubectl bin/.
+    cp /plugins/* bin/ && cp /root/kubectl bin/.
+RUN wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz \
+    && gunzip helm-v3.12.1-linux-amd64.tar.gz \
+    && tar -xvf helm-v3.12.1-linux-amd64.tar \
+    && mv linux-amd64/helm bin/.
 
 COPY repositories.yaml /.helm/repository/
 COPY cloudark-helm-charts-index.yaml /.helm/repository/cache/

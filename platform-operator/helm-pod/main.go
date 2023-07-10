@@ -350,7 +350,7 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 
 func deleteHelmRelease(helmreleaseNS, helmrelease string) bool {
 	fmt.Printf("Helm release:%s\n", helmrelease)
-	cmd := "./root/helm delete " + helmrelease + " -n " + helmreleaseNS
+	cmd := "helm delete " + helmrelease + " -n " + helmreleaseNS
 	fmt.Printf("Helm delete cmd:%s\n", cmd)
 	var output string
 	cmdRunnerPod := getKubePlusPod()
@@ -766,14 +766,14 @@ func deployChart(request *restful.Request, response *restful.Response) {
 					fmt.Printf("Output of Label NS Cmd:%v\n", execOutput)
 
 					// Install the Helm chart in the namespace that is created for that instance
-	 				helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + targetNSName
+	 				helmInstallCmd := "helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + targetNSName
 	  				fmt.Printf("ABC helm install cmd:%s\n", helmInstallCmd)
 					go runHelmInstall(cmdRunnerPod, helmInstallCmd, releaseName, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim)
 				}
 
 				if dryrun == "true" {
 					fmt.Printf("DRY RUN - ABC:%s\n", dryrun)
-					helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + namespace + " --dry-run"
+					helmInstallCmd := "helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + namespace + " --dry-run"
 
 					_, execOutput := executeExecCall(cmdRunnerPod, helmInstallCmd)
 
@@ -906,12 +906,12 @@ func testChartDeployment(request *restful.Request, response *restful.Response) {
  	releaseName := strings.ToLower(kind) + "-" + parsedChartName
 
 	//helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -n " + namespace + " --dry-run" 
-	helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -n " + namespace
+	helmInstallCmd := "helm install " + releaseName + " ./" + parsedChartName  + " -n " + namespace
 	fmt.Printf("helm install cmd:%s\n", helmInstallCmd)
 	_, execOutput := executeExecCall(cmdRunnerPod, helmInstallCmd)
 	fmt.Printf("Test chart deployment - DEF:%s\n", execOutput)
 
-	helmDeleteCmd := "./root/helm delete " + releaseName + " -n " + namespace
+	helmDeleteCmd := "helm delete " + releaseName + " -n " + namespace
 	fmt.Printf("helm delete cmd:%s\n", helmDeleteCmd)
 	executeExecCall(cmdRunnerPod, helmDeleteCmd)
 
