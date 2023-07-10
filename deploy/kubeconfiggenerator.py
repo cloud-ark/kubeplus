@@ -579,17 +579,29 @@ def get_chart_yaml(chartLoc, chartName):
     return yaml_contents
 
 
+# def check_and_install_crds(chartLoc, chartName=''):
+#     app.logger.info("Inside check_and_install_crds")
+#     download_and_untar_chart(chartLoc, chartName)
+#     crdLoc = '/' + chartName + '/crds'
+#     if os.path.exists(crdLoc):
+#         app.logger.info("CRDs exist in this chart. Installing them")
+#         cmd = 'kubectl create -f ' + crdLoc
+#         out, err = run_command(cmd)
+#         return True
+#     return False
+
 def check_and_install_crds(chartLoc, chartName=''):
     app.logger.info("Inside check_and_install_crds")
     download_and_untar_chart(chartLoc, chartName)
-    crdLoc = '/' + chartName + '/crds'
-    if os.path.exists(crdLoc):
-        app.logger.info("CRDs exist in this chart. Installing them")
-        cmd = 'kubectl create -f ' + crdLoc
-        out, err = run_command(cmd)
-        return True
-    return False
-
+    chartPath = '/' + chartName
+    found = False
+    for path, dirs, files in os.walk(chartPath):
+        if 'crds' in dirs:
+            app.logger.info("CRDs exist in this chart. Installing them")
+            cmd = 'kubectl create -f ' + os.path.join(path, 'crds')
+            out, err = run_command(cmd)
+            found = True
+    return found
 
 def delete_chart_crds(chartName=''):
     app.logger.info("Inside delete_chart_crds")
