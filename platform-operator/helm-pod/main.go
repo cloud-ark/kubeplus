@@ -15,6 +15,8 @@ import (
 	"strconv"
 	//"sync"
 	"context"
+	"io/fs"
+	"path/filepath"
 
 	"os"
 	"k8s.io/client-go/dynamic"
@@ -234,16 +236,35 @@ func getKubePlusPod() string {
 func deleteChartCRDs(request *restful.Request, response *restful.Response) {
 	fmt.Printf("-- Inside deleteChartCRDs...\n")
 	chartName := request.QueryParameter("chartName")
-
-        fmt.Printf("Chart Name:%s\n", chartName)
-        _, errF := os.Stat("/" + chartName)
-        fmt.Printf("Path checking:%v\n", errF)
-        if !os.IsNotExist(errF) {
+	fmt.Printf("Chart Name:%s\n", chartName)
+	_, errF := os.Stat("/" + chartName)
+	fmt.Printf("Path checking:%v\n", errF)
+	if !os.IsNotExist(errF) {
 		cmd := "kubectl delete -f /" + chartName + "/crds"
-
 		cmdRunnerPod := getKubePlusPod()
 		// Do in the background as deleting crds can be a time consuming action
 		go executeExecCall(cmdRunnerPod, cmd)
+
+		chartsDir := "/" + chartName + "/charts"
+		_, errF = os.Stat(chartsDir)
+		if !os.IsNotExist(errF) {
+			err := filepath.Walk(chartsDir, func(path string, info fs.FileInfo, err error) error {
+				if err != nil {
+					fmt.Printf("Failure accessing path: %q: %v\n", path, err)
+					return err
+				}
+				if info.IsDir() && info.Name() == "crds" {
+					fmt.Printf("Found subchart crds: %q\n", path)
+					cmd = "kubectl delete -f " + path
+					go executeExecCall(cmdRunnerPod, cmd)
+				}
+				return nil
+			})
+			if err != nil {
+				fmt.Printf("Error walking charts directory: %q: %v\n", chartsDir, err)
+				return
+			}
+		}
 	}
 }
 
