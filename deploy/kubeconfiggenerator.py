@@ -488,12 +488,11 @@ def flatten(yaml_contents, flattened, types_dict, prefix=''):
             types_dict[key] = {'type': 'integer'}
         elif isinstance(value, float):
             flattened[prefix + key] = value
-            types_dict[key] = {'type': 'float'}
+            types_dict[key] = {'type': 'number'}
         if isinstance(value, dict):
             inner_prop_dict = {}
             prop_dict = {'properties': inner_prop_dict}
             prop_dict['type'] = 'object'
-            prop_dict['additionalProperties'] = True
             types_dict[key] = prop_dict
             if value:
                 flatten(value, flattened, inner_prop_dict, prefix=prefix + key + ".")
@@ -501,49 +500,44 @@ def flatten(yaml_contents, flattened, types_dict, prefix=''):
             else:
                 flattened[prefix + key] = {}
         if isinstance(value, list):
-            types_dict[key] = {'type': 'array', 'items': {'type': 'string'}}
+            types_dict[key] = {'type': 'array', 'items': []} 
             if len(value) == 0:
+                types_dict[key] = {'type': 'array', 'items': {'type': 'string'}}
                 flattened[prefix + key] = []
             else:
-                namelist = []
-                prop_list_dict = {}
+                prop_list_dict = {'name': {'type': 'string'}}
                 for l in value:
                     if isinstance(l, dict) or isinstance(l, list):
-                        if 'name' in l:
-                            types_dict[key] = {'type': 'array', 'properties': prop_list_dict, 'anyOf': [], 'items': {'type': 'object'}}
-                            #if 'items' in types_dict[key]:
-                            #    del types_dict[key]['items']
-                            namelist.append(l['name'])
                         if isinstance(l, dict):
                             inner_prop_dict = {}
                             prop_dict = {'properties': inner_prop_dict}
                             prop_dict['type'] = 'object'
-                            if 'name' in l:
-                                types_dict[key]['properties'][l['name']] = prop_dict
-                            else:
-                                types_dict[key]['items'] = prop_dict
-                                types_dict[key]['type'] = 'array'
+                            types_dict[key]['items'].append(prop_dict)
                         if isinstance(l, list):
                             inner_prop_dict = {}
                             prop_dict = {'items': inner_prop_dict}
                             prop_dict['type'] = 'array'
-                            if 'name' in l:
-                                types_dict[key]['properties'][l['name']] = prop_dict
-                            else:
-                                types_dict[key]['items'] = prop_dict
-                                types_dict[key]['type'] = 'array'
+                            types_dict[key]['items'].append(prop_dict)
                         flatten(l, flattened, inner_prop_dict, prefix=prefix + key + ".")
+                        if 'name' in l:
+                            prop_list_dict.update(inner_prop_dict)
                     else:
                         flattened[prefix + key] = l
-                if len(namelist) > 0:
-                    for name in namelist:
-                        propNameDict = {}
-                        propNameDict['properties'] = None
-                        propNameDict['required'] = []
-                        propNameDict['required'].append(name)
-                        types_dict[key]['anyOf'].append(propNameDict)
-                    for propName in types_dict[key]['properties']:
-                        del types_dict[key]['properties'][propName]['properties']['name']
+                        if isinstance(l, str):
+                            types_dict[key]['items'].append({'type': 'string'})
+                        if isinstance(l, bool):
+                            types_dict[key]['items'].append({'type': 'boolean'})
+                        elif isinstance(l, int):
+                            types_dict[key]['items'].append({'type': 'integer'})
+                        elif isinstance(l, float):
+                            types_dict[key]['items'].append({'type': 'number'})
+                if types_dict[key]['items']:
+                    if len(prop_list_dict) > 1:
+                        types_dict[key]['items'] = {'type': 'object', 'properties': prop_list_dict, 'required': ['name']}
+                        types_dict[key]['x-kubernetes-list-map-keys'] = ['name']
+                        types_dict[key]['x-kubernetes-list-type'] = 'map'
+                    else:
+                        types_dict[key]['items'] = types_dict[key]['items'][0]
 
 
 def download_and_untar_chart(chartLoc, chartName):
