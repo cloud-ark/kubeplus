@@ -115,6 +115,9 @@ func register() {
 	ws.Route(ws.GET("/deletecrdinstances").To(deleteCRDInstances).
 		Doc("Delete CRD Instances"))
 
+	ws.Route(ws.GET("/updatecrdinstances").To(updateCRDInstances).
+		Doc("Update CRD Instances"))
+
 	ws.Route(ws.GET("/deletechartcrds").To(deleteChartCRDs).
 		Doc("Delete Chart CRDs"))
 
@@ -377,6 +380,107 @@ func deleteHelmRelease(helmreleaseNS, helmrelease string) bool {
 	cmdRunnerPod := getKubePlusPod()
 	ok, output := executeExecCall(cmdRunnerPod, cmd)
 	fmt.Printf("Helm delete o/p:%v\n", output)
+	return ok
+}
+
+func updateCRDInstances(request *restful.Request, response *restful.Response) {
+	fmt.Printf("-- Inside updateCRDInstances...\n")
+
+	kind := request.QueryParameter("kind")
+	group := request.QueryParameter("group")
+	version := request.QueryParameter("version")
+	plural := request.QueryParameter("plural")
+	namespace := request.QueryParameter("namespace")
+	chartURL := request.QueryParameter("chartURL")
+	chartName := request.QueryParameter("chartName")
+	crName := request.QueryParameter("instance")
+
+	fmt.Printf("Kind:%s\n", kind)
+	fmt.Printf("Group:%s\n", group)
+	fmt.Printf("Version:%s\n", version)
+	fmt.Printf("Plural:%s\n", plural)
+	fmt.Printf("Namespace:%s\n", namespace)
+	fmt.Printf("ChartURL:%s\n", chartURL)
+	fmt.Printf("ChartName:%s\n", chartName)
+	fmt.Printf("CRName:%s\n", crName)
+
+	if _, errF := os.Stat("/" + chartName); os.IsNotExist(errF) {
+		fmt.Printf("Error: chart '%s' not installed", chartName)
+	}
+	
+	cmdRunnerPod := getKubePlusPod()
+	downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace)
+
+	apiVersion := group + "/" + version
+	fmt.Printf("APIVersion:%s\n", apiVersion)
+
+	ownerRes := schema.GroupVersionResource{Group: group, Version: version, Resource: plural}
+	fmt.Printf("GVR:%v\n", ownerRes)
+	
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+	dynamicClient, _ := dynamic.NewForConfig(config)
+
+	crdObjList, err := dynamicClient.Resource(ownerRes).Namespace("").List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		fmt.Printf("Error:%v\n...checking in non-namespace", err)
+		crdObjList, err = dynamicClient.Resource(ownerRes).List(context.Background(), metav1.ListOptions{})
+		if err != nil {
+			fmt.Printf("Error:%v\n", err)
+		}
+	}
+
+	execOutput := ""
+
+	for _, instanceObj := range crdObjList.Items {
+		objData := instanceObj.UnstructuredContent()
+		objName := instanceObj.GetName()
+
+		if crName != "" && objName != crName {
+			continue;
+		}
+
+		fmt.Printf("objData:%v\n", objData)
+		status := objData["status"]
+		fmt.Printf("Status:%v\n", status)
+
+		if status != nil {
+			helmreleaseNS, helmrelease := getHelmReleaseName(status)
+			fmt.Printf("Helm release:%s, %s\n", helmreleaseNS, helmrelease)
+			if helmreleaseNS != "" && helmrelease != "" {
+				upgradeHelmRelease(helmreleaseNS, helmrelease, chartName)
+				fmt.Printf("Helm release updated...\n")
+
+				//if crName == "" {
+				//	fmt.Printf("Deleting the object %s\n", objName)
+				//	dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(context.Background(), objName, metav1.DeleteOptions{})
+				//}
+			}
+		}
+	}
+
+	//if crName == "" { //crName == "" means that we received request to delete all objects
+	//	lowercaseKind := strings.ToLower(kind)
+	//	configMapName := lowercaseKind + "-usage"
+	//	// Delete the usage configmap
+	//	fmt.Printf("Deleting the usage configmap:%s\n", configMapName)
+	//	kubeClient.CoreV1().ConfigMaps(namespace).Delete(context.Background(), configMapName, metav1.DeleteOptions{})
+	//	fmt.Println("Done deleting CRD Instances..")
+	//}
+
+	response.Write([]byte(execOutput))
+}
+
+func upgradeHelmRelease(helmreleaseNS, helmrelease, chartName string) bool {
+	fmt.Printf("Helm release:%s\n", helmrelease)
+	cmd := "helm upgrade " + helmrelease + " /" + chartName + " -n " + helmreleaseNS
+	fmt.Printf("Helm upgrade cmd:%s\n", cmd)
+	var output string
+	cmdRunnerPod := getKubePlusPod()
+	ok, output := executeExecCall(cmdRunnerPod, cmd)
+	fmt.Printf("Helm upgrade o/p:%v\n", output)
 	return ok
 }
 

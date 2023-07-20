@@ -9,6 +9,7 @@ import (
 	"strings"
 	"context"
 	gerrors "errors" 
+	"reflect"
 
 	_ "github.com/lib/pq"
 	"net/http"
@@ -138,7 +139,8 @@ func NewPlatformController(
 				// Two different versions of the same Deployment will always have different RVs.
 				return
 			} else {
-				controller.enqueueFoo(new)
+				//controller.enqueueFoo(new)
+				controller.updateFoo(oldDepl, newDepl)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -305,11 +307,11 @@ func (c *Controller) deleteFoo(obj interface{}) {
 	   panic(err)
 	}
 
-	foo := obj.(*platformworkflowv1alpha1.ResourceComposition)
+	foo := obj.(*plkflowv1alpha1.ResourceComposition)
 
-	fmt.Printf("JKL\n")
+	fmt.Printf("JKLatformwor\n")
 	fmt.Printf("%v\n", foo.Spec)
-	newRes := foo.Spec.NewResource
+	newRes := foo.S - delete - deletepec.NewResource
 	fmt.Printf("newRes:%v\n", newRes)
 
 	namespace := foo.ObjectMeta.Namespace
@@ -342,6 +344,58 @@ func (c *Controller) deleteFoo(obj interface{}) {
 	deleteResourceMonitor(resMonitorSpec, namespace)
 
 	c.recorder.Event(foo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
+}
+
+func (c *Controller) updateFoo(oldObj, newObj interface{}) {
+	fmt.Println("Inside update Foo")
+
+	var err error
+	if _, err = cache.MetaNamespaceKeyFunc(newObj); err != nil {
+		panic(err)
+	}
+
+	oldFoo := oldObj.(*platformworkflowv1alpha1.ResourceComposition)
+	newFoo := newObj.(*platformworkflowv1alpha1.ResourceComposition)
+
+	fmt.Printf("JKL - update\n")
+	fmt.Printf("old: %v\n", oldFoo.Spec)
+	fmt.Printf("new: %v\n", newFoo.Spec)
+
+	namespace := newFoo.ObjectMeta.Namespace
+	if namespace == "" {
+		namespace = "default"
+	}
+	fmt.Printf("GHI - update\n")
+	fmt.Printf("NS:%s", namespace)
+	kind      := newFoo.Spec.NewResource.Resource.Kind
+	group     := newFoo.Spec.NewResource.Resource.Group
+	version   := newFoo.Spec.NewResource.Resource.Version
+	plural    := newFoo.Spec.NewResource.Resource.Plural
+	chartURL  := newFoo.Spec.NewResource.ChartURL
+	chartName := newFoo.Spec.NewResource.ChartName
+	fmt.Printf("Kind:%s, Version:%s Group:%s, Plural:%s\n", kind, version, group, plural)
+	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
+
+	// only update if spec has changed
+	if !reflect.DeepEqual(oldFoo.Spec, newFoo.Spec) {
+		fmt.Println("Resource spec has changed: updating")
+		action := "update"
+		handleCRD(newFoo.Name, kind, version, group, plural, action, namespace, chartURL, chartName)
+	} else {
+		fmt.Println("Resource spec hasn't changed")
+	}
+
+ 	//resPolicySpec := foo.Spec.ResPolicy
+ 	//fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
+
+	//deleteResourcePolicy(resPolicySpec, namespace)
+
+ 	//resMonitorSpec := foo.Spec.ResMonitor
+ 	//fmt.Printf("ResMonitorSpec:%v\n",resMonitorSpec)
+
+	//deleteResourceMonitor(resMonitorSpec, namespace)
+
+	c.recorder.Event(newFoo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 }
 
 // syncHandler compares the actual state with the desired, and attempts to
@@ -792,6 +846,8 @@ func handleCRD(rescomposition, kind, version, group, plural, action, namespace, 
 			} else {
 				fmt.Printf("CRD deleted successfully.\n")
 			}
+		} else if action == "update" {
+			updateCRDInstances(kind, group, version, plural, namespace, chartURL, chartName)
 		}
 	}
 	return nil
@@ -841,6 +897,19 @@ func deleteCRDInstances(kind, group, version, plural, namespace string) []byte {
 	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deletecrdinstances?%s", HELMER_HOST, HELMER_PORT, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
+}
+
+
+func updateCRDInstances(kind, group, version, plural, namespace, chartURL, chartName string) []byte {
+	fmt.Printf("Inside updateCRDInstances...\n")
+	args := fmt.Sprintf("kind=%s&group=%s&version=%s&plural=%s&namespace=%s&chartURL=%s&chartName=%s", kind, group, version, plural, namespace, chartURL, chartName)
+	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
+	//fmt.Printf("After getServiceEndpoint...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/updatecrdinstances?%s", HELMER_HOST, HELMER_PORT, args)
 	fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body
