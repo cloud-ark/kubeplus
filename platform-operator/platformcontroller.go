@@ -307,11 +307,11 @@ func (c *Controller) deleteFoo(obj interface{}) {
 	   panic(err)
 	}
 
-	foo := obj.(*plkflowv1alpha1.ResourceComposition)
+	foo := obj.(*platformworkflowv1alpha1.ResourceComposition)
 
-	fmt.Printf("JKLatformwor\n")
+	fmt.Printf("JKL\n")
 	fmt.Printf("%v\n", foo.Spec)
-	newRes := foo.S - delete - deletepec.NewResource
+	newRes := foo.Spec.NewResource
 	fmt.Printf("newRes:%v\n", newRes)
 
 	namespace := foo.ObjectMeta.Namespace
