@@ -490,54 +490,53 @@ def flatten(yaml_contents, flattened, types_dict, prefix=''):
             flattened[prefix + key] = value
             types_dict[key] = {'type': 'number'}
         if isinstance(value, dict):
-            inner_prop_dict = {}
-            prop_dict = {'properties': inner_prop_dict}
-            prop_dict['type'] = 'object'
+            prop_dict = {'type': 'object'}
             types_dict[key] = prop_dict
             if value:
+                inner_prop_dict = {}
                 flatten(value, flattened, inner_prop_dict, prefix=prefix + key + ".")
+                prop_dict['properties'] = inner_prop_dict
                 flattened[prefix + key] = value
             else:
+                prop_dict['additionalProperties'] = True
                 flattened[prefix + key] = {}
         if isinstance(value, list):
-            types_dict[key] = {'type': 'array', 'items': []} 
+            types_dict[key] = {'type': 'array'}
             if len(value) == 0:
-                types_dict[key] = {'type': 'array', 'items': {'type': 'string'}}
+                # assume empty array is of type string
+                types_dict[key]['items'] = {'type': 'string'}
                 flattened[prefix + key] = []
             else:
                 prop_list_dict = {'name': {'type': 'string'}}
                 for l in value:
                     if isinstance(l, dict) or isinstance(l, list):
-                        if isinstance(l, dict):
-                            inner_prop_dict = {}
-                            prop_dict = {'properties': inner_prop_dict}
-                            prop_dict['type'] = 'object'
-                            types_dict[key]['items'].append(prop_dict)
-                        if isinstance(l, list):
-                            inner_prop_dict = {}
-                            prop_dict = {'items': inner_prop_dict}
-                            prop_dict['type'] = 'array'
-                            types_dict[key]['items'].append(prop_dict)
+                        inner_prop_dict = {}
                         flatten(l, flattened, inner_prop_dict, prefix=prefix + key + ".")
                         if 'name' in l:
+                            # treat as map-like array
                             prop_list_dict.update(inner_prop_dict)
+                        else:
+                            if isinstance(l, dict):
+                                prop_dict = {'type': 'object', 'properties': inner_prop_dict}
+                            if isinstance(l, list):
+                                prop_dict = {'type': 'array', 'items': inner_prop_dict}
+                            types_dict[key]['items'] = prop_dict
                     else:
                         flattened[prefix + key] = l
+                        # assuming that all array elements are the same type
                         if isinstance(l, str):
-                            types_dict[key]['items'].append({'type': 'string'})
-                        if isinstance(l, bool):
-                            types_dict[key]['items'].append({'type': 'boolean'})
+                            types_dict[key]['items'] = {'type': 'string'}
+                        elif isinstance(l, bool):
+                            types_dict[key]['items'] = {'type': 'boolean'}
                         elif isinstance(l, int):
-                            types_dict[key]['items'].append({'type': 'integer'})
+                            types_dict[key]['items'] = {'type': 'integer'}
                         elif isinstance(l, float):
-                            types_dict[key]['items'].append({'type': 'number'})
-                if types_dict[key]['items']:
-                    if len(prop_list_dict) > 1:
-                        types_dict[key]['items'] = {'type': 'object', 'properties': prop_list_dict, 'required': ['name']}
-                        types_dict[key]['x-kubernetes-list-map-keys'] = ['name']
-                        types_dict[key]['x-kubernetes-list-type'] = 'map'
-                    else:
-                        types_dict[key]['items'] = types_dict[key]['items'][0]
+                            types_dict[key]['items'] = {'type': 'number'}
+                if len(prop_list_dict) > 1:
+                    # treat as map-like array
+                    types_dict[key]['items'] = {'type': 'object', 'properties': prop_list_dict, 'required': ['name']}
+                    types_dict[key]['x-kubernetes-list-map-keys'] = ['name']
+                    types_dict[key]['x-kubernetes-list-type'] = 'map'
 
 
 def download_and_untar_chart(chartLoc, chartName):
