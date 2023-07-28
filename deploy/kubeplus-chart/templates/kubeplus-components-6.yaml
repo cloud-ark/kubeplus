@@ -317,7 +317,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: kubeconfiggenerator
-        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.21
+        image: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.22
         imagePullPolicy: IfNotPresent
         env:
           - name: KUBEPLUS_NAMESPACE
@@ -358,7 +358,7 @@ spec:
         imagePullPolicy: IfNotPresent
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
-        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.12
+        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.13
         imagePullPolicy: IfNotPresent
         command: ["/root/helm-pod"]
         volumeMounts:
