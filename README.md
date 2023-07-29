@@ -72,7 +72,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 5) Install KubePlus Operator using the generated provider kubeconfig 
 
    ```
-   helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.26.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+   helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.27.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
    until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done
    ```
 
@@ -114,6 +114,11 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    wp-tenant1   86s
    wp-tenant2   26s
    ```
+   Check the details of created instance:
+
+   ```
+   kubectl describe wordpressservices wp-tenant1
+   ``` 
 
 10) Check created application resources
 
