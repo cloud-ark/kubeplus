@@ -423,7 +423,7 @@ func updateCRDInstances(request *restful.Request, response *restful.Response) {
 	}
 	dynamicClient, _ := dynamic.NewForConfig(config)
 
-	crdObjList, err := dynamicClient.Resource(ownerRes).Namespace("").List(context.Background(), metav1.ListOptions{})
+	crdObjList, err := dynamicClient.Resource(ownerRes).Namespace(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Printf("Error:%v\n...checking in non-namespace", err)
 		crdObjList, err = dynamicClient.Resource(ownerRes).List(context.Background(), metav1.ListOptions{})
@@ -452,23 +452,9 @@ func updateCRDInstances(request *restful.Request, response *restful.Response) {
 			if helmreleaseNS != "" && helmrelease != "" {
 				upgradeHelmRelease(helmreleaseNS, helmrelease, chartName)
 				fmt.Printf("Helm release updated...\n")
-
-				//if crName == "" {
-				//	fmt.Printf("Deleting the object %s\n", objName)
-				//	dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(context.Background(), objName, metav1.DeleteOptions{})
-				//}
 			}
 		}
 	}
-
-	//if crName == "" { //crName == "" means that we received request to delete all objects
-	//	lowercaseKind := strings.ToLower(kind)
-	//	configMapName := lowercaseKind + "-usage"
-	//	// Delete the usage configmap
-	//	fmt.Printf("Deleting the usage configmap:%s\n", configMapName)
-	//	kubeClient.CoreV1().ConfigMaps(namespace).Delete(context.Background(), configMapName, metav1.DeleteOptions{})
-	//	fmt.Println("Done deleting CRD Instances..")
-	//}
 
 	response.Write([]byte(execOutput))
 }

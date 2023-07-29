@@ -139,8 +139,8 @@ func NewPlatformController(
 				// Two different versions of the same Deployment will always have different RVs.
 				return
 			} else {
-				//controller.enqueueFoo(new)
 				controller.updateFoo(oldDepl, newDepl)
+				controller.enqueueFoo(new)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -384,16 +384,6 @@ func (c *Controller) updateFoo(oldObj, newObj interface{}) {
 	} else {
 		fmt.Println("Resource spec hasn't changed")
 	}
-
- 	//resPolicySpec := foo.Spec.ResPolicy
- 	//fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
-
-	//deleteResourcePolicy(resPolicySpec, namespace)
-
- 	//resMonitorSpec := foo.Spec.ResMonitor
- 	//fmt.Printf("ResMonitorSpec:%v\n",resMonitorSpec)
-
-	//deleteResourceMonitor(resMonitorSpec, namespace)
 
 	c.recorder.Event(newFoo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 }
