@@ -895,9 +895,8 @@ func deleteCRDInstances(kind, group, version, plural, namespace string) []byte {
 
 func updateCRDInstances(kind, group, version, plural, namespace, chartURL, chartName string) []byte {
 	fmt.Printf("Inside updateCRDInstances...\n")
-	args := fmt.Sprintf("kind=%s&group=%s&version=%s&plural=%s&namespace=%s&chartURL=%s&chartName=%s", kind, group, version, plural, namespace, chartURL, chartName)
-	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
-	//fmt.Printf("After getServiceEndpoint...\n")
+	encodedChartURL := url.QueryEscape(chartURL)
+	args := fmt.Sprintf("kind=%s&group=%s&version=%s&plural=%s&namespace=%s&chartURL=%s&chartName=%s", kind, group, version, plural, namespace, encodedChartURL, chartName)
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/updatecrdinstances?%s", HELMER_HOST, HELMER_PORT, args)
 	fmt.Printf("Url:%s\n", url1)

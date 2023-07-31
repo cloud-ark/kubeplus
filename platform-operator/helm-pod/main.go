@@ -406,6 +406,9 @@ func updateCRDInstances(request *restful.Request, response *restful.Response) {
 
 	if _, errF := os.Stat("/" + chartName); os.IsNotExist(errF) {
 		fmt.Printf("Error: chart '%s' not installed", chartName)
+		errFString := string(errF.Error())
+		response.Write([]byte(errFString))
+		return
 	}
 	
 	cmdRunnerPod := getKubePlusPod()
@@ -429,6 +432,9 @@ func updateCRDInstances(request *restful.Request, response *restful.Response) {
 		crdObjList, err = dynamicClient.Resource(ownerRes).List(context.Background(), metav1.ListOptions{})
 		if err != nil {
 			fmt.Printf("Error:%v\n", err)
+			errString := string(err.Error())
+			response.Write([]byte(errString))
+			return
 		}
 	}
 
@@ -450,7 +456,7 @@ func updateCRDInstances(request *restful.Request, response *restful.Response) {
 			helmreleaseNS, helmrelease := getHelmReleaseName(status)
 			fmt.Printf("Helm release:%s, %s\n", helmreleaseNS, helmrelease)
 			if helmreleaseNS != "" && helmrelease != "" {
-				upgradeHelmRelease(helmreleaseNS, helmrelease, chartName)
+				go upgradeHelmRelease(helmreleaseNS, helmrelease, chartName)
 				fmt.Printf("Helm release updated...\n")
 			}
 		}
