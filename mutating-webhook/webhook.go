@@ -362,8 +362,7 @@ func handleDelete(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 		}
 	}
 
-	if req.Kind.Kind == "Namespace" {
-
+	if kind == "Namespace" {
 		if (strings.Contains(user, "kubeplus-saas-provider") || strings.Contains(user, "kubeplus-saas-consumer")) {
 			return &v1.AdmissionResponse{
 				Result: &metav1.Status{
@@ -374,8 +373,17 @@ func handleDelete(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	}
 
 	fmt.Printf("Calling DeleteCRDInstances...")
-	DeleteCRDInstances(kind, group, version, plural, namespace, resName)
+	resp := DeleteCRDInstances(kind, group, version, plural, namespace, resName)
 	fmt.Println("After calling DeleteCRDInstances...")
+	respString := string(resp)
+	if strings.Contains(respString, "Error") {
+		fmt.Println(respString)
+		return &v1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: respString,
+			},
+		}
+	}
 
 	return &v1.AdmissionResponse{
 		Allowed: true,
