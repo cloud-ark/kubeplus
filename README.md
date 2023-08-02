@@ -63,6 +63,8 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 4) Create provider kubeconfig using the provider-kubeconfig.py utility that we provide
 
    ```
+   wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/requirements.txt
+   wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/provider-kubeconfig.py
    python3 -m venv venv
    source venv/bin/activate
    pip3 install -r requirements.txt
@@ -72,7 +74,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 5) Install KubePlus Operator using the generated provider kubeconfig 
 
    ```
-   helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.27.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+   helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.28.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
    until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done
    ```
 
@@ -224,13 +226,13 @@ atforms.
 
 ## Presentations
 
-1. [DevOps.com Webinar: Deliver your Kubernetes Applications as-a-Service](https://webinars.devops.com/deliver-your-kubernetes-applications-as-a-service)
+1. [KubePlus presentation at community meetings (CNCF sig-app-delivery, Kubernetes sig-apps, Helm)](https://github.com/cloud-ark/kubeplus/blob/master/KubePlus-presentation.pdf)
+
+2. [DevOps.com Webinar: Deliver your Kubernetes Applications as-a-Service](https://webinars.devops.com/deliver-your-kubernetes-applications-as-a-service)
 
 2. [Being a good citizen of the Multi-Operator world, Kubecon NA 2020](https://www.youtube.com/watch?v=NEGs0GMJbCw&t=2s)
 
 3. [Operators and Helm: It takes two to Tango, Helm Summit 2019](https://youtu.be/F_Dgz1V5Q2g)
-
-4. [KubePlus presentation at community meetings (CNCF sig-app-delivery, Kubernetes sig-apps, Helm)](https://github.com/cloud-ark/kubeplus/blob/master/KubePlus-presentation.pdf)
 
 
 ## Contact

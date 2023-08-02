@@ -350,7 +350,7 @@ spec:
         - name: shared-data
           mountPath: /crdinstances
       - name: platform-operator
-        image: gcr.io/cloudark-kubeplus/platform-operator:3.0.4
+        image: gcr.io/cloudark-kubeplus/platform-operator:3.0.5
         imagePullPolicy: IfNotPresent
         command: [ "/platform-operator"]
       - name: consumerui
@@ -358,7 +358,7 @@ spec:
         imagePullPolicy: IfNotPresent
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
-        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.13
+        image: gcr.io/cloudark-kubeplus/helm-pod:3.0.14
         imagePullPolicy: IfNotPresent
         command: ["/root/helm-pod"]
         volumeMounts:
