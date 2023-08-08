@@ -304,7 +304,7 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 	}
 	dynamicClient, _ := dynamic.NewForConfig(config)
 
-	crdObjList, err := dynamicClient.Resource(ownerRes).Namespace("").List(context.Background(), metav1.ListOptions{})
+	crdObjList, err := dynamicClient.Resource(ownerRes).Namespace(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Printf("Error:%v\n...checking in non-namespace", err)
 		crdObjList, err = dynamicClient.Resource(ownerRes).List(context.Background(), metav1.ListOptions{})
@@ -334,28 +334,31 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 			helmreleaseNS, helmrelease := getHelmReleaseName(status)
 			fmt.Printf("Helm release:%s, %s\n", helmreleaseNS, helmrelease)
 			if helmreleaseNS != "" && helmrelease != "" {
-				deleteHelmRelease(helmreleaseNS, helmrelease)
-				//if ok {
+				// Do in the background as 'helm delete' and deleting NS are time consuming actions
+				go func() {
+					deleteHelmRelease(helmreleaseNS, helmrelease)
+
 					fmt.Printf("Helm release deleted...\n")
 					fmt.Printf("Deleting the namespace...\n")
-					
+
 					// The namespace created to deploy the Helm chart
 					// needs to be deleted only if the helmreleaseNS does not match namespace.
 					// For managed app use-case, namespace and helmreleaseNS will be same.
 					if helmreleaseNS != namespace {
 						namespaceDeleteCmd := "./root/kubectl delete ns " + helmreleaseNS
 						cmdRunnerPod := getKubePlusPod()
-						// Do in the background as deleting NS is a time consuming action
-						go executeExecCall(cmdRunnerPod, namespaceDeleteCmd)
-                                		//fmt.Printf("Output of Delete NS Cmd:%v\n", execOutput)
+						executeExecCall(cmdRunnerPod, namespaceDeleteCmd)
 					}
+				}()
 
-					if crName == "" {
-						fmt.Printf("Deleting the object %s\n", objName)
-						dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(context.Background(), objName, metav1.DeleteOptions{})
-					}
-				//}
+				if crName == "" {
+					fmt.Printf("Deleting the object %s\n", objName)
+					dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(context.Background(), objName, metav1.DeleteOptions{})
+				}
 			}
+		} else {
+			response.Write([]byte("Error: Custom Resource instance cannot be deleted. It is not ready yet."))
+			return
 		}
 	}
 
