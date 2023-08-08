@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 
 	platformworkflowclientset "github.com/cloud-ark/kubeplus/platform-operator/pkg/generated/clientset/versioned"
@@ -360,6 +361,66 @@ func handleDelete(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 				},
 			}
 		}
+		// check status of helm releases for this CRD
+		fmt.Println("Delete ResourceComposition")
+
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			fmt.Printf("Error:%s\n", err.Error())
+		}
+
+		var sampleclientset platformworkflowclientset.Interface
+		sampleclientset, err = platformworkflowclientset.NewForConfig(config)
+		if err != nil {
+			fmt.Printf("Error:%s\n", err.Error())
+		}
+
+		platformWorkflow, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Get(context.Background(), resName, metav1.GetOptions{})
+		if err != nil {
+			fmt.Printf("Error:%s\n", err.Error())
+		}
+
+		crdnamespace := platformWorkflow.ObjectMeta.Namespace
+		fmt.Printf("Namespace: %s\n", crdnamespace)
+
+		crdkind := platformWorkflow.Spec.NewResource.Resource.Kind
+		crdgroup := platformWorkflow.Spec.NewResource.Resource.Group
+		crdversion := platformWorkflow.Spec.NewResource.Resource.Version
+		crdplural := platformWorkflow.Spec.NewResource.Resource.Plural
+		fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s\n", crdkind, crdgroup, crdversion, crdplural)
+
+		ownerRes := schema.GroupVersionResource{Group: crdgroup,
+							Version: crdversion,
+							Resource: crdplural}
+		fmt.Printf("GVR: %v\n", ownerRes)
+
+
+		dynamicClient, err := dynamic.NewForConfig(config)
+		if err != nil {
+			fmt.Printf("Error: %s\n", err.Error())
+		}
+
+		crdObjList, err := dynamicClient.Resource(ownerRes).Namespace(crdnamespace).List(context.Background(), metav1.ListOptions{})
+		if err != nil {
+			fmt.Printf("Error:%v\n...checking at cluster-scope", err)
+			crdObjList, err = dynamicClient.Resource(ownerRes).List(context.Background(), metav1.ListOptions{})
+			if err != nil {
+				fmt.Printf("Error:%v\n", err)
+			}
+		}
+
+		for _, instanceObj := range crdObjList.Items {
+			objData := instanceObj.UnstructuredContent()
+			status := objData["status"]
+			if status == nil {
+				return &v1.AdmissionResponse{
+					Result: &metav1.Status{
+						Message: "Error: ResourceComposition instance cannot be deleted. It has an application instance starting up.",
+					},
+				}
+			}
+		}
+
 	}
 
 	if kind == "Namespace" {
