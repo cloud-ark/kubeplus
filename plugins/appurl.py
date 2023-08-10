@@ -8,6 +8,21 @@ from crmetrics import CRBase
 
 class AppURLFinder(CRBase):
 
+	def get_ingresses(self, resources):
+		ingress_list = []
+		for resource in resources:
+			#print(resource)
+			if resource['Kind'] == 'Ingress':
+				present = False
+				for s in ingress_list:
+					if s['Name'] == resource['Name']:
+						present = True
+						break
+				if not present:
+					ingress_list.append(resource)
+		#print(ingress_list)
+		return ingress_list
+
 	def get_svc(self, resources):
 		svc_list = []
 		for resource in resources:
@@ -22,6 +37,29 @@ class AppURLFinder(CRBase):
 					svc_list.append(resource)
 		#print(svc_list)
 		return svc_list
+
+	def get_host_from_ingress(self, ingresses, namespace, kubeconfig):
+		appURL = ""
+		for ingress in ingresses:
+			cmd = 'kubectl get ingress ' + ingress['Name'] + ' -n ' + ingress['Namespace'] + ' -o json ' + kubeconfig
+			#print(cmd)
+			try:
+				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+										stderr=subprocess.PIPE, shell=True).communicate()[0]
+
+				if out:
+					json_output = json.loads(out)
+					#print(json_output)
+					if 'tls' in json_output['spec']:
+						host = json_output['spec']['tls'][0]['hosts'][0]
+						appURL = "https://" + host.strip()
+					else:
+						host = json_output['spec']['rules'][0]['host']
+						appURL = "http://" + host.strip()
+					break
+			except Exception as e:
+				print(e)
+		return appURL
 
 	def get_svc_port(self, svcs, namespace, kubeconfig):
 		nodePort = -1
@@ -99,21 +137,26 @@ if __name__ == '__main__':
 		resources = appURLFinder.get_resources_connections(kind, instance, namespace, kubeconfig)
 		#print(resources)
 	try:
-		svcs = appURLFinder.get_svc(resources)
-		svcPort = appURLFinder.get_svc_port(svcs, namespace, kubeconfig)
-		appIP = appURLFinder.get_node_ip(kubeconfig)
-		if appIP == "":
-			appIP = appURLFinder.get_server_ip(kubeconfig)
-		if appIP == '':
-			print("KubePlus SaaS Consumer context not found in the kubeconfig.")
-			print("Cannot form app url.")
-			exit()
-		else:
-			if "//" not in appIP:
-				appIP = "//" + appIP
-			appURL = "http:" + appIP + ":" + str(svcPort)
-			appURL = appURL.strip()
-			#print("App port:" + str(svcPort))
+		ingresses = appURLFinder.get_ingresses(resources)
+		if len(ingresses) > 0:
+			appURL = appURLFinder.get_host_from_ingress(ingresses, namespace, kubeconfig)
 			print(appURL)
+		else:
+			svcs = appURLFinder.get_svc(resources)
+			svcPort = appURLFinder.get_svc_port(svcs, namespace, kubeconfig)
+			appIP = appURLFinder.get_node_ip(kubeconfig)
+			if appIP == "":
+				appIP = appURLFinder.get_server_ip(kubeconfig)
+			if appIP == '':
+				print("KubePlus SaaS Consumer context not found in the kubeconfig.")
+				print("Cannot form app url.")
+				exit()
+			else:
+				if "//" not in appIP:
+					appIP = "//" + appIP
+				appURL = "http:" + appIP + ":" + str(svcPort)
+				appURL = appURL.strip()
+				#print("App port:" + str(svcPort))
+				print(appURL)
 	except Exception as e:
 		print(e)
