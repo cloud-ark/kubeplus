@@ -57,7 +57,7 @@ Change the ResourceComposition file "basic-web-app-service-composition-localchar
 Change the version of the chartURL from 0.0.1 to 0.0.2
 
 If you are curious, take a look in the templates directory of the 0.0.2 helm chart.
-You will notice the post-upgrade hook as: "post-install-job.yaml"
+You will notice the post-upgrade hook as: "post-upgrade-job.yaml"
 Check the command in that file that will be run on the application instances.
 The SQL command itself is in the "values.yaml" file of the chart.
 

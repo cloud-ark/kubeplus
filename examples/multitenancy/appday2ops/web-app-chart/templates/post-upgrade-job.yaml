@@ -24,6 +24,6 @@ spec:
     spec:
       restartPolicy: Never
       containers:
-      - name: post-install-job
+      - name: post-upgrade-job
         image: mysql:5.6
         command: ["mysql","--host={{ .Values.MYSQL_SERVICE_NAME }}","--user={{ .Values.db.username }}","--password={{ .Values.db.password }}","{{ .Values.db.db_name }}","-e",{{ .Values.sql.command | quote }}]
