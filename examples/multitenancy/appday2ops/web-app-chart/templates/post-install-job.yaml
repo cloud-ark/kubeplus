@@ -26,4 +26,4 @@ spec:
       containers:
       - name: post-install-job
         image: mysql:5.6
-        command: ["mysql","--host=mysql","--user={{ .Values.db.username }}","--password={{ .Values.db.password }}","{{ .Values.db.db_name }}","-e",{{ .Values.sql.command | quote }}]
+        command: ["mysql","--host={{ .Values.MYSQL_SERVICE_NAME }}","--user={{ .Values.db.username }}","--password={{ .Values.db.password }}","{{ .Values.db.db_name }}","-e",{{ .Values.sql.command | quote }}]
