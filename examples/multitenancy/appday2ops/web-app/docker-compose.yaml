@@ -1,0 +1,33 @@
+version: "3"
+services:
+  web-app:
+    build: .
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      MYSQL_USER: name123
+      MYSQL_PASSWORD: password123
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: usersdb
+    ports:
+      - "5000:5000"
+    networks:
+      - backend
+  mysql:
+    image: mysql:latest
+    hostname: mysql
+    restart: always
+    environment: 
+      MYSQL_ROOT_PASSWORD: toor
+      MYSQL_USER: name123
+      MYSQL_PASSWORD: password123
+      MYSQL_DATABASE: usersdb
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d
+    networks:
+      - backend
+networks:
+  backend:
+    driver: bridge
