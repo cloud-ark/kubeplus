@@ -73,7 +73,3 @@ Check the application once again. There should be a new user added.
 Clean up:
 $ kubectl delete -f basic-web-app-service-composition-localchart.yaml --kubeconfig=provider.conf
 
-If you would like to run the web app outside of Kubernetes, you can do so with
-the "docker-compose.yaml" file found in the "web-app/" directory:
-$ docker compose up --build
-
