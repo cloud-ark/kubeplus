@@ -1,0 +1,6 @@
+apiVersion: platformapi.kubeplus/v1alpha1
+kind: WebAppService
+metadata:
+  name: bwa-tenant1
+spec:
+  nodeName: minikube
