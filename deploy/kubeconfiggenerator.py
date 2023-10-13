@@ -611,17 +611,16 @@ def overrides():
     customresource = request.args.get("customresource")
     overridesPath = "/crdinstances/" + platformworkflow + "-" + customresource 
     fp = open(overridesPath + ".raw", "r")
-    reqObj = fp.read()
-    reqObjStr = str(reqObj, "utf-8")
+    reqObjStr = fp.read()
     app.logger.info("Request Object:" + reqObjStr)
-
     fp1 = open(overridesPath, "w")
     yaml_contents = yaml.safe_load(reqObjStr)
     for key in yaml_contents:
         if key == 'spec':
             fp1.write(json.dumps(yaml_contents[key]))
             break
-    app.logger.info("Created overrides file:" + fPath)
+    app.logger.info("Created overrides file:" + overridesPath)
+    return "Overrides processed successfully."
 
 @app.route("/registercrd")
 def registercrd():
