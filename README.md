@@ -38,10 +38,7 @@ KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](htt
 
 ## Demo
 
-<video width="320" height="240" controls>
-  <source src="KubePlus-demo.mp4" type="video/mp4">
-</video>
-
+https://github.com/cloud-ark/kubeplus/assets/732525/efb255ff-fc73-446b-a583-4b89dbf61638
 
 ## Example
 
