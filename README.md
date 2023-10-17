@@ -36,6 +36,12 @@ The spec properties of the Kubernetes API wrapping the application Helm chart ar
 KubePlus architecture details are available [here](http://kubeplus-docs.s3-website-us-west-2.amazonaws.com/html/index.html).
 KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](https://kubernetes.io/docs/concepts/security/multi-tenancy/#multi-customer-tenancy).
 
+## Demo
+
+<video width="320" height="240" controls>
+  <source src="KubePlus-demo.mp4" type="video/mp4">
+</video>
+
 
 ## Example
 
