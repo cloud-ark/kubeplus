@@ -1,0 +1,25 @@
+#!/bin/bash
+
+source utils.sh
+
+print_help () {
+    echo "NAME"
+    echo "        kubectl show consumer permissions"
+    echo ""
+    echo "SYNOPSIS"
+    echo "        kubectl show consumer permissions <Namespace>"
+    echo ""
+    echo "DESCRIPTION"
+    echo "        kubectl show consumer permissions shows the permissions for kubeplus-saas-consumer service account in the namespace where kubeplus is installed."
+    exit 0
+}
+
+if (( $# < 1 || $# >= 2)); then
+  print_help
+fi
+
+namespace="$1"
+
+check_namespace $namespace
+
+kubectl auth can-i --list --as=system:serviceaccount:$namespace:kubeplus-saas-consumer

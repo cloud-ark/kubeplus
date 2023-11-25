@@ -10,11 +10,13 @@ print_help () {
     echo "        kubectl metrics"
     echo "        kubectl applogs"
     echo "        kubectl appurl"
-    echo "	  kubectl appresources"
+    echo "        kubectl appresources"
     echo "        kubectl retrieve kubeconfig provider"
     echo "        kubectl retrieve kubeconfig consumer"
     echo "        kubectl grantpermission consumer"
     echo "        kubectl upload chart"
+    echo "        kubectl show provider permissions"
+    echo "        kubectl show consumer permissions"
     echo ""
     echo "DESCRIPTION"
     echo "        KubePlus provides a suite of kubectl plugins to discover, monitor and troubleshoot Kubernetes applications."
@@ -42,6 +44,9 @@ print_help () {
     echo "        A consumer will be able to create service instances only after that."
     echo "        - kubectl upload chart"
     echo "        Upload Helm chart (tgz) to KubePlus Operator."
+    echo ""
+    echo "        - kubectl show provider permissions shows the permissions for kubeplus-saas-provider service account in the namespace where kubeplus is installed."
+    echo "        - kubectl show consumer permissions shows the permissions for kubeplus-saas-consumer service account in the namespace where kubeplus is installed."
     exit 0
 }
 
