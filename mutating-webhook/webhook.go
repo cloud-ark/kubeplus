@@ -409,14 +409,16 @@ func handleDelete(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 			}
 		}
 
-		for _, instanceObj := range crdObjList.Items {
-			objData := instanceObj.UnstructuredContent()
-			status := objData["status"]
-			if status == nil {
-				return &v1.AdmissionResponse{
-					Result: &metav1.Status{
-						Message: "Error: ResourceComposition instance cannot be deleted. It has an application instance starting up.",
-					},
+		if crdObjList != nil {
+			for _, instanceObj := range crdObjList.Items {
+				objData := instanceObj.UnstructuredContent()
+				status := objData["status"]
+				if status == nil {
+					return &v1.AdmissionResponse{
+						Result: &metav1.Status{
+							Message: "Error: ResourceComposition instance cannot be deleted. It has an application instance starting up.",
+						},
+					}
 				}
 			}
 		}
