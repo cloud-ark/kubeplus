@@ -181,7 +181,7 @@ func getChartValues(request *restful.Request, response *restful.Response) {
  				fmt.Printf("Command runner Pod name could not be determined.. cannot continue.")
  				valuesToReturn = ""
  			}
- 			parsedChartName := downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace)
+ 			parsedChartName := downloadUntarChartandGetName(chartURL, chartName, cmdRunnerPod, namespace)
  			chartValuesPath := "/" + parsedChartName + "/values.yaml"
  			fmt.Printf("Chart Values Path:%s\n",chartValuesPath)
  			readCmd := "cat " + chartValuesPath
@@ -415,7 +415,7 @@ func updateCRDInstances(request *restful.Request, response *restful.Response) {
 	}
 	
 	cmdRunnerPod := getKubePlusPod()
-	downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace)
+	downloadUntarChartandGetName(chartURL, chartName, cmdRunnerPod, namespace)
 
 	apiVersion := group + "/" + version
 	fmt.Printf("APIVersion:%s\n", apiVersion)
@@ -748,7 +748,7 @@ func getHelmReleaseName(object interface{}) (string, string) {
 	return helmreleaseNS, helmreleaseName
 }
 
-func downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace string) string {
+func downloadUntarChartandGetName(chartURL, chartName, cmdRunnerPod, namespace string) string {
 	fmt.Printf("Inside downloadUntarChartandGetName\n")
 
 	parsedChartName := ""
@@ -760,6 +760,7 @@ func downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace string) stri
 		parts := strings.Split(chartURL, "file:///")
 		charttgz := strings.TrimSpace(parts[1])
 		fmt.Printf("Chart tgz:%s\n",charttgz)
+		removePreviousChart(chartName, cmdRunnerPod)
 		parsedChartName = untarChart(charttgz, cmdRunnerPod, namespace)
 	}
 	return parsedChartName
@@ -845,7 +846,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 		fmt.Printf("Release name:%s\n", releaseName)
  			if chartURL != "" {
 
- 			parsedChartName := downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace)
+ 			parsedChartName := downloadUntarChartandGetName(chartURL, chartName, cmdRunnerPod, namespace)
 
  				// 1. Download the chart
  				//parsedChartName := downloadChart(chartURL, cmdRunnerPod, namespace)
@@ -1015,14 +1016,14 @@ func testChartDeployment(request *restful.Request, response *restful.Response) {
 
 	namespace := request.QueryParameter("namespace")
 	kind := request.QueryParameter("kind")
-	//chartName := request.QueryParameter("chartName")
+	chartName := request.QueryParameter("chartName")
 	encodedChartURL := request.QueryParameter("chartURL")
 	chartURL, _ := url.QueryUnescape(encodedChartURL)
 
  	cmdRunnerPod := getKubePlusPod()
 
   	//parsedChartName := downloadChart(chartURL, cmdRunnerPod, namespace)
- 	parsedChartName := downloadUntarChartandGetName(chartURL, cmdRunnerPod, namespace)
+ 	parsedChartName := downloadUntarChartandGetName(chartURL, chartName, cmdRunnerPod, namespace)
  	releaseName := strings.ToLower(kind) + "-" + parsedChartName
 
 	//helmInstallCmd := "./root/helm install " + releaseName + " ./" + parsedChartName  + " -n " + namespace + " --dry-run" 
@@ -1038,6 +1039,13 @@ func testChartDeployment(request *restful.Request, response *restful.Response) {
 	response.Write([]byte(execOutput))
 }
 
+func removePreviousChart(chartName, cmdRunnerPod string) {
+	// 1. Remove previous instance of chart
+	rmCmd := "rm -rf /" + chartName
+	fmt.Printf("rm cmd:%s\n", rmCmd)
+	executeExecCall(cmdRunnerPod, rmCmd)
+}
+
 func downloadChart(chartURL, cmdRunnerPod, namespace string) string {
 	 			// 1. Extract Chart Name
 	 			lastIndexOfSlash := strings.LastIndex(chartURL, "/")
@@ -1047,12 +1055,8 @@ func downloadChart(chartURL, cmdRunnerPod, namespace string) string {
 	 			chartName2 := parts[0]
 	 			//fmt.Printf("ChartName2:%s\n", chartName2)
 
+				removePreviousChart(chartName2, cmdRunnerPod)
 	 			lsCmd := "ls -l "
-
-                // 1. Remove previous instance of chart
-                rmCmd := "rm -rf /" + chartName2
-	 			fmt.Printf("rm cmd:%s\n", rmCmd)
-	 			executeExecCall(cmdRunnerPod, rmCmd)
 	 			executeExecCall(cmdRunnerPod, lsCmd)
 
 	 			// 2. Download the Chart

@@ -555,7 +555,15 @@ def download_and_untar_chart(chartLoc, chartName):
         out, err = run_command(wget)
         app.logger.info("wget output:" + out)
         app.logger.info("wget error:" + err)
-        
+
+    
+    # delete the previous chart folder
+    cmd = "rm -rf /" + chartName
+    app.logger.info("Deleting the previous chart folder:" + chartName)
+    out, err = run_command(cmd)
+    app.logger.info("Delete previous chart o/p:" + str(out))
+    app.logger.info("Delete previous chart err:" + str(err))
+
     cmd = "tar -xvzf /" + charttgz
     out, err = run_command(cmd)
 
