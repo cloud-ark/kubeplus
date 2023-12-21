@@ -728,7 +728,10 @@ class KubeconfigGenerator(object):
                             server = out2.strip()
                             server = "https://" + server
                         else:
-                            server = "https://" + api_server_ip
+                            if "https" not in api_server_ip:
+                                server = "https://" + api_server_ip
+                            else:
+                                server = api_server_ip
                         #print("Kube API Server:" + server)
                         self._create_kubecfg_file(sa, namespace, filename, token, ca_cert, server, kubeconfig)
 
