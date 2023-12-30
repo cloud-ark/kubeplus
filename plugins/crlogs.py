@@ -19,6 +19,7 @@ class CRLogs(CRBase):
 										stderr=subprocess.PIPE, shell=True).communicate()[0]
 				if out:
 					print(out)
+					print("================================================\n\n")
 			except Exception as e:
 				print(e)
 
@@ -103,7 +104,7 @@ if __name__ == '__main__':
 	#	resources = crLogs.get_resources_composition(kind, instance, namespace, kubeconfig)
 	#	#print(resources)
 	#resource_json = json.loads(resources)
-	pods = crLogs.get_pods(kind, instance, kubeconfig)
+	pods = crLogs.get_pods_in_ns(kind, instance, kubeconfig)
 	for pod in pods:
 		pod_name = pod['Name']
 		pod_namespace = pod['Namespace']

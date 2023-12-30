@@ -11,6 +11,38 @@ import utils
 
 class CRBase(object):
 
+	def parse_pod_details(self, out, instance):
+		pod_list = []
+		for line in out.split("\n"):
+			if 'NAME' not in line and line != '':
+				line1 = ' '.join(line.split())
+				parts = line1.split(" ")
+				pod_info = {}
+				pod_info['Name'] = parts[0]
+				pod_info['Namespace'] = instance
+				pod_list.append(pod_info)
+		return pod_list
+        	
+	def get_pods_in_ns(self, kind, instance, kubeconfig):
+		pod_list = []
+		labelSelector = "partof=" + kind + "-" + instance
+		labelSelector = labelSelector.lower()
+		cmd = "kubectl get pods -n  " + instance + " " + kubeconfig
+		#print(cmd)
+		out = ''
+		try:
+			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE, shell=True).communicate()[0]
+			out = out.decode('utf-8')
+		except Exception as e:
+			print(e)
+		
+		pod_list = self.parse_pod_details(out, instance)
+
+		#print(out)
+
+		#print(pod_list)
+		return pod_list
+
 	def get_pods(self, kind, instance, kubeconfig):
 		pod_list = []
 		labelSelector = "partof=" + kind + "-" + instance
@@ -23,9 +55,8 @@ class CRBase(object):
 			out = out.decode('utf-8')
 		except Exception as e:
 			print(e)
-
-		#print(out)
-		pod_list = []
+		
+		#pod_list = self.parse_pod_details(out)
 		for line in out.split("\n"):
 			if 'NAME' not in line and line != '':
 				line1 = ' '.join(line.split())
@@ -34,6 +65,8 @@ class CRBase(object):
 				pod_info['Name'] = parts[1]
 				pod_info['Namespace'] = parts[0]
 				pod_list.append(pod_info)
+
+		#print(out)
 
 		#print(pod_list)
 		return pod_list
@@ -994,7 +1027,8 @@ class CRMetrics(CRBase):
 			num_of_resources = "-"
 			conn_op_format = "json"
 			#pod_list = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace, kubeconfig, conn_op_format)
-			pod_list = self.get_pods(custom_resource, custom_res_instance, kubeconfig) # uses label selectors
+			#pod_list = self.get_pods(custom_resource, custom_res_instance, kubeconfig) # uses label selectors
+			pod_list = self.get_pods_in_ns(custom_resource, custom_res_instance, kubeconfig) # queries Pods in the CR NS 
 			if len(pod_list) == 0:
 			    # uses kubectl connections plugin - slower than label selectors
 			    pod_list = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace, kubeconfig, conn_op_format)
