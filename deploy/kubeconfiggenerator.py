@@ -675,7 +675,10 @@ def registercrd():
     crd = {}
     crd['apiVersion'] = "apiextensions.k8s.io/v1"
     crd['kind'] = "CustomResourceDefinition"
-    crd['metadata'] = {'name':plural + "." + group}
+    registered_by = {}
+    registered_by['registered-by'] = "kubeplus"
+    crd['metadata'] = {'name':plural + "." + group,
+                       'labels': registered_by }
     crd['spec'] = {"group":group, "names":{"kind": kind, "listKind": kind + "List","plural":plural,"singular":kind.lower()}, "scope": "Namespaced", "versions": [{"name": "v1alpha1", "schema": attr_types, "served": True, "storage": True}]}
 
 #"status": {
