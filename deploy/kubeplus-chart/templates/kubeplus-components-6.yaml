@@ -300,7 +300,7 @@ spec:
       initContainers:
       #containers:
       - name: webhook-cert-setup
-        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:3.0.13
+        image: gcr.io/cloudark-kubeplus/webhook-tls-getter:3.0.26
         imagePullPolicy: IfNotPresent 
         env:
           - name: KUBEPLUS_NAMESPACE
@@ -332,7 +332,7 @@ spec:
         - name: shared-data
           mountPath: /crdinstances
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.12
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.13
         imagePullPolicy: IfNotPresent
         env:
           - name: CHECK_KYVERNO_POLICIES
@@ -350,7 +350,7 @@ spec:
         - name: shared-data
           mountPath: /crdinstances
       - name: platform-operator
-        image: gcr.io/cloudark-kubeplus/platform-operator:3.0.5
+        image: gcr.io/cloudark-kubeplus/platform-operator:3.0.6
         imagePullPolicy: IfNotPresent
         command: [ "/platform-operator"]
       - name: consumerui
