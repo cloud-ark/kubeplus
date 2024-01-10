@@ -472,7 +472,8 @@ func (c *Controller) updateResourceCompositionStatus(foo *platformworkflowv1alph
 	_, err := c.platformStackclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Update(context.Background(), fooCopy, metav1.UpdateOptions{})
 	//_, err := c.sampleclientset.MoodlecontrollerV1().Moodles(foo.Namespace).Update(fooCopy)
 	if err != nil {
-		fmt.Printf("Platformcontroller.go  : ERROR in UpdateResourceCompositionStatus %e", err)
+		fmt.Printf("Platformcontroller.go  : ERROR in UpdateResourceCompositionStatus %e\n", err)
+		fmt.Printf("Platformcontroller.go  : ERROR %v\n", err)
 		time.Sleep(1 * time.Second)
 		count = count + 1
 	} else {

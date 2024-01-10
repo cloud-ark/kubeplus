@@ -29,3 +29,7 @@ webhooks:
         apiGroups: ["workflows.kubeplus", "platformapi.kubeplus"]
         apiVersions: ["v1alpha1"]
         resources: ["resourcepolicies", "resourcecompositions", "resourcemonitors", "resourceevents","*"]
+      - operations: [ "UPDATE"]
+        apiGroups: ["workflows.kubeplus"]
+        apiVersions: ["v1alpha1"]
+        resources: ["resourcepolicies", "resourcecompositions", "resourcemonitors", "resourceevents"]

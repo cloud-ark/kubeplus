@@ -31,8 +31,8 @@ $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
 $ kubectl kubeplus commands
 
 Upload the charts to KubePlus:
-$ $KUBEPLUS_HOME/plugins/kubectl-upload-chart basicwebapp-0.0.1.tgz provider.conf
-$ $KUBEPLUS_HOME/plugins/kubectl-upload-chart basicwebapp-0.0.2.tgz provider.conf
+$ kubectl upload chart basicwebapp-0.0.1.tgz provider.conf
+$ kubectl upload chart basicwebapp-0.0.2.tgz provider.conf
 
 Create basic web app API:
 $ kubectl create -f basic-web-app-service-composition-localchart.yaml --kubeconfig=provider.conf
@@ -47,11 +47,12 @@ Check that the application instance Pods are created in a new namespace:
 $ kubectl get pods -A
 
 Connect to the application:
-$ kubectl port-forward <name of the app instance> -n bwa-tenant1
+$ kubectl port-forward <web-app-deploy-pod> -n bwa-tenant1 5000:5000
    - get the name from the previous command
 
 Verify that you can add users and try adding the same user again.
 Go to "localhost:5000/users" to see the list of users in the database.
+- curl -v http://localhost:5000/users
 
 Change the ResourceComposition file "basic-web-app-service-composition-localchart.yaml"
 Change the version of the chartURL from 0.0.1 to 0.0.2
@@ -69,6 +70,7 @@ Verify this by checking the pods once again:
 $ kubectl get pods -A
 
 Check the application once again. There should be a new user added.
+- curl -v localhost:5000/users
 
 Clean up:
 $ kubectl delete -f basic-web-app-service-composition-localchart.yaml --kubeconfig=provider.conf
