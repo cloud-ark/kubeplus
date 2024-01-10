@@ -214,6 +214,25 @@ func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v
 
 	if req.Kind.Kind == "ResourceComposition"  {
 		if strings.Contains(user, "kubeplus-saas-provider") {
+
+			message := checkChartExists(ar)
+			if message != "" {
+                        	return &v1.AdmissionResponse{
+                                	Result: &metav1.Status{
+                                        Message: message,
+                                	},
+                        	}
+			}
+
+			statusMessageToCheck := "New CRD defined in ResourceComposition created successfully."
+			statusMessage := getStatusMessage(ar)
+			if statusMessageToCheck == statusMessage {
+				fmt.Printf("Intercepted call from platform-controller. Nothing to do for this call..\n")
+                        	return &v1.AdmissionResponse{
+					Allowed: true,
+                        	}
+			}
+
 			errResponse := trackCustomAPIs(ar)
 			if errResponse != nil {
 				//fmt.Printf("111222333")
@@ -315,6 +334,18 @@ func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v
 			return &pt
 		}(),
 	}
+}
+
+func getStatusMessage(ar *v1.AdmissionReview) string {
+	fmt.Println("Inside getStatusMessage")
+	req := ar.Request
+        body := req.Object.Raw
+        status, err := jsonparser.GetUnsafeString(body, "status","status")
+        if err != nil {
+                fmt.Errorf("Error:%s\n", err)
+        }
+	fmt.Printf("getStatusMessage:%s\n", status)
+	return status
 }
 
 func handleDelete(ar *v1.AdmissionReview) *v1.AdmissionResponse {
@@ -1247,6 +1278,31 @@ func getPaCAnnotation(ar *v1.AdmissionReview) map[string]string {
 
 	return annotations1
 }
+
+func checkChartExists(ar *v1.AdmissionReview) string {
+	fmt.Printf("Inside checkChartExists...\n")
+
+        req := ar.Request
+        body := req.Object.Raw
+        kind, err := jsonparser.GetUnsafeString(body, "kind")
+        if err != nil {
+                fmt.Errorf("Error:%s\n", err)
+        }
+
+	crname, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
+        fmt.Printf("CR Name:%s\n", crname)
+        fmt.Printf("Kind:%s\n", kind)
+
+	chartURL, err := jsonparser.GetUnsafeString(req.Object.Raw, "spec", "newResource", "chartURL")
+
+	fmt.Printf("%%%%% CHART URL:%s %%%%%\n", chartURL)
+
+	message1 := string(CheckChartExists(chartURL))
+        fmt.Printf("After CheckChartExists - message:%s\n", message1)
+
+	return message1
+}
+
 
 func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	fmt.Printf("Inside handleCustomAPIs...\n")
