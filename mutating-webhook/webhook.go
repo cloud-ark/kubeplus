@@ -215,6 +215,15 @@ func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v
 	if req.Kind.Kind == "ResourceComposition"  {
 		if strings.Contains(user, "kubeplus-saas-provider") {
 
+			crdNameCheck := checkCRDNameValidity(ar)
+			if crdNameCheck != "" {
+                        	return &v1.AdmissionResponse{
+                                	Result: &metav1.Status{
+                                        Message: crdNameCheck,
+                                	},
+                        	}
+			}
+
 			message := checkChartExists(ar)
 			if message != "" {
                         	return &v1.AdmissionResponse{
@@ -1278,6 +1287,29 @@ func getPaCAnnotation(ar *v1.AdmissionReview) map[string]string {
 
 	return annotations1
 }
+
+
+func checkCRDNameValidity(ar *v1.AdmissionReview) string {
+	fmt.Printf("Inside checkCRDNameValidity...\n")
+
+        req := ar.Request
+        body := req.Object.Raw
+        kind, err := jsonparser.GetUnsafeString(body, "spec","newResource","resource","kind")
+        if err != nil {
+                fmt.Errorf("Error:%s\n", err)
+        }
+
+	crname, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
+        fmt.Printf("CR Name:%s\n", crname)
+        fmt.Printf("Kind:%s\n", kind)
+
+	message1 := "";
+	if strings.Contains(kind, ".") {
+		message1 = "Kind name " + kind + " invalid. Cannot contain period (.)\n"
+	}
+		return message1
+}
+
 
 func checkChartExists(ar *v1.AdmissionReview) string {
 	fmt.Printf("Inside checkChartExists...\n")
