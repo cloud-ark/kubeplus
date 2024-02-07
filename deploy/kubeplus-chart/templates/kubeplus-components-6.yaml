@@ -332,7 +332,7 @@ spec:
         - name: shared-data
           mountPath: /crdinstances
       - name: crd-hook
-        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.13
+        image: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.14
         imagePullPolicy: IfNotPresent
         env:
           - name: CHECK_KYVERNO_POLICIES
