@@ -658,7 +658,7 @@ def registercrd():
     openAPIV3SchemaPropertiesInner['type'] = 'object'
     openAPIV3SchemaPropertiesInner['properties'] = openAPIV3SchemaPropertiesInnerDetails
     openAPIV3SchemaProperties['spec'] = openAPIV3SchemaPropertiesInner
-    openAPIV3SchemaProperties['status'] = {"type": "object", "properties": {"helmrelease": {"type": "string"}}}
+    openAPIV3SchemaProperties['status'] = {"type": "object", "properties": {"helmrelease": {"type": "string"}, "error": {"type": "string"}}}
     openAPIV3SchemaObj['type'] = 'object'
     openAPIV3SchemaObj['properties'] = openAPIV3SchemaProperties
     attr_types['openAPIV3Schema'] = openAPIV3SchemaObj

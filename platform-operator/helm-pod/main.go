@@ -459,8 +459,20 @@ func updateCRDInstances(request *restful.Request, response *restful.Response) {
 			helmreleaseNS, helmrelease := getHelmReleaseName(status)
 			fmt.Printf("Helm release:%s, %s\n", helmreleaseNS, helmrelease)
 			if helmreleaseNS != "" && helmrelease != "" {
-				go upgradeHelmRelease(helmreleaseNS, helmrelease, chartName)
-				fmt.Printf("Helm release updated...\n")
+				_, output := upgradeHelmRelease(helmreleaseNS, helmrelease, chartName)
+				output = strings.ReplaceAll(output, "\n", "")
+				fmt.Printf("Helm release updated...%s\n", output)
+				helmReleaseFQDN := status.(map[string]interface{})["helmrelease"]
+				helmReleaseFQDN_str := helmReleaseFQDN.(string)
+				//helmrelease["helmrelease"] = targetNS + ":" + releaseName
+				//status1 := helmReleaseFQDN_str + "\n" + output + "\n" + "Update complete."
+				helmreleaseUpdate := make(map[string]string)
+				helmreleaseUpdate["helmrelease"] = helmReleaseFQDN_str
+				helmreleaseUpdate["error"] = chartURL + " upgrade output:" + output
+	                        objData["status"] = helmreleaseUpdate
+        	                fmt.Printf("objData:%v\n",objData)
+                		instanceObj.SetUnstructuredContent(objData)
+                        	dynamicClient.Resource(ownerRes).Namespace(namespace).Update(context.Background(), &instanceObj, metav1.UpdateOptions{})
 			}
 		}
 	}
@@ -468,7 +480,7 @@ func updateCRDInstances(request *restful.Request, response *restful.Response) {
 	response.Write([]byte(execOutput))
 }
 
-func upgradeHelmRelease(helmreleaseNS, helmrelease, chartName string) bool {
+func upgradeHelmRelease(helmreleaseNS, helmrelease, chartName string) (bool, string) {
 	fmt.Printf("Helm release:%s\n", helmrelease)
 	cmd := "helm upgrade " + helmrelease + " /" + chartName + " -n " + helmreleaseNS
 	fmt.Printf("Helm upgrade cmd:%s\n", cmd)
@@ -476,7 +488,7 @@ func upgradeHelmRelease(helmreleaseNS, helmrelease, chartName string) bool {
 	cmdRunnerPod := getKubePlusPod()
 	ok, output := executeExecCall(cmdRunnerPod, cmd)
 	fmt.Printf("Helm upgrade o/p:%v\n", output)
-	return ok
+	return ok, output
 }
 
 func annotateCRD(request *restful.Request, response *restful.Response) {
@@ -1116,6 +1128,7 @@ func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, re
 			helmrelease := make(map[string]interface{},0)
 			// Helm release will be done in the target namespace where the customresource instance
 			// is deployed.
+			releaseName = strings.ReplaceAll(releaseName, "\n", "")
 			helmrelease["helmrelease"] = targetNS + ":" + releaseName
 			objData["status"] = helmrelease
 			//fmt.Printf("objData:%v\n",objData)
