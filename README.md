@@ -71,7 +71,8 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    python3 -m venv venv
    source venv/bin/activate
    pip3 install -r requirements.txt
-   python3 provider-kubeconfig.py create $KUBEPLUS_NS
+   apiserver=`./parse-api-server-url.sh`
+   python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
    ```
 
 5) Install KubePlus Operator using the generated provider kubeconfig 
