@@ -72,6 +72,7 @@ class KubeconfigGenerator(object):
                 return out, err
 
         def _create_kubecfg_file(self, sa, namespace, filename, token, ca, server, kubeconfig):
+                print("Creating kubecfg file")
                 top_level_dict = {}
                 top_level_dict["apiVersion"] = "v1"
                 top_level_dict["kind"] = "Config"
@@ -115,6 +116,7 @@ class KubeconfigGenerator(object):
                 top_level_dict["current-context"] = contextName
 
                 json_file = json.dumps(top_level_dict)
+                print("kubecfg file:" + json_file)
 
                 fp = open(os.getcwd() + "/" + filename, "w")
                 fp.write(json_file)
@@ -671,6 +673,59 @@ class KubeconfigGenerator(object):
                     sys.exit()
                 return out
 
+        def _extract_kubeconfig(self, sa, namespace, filename, serverip='', kubecfg=''):
+            print("Extracting kubeconfig")
+            secretName = sa
+            tokenFound = False
+            kubeconfig = kubecfg
+            api_server_ip = serverip
+            cmdprefix = ""
+            while not tokenFound:
+                cmd1 = " kubectl describe secret " + secretName + " -n " + namespace + kubeconfig
+                cmdToRun = cmdprefix + " " + cmd1
+                out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+                out1 = out1.decode('utf-8')
+                #print(out1)
+                token = ''
+                for line in out1.split("\n"):
+                    if 'token' in line:
+                        parts = line.split(":")
+                        token = parts[1].strip()
+                    if token != '':
+                        tokenFound = True
+                    else:
+                        time.sleep(2)
+
+            cmd1 = " kubectl get secret " + secretName + " -n " + namespace + " -o json " + kubeconfig
+            cmdToRun = cmdprefix + " " + cmd1
+            out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+            out1 = out1.decode('utf-8')
+            json_output1 = json.loads(out1)
+            ca_cert = json_output1["data"]["ca.crt"].strip()
+            print("CA Cert:" + ca_cert)
+
+            #cmd2 = " kubectl config view --minify -o json "
+            server = ''
+            if api_server_ip == '':
+                cmd2 = "kubectl -n default get endpoints kubernetes " + kubeconfig + " | awk '{print $2}' | grep -v ENDPOINTS"
+                cmdToRun = cmdprefix + " " + cmd2
+                out2 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+                #print("Config view Minify:")
+                #print(out2)
+                out2 = out2.decode('utf-8')
+                #json_output2 = json.loads(out2)
+                #server = json_output2["clusters"][0]["cluster"]["server"].strip()
+                server = out2.strip()
+                server = "https://" + server
+            else:
+                if "https" not in api_server_ip:
+                    server = "https://" + api_server_ip
+                else:
+                    server = api_server_ip
+                    #print("Kube API Server:" + server)
+            self._create_kubecfg_file(sa, namespace, filename, token, ca_cert, server, kubeconfig)
+
+
         def _generate_kubeconfig(self, sa, namespace, filename, api_server_ip='', kubeconfig=''):
                 cmdprefix = ""
                 cmd = " kubectl create sa " + sa + " -n " + namespace + kubeconfig
@@ -689,51 +744,10 @@ class KubeconfigGenerator(object):
                         #secretName = json_output["secrets"][0]["name"]
                         #print("Secret Name:" + secretName)
 
-                        tokenFound = False
-                        while not tokenFound:
-                                cmd1 = " kubectl describe secret " + secretName + " -n " + namespace + kubeconfig
-                                cmdToRun = cmdprefix + " " + cmd1
-                                out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
-                                out1 = out1.decode('utf-8')
-                                #print(out1)
-                                token = ''
-                                for line in out1.split("\n"):
-                                        if 'token' in line:
-                                                parts = line.split(":")
-                                                token = parts[1].strip()
-                                if token != '':
-                                        tokenFound = True
-                                else:
-                                        time.sleep(2)
 
+                        # Moving from here
                         #print("Got secret token")
-                        cmd1 = " kubectl get secret " + secretName + " -n " + namespace + " -o json " + kubeconfig
-                        cmdToRun = cmdprefix + " " + cmd1
-                        out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
-                        out1 = out1.decode('utf-8')
-                        json_output1 = json.loads(out1)
-                        ca_cert = json_output1["data"]["ca.crt"].strip()
-                        #print("CA Cert:" + ca_cert)
-
-                        #cmd2 = " kubectl config view --minify -o json "
-                        if api_server_ip == '':
-                            cmd2 = "kubectl -n default get endpoints kubernetes " + kubeconfig + " | awk '{print $2}' | grep -v ENDPOINTS"
-                            cmdToRun = cmdprefix + " " + cmd2
-                            out2 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
-                            #print("Config view Minify:")
-                            #print(out2)
-                            out2 = out2.decode('utf-8')
-                            #json_output2 = json.loads(out2)
-                            #server = json_output2["clusters"][0]["cluster"]["server"].strip()
-                            server = out2.strip()
-                            server = "https://" + server
-                        else:
-                            if "https" not in api_server_ip:
-                                server = "https://" + api_server_ip
-                            else:
-                                server = api_server_ip
-                        #print("Kube API Server:" + server)
-                        self._create_kubecfg_file(sa, namespace, filename, token, ca_cert, server, kubeconfig)
+                        self._extract_kubeconfig(sa, namespace, filename, serverip=api_server_ip, kubecfg=kubeconfig)
 
 
 if __name__ == '__main__':
@@ -757,7 +771,7 @@ if __name__ == '__main__':
 
         kubeconfigPath = os.getenv("HOME") + "/.kube/config"
         parser = argparse.ArgumentParser()
-        parser.add_argument("action", help="command", choices=['create', 'delete', 'update'])
+        parser.add_argument("action", help="command", choices=['create', 'delete', 'update', 'extract'])
         parser.add_argument("namespace", help="namespace in which KubePlus will be installed.")
         parser.add_argument("-k", "--kubeconfig", help='''This flag is used to specify the path
                 of the kubeconfig file that should be used for executing steps in provider-kubeconfig.
@@ -826,6 +840,10 @@ if __name__ == '__main__':
                 # 1. Generate Provider kubeconfig
                 kubeconfigGenerator._generate_kubeconfig(sa, namespace, filename, api_server_ip=api_s_ip, kubeconfig=kubeconfigString)
                 kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider', kubeconfig=kubeconfigString)
+                print("Provider kubeconfig created: " + filename)
+
+        if action == "extract":
+                kubeconfigGenerator._extract_kubeconfig(sa, namespace, filename, serverip=api_s_ip, kubecfg=kubeconfigString)
                 print("Provider kubeconfig created: " + filename)
 
         if action == "update":
