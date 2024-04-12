@@ -243,4 +243,4 @@ atforms.
 ## Contact
 
 For support and new features [reach out to us](https://cloudark.io/kubeplus-saas-manager)
-or contact our team on [Slack](https://join.slack.com/t/cloudark/shared_invite/zt-2yp5o32u-sOq4ub21TvO_kYgY9ZfFfw).
+or contact our team on #kubeplus channel on [CNCF Slack](https://cloud-native.slack.com/archives/C06U6MP24PN)
