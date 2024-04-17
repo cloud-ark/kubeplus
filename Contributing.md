@@ -39,6 +39,7 @@ File an Issue with following information:
     - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NAMESAPCE -c platform-operator
     - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NAMESAPCE -c webhook-cert-setup
     - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NAMESAPCE -c consumerui
+    - kubectl exec -it <kubeplus-pod> -n $KUBELUS_NS -c kubeconfiggenerator /bin/bash; tail -100 /root/kubeconfiggenerator.log
   ```
 
   * Cluster details
