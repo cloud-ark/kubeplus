@@ -6,7 +6,9 @@ KubePlus is a turn-key solution to transform any containerized application into 
 <img src="./docs/application-stacks-1.png" width="700" height="150" class="center">
 </p>
 
-Multi-instance multi-tenancy (MIMT) is a software architecture pattern in which a dedicated instance of an application is provided per tenant. The typical adopters of this pattern are organizations that need to host and manage multiple instances of a software application for different tenants and effectively deliver that application as-a-service. KubePlus is a turn-key solution to build a multi-instance multi-tenancy (MIMT) pattern on Kubernetes and comes with end to end automation to help you deploy and manage your MIMT application on Kubernetes. This includes isolation and security between instances along with easy to use APIs for managing upgrades, customization and resource utilization. 
+Multi-instance multi-tenancy (MIMT) is a software architecture pattern in which a dedicated instance of an application is provided per tenant. The typical adopters of this pattern are platform engineering teams and B2B software vendors that need to host and manage multiple instances of a software application for different tenants and effectively deliver that application as a managed service.
+KubePlus is a turn-key solution to build such managed services following the multi-instance multi-tenancy (MIMT) pattern on Kubernetes.
+It comes with end to end automation to help you deploy and manage your MIMT application on Kubernetes. This includes isolation and security between instances along with easy to use APIs for managing upgrades, customization and resource utilization. 
 
 KubePlus takes an application Helm chart and wraps it under a Kubernetes API (CRD). Whenever an application instance is created using this API, KubePlus ensures that every instance is created in a separate namespace and the required multi-tenancy policies are applied in order to ensure isolation between instances. The API also supports RBAC, version upgrades and additional customizations for each instance. 
 
@@ -18,36 +20,40 @@ KubePlus takes an application Helm chart and wraps it under a Kubernetes API (CR
 
 ### Isolation
 
-KubePlus takes an application Helm chart and wraps it in a Kubernetes API. Application providers use this API to provision application instances on a cluster. KubePlus isolates each application instance in a separate Namespace. It adds a safety perimeter around such Namespaces using Kubernetes Network Policies and non-shared persistent volumes ensuring that each application instance is appropriately isolated from other instances. Additionally, it provides controls for application providers to deploy different tenant application instances on different worker nodes for node isolation. 
+KubePlus takes an application Helm chart and wraps it in a Kubernetes API (CRD). Application providers use this API to provision application instances on a cluster. KubePlus isolates each application instance in a separate Namespace. It adds a safety perimeter around such Namespaces using Kubernetes Network Policies and non-shared persistent volumes ensuring that each application instance is appropriately isolated from other instances. Additionally, it provides controls for application providers to deploy different tenant application instances on different worker nodes for node isolation. 
 
 ### Security
 
-The KubePlus Operator does not need any admin-level permissions on a cluster for application providers. This allows application providers to offer their managed services on any K8s clusters including those owned by their customers. KubePlus comes with a small utility that allows you to create provider specific kubeconfig on a cluster in order to enable this RBAC. Application providers have an ability to create a consumer specific further limited kubeconfig to allow for self service provisioning of the instance as well. 
+The KubePlus Operator does not need any admin-level permissions on a cluster for application providers. This allows application providers to offer their managed services on any K8s clusters including those owned by their customers. KubePlus comes with a small utility that allows you to create provider specific kubeconfig on a cluster in order to enable application deployments and management. Providers have an ability to create a consumer specific further limited kubeconfig to allow for self service provisioning of application instances as well. 
 
 ### Resource utilization
 KubePlus provides controls to set per-namespace resource quotas. It also monitors usage of CPU, memory, storage, and network traffic at the application instance level. The collected metrics are available in different formats and can be pulled into Prometheus for historical usage tracking.
 
 ### Upgrades
-A new version of an application can be deployed by updating the application Helm chart under the existing Kubernetes API or registering the new chart under a new Kubernetes API. If the existing Kubernetes API object is updated, KubePlus will update all the running application instances (helm releases) to the new version of the application Helm chart.
+A new version of an application can be deployed by updating the application Helm chart under the existing Kubernetes CRD or registering the new chart under a new Kubernetes CRD. If the existing Kubernetes CRD object is updated, KubePlus will update all the running application instances (helm releases) to the new version of the application Helm chart.
 
 ### Customization
-The spec properties of the Kubernetes API wrapping the application Helm chart are the fields defined in the chart’s values.yaml file. Application deployments can be customized by specifying different values for these spec properties.
-
-KubePlus architecture details are available [here](http://kubeplus-docs.s3-website-us-west-2.amazonaws.com/html/index.html).
-KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](https://kubernetes.io/docs/concepts/security/multi-tenancy/#multi-customer-tenancy).
+The spec properties of the Kubernetes CRD wrapping the application Helm chart are the fields defined in the chart’s values.yaml file. Application deployments can be customized by specifying different values for these spec properties.
 
 ## Demo
 
 https://github.com/cloud-ark/kubeplus/assets/732525/efb255ff-fc73-446b-a583-4b89dbf61638
 
-## Example
+
+## Architecture
+
+KubePlus architecture details are available [here](http://kubeplus-docs.s3-website-us-west-2.amazonaws.com/html/index.html).
+KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](https://kubernetes.io/docs/concepts/security/multi-tenancy/#multi-customer-tenancy).
+
+
+## Getting Started 
 
 Let’s look at an example of creating a multi-instance WordPress Service using KubePlus. The WordPress service provider goes through the following steps towards this on their cluster:
 
 1) Create cluster (or using existing cluster).
    For testing purposes you can create a minikube cluster:
 
-   ``$ minikube start --kubernetes-version=v1.24.3``
+   ``$ minikube start ``
 
 2) Download KubePlus plugins and set up the PATH
 ```
@@ -61,13 +67,14 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 3) Set the Namespace in which to deploy KubePlus
 
-   ``export KUBEPLUS_NS=<namespace in which you want to run KubePlus>``
+   ``export KUBEPLUS_NS=default``
 
 4) Create provider kubeconfig using the provider-kubeconfig.py utility that we provide
 
    ```
    wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/requirements.txt
    wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/provider-kubeconfig.py
+   wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/parse-api-server-url.sh
    python3 -m venv venv
    source venv/bin/activate
    pip3 install -r requirements.txt
@@ -82,7 +89,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done
    ```
 
-6) Create API wrapping WordPress Helm chart.
+6) Create Kubernetes CRD representing WordPress Helm chart.
    
    The WordPress Helm chart can be specified as a [public url](./examples/multitenancy/wordpress/wordpress-service-composition.yaml#L14) or can be [available locally](./examples/multitenancy/wordpress/wordpress-service-composition-localchart.yaml#L14).
 
@@ -145,6 +152,9 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
     wp-tenant1                NetworkPolicy             restrict-cross-ns-traffic 
     wp-tenant1                ResourceQuota             wordpressservice-wp-tenant1 
     ```
+    Notice that the WordpressService instance resources are deployed in a Namespace (wp-tenant1),
+    which was created by KubePlus.
+
 <!--
 <p align="center">
 <img src="./docs/app-resources.png" width="700" height="250" class="center">
@@ -186,7 +196,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 <img src="./docs/app-metrics.png" width="700" height="250" class="center">
 </p>-->
 
-## Try
+## Try:
 
 1) Examples:
    - [Hello world](./examples/multitenancy/hello-world/steps.txt)
@@ -202,10 +212,15 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 3) Troubleshoot
 ```
-   kubectl logs <kubeplus-pod> -c crd-hook
-   kubectl logs <kubeplus-pod> -c helmer
-   kubectl exec -it <kubeplus-pod> -c kubeconfiggenerator /bin/bash; tail -100 /root/kubeconfiggenerator.log
+   kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c crd-hook
+   kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c helmer
+   kubectl exec -it <kubeplus-pod> -n $KUBELUS_NS -c kubeconfiggenerator /bin/bash; tail -100 /root/kubeconfiggenerator.log
 ```
+
+## Contributing:
+
+Check the [contributing guidelines](./Contributing.md).
+
 
 ## Case studies
 
@@ -217,7 +232,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 ## CNCF Landscape
 
 KubePlus is part of CNCF landscape's
-[Application Definition section](https://landscape.cncf.io/card-mode?category=application-definition-image-build&grouping=category).
+[Application Definition section](https://landscape.cncf.io/guide#app-definition-and-development--application-definition-image-build).
 
 
 ## Operator Maturity Model
