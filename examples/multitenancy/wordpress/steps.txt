@@ -20,7 +20,11 @@ This example shows delivering Wordpress Helm chart as-a-service using KubePlus.
 3. Get Provider and consumer kubeconfigs:
    - Extract provider kubeconfig:
      $ KUBEPLUS_NS=default
-     $ python ../../../provider-kubeconfig.py create $KUBEPLUS_NS
+     $ python3 ../../../provider-kubeconfig.py create $KUBEPLUS_NS
+   - If your cluster is on public cloud (such as GKE/EKS/AKS), then follow these steps:
+     $ wget https://github.com/cloud-ark/kubeplus/blob/master/parse-api-server-url.sh
+     $ apiserver=`./parse-api-server-url.sh`
+     $ python3 ../../../provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
 
 4. Install KubePlus Operator:
    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.35.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=kubeplus-saas-provider.json
