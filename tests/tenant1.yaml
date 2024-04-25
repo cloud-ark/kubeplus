@@ -1,0 +1,6 @@
+apiVersion: platformapi.kubeplus/v1alpha1
+kind: WordpressService 
+metadata:
+  name: tenant1
+spec:
+  resourceName: wp-for-tenant1
