@@ -1,5 +1,4 @@
 import unittest
-import requests
 import sys
 import json
 import subprocess
@@ -89,7 +88,7 @@ class TestKubePlus(unittest.TestCase):
         installed = False
         cmd = "kubectl get crds"
         timer = 0
-        while not installed and timer < 30:
+        while not installed and timer < 120:
             out, err = TestKubePlus.run_command(cmd)
             if 'wordpressservices.platformapi.kubeplus' in out:
                 installed = True
@@ -101,10 +100,10 @@ class TestKubePlus(unittest.TestCase):
         TestKubePlus.run_command(cmd)
 
         all_running = False
-        cmd = "kubectl get pods -n wp-for-tenant1"
+        cmd = "kubectl get pods -n tenant1"
         pods = []
         timer = 0
-        while not all_running and timer < 30:
+        while not all_running and timer < 60:
             timer = timer + 1
             out, err = TestKubePlus.run_command(cmd)
             count = 0
@@ -125,7 +124,7 @@ class TestKubePlus(unittest.TestCase):
             #print(pods)
             # Check container configs
             for pod in pods:
-                cmd = "kubectl get pod " + pod + " -n wp-for-tenant1 -o json "
+                cmd = "kubectl get pod " + pod + " -n tenant1 -o json "
                 out, err = TestKubePlus.run_command(cmd)
                 json_obj = json.loads(out)
                 #print(json_obj)

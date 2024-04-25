@@ -1,15 +1,15 @@
 apiVersion: workflows.kubeplus/v1alpha1
 kind: ResourceComposition
 metadata:
-  name: wordpress-service-composition
+  name: wordpress-service-composition-storage
 spec:
   # newResource defines the new CRD to be installed define a workflow.
   newResource:
     resource:
-      kind: WordpressService
+      kind: WordpressServiceStorage
       group: platformapi.kubeplus
       version: v1alpha1
-      plural: wordpressservices 
+      plural: wordpressservicestorages
     # URL of the Helm chart that contains Kubernetes resources that represent a workflow.
     chartURL: https://github.com/cloud-ark/k8s-workshop/blob/master/wordpress-deployment-chart/wordpress-chart-0.0.4.tgz?raw=true
     chartName: wordpress-chart
@@ -18,10 +18,10 @@ spec:
     apiVersion: workflows.kubeplus/v1alpha1
     kind: ResourcePolicy 
     metadata:
-      name: wordpress-service-policy
+      name: wordpress-service-policy-storage
     spec:
       resource:
-        kind: WordpressService 
+        kind: WordpressServiceStorage 
         group: platformapi.kubeplus
         version: v1alpha1
       policy:
@@ -43,10 +43,10 @@ spec:
     apiVersion: workflows.kubeplus/v1alpha1
     kind: ResourceMonitor
     metadata:
-      name: wordpress-service-monitor
+      name: wordpress-service-monitor-storage
     spec:
       resource:
-        kind: WordpressService 
+        kind: WordpressServiceStorage 
         group: platformapi.kubeplus
         version: v1alpha1
       # This attribute indicates that Pods that are reachable through all the relationships should be used
