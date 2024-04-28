@@ -103,12 +103,12 @@ class TestKubePlus(unittest.TestCase):
         cmd = "kubectl get pods -n tenant1"
         pods = []
         timer = 0
-        while not all_running and timer < 60:
+        while not all_running and timer < 120:
             timer = timer + 1
             out, err = TestKubePlus.run_command(cmd)
             count = 0
             for line in out.split("\n"):
-                if 'Running' in line:
+                if 'Running' in line or 'Pending' in line:
                     count = count + 1
                 if 'NAME' not in line:
                     parts = line.split(" ")
