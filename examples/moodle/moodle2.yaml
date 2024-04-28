@@ -1,8 +1,0 @@
-apiVersion: moodlecontroller.kubeplus/v1
-kind: Moodle
-metadata:
-  name: moodle2
-spec:
-  name: moodle2
-  plugins: ["profilecohort"]
-
