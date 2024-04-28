@@ -759,9 +759,16 @@ if __name__ == '__main__':
         parser = argparse.ArgumentParser()
         parser.add_argument("action", help="command", choices=['create', 'delete', 'update'])
         parser.add_argument("namespace", help="namespace in which KubePlus will be installed.")
-        parser.add_argument("-k", "--kubeconfig", help="kubeconfig file")
-        parser.add_argument("-s", "--serverip", help="api server ip address")
-        parser.add_argument("-f", "--filename", help="output file name (default name is kubeplus-saas-provider.json)")
+        parser.add_argument("-k", "--kubeconfig", help='''This flag is used to specify the path
+                of the kubeconfig file that should be used for executing steps in provider-kubeconfig.
+                The default value is ~/.kube/config''')
+        parser.add_argument("-s", "--apiserverurl", help='''This flag is to be used to pass the API Server URL of the
+                API server on which KubePlus is installed. This API Server URL will be used in constructing the
+                server endpoint in the provider kubeconfig. Use the parse-api-server-url.sh script available in KubePlus repo
+                to get the API Server URL.''')
+        parser.add_argument("-f", "--filename", help='''This flag is used to specify the
+                output file name in which generated provider kubeconfig will be store
+                (The default value is kubeplus-saas-provider.json)''')
         permission_help = "permissions file - use with update command.\n"
         permission_help = permission_help + "Should be a JSON file with the following structure:\n"
         permission_help = permission_help + "{perms:{<apiGroup1>:[{resource1|resource/resourceName::<resourceName>: [verb1, verb2, ...]}, {resource2: [..]}], {<apiGroup2>:[...]}}}"
@@ -780,9 +787,9 @@ if __name__ == '__main__':
         kubeconfigString = " --kubeconfig=" + kubeconfigPath
 
         api_s_ip = ''
-        if args.serverip:
+        if args.apiserverurl:
             #print("Server ip:" + args.serverip)
-            api_s_ip = args.serverip
+            api_s_ip = args.apiserverurl
 
         permission_file = ''
         if args.permissionfile:
