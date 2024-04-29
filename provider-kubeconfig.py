@@ -72,7 +72,7 @@ class KubeconfigGenerator(object):
                 return out, err
 
         def _create_kubecfg_file(self, sa, namespace, filename, token, ca, server, kubeconfig):
-                print("Creating kubecfg file")
+                #print("Creating kubecfg file")
                 top_level_dict = {}
                 top_level_dict["apiVersion"] = "v1"
                 top_level_dict["kind"] = "Config"
@@ -116,7 +116,7 @@ class KubeconfigGenerator(object):
                 top_level_dict["current-context"] = contextName
 
                 json_file = json.dumps(top_level_dict)
-                print("kubecfg file:" + json_file)
+                #print("kubecfg file:" + json_file)
 
                 fp = open(os.getcwd() + "/" + filename, "w")
                 fp.write(json_file)
@@ -492,24 +492,6 @@ class KubeconfigGenerator(object):
                 cmd = "kubectl create configmap kubeplus-saas-provider-perms -n " + namespace  + " --from-file=kubeplus-saas-provider-perms.txt"
                 self.run_command(cmd)
 
-#                cmd = "kubectl get configmap kubeplus-saas-provider-perms -o json -n " + namespace
-#                out, err = self.run_command(cmd)
-#                out = out.decode('utf-8')
-#                err = err.decode('err')
-#                print("Out:" + str(out))
-#                print("Err:" + str(err))
-#                if err == '' and out != '':
-#                    json_op = json.loads(out)
-#                    perms = json_op['data']['kubeplus-saas-provider-perms.txt']
-#                    print(perms)
-#                    k_perms = perms.split(",")
-#                    for p in k_perms:
-#                        p = p.replace("'","")
-#                        p = p.replace("[","")
-#                        p = p.replace("]","")
-#                        p = p.strip()
-#                        print("- " + p) 
-
         def _update_rbac(self, permissionfile, sa, namespace, kubeconfig):
                 role = {}
                 role["apiVersion"] = "rbac.authorization.k8s.io/v1"
@@ -618,8 +600,6 @@ class KubeconfigGenerator(object):
                 fp.close()
                 cmd = "kubectl create configmap kubeplus-saas-provider-perms -n " + namespace  + " --from-file=kubeplus-saas-provider-perms.txt"
                 self.run_command(cmd)
-
-        
     
 
         def _apply_rbac(self, sa, namespace, entity='', kubeconfig=''):
@@ -674,7 +654,7 @@ class KubeconfigGenerator(object):
                 return out
 
         def _extract_kubeconfig(self, sa, namespace, filename, serverip='', kubecfg=''):
-            print("Extracting kubeconfig")
+            #print("Extracting kubeconfig")
             secretName = sa
             tokenFound = False
             kubeconfig = kubecfg
@@ -702,7 +682,7 @@ class KubeconfigGenerator(object):
             out1 = out1.decode('utf-8')
             json_output1 = json.loads(out1)
             ca_cert = json_output1["data"]["ca.crt"].strip()
-            print("CA Cert:" + ca_cert)
+            #print("CA Cert:" + ca_cert)
 
             #cmd2 = " kubectl config view --minify -o json "
             server = ''
@@ -744,30 +724,12 @@ class KubeconfigGenerator(object):
                         #secretName = json_output["secrets"][0]["name"]
                         #print("Secret Name:" + secretName)
 
-
                         # Moving from here
                         #print("Got secret token")
                         self._extract_kubeconfig(sa, namespace, filename, serverip=api_server_ip, kubecfg=kubeconfig)
 
 
 if __name__ == '__main__':
-
-#        if len(sys.argv) < 3:
-#                print("python provider-kubeconfig.py <create|delete|update> <namespace> [<api server ip>] [<kubeconfig-file>]")
-#                exit()
-#        api_s_ip = ''
-#        if len(sys.argv) == 3:
-#            action = sys.argv[1]
-#            namespace = sys.argv[2]
-#        if len(sys.argv) == 4:
-#            action = sys.argv[1]
-#            namespace = sys.argv[2]
-#            api_s_ip = sys.argv[3]
-#        if len(sys.argv) == 5:
-#            action = sys.argv[1]
-#            namespace = sys.argv[2]
-#            api_s_ip = sys.argv[3]
-#            kubeconfigPath = sys.argv[4]
 
         kubeconfigPath = os.getenv("HOME") + "/.kube/config"
         parser = argparse.ArgumentParser()
