@@ -4,7 +4,7 @@ We would love your contributions. The process is simple:
 
 ## Code submissions:
 
-Set up your development environment by following the steps [here](http://kubeplus-docs.s3-website-us-west-2.amazonaws.com/html/compile-components.html).
+Set up your development environment by following the steps [here](https://github.com/cloud-ark/kubeplus/wiki/Development-and-Testing).
 
 When submitting a PR, link to the [relevant GitHub issue](https://github.com/cloud-ark/kubeplus/issues).
 
@@ -13,7 +13,7 @@ Ping us on KubePlus Slack channel for any questions/discussions about the featur
 
 ## Feature requests:
 
-File an Issue with following information:
+File an Issue with the following information:
 
   * Feature description
 
@@ -34,11 +34,11 @@ File an Issue with following information:
 
   ```
     - export KUBEPLUS_NAMESPACE=<Namespace in which KubePlus is deployed>
-    - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NAMESPACE -c crd-hook
-    - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NAMESPACE -c helmer
-    - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NAMESAPCE -c platform-operator
-    - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NAMESAPCE -c webhook-cert-setup
-    - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NAMESAPCE -c consumerui
+    - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c crd-hook
+    - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c helmer
+    - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c platform-operator
+    - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c webhook-cert-setup
+    - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c consumerui
     - kubectl exec -it <kubeplus-pod> -n $KUBELUS_NS -c kubeconfiggenerator /bin/bash; tail -100 /root/kubeconfiggenerator.log
   ```
 
