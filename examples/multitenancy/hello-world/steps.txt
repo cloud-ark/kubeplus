@@ -11,28 +11,36 @@ Setup:
 Install Helm v3
 Install minikube
 
+Set Path:
+$ mkdir -p $HOME/go/src/github.com/cloud-ark/
+$ cd $HOME/go/src/github.com/cloud-ark/
+
+Clone KubePlus repo, if not already cloned:
+$ git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
+$ cd kubeplus
+$ export KUBEPLUS_HOME=`pwd`
+$ export PATH=$KUBEPLUS_HOME/plugins:$PATH
+$ kubectl kubeplus commands
+
 Create minikube cluster
-- minikube start --kubernetes-version=v1.24.3
+- minikube start
 
 Install KubePlus Operator
 $ KUBEPLUS_NS=default
-$ python ../../../provider-kubeconfig.py create $KUBEPLUS_NS
-$ cp kubeplus-saas-provider.json provider.conf
+$ apiserver=`./parse-api-server-url.sh`
+$ python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
+$ cp kubeplus-saas-provider.json examples/multitenancy/hello-world/provider.conf
+$ cd examples/multitenancy/hello-world/
 $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.36.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=provider.conf
 $ kubectl get pods (wait till kubeplus pod is Running)
 
-Install KubePlus kubectl plugins
-$ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
-$ gunzip kubeplus-kubectl-plugins.tar.gz
-$ tar -xvf kubeplus-kubectl-plugins.tar
-$ export KUBEPLUS_HOME=`pwd`
-$ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
-$ kubectl kubeplus commands
 
 Get Consumer kubeconfig:
 ---------------------------------------
 Extract consumer kubeconfig:
-- kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
+$ kubectl retrieve kubeconfig consumer $KUBEPLUS_NS -s $apiserver > consumer.conf
+OR
+$ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
 
 
 Create new consumer API:
@@ -50,13 +58,17 @@ You can use either the provider.conf or consumer.conf in below commands.
 
 1. Check HelloWorldService man page
    - kubectl man HelloWorldService -k consumer.conf
+   You will see that this is a Kubernetes CRD with a spec property "greeting".
 
 2. Create a hello world instance
+   - more hs1.yaml
+   Notice that this is an instance of HelloWorldService named 'hs1'. The "greetings" spec property
+   value is set to "Hello hello hello".
    - kubectl create -f hs1.yaml --kubeconfig=consumer.conf
 
 3. Check that the application instance Pods are created in a new namespace
    - kubectl get pods -A --kubeconfig=consumer.conf
-     - should see the hello world pod in hs1 namespace
+     - you should see the hello world Pod in hs1 namespace
 
 4. Verify that resource requests and limits for cpu and memory have been set
    on the hello world Pod as defined in the ResourceComposition definition in hello-world-service-composition.yaml
