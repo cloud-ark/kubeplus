@@ -7,29 +7,33 @@ This example shows delivering Wordpress Helm chart as-a-service using KubePlus.
    - Install Helm v3
    - Install minikube
    - Create minikube cluster
-     $ minikube start --kubernetes-version=v1.24.3
+     $ minikube start 
 
-2. Install KubePlus kubectl plugins:
-   $ wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
-   $ gunzip kubeplus-kubectl-plugins.tar.gz
-   $ tar -xvf kubeplus-kubectl-plugins.tar
-   $ export KUBEPLUS_HOME=`pwd`
-   $ export PATH=$KUBEPLUS_HOME/plugins/:$PATH
-   $ kubectl kubeplus commands
+2. Set Path:
+$ mkdir -p $HOME/go/src/github.com/cloud-ark/
+$ cd $HOME/go/src/github.com/cloud-ark/
+
+Clone KubePlus repo, if not already cloned:
+$ git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
+$ cd kubeplus
+$ export KUBEPLUS_HOME=`pwd`
+$ export PATH=$KUBEPLUS_HOME/plugins:$PATH
+$ kubectl kubeplus commands
 
 3. Get Provider and consumer kubeconfigs:
    - Extract provider kubeconfig:
      $ KUBEPLUS_NS=default
-     $ python3 ../../../provider-kubeconfig.py create $KUBEPLUS_NS
-   - If your cluster is on public cloud (such as GKE/EKS/AKS), then follow these steps:
-     $ wget https://github.com/cloud-ark/kubeplus/blob/master/parse-api-server-url.sh
      $ apiserver=`./parse-api-server-url.sh`
-     $ python3 ../../../provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
+     $ python3 provider-kubeconfig.py create  -s $apiserver create $KUBEPLUS_NS
+     $ cp kubeplus-saas-provider.json examples/multitenancy/wordpress/.
+     $ cd examples/multitenancy/wordpress/
 
 4. Install KubePlus Operator:
    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.36.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=kubeplus-saas-provider.json
 
 5. Extract consumer kubeconfig:
+   $ kubectl retrieve kubeconfig consumer $KUBEPLUS_NS -s $apiserver > consumer.conf
+   OR
    $ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
 
 6. Create new consumer API:
@@ -37,7 +41,7 @@ This example shows delivering Wordpress Helm chart as-a-service using KubePlus.
      - Check wordpress-service-composition.yaml
      - If required modify the Pod policies in the podconfig section (cpu/memory requests and limits) 
      $ kubectl create -f wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
-   - Verify WordpressStack CRD registered
+   - Verify WordpressService CRD registered
      $ until kubectl get crds --kubeconfig=kubeplus-saas-provider.json | grep wordpressservices.platformapi.kubeplus  ; do echo "Waiting for WordpressService CRD to be registered.."; sleep 1; done
 
 7. Create tenant1 Wordpress stack: 
