@@ -40,11 +40,6 @@ The spec properties of the Kubernetes CRD wrapping the application Helm chart ar
 https://github.com/cloud-ark/kubeplus/assets/732525/efb255ff-fc73-446b-a583-4b89dbf61638
 
 
-## Architecture
-
-KubePlus architecture details are available [here](http://kubeplus-docs.s3-website-us-west-2.amazonaws.com/html/index.html).
-KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](https://kubernetes.io/docs/concepts/security/multi-tenancy/#multi-customer-tenancy).
-
 
 ## Getting Started 
 
@@ -69,7 +64,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
    ``export KUBEPLUS_NS=default``
 
-4) Create provider kubeconfig using the provider-kubeconfig.py utility that we provide
+4) Create provider kubeconfig using provider-kubeconfig.py
 
    ```
    wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/requirements.txt
@@ -120,9 +115,9 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 9) Check created WordpressService instances
 
-   ``kubectl get wordpressservices``
-
    ```
+   kubectl get wordpressservices
+   
    NAME             AGE
    wp-tenant1   86s
    wp-tenant2   26s
@@ -135,25 +130,26 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 10) Check created application resources
 
-   ``kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json``
+   ```
+   kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
 
-    ```
-    NAMESPACE                 KIND                      NAME                      
-    default                   WordpressService          wp-tenant1                
-    wp-tenant1                PersistentVolumeClaim     mysql-pv-claim            
-    wp-tenant1                PersistentVolumeClaim     wp-for-tenant1            
-    wp-tenant1                Service                   wordpress-mysql           
-    wp-tenant1                Service                   wp-for-tenant1            
-    wp-tenant1                Deployment                mysql                     
-    wp-tenant1                Deployment                wp-for-tenant1            
-    wp-tenant1                Pod                       mysql-76d6d9bdfd-2wl2p    
-    wp-tenant1                Pod                       wp-for-tenant1-87c4c954-s2cct 
-    wp-tenant1                NetworkPolicy             allow-external-traffic    
-    wp-tenant1                NetworkPolicy             restrict-cross-ns-traffic 
-    wp-tenant1                ResourceQuota             wordpressservice-wp-tenant1 
-    ```
-    Notice that the WordpressService instance resources are deployed in a Namespace (wp-tenant1),
-    which was created by KubePlus.
+   NAMESPACE                 KIND                      NAME                      
+   default                   WordpressService          wp-tenant1                
+   wp-tenant1                PersistentVolumeClaim     mysql-pv-claim            
+   wp-tenant1                PersistentVolumeClaim     wp-for-tenant1            
+   wp-tenant1                Service                   wordpress-mysql           
+   wp-tenant1                Service                   wp-for-tenant1            
+   wp-tenant1                Deployment                mysql                     
+   wp-tenant1                Deployment                wp-for-tenant1            
+   wp-tenant1                Pod                       mysql-76d6d9bdfd-2wl2p    
+   wp-tenant1                Pod                       wp-for-tenant1-87c4c954-s2cct 
+   wp-tenant1                NetworkPolicy             allow-external-traffic    
+   wp-tenant1                NetworkPolicy             restrict-cross-ns-traffic 
+   wp-tenant1                ResourceQuota             wordpressservice-wp-tenant1 
+   ```
+   
+   Notice that the WordpressService instance resources are deployed in a Namespace (wp-tenant1),
+   which was created by KubePlus.
 
 <!--
 <p align="center">
@@ -161,10 +157,10 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 </p>-->
 
 11) Check application resource consumption
-
-   ``kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json``
    
    ```
+   kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+
    ---------------------------------------------------------- 
    Kubernetes Resources created:
        Number of Sub-resources: -
@@ -196,7 +192,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 <img src="./docs/app-metrics.png" width="700" height="250" class="center">
 </p>-->
 
-## Examples:
+## Examples
 
    - [Hello world](./examples/multitenancy/hello-world/steps.txt)
    - [Wordpress](./examples/multitenancy/wordpress/steps.txt)
@@ -204,7 +200,13 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    - [Application specific Day2 operations](./examples/multitenancy/appday2ops/steps.txt)
 
 
-## Contributing:
+## Architecture
+
+KubePlus architecture details are available [here](http://kubeplus-docs.s3-website-us-west-2.amazonaws.com/html/index.html).
+KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](https://kubernetes.io/docs/concepts/security/multi-tenancy/#multi-customer-tenancy).
+
+
+## Contributing
 
 Check the [contributing guidelines](./Contributing.md).
 
