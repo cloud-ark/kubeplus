@@ -6,7 +6,7 @@ KubePlus is a turn-key solution to transform any containerized application into 
 <img src="./docs/application-stacks-1.png" width="700" height="150" class="center">
 </p>
 
-Multi-instance multi-tenancy (MIMT) is a software architecture pattern in which a dedicated instance of an application is provided per tenant. The typical adopters of this pattern are platform engineering teams and B2B software vendors that need to host and manage multiple instances of a software application for different tenants and effectively deliver that application as a managed service.
+Multi-instance multi-tenancy (MIMT) is a software architecture pattern in which a dedicated instance of an application is provided per tenant. The typical adopters of this pattern are platform engineering teams, B2B software vendors, and application hosting providers that need to host and manage multiple instances of a software application for different tenants and effectively deliver that application as a managed service.
 KubePlus is a turn-key solution to build such managed services following the multi-instance multi-tenancy (MIMT) pattern on Kubernetes.
 It comes with end to end automation to help you deploy and manage your MIMT application on Kubernetes. This includes isolation and security between instances along with easy to use APIs for managing upgrades, customization and resource utilization. 
 
@@ -50,7 +50,7 @@ KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](htt
 
 Let’s look at an example of creating a multi-instance WordPress Service using KubePlus. The WordPress service provider goes through the following steps towards this on their cluster:
 
-1) Create cluster (or using existing cluster).
+1) Create cluster (or use an existing cluster).
    For testing purposes you can create a minikube cluster:
 
    ``$ minikube start ``
@@ -196,26 +196,13 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 <img src="./docs/app-metrics.png" width="700" height="250" class="center">
 </p>-->
 
-## Try:
+## Examples:
 
-1) Examples:
    - [Hello world](./examples/multitenancy/hello-world/steps.txt)
    - [Wordpress](./examples/multitenancy/wordpress/steps.txt)
    - [Bitnami Odoo chart](./examples/multitenancy/odoo/steps.txt)
    - [Application specific Day2 operations](./examples/multitenancy/appday2ops/steps.txt)
 
-2) Run tests
-```
-   cd tests
-   python3 -m unittest -v tests
-```
-
-3) Troubleshoot
-```
-   kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c crd-hook
-   kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c helmer
-   kubectl exec -it <kubeplus-pod> -n $KUBELUS_NS -c kubeconfiggenerator /bin/bash; tail -100 /root/kubeconfiggenerator.log
-```
 
 ## Contributing:
 
@@ -237,11 +224,9 @@ KubePlus is part of CNCF landscape's
 
 ## Operator Maturity Model
 
-As enterprise teams build their custom Kubernetes platforms using community or in house developed Operators, they need a set of guidelines for Operator readin
-ess in multi-Operator and multi-tenant environments.
+As enterprise teams build their custom Kubernetes platforms using community or in house developed Operators, they need a set of guidelines for Operator readiness in multi-Operator and multi-tenant environments.
 We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kubeplus/blob/master/Guidelines.md) for this purpose. Operator developers are using this model today to ensure that their Operator is a good citizen of the multi-Operator world and ready
- to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators for curating community Operators towards building their custom pl
-atforms.
+ to serve multi-tenant workloads. It is also being used by Kubernetes cluster administrators for curating community Operators towards building their custom platforms.
 
 
 ## Presentations
