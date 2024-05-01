@@ -33,7 +33,7 @@ File an Issue with following information:
   * KubePlus logs
 
   ```
-    - export KUBEPLUS_NAMESPACE=<Namespace in which KubePlus is deployed>
+    - export KUBEPLUS_NS=<Namespace in which KubePlus is deployed>
     - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c crd-hook
     - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c helmer
     - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c platform-operator

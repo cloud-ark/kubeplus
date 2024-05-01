@@ -13,7 +13,7 @@ Install Helm v3
 Install minikube
 
 Create minikube cluster:
-$ minikube start --kubernetes-version=v1.24.3
+$ minikube start
 
 Install KubePlus Operator:
 $ KUBEPLUS_NS=default
@@ -54,12 +54,16 @@ Verify that you can add users and try adding the same user again.
 Go to "localhost:5000/users" to see the list of users in the database.
 - curl -v http://localhost:5000/users
 
+
+Perform application-specific day2 operation:
+---------------------------------------------
 Change the ResourceComposition file "basic-web-app-service-composition-localchart.yaml"
 Change the version of the chartURL from 0.0.1 to 0.0.2
 
 If you are curious, take a look in the templates directory of the 0.0.2 helm chart.
-You will notice the post-upgrade hook as: "post-upgrade-job.yaml"
-Check the command in that file that will be run on the application instances.
+You will find that there is a post-upgrade hook: "post-upgrade-job.yaml"
+Check the command in that file. This command represents the application-specific day2 operation,
+which will be run on all the application instances as part of an upgrade.
 The SQL command itself is in the "values.yaml" file of the chart.
 
 Now apply the changes and upgrade the instances:
