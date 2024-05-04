@@ -102,7 +102,7 @@
                 <div>
                   <ul style="list-style:none;padding-left:0">
                     {% for item in resource_list %}
-                      <div><a style="color:black;text-decoration:underline;text-align:right;" href="#" onclick="get_resource('{{item.name}}, {{item.namespace}}, {{service_name}}')">{{ item.name }}</a></div>
+		    <div id="{{service_name}}-{{item.name}}"><a style="color:black;text-decoration:underline;text-align:right;" href="#" onclick="get_resource('{{item.name}}, {{item.namespace}}, {{service_name}}')">{{ item.name }}</a></div>
                     {% endfor %}
                   </ul>
                 </div>
@@ -158,6 +158,7 @@
           <div id="app_url" style="display:none"></div>
           <!--<div id="app_logs_url" style="display:none"></div>-->
           <div id="app_logs_data" style="display:none"></div>
+	  <div id="app_delete" style="display:none"></div>
 
         </div>
       </div>
