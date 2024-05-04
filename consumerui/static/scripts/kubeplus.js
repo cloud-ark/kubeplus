@@ -112,7 +112,7 @@ function get_resource(res_string) {
   namespace = myArr[1];
   resource = myArr[2];
   element = document.getElementById("consumption_string_id");
-  element.innerHTML = "Consumption metrics for " + instance;
+  element.innerHTML = "Details for " + instance;
   element.style.display = "block";
 
   // TODO: Make Ajax call to get metrics for <instance, namespace, resource>
@@ -154,6 +154,12 @@ function get_resource(res_string) {
         document.getElementById("app_logs_data").innerHTML = textarea;
         document.getElementById("app_logs_data").style.display = "block";
 
+	deleteButton = document.createElement("Button");
+	deleteButton.innerHTML = "Delete"
+	deleteButton.setAttribute("onclick", "delete_instance('" + resource + "','" + instance + "','" + namespace + "')");
+	document.getElementById("app_delete").appendChild(deleteButton);
+        document.getElementById("app_delete").style.display = "block";
+
         /*
         logs_url = "<a href=\"" + "\">Application Logs</a><hr><br></br>"
         document.getElementById("app_logs_url").innerHTML = logs_url;
@@ -165,6 +171,31 @@ function get_resource(res_string) {
         hideElements(elementsToHide);
       }
     };
+  xhr.send();
+}
+
+function delete_instance(resource, instance, namespace) {
+  resource = resource.trim();
+  instance = instance.trim();
+  namespace = namespace.trim();
+  url = "/service/instance_delete?resource=" + resource + "&instance=" + instance + "&namespace=" + namespace;
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  xhr.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+        fieldData = this.responseText;
+        console.log(fieldData);
+        console.log("-------");
+        data1 = JSON.parse(fieldData);
+        delete_status = data1['status'];
+        console.log(delete_status);
+	document.getElementById("consumption_string_id").innerHTML = delete_status;
+	elementsToHide = ["app_url", "app_logs_data","app_delete","metrics-details"];
+	hideElements(elementsToHide);
+	nodeToDelete = document.getElementById(resource + "-" + instance);
+	nodeToDelete.parentNode.removeChild(nodeToDelete);
+    }
+  }
   xhr.send();
 }
 
@@ -208,6 +239,52 @@ function set_metrics(cpu, memory, storage, ingress, egress) {
 }
 
 function create_resource(resource) {
+
+  document.getElementById("input-form").style.display = "block";
+
+  elementsToHide = ["metrics-details","man-page","consumption_string_id","num_of_instances","create-status"];
+  hideElements(elementsToHide);
+
+ queryParam = "crd=" + resource;
+ url = "/resourcespec?" + queryParam;
+  console.log("URL:" + url);
+  var xhttp = new XMLHttpRequest();
+  xhttp.open("GET", url, true);
+
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      fieldData = JSON.parse(this.responseText);
+      console.log(fieldData);
+      console.log("-------");
+      fields = fieldData['resource_spec'];
+      console.log(fields);
+
+      formDetailsElement = document.getElementById("form-details");
+      header = document.createElement("h4");
+      header.innerHTML = "Enter data";
+      formDetailsElement.appendChild(header);
+
+      instanceSpec = document.createElement("textarea");
+      instanceSpec.setAttribute("overflow", "scroll");
+      instanceSpec.setAttribute("style", "height:95%; width:95%; margin-left:3%; margin-right:5%");
+      instanceSpec.setAttribute("white-space","pre");
+      instanceSpec.setAttribute("id","instanceSpec");
+      instanceSpec.setAttribute("name","instanceSpec");
+      instanceSpec.value = JSON.stringify(fields, null, ' ');
+      formDetailsElement.appendChild(instanceSpec);
+
+      var submit = document.createElement("button");
+      submit.innerHTML = "Submit";
+      //submit.setAttribute("onclick","formHandler()");
+      formDetailsElement.appendChild(submit);
+
+    }
+  }
+  xhttp.send();
+}
+
+
+function create_resource_prev(resource) {
 
   document.getElementById("input-form").style.display = "block";
 
