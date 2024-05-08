@@ -10,8 +10,8 @@ Multi-instance multi-tenancy (MIMT) is a software architecture pattern in which 
 KubePlus is a turn-key solution to build such managed services following the multi-instance multi-tenancy (MIMT) pattern on Kubernetes.
 It comes with end to end automation to help you deploy and manage your MIMT application on Kubernetes. This includes isolation and security between instances along with easy to use APIs for managing upgrades, customization and resource utilization. 
 
-KubePlus takes an application Helm chart and wraps it under a Kubernetes API (CRD). Whenever an application instance is created using this API, KubePlus ensures that every instance is created in a separate namespace and the required multi-tenancy policies are applied in order to ensure isolation between instances. The API also supports RBAC, version upgrades and additional customizations for each instance. 
-
+KubePlus takes an application Helm chart and wraps it under a Kubernetes API (CRD). Whenever an application instance is created using this API, KubePlus ensures that every instance is created in a separate namespace and the required multi-tenancy policies are applied in order to ensure isolation between instances. The API also supports RBAC, version upgrades and additional customizations for each instance.
+KubePlus supports [CRUD operations on the instances of the registered CRD](./examples/multitenancy/hello-world/steps.txt).
 
 <p align="center">
 <img src="./docs/kubeplus-with-properties.png" width="700" height="250" class="center">
@@ -192,13 +192,11 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 <img src="./docs/app-metrics.png" width="700" height="250" class="center">
 </p>-->
 
-## Examples
+## Use cases
 
-   - [Hello world](./examples/multitenancy/hello-world/steps.txt)
-   - [Wordpress](./examples/multitenancy/wordpress/steps.txt)
-   - [Bitnami Odoo chart](./examples/multitenancy/odoo/steps.txt)
-   - [Application specific Day2 operations](./examples/multitenancy/appday2ops/steps.txt)
-
+   - [Application Hosting](./examples/multitenancy/wordpress/steps.txt)
+   - [Platform Engineering](./examples/multitenancy/odoo/steps.txt)
+   - [Managed Service](./examples/multitenancy/appday2ops/steps.txt)
 
 ## Architecture
 
