@@ -77,36 +77,69 @@ class TestKubePlus(unittest.TestCase):
         #print("Err:" + err)
         self.assertTrue('If quota is specified, specify all four values: requests.cpu, requests.memory, limits.cpu, limits.memory' in err)
 
-    def test_res_comp_with_no_podpolicies(self):
+    def test_application_update(self):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
             sys.exit(0)
 
-        cmd = "kubectl create -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        kubeplus_home = os.getenv("KUBEPLUS_HOME")
+        #print("KubePlus home:" + kubeplus_home)
+        path = os.getenv("PATH")
+        #print("Path:" + path)
+        if kubeplus_home == '':
+            print("Skipping the test as KUBEPLUS_HOME is not set.")
+            return
+        
+        cmd = "kubectl upload chart ../examples/multitenancy/hello-world/hello-world-chart-0.0.3.tgz ../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        
+        crd = "helloworldservices.platformapi.kubeplus"
+        crd_installed = self._check_crd_installed(crd)
+        if not crd_installed:
+            print("CRD " + crd + " not installed. Exiting this test.")
+            return
+
+        cmd = "kubectl apply -f ../examples/multitenancy/hello-world/hs1.yaml --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)
-
-        installed = False
-        cmd = "kubectl get crds"
-        timer = 0
-        while not installed and timer < 120:
-            out, err = TestKubePlus.run_command(cmd)
-            if 'wordpressservices.platformapi.kubeplus' in out:
-                installed = True
-            else:
-                time.sleep(1)
-                timer = timer + 1
-
-        cmd = "kubectl create -f tenant1.yaml --kubeconfig=../kubeplus-saas-provider.json"
-        TestKubePlus.run_command(cmd)
-
         all_running = False
-        cmd = "kubectl get pods -n tenant1"
+        cmd = "kubectl get pods -n hs1"
+
+        target_pod_count = 1
+        pods, count, all_running = self._check_pod_status(cmd, target_pod_count)
+        if count == target_pod_count:
+            self.assertTrue(True)
+        else:
+            self.assertTrue(False)
+
+        cmd = "kubectl apply -f ../examples/multitenancy/hello-world/hs1-replicas-2.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+        all_running = False
+        cmd = "kubectl get pods -n hs1"
+
+        target_pod_count = 2 
+        pods, count, all_running = self._check_pod_status(cmd, target_pod_count)
+        if count == target_pod_count:
+            self.assertTrue(True)
+        else:
+            self.assertTrue(False)
+
+        cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hs1-replicas-2.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+
+        cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+
+
+    def _check_pod_status(self, cmd, num_of_pods):
+        all_running = False
         pods = []
         timer = 0
+        count = 0
         while not all_running and timer < 120:
             timer = timer + 1
             out, err = TestKubePlus.run_command(cmd)
-            count = 0
             for line in out.split("\n"):
                 if 'Running' in line or 'Pending' in line:
                     count = count + 1
@@ -115,10 +148,49 @@ class TestKubePlus(unittest.TestCase):
                     pod = parts[0].strip()
                     if pod != '' and pod not in pods:
                         pods.append(pod)
-            if count == 2:
+            if count == num_of_pods:
                 all_running = True
 
-        if count < 2:
+        return pods, count, all_running
+
+
+    def _check_crd_installed(self, crd):
+        installed = False
+        cmd = "kubectl get crds"
+        timer = 0
+        while not installed and timer < 120:
+            out, err = TestKubePlus.run_command(cmd)
+            if crd in out:
+                installed = True
+            else:
+                time.sleep(1)
+                timer = timer + 1
+        return installed
+
+
+    def test_res_comp_with_no_podpolicies(self):
+        if not TestKubePlus._is_kubeplus_running():
+            print("KubePlus is not running. Deploy KubePlus and then run tests")
+            sys.exit(0)
+
+        cmd = "kubectl create -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+        crd = "wordpressservices.platformapi.kubeplus"
+        crd_installed = self._check_crd_installed(crd)
+        if not crd_installed:
+            print("CRD " + crd + " not installed. Exiting this test.")
+            return
+
+        cmd = "kubectl create -f tenant1.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+
+        all_running = False
+        cmd = "kubectl get pods -n tenant1"
+
+        target_pod_count = 2
+        pods, count, all_running = self._check_pod_status(cmd, target_pod_count)
+
+        if count < target_pod_count:
             print("Application Pod not started..")
         else:
             #print(pods)
@@ -136,6 +208,8 @@ class TestKubePlus(unittest.TestCase):
                     self.assertTrue(False)
 
         #clean up
+        #wait and then clean up
+        time.sleep(30)
         cmd = "kubectl delete -f tenant1.yaml --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)
 
