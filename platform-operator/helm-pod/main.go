@@ -869,7 +869,10 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	 			fmt.Printf("Chart dir:%s\n", chartDir)
 	 			overRidesFile := chartDir + "/overrides.yaml"
 	 			fmt.Printf("Overrides file:%s\n", overRidesFile)
-	 			os.Mkdir(chartDir, 0755)
+				errm := os.Mkdir(chartDir, 0755)
+				if errm != nil {
+					fmt.Errorf("Error:%s\n", errm)
+				}
 	 			f, errf := os.Create(overRidesFile)
 	 			if errf != nil {
 	 				fmt.Errorf("Error:%s\n", errf)
@@ -881,13 +884,28 @@ func deployChart(request *restful.Request, response *restful.Response) {
 
 				targetNSName := namespace
 				if dryrun == "" {
+					createNSCmd := ""
+					getNSCmd := ""
+					doHelmInstall := true
+					doHelmUpgrade := false
+					getNSSuccess := false 
 					if namespace == KUBEPLUS_NAMESPACE {
-						createNSCmd := "./root/kubectl create ns " + customresource
-						_, execOutput = executeExecCall(cmdRunnerPod, createNSCmd)
-						fmt.Printf("Output of Create NS Cmd:%v\n", execOutput)
+						getNSCmd = "./root/kubectl get ns " + customresource
+						getNSSuccess, execOutput = executeExecCall(cmdRunnerPod, getNSCmd)
+						fmt.Printf("Output of kubectl get ns:%v\n", execOutput)
+						if !getNSSuccess {
+							createNSCmd = "./root/kubectl create ns " + customresource
+							_, execOutput = executeExecCall(cmdRunnerPod, createNSCmd)
+							fmt.Printf("Output of Create NS Cmd:%v\n", execOutput)
+						} else {
+							fmt.Printf("NS " + customresource + " exists. Performing Helm upgrade.")
+							doHelmUpgrade = true
+							doHelmInstall = false
+						}
 						targetNSName = customresource
 					}
 
+					if doHelmInstall {
 					annotateNSCmd := "./root/kubectl annotate --overwrite=true namespace " + targetNSName + " meta.helm.sh/release-name=\"" + releaseName + "\""
 					fmt.Printf("Annotation NS Cmd:%v\n", annotateNSCmd)
 					_, execOutput = executeExecCall(cmdRunnerPod, annotateNSCmd)
@@ -899,9 +917,18 @@ func deployChart(request *restful.Request, response *restful.Response) {
 					fmt.Printf("Output of Label NS Cmd:%v\n", execOutput)
 
 					// Install the Helm chart in the namespace that is created for that instance
-	 				helmInstallCmd := "helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + targetNSName
+					helmInstallCmd := "helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + targetNSName
 	  				fmt.Printf("ABC helm install cmd:%s\n", helmInstallCmd)
 					go runHelmInstall(cmdRunnerPod, helmInstallCmd, releaseName, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim)
+					}
+
+					if doHelmUpgrade {
+						helmUpgradeCmd := "helm upgrade " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + targetNSName
+	  					fmt.Printf("ABC helm upgrade cmd:%s\n", helmUpgradeCmd)
+
+						_, helmUpgradeOutput := executeExecCall(cmdRunnerPod, helmUpgradeCmd)
+						fmt.Printf("Helm upgrade o/p:%v\n", helmUpgradeOutput)
+					}
 				}
 
 				if dryrun == "true" {

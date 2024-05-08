@@ -25,7 +25,7 @@ webhooks:
         apiGroups: ["workflows.kubeplus", "apps", "extensions", "", "apiextensions.k8s.io", "platformapi.kubeplus"]
         apiVersions: ["v1alpha1", "v1", "v1beta1"]
         resources: ["resourcepolicies", "resourcecompositions", "resourcemonitors", "resourceevents", "pods", "customresourcedefinitions","namespaces","*"]
-      - operations: [ "DELETE"]
+      - operations: [ "DELETE","UPDATE"]
         apiGroups: ["workflows.kubeplus", "platformapi.kubeplus"]
         apiVersions: ["v1alpha1"]
         resources: ["resourcepolicies", "resourcecompositions", "resourcemonitors", "resourceevents","*"]
