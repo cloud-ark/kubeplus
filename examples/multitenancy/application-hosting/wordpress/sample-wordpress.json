@@ -1,0 +1,10 @@
+apiVersion: platformapi.kubeplus/v1alpha1
+kind: WordpressService
+metadata:
+  name: sample-wps
+spec:
+  # Default value for namespace. 
+  resourceName: wp-stack1 
+  
+  
+

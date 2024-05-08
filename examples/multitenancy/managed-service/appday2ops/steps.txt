@@ -1,10 +1,10 @@
 Day2 operation on basic web app
--------------------------
+--------------------------------
 
-This example shows how to perform day2 operations on a basic web app. The app
-is just a Flask server with a MySql database. The app is packaged as a Helm
-chart with two versions and is initialized with a single user in the database.
-The second version contains a helm post-upgrade hook to add a user to the
+This example shows how KubePlus can be used to perform day2 operations as part of delivering
+managed service for a web app. The app is a Flask server with a MySql database. 
+The app is packaged as a Helm chart with two versions and is initialized with a single user in the database.
+The second version contains a helm post-upgrade hook to add a new user to the
 database. The day2 operation is done by upgrading the helm releases by updating
 the ResourceComposition instance.
 
@@ -48,7 +48,7 @@ $ kubectl get pods -A
 
 Connect to the application:
 $ kubectl port-forward <web-app-deploy-pod> -n bwa-tenant1 5000:5000
-   - get the name from the previous command
+   - get the name of the KubePlus Podfrom the previous command
 
 Verify that you can add users and try adding the same user again.
 Go to "localhost:5000/users" to see the list of users in the database.

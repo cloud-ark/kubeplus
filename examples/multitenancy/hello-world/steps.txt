@@ -118,6 +118,7 @@ You can use either the provider.conf or consumer.conf in below commands.
 9. Check resource connectivity graph
    - kubectl connections HelloWorldService hs1 default -k consumer.conf -o png
 
+10. Follow steps from steps-app-upgrade.txt to see an example of application upgrade.
 
 Clean up:
 -----------
