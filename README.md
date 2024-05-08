@@ -194,9 +194,9 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 ## Use cases
 
-   - [Application Hosting](./examples/multitenancy/wordpress/steps.txt)
-   - [Platform Engineering](./examples/multitenancy/odoo/steps.txt)
-   - [Managed Service](./examples/multitenancy/appday2ops/steps.txt)
+   - [Application Hosting](./examples/multitenancy/application-hosting/wordpress/steps.txt)
+   - [Platform Engineering](./examples/multitenancy/platform-engineering/steps.txt)
+   - [Managed Service](./examples/multitenancy/managed-service/appday2ops/steps.txt)
 
 ## Architecture
 
