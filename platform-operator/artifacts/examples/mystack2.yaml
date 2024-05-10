@@ -1,8 +1,0 @@
-apiVersion: platformapi.kubeplus/v1alpha1
-kind: MysqlClusterStack 
-metadata:
-  name: stack2 
-spec:
-  name: stack2
-  replicas: 1 
-
