@@ -4,6 +4,8 @@
 FROM registry.redhat.io/ubi7
 MAINTAINER NAME <devdatta@cloudark.io>
 
+USER root
+
 ### Required Atomic/OpenShift Labels - https://github.com/projectatomic/ContainerApplicationGenericLabels
 LABEL "name"="KubePlus Webhook TLS getter" \
       "maintainer"="devdatta@cloudark.io" \
@@ -30,7 +32,14 @@ RUN REPOLIST=ubi-7,ubi-7-optional \
 #RUN "ANY OTHER INSTRUCTIONS HERE"
 
 ADD webhook-create-signed-cert-new.sh /
-COPY kubectl /root/
+
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+RUN install -o root -g root -m 0755 kubectl bin/kubectl
+RUN cp bin/kubectl /root/kubectl
+RUN chmod +x /root/kubectl && chmod +x /bin/kubectl
+
+#COPY kubectl /root/
+
 COPY kubeplus-non-pod-resources.yaml /root/.
 COPY mutatingwebhook.yaml /root/.
 COPY webhook-patch-ca-bundle-new.sh /root/.
