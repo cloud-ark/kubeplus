@@ -4,6 +4,8 @@
 FROM registry.redhat.io/ubi7
 MAINTAINER NAME <devdatta@cloudark.io>
 
+USER root
+
 ### Required Atomic/OpenShift Labels - https://github.com/projectatomic/ContainerApplicationGenericLabels
 LABEL "name"="KubePlus Mutating webhook helper" \
       "maintainer"="devdatta@cloudark.io" \
@@ -29,7 +31,13 @@ RUN REPOLIST=ubi-7,ubi-7-optional \
 ### Install your application here -- add all other necessary items to build your image
 #RUN "ANY OTHER INSTRUCTIONS HERE"
 
-COPY kubectl /root/
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+RUN install -o root -g root -m 0755 kubectl bin/kubectl
+RUN cp bin/kubectl /root/kubectl
+RUN chmod +x /root/kubectl && chmod +x /bin/kubectl
+
+#COPY kubectl /root/
+
 COPY helm-pod /root/
 RUN mkdir /.helm && mkdir -p /.helm/repository && \
     mkdir /.helm/repository/cache && mkdir -p /.helm/cache/archive && mkdir -p /.helm/cache/plugins && \ 
