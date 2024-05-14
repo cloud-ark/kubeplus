@@ -244,6 +244,7 @@ We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kub
 
 ## Contact
 
-For support and new features [reach out to us](https://cloudark.io/kubeplus-saas-manager)
-or contact our team on #kubeplus channel on [CNCF Slack](https://cloud-native.slack.com/archives/C06U6MP24PN).
+Subscribe to [KubePlus mailing list](https://groups.google.com/g/kubeplus).
+
+Join #kubeplus channel on [CNCF Slack](https://cloud-native.slack.com/archives/C06U6MP24PN).
 If you don't have an account on the CNCF workspace, get your invitation [here](https://communityinviter.com/apps/cloud-native/cncf). You can join the #kubeplus channel once your invitation is active.
