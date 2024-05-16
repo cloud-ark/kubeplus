@@ -1,14 +1,13 @@
 ## KubePlus - Kubernetes Operator for Multi-Instance Multi-tenancy
 
-KubePlus is a turn-key solution to transform any containerized application into a SaaS.
+KubePlus is a turn-key solution to transform any containerized application into a multi-instance SaaS.
 
 <p align="center">
 <img src="./docs/application-stacks-1.png" width="700" height="150" class="center">
 </p>
 
-Multi-instance multi-tenancy (MIMT) is a software architecture pattern in which a dedicated instance of an application is provided per tenant. The typical adopters of this pattern are platform engineering teams, B2B software vendors, and application hosting providers that need to host and manage multiple instances of a software application for different tenants and effectively deliver that application as a managed service.
-KubePlus is a turn-key solution to build such managed services following the multi-instance multi-tenancy (MIMT) pattern on Kubernetes.
-It comes with end to end automation to help you deploy and manage your MIMT application on Kubernetes. This includes isolation and security between instances along with easy to use APIs for managing upgrades, customization and resource utilization. 
+Multi-instance multi-tenancy (MIMT) is a software architecture pattern in which a separate instance of an application is provided per tenant. The typical adopters of this pattern are application hosting providers, platform engineering teams, and B2B software vendors that need to host and manage dedicated instances of a software application for different tenants and effectively deliver that application as a managed service. KubePlus is a turn-key solution to build such managed services on Kubernetes.
+It comes with end to end automation to help you deploy and manage your application on Kubernetes following the MIMT pattern. This includes isolation and security between instances along with easy to use APIs for managing upgrades, customization and resource utilization.
 
 KubePlus takes an application Helm chart and wraps it under a Kubernetes API (CRD). Whenever an application instance is created using this API, KubePlus ensures that every instance is created in a separate namespace and the required multi-tenancy policies are applied in order to ensure isolation between instances. The API supports CRUD operations on the instances of the CRD, RBAC, version upgrades, and additional customizations for each instance.
 
