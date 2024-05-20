@@ -47,9 +47,7 @@ https://github.com/cloud-ark/kubeplus/assets/732525/efb255ff-fc73-446b-a583-4b89
 
 Let’s look at an example of creating a multi-instance WordPress Service using KubePlus. The WordPress service provider goes through the following steps towards this on their cluster:
 
-1. Clone the repository locally
-
-2. Create cluster or use an existing cluster. For testing purposes you can create a [minikube](https://minikube.sigs.k8s.io/docs/) or [kind](https://kind.sigs.k8s.io/) cluster:
+1. Create cluster or use an existing cluster. For testing purposes you can create a [minikube](https://minikube.sigs.k8s.io/docs/) or [kind](https://kind.sigs.k8s.io/) cluster:
 
    `minikube start`
 
@@ -57,43 +55,47 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
    `kind create cluster`
 
-3. Unzip KubePlus plugins and set up the PATH
+2. Unzip KubePlus plugins and set up the PATH
 
    ```
+   wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
    tar -zxvf kubeplus-kubectl-plugins.tar.gz
    export KUBEPLUS_HOME=`pwd`
    export PATH=$KUBEPLUS_HOME/plugins:$PATH
    kubectl kubeplus commands
    ```
 
-4. Set the Namespace in which to deploy KubePlus
+3. Set the Namespace in which to deploy KubePlus
 
    `export KUBEPLUS_NS=default`
 
-5. Create provider kubeconfig using provider-kubeconfig.py
+4. Create provider kubeconfig using provider-kubeconfig.py
 
    ```
+   wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/requirements.txt
+   wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/provider-kubeconfig.py
+   wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/parse-api-server-url.sh
    python3 -m venv venv
    source venv/bin/activate
    pip3 install -r requirements.txt
-   apiserver=`./parse-api-server-url.sh`
+   apiserver=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
    python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
    deactivate
    ```
 
-6. Install KubePlus Operator using the generated provider kubeconfig 
+5. Install KubePlus Operator using the generated provider kubeconfig 
 
    ```
    helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.39.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
    until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done
    ```
 
-7. Create Kubernetes CRD representing WordPress Helm chart.
+6. Create Kubernetes CRD representing WordPress Helm chart.
    
-   *The WordPress Helm chart can be specified as a [public url](./examples/multitenancy/wordpress/wordpress-service-composition.yaml#L14) or can be [available locally](./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition.yaml).*
+   *The WordPress Helm chart can be specified as a [public url](./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition.yaml) or can be [available locally](./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml).*
 
    ```
-   kubectl create -f examples/multitenancy/application-hosting/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
+   kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json
    kubectl get resourcecompositions
    kubectl describe resourcecomposition wordpress-service-composition
    ```
@@ -106,19 +108,19 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    
    You should see `wordpressservices.platformapi.kubeplus` CRD registered.
 
-8. Create WordpressService instance `wp-tenant1`
+7. Create WordpressService instance `wp-tenant1`
 
    ```
-   kubectl create -f examples/multitenancy/application-hosting/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
+   kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
    ```
 
-9. Create WordpressService instance `wp-tenant2`
+8. Create WordpressService instance `wp-tenant2`
 
    ```
-   kubectl create -f examples/multitenancy/application-hosting/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json
+   kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json
    ```
 
-10. Check created WordpressService instances
+9.  Check created WordpressService instances
 
    ```
    kubectl get wordpressservices
@@ -128,13 +130,13 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    wp-tenant2   26s
    ```
    
-11. Check the details of created instance:
+10. Check the details of created instance:
 
    ```
    kubectl describe wordpressservices wp-tenant1
    ```
 
-12. Check created application resources. Notice that the `WordpressService` instance resources are deployed in a Namespace `wp-tenant1`, which was created by KubePlus.
+11. Check created application resources. Notice that the `WordpressService` instance resources are deployed in a Namespace `wp-tenant1`, which was created by KubePlus.
 
    ```
    kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
@@ -154,7 +156,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    wp-tenant1                ResourceQuota             wordpressservice-wp-tenant1
    ```
 
-13. Check application resource consumption
+12. Check application resource consumption
    
    ```
    kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
@@ -175,7 +177,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    ---------------------------------------------------------- 
    ```
 
-14. Cleanup
+13. Cleanup
 
     ```
     kubectl delete wordpressservice wp-tenant1 --kubeconfig=kubeplus-saas-provider.json
