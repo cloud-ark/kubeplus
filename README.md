@@ -74,7 +74,6 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    ```
    wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/requirements.txt
    wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/provider-kubeconfig.py
-   wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/parse-api-server-url.sh
    python3 -m venv venv
    source venv/bin/activate
    pip3 install -r requirements.txt
