@@ -1,4 +1,6 @@
 *~
+venv
+provider-kubeconfig.log
 bak
 vendor
 operator-deployer/artifacts/deployment/operator-deployer
