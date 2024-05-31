@@ -233,6 +233,13 @@ We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kub
 
 4. [Operators and Helm: It takes two to Tango, Helm Summit 2019](https://youtu.be/F_Dgz1V5Q2g)
 
+## Community Meetings
+
+We meet every Tuesday at 10.30 a.m. US CST. We use Slack huddle in `#kubeplus` channel on CNCF workspace
+The meeting agenda is [here](https://docs.google.com/document/d/18PDo2XtvspP__3EemADyHh94O1-yActrLMCOntOiv1Y/edit?usp=sharing).
+Please join us in our meetings. Your participation is welcome.
+
+
 ## Contact
 
 Subscribe to [KubePlus mailing list](https://groups.google.com/g/kubeplus).
