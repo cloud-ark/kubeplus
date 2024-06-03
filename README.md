@@ -94,7 +94,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    *The WordPress Helm chart can be specified as a [public url](./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition.yaml) or can be [available locally](./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml).*
 
    ```
-   kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json
+   kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
    kubectl get resourcecompositions
    kubectl describe resourcecomposition wordpress-service-composition
    ```
