@@ -35,7 +35,8 @@ jobs:
         until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done 
     - name: Deploy WordPress application
       run: |
-        kubectl create -f ./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
+        kubectl upload chart wordpress-chart-0.0.3.tgz kubeplus-saas-provider.json
+        kubectl create -f ./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json
         kubectl get resourcecompositions
         kubectl describe resourcecomposition wordpress-service-composition
         until kubectl get crds | grep wordpressservices.platformapi.kubeplus; do echo "Waiting for CRD to be registered.."; sleep 1; done
