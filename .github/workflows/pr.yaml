@@ -32,14 +32,13 @@ jobs:
         python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
         deactivate
         helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.39.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
-        #helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
         until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done 
         kubectl upload chart ./examples/multitenancy/application-hosting/wordpress/wordpress-chart-0.0.3.tgz kubeplus-saas-provider.json
         kubectl create -f ./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json
-        kubectl get resourcecompositions
-        kubectl describe resourcecomposition wordpress-service-composition
         until kubectl get crds | grep wordpressservices.platformapi.kubeplus; do echo "Waiting for CRD to be registered.."; sleep 1; done
         kubectl create -f ./examples/multitenancy/application-hosting/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
+        kubectl get resourcecompositions
+        kubectl describe resourcecomposition wordpress-service-composition
         kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
         kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
 
