@@ -17,7 +17,7 @@ jobs:
         wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz
         gunzip helm-v3.12.1-linux-amd64.tar.gz
         tar -xvf helm-v3.12.1-linux-amd64.tar
-        mv linux-amd64/helm bin/.
+        sudo mv linux-amd64/helm /usr/local/bin/.
         export KUBEPLUS_HOME=`pwd`
         export PATH=$KUBEPLUS_HOME/plugins:$PATH
         echo "PATH:$PATH"
