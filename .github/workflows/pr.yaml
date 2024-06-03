@@ -11,7 +11,7 @@ jobs:
       uses: medyagh/setup-minikube@master
     - name: Try the cluster !
       run: kubectl get pods -A
-    - name: Deploy KubePlus to minikube 
+    - name: Deploy KubePlus and application to minikube 
       run: |
         export SHELL=/bin/bash
         wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz
@@ -33,9 +33,7 @@ jobs:
         deactivate
         helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
         until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done 
-    - name: Deploy WordPress application
-      run: |
-        kubectl upload chart wordpress-chart-0.0.3.tgz kubeplus-saas-provider.json
+        kubectl upload chart ./examples/multitenancy/application-hosting/wordpress/wordpress-chart-0.0.3.tgz kubeplus-saas-provider.json
         kubectl create -f ./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json
         kubectl get resourcecompositions
         kubectl describe resourcecomposition wordpress-service-composition
