@@ -23,7 +23,7 @@ $ kubectl kubeplus commands
 3. Get Provider and consumer kubeconfigs:
    - Extract provider kubeconfig:
      $ KUBEPLUS_NS=default
-     $ apiserver=`./parse-api-server-url.sh`
+     $ apiserver=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
      $ python3 provider-kubeconfig.py create  -s $apiserver create $KUBEPLUS_NS
      $ cp kubeplus-saas-provider.json examples/multitenancy/wordpress/.
      $ cd examples/multitenancy/wordpress/
