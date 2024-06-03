@@ -1,0 +1,39 @@
+name: CI
+on:
+  - pull_request
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    name: build example and deploy to minikube
+    steps:
+    - uses: actions/checkout@v2
+    - name: Start minikube
+      uses: medyagh/setup-minikube@master
+    - name: Try the cluster !
+      run: kubectl get pods -A
+    - name: Deploy KubePlus to minikube 
+      run: |
+        export SHELL=/bin/bash
+        wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz
+        gunzip helm-v3.12.1-linux-amd64.tar.gz
+        tar -xvf helm-v3.12.1-linux-amd64.tar
+        mv linux-amd64/helm bin/.
+        export KUBEPLUS_HOME=`pwd`
+        export PATH=$KUBEPLUS_HOME/plugins:$PATH
+        echo "PATH:$PATH"
+        echo "KUBEPLUS_HOME:$KUBEPLUS_HOME"
+        kubectl kubeplus commands
+        export KUBEPLUS_NS=default
+        python3 -m venv venv
+        source venv/bin/activate
+        pip3 install -r requirements.txt
+        apiserver=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
+        echo "API_SERVER_URL:$apiserver"
+        python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
+        deactivate
+        helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+        until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done 
+        #eval $(minikube -p minikube docker-env)
+        #docker build -f ./Dockerfile -t local/example .
+        #echo -n "verifying images:"
+        #docker images        
