@@ -4,7 +4,7 @@ on:
 jobs:
   job1:
     runs-on: ubuntu-latest
-    name: build example and deploy to minikube
+    name: Deploy to minikube
     steps:
     - uses: actions/checkout@v2
     - name: Start minikube
@@ -33,6 +33,16 @@ jobs:
         deactivate
         helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
         until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done 
+    - name: Deploy WordPress application
+      run: |
+        kubectl create -f ./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json
+        kubectl get resourcecompositions
+        kubectl describe resourcecomposition wordpress-service-composition
+        until kubectl get crds | grep wordpressservices.platformapi.kubeplus; do echo "Waiting for CRD to be registered.."; sleep 1; done
+        kubectl create -f ./examples/multitenancy/application-hosting/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
+        kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
+        kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+
         #eval $(minikube -p minikube docker-env)
         #docker build -f ./Dockerfile -t local/example .
         #echo -n "verifying images:"
