@@ -34,7 +34,8 @@ jobs:
         echo "API_SERVER_URL:$apiserver"
         python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
         deactivate
-        helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.39.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+        helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+        #helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.39.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
         until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done 
         kubectl upload chart ./examples/multitenancy/application-hosting/wordpress/wordpress-chart-0.0.3.tgz kubeplus-saas-provider.json
         echo "Sleeping for 10 seconds before continuing..."
