@@ -18,14 +18,14 @@ Platform Engineering team
 3. Install KubePlus and setup KubePlus kubectl plugins (skip this step if KubePlus is already installed):
    - Create provider kubeconfig:
      - Minikube:
-       $ server=`../../../parse-api-server-url.sh`
+       $ server=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
        $ python ../../../provider-kubeconfig.py create default
      - GKE:
        $ export PROJECT_ID=<your-gcp-project>
        $ export CLOUDSDK_COMPUTE_ZONE=<gcp-zone-of-your-cluster>
        $ export KUBECONFIG=<location-to-store-admin-kubeconfig-file>
        $ gcloud container clusters get-credentials <cluster-name>
-       $ server=`../../../parse-api-server-url.sh`
+       $ server=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
        $ python ../../../provider-kubeconfig.py create default -s $server
    - Install KubePlus
 
