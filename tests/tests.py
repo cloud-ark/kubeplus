@@ -153,7 +153,6 @@ class TestKubePlus(unittest.TestCase):
             if count == num_of_pods:
                 all_running = True
                 break
-            #time.sleep(1)
 
         return pods, count, all_running
 

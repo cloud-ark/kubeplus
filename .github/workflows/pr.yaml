@@ -54,8 +54,3 @@ jobs:
         source venv/bin/activate
         cd tests
         python3 -m unittest -v tests
-
-        #eval $(minikube -p minikube docker-env)
-        #docker build -f ./Dockerfile -t local/example .
-        #echo -n "verifying images:"
-        #docker images        
