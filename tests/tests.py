@@ -11,13 +11,15 @@ class TestKubePlus(unittest.TestCase):
 
     @classmethod
     def run_command(self, cmd):
-        #print(cmd)
         cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
         out = cmdOut[0].decode('utf-8')
         err = cmdOut[1].decode('utf-8')
-        #print(out)
-        #print("---")
-        #print(err)
+        show_output = os.getenv("KUBEPLUS_TEST_OUTPUT","")
+        if show_output == "yes":
+            print(cmd)
+            print(out)
+            print("---")
+            print(err)
         return out, err
 
     @classmethod
@@ -141,7 +143,7 @@ class TestKubePlus(unittest.TestCase):
             timer = timer + 1
             out, err = TestKubePlus.run_command(cmd)
             for line in out.split("\n"):
-                if 'Running' in line or 'Pending' in line:
+                if 'Running' in line or 'Pending' in line or 'ContainerCreating' in line:
                     count = count + 1
                 if 'NAME' not in line:
                     parts = line.split(" ")
@@ -150,6 +152,7 @@ class TestKubePlus(unittest.TestCase):
                         pods.append(pod)
             if count == num_of_pods:
                 all_running = True
+                break
 
         return pods, count, all_running
 

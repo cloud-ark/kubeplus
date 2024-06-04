@@ -1,6 +1,9 @@
 name: CI
 on:
   - pull_request
+env:
+  ACTIONS_RUNNER_DEBUG: true
+  KUBEPLUS_TEST_OUTPUT: yes
 jobs:
   job1:
     runs-on: ubuntu-latest
@@ -34,6 +37,8 @@ jobs:
         helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.39.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
         until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done 
         kubectl upload chart ./examples/multitenancy/application-hosting/wordpress/wordpress-chart-0.0.3.tgz kubeplus-saas-provider.json
+        echo "Sleeping for 10 seconds before continuing..."
+        sleep 10
         kubectl create -f ./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json
         until kubectl get crds | grep wordpressservices.platformapi.kubeplus; do echo "Waiting for CRD to be registered.."; sleep 1; done
         kubectl create -f ./examples/multitenancy/application-hosting/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
@@ -42,8 +47,10 @@ jobs:
         until kubectl get pods -n wp-tenant1 | grep Running; do echo "Waiting for Application Pods to start.."; sleep 1; done
         kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
         kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
-
-        #eval $(minikube -p minikube docker-env)
-        #docker build -f ./Dockerfile -t local/example .
-        #echo -n "verifying images:"
-        #docker images        
+        kubectl delete wordpressservice wp-tenant1 --kubeconfig=kubeplus-saas-provider.json
+        kubectl delete resourcecomposition wordpress-service-composition --kubeconfig=kubeplus-saas-provider.json
+        echo "Running tests..starting in 5 seconds"
+        sleep 5
+        source venv/bin/activate
+        cd tests
+        python3 -m unittest -v tests
