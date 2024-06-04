@@ -42,6 +42,10 @@ jobs:
         until kubectl get pods -n wp-tenant1 | grep Running; do echo "Waiting for Application Pods to start.."; sleep 1; done
         kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
         kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+        echo "Running tests.."
+        source venv/bin/activate
+        cd tests
+        python3 -m unittest -v tests
 
         #eval $(minikube -p minikube docker-env)
         #docker build -f ./Dockerfile -t local/example .
