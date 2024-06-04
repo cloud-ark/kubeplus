@@ -143,7 +143,7 @@ class TestKubePlus(unittest.TestCase):
             timer = timer + 1
             out, err = TestKubePlus.run_command(cmd)
             for line in out.split("\n"):
-                if 'Running' in line or 'Pending' in line:
+                if 'Running' in line or 'Pending' in line or 'ContainerCreating' in line:
                     count = count + 1
                 if 'NAME' not in line:
                     parts = line.split(" ")
@@ -153,7 +153,7 @@ class TestKubePlus(unittest.TestCase):
             if count == num_of_pods:
                 all_running = True
                 break
-            time.sleep(2)
+            #time.sleep(1)
 
         return pods, count, all_running
 
