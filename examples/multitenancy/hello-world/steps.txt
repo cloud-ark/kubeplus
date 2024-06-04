@@ -27,7 +27,7 @@ Create minikube cluster
 
 Install KubePlus Operator
 $ KUBEPLUS_NS=default
-$ apiserver=`./parse-api-server-url.sh`
+$ apiserver=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
 $ python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
 $ cp kubeplus-saas-provider.json examples/multitenancy/hello-world/provider.conf
 $ cd examples/multitenancy/hello-world/
