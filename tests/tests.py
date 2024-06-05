@@ -83,6 +83,9 @@ class TestKubePlus(unittest.TestCase):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
             sys.exit(0)
+        
+        start_clean = "kubectl delete ns hs1"
+        TestKubePlus.run_command(start_clean)
 
         kubeplus_home = os.getenv("KUBEPLUS_HOME")
         #print("KubePlus home:" + kubeplus_home)
@@ -175,6 +178,9 @@ class TestKubePlus(unittest.TestCase):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
             sys.exit(0)
+
+        start_clean = "kubectl delete ns tenant1"
+        TestKubePlus.run_command(start_clean)
 
         cmd = "kubectl create -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)

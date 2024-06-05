@@ -453,7 +453,9 @@ func handleDelete(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 			for _, instanceObj := range crdObjList.Items {
 				objData := instanceObj.UnstructuredContent()
 				status := objData["status"]
-				if status == nil {
+				labels := instanceObj.GetLabels()
+				forcedDelete, _ := labels["delete"] 
+				if status == nil && forcedDelete == "" {
 					return &v1.AdmissionResponse{
 						Result: &metav1.Status{
 							Message: "Error: ResourceComposition instance cannot be deleted. It has an application instance starting up.",
@@ -1367,6 +1369,12 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	cruid := id.String()
 	//fmt.Printf("CR Uid:%s\n", cruid)
 
+	labelsBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "metadata", "labels")
+	labels := string(labelsBytes)
+	fmt.Printf("******\n")
+	fmt.Printf("labels:%s\n", labels)
+	fmt.Printf("******\n")
+
 	overridesBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "spec")
 	overrides := string(overridesBytes)
 	fmt.Printf("******\n")
@@ -1469,7 +1477,7 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
         	fp.Close()
 
 		deploymentStatus := QueryDeployEndpoint(platformWorkflowName, crname, namespace, overrides, cpu_requests_q,
-	                           cpu_limits_q, mem_requests_q, mem_limits_q)
+	                           cpu_limits_q, mem_requests_q, mem_limits_q, labels)
 
 
 		if string(deploymentStatus) != "" {
