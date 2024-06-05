@@ -17,6 +17,7 @@ import (
 	"context"
 	"io/fs"
 	"path/filepath"
+	"encoding/json"
 
 	"os"
 	"k8s.io/client-go/dynamic"
@@ -187,7 +188,7 @@ func getChartValues(request *restful.Request, response *restful.Response) {
  			readCmd := "cat " + chartValuesPath
  			fmt.Printf("cat cmd:%s\n", readCmd)
  			_, valuesToReturn = executeExecCall(cmdRunnerPod, readCmd)
- 			fmt.Printf("valuesToReturn:%v\n",valuesToReturn)
+ 			//fmt.Printf("valuesToReturn:%v\n",valuesToReturn)
 		}
 
 	response.Write([]byte(valuesToReturn))
@@ -327,12 +328,14 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 			continue;
 		}
 
-		fmt.Printf("objData:%v\n", objData)
+		//fmt.Printf("objData:%v\n", objData)
 		status := objData["status"]
-		fmt.Printf("Status:%v\n", status)
-		if status != nil {
+		//fmt.Printf("Status:%v\n", status)
+		//labels := instanceObj.GetLabels()
+                //forcedDelete, _ := labels["delete"] 
+		if status != nil { //|| forcedDelete != "" {
 			helmreleaseNS, helmrelease := getHelmReleaseName(status)
-			fmt.Printf("Helm release:%s, %s\n", helmreleaseNS, helmrelease)
+			fmt.Printf("Helm release NS and release name:%s, %s\n", helmreleaseNS, helmrelease)
 			if helmreleaseNS != "" && helmrelease != "" {
 				// Do in the background as 'helm delete' and deleting NS are time consuming actions
 				go func() {
@@ -347,7 +350,8 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 					if helmreleaseNS != namespace {
 						namespaceDeleteCmd := "./root/kubectl delete ns " + helmreleaseNS
 						cmdRunnerPod := getKubePlusPod()
-						executeExecCall(cmdRunnerPod, namespaceDeleteCmd)
+						_, op := executeExecCall(cmdRunnerPod, namespaceDeleteCmd)
+						fmt.Printf("kubectl delete ns o/p:%v\n", op)
 					}
 				}()
 
@@ -356,6 +360,8 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 					dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(context.Background(), objName, metav1.DeleteOptions{})
 				}
 			}
+                        //fmt.Printf("Deleting the object %s\n", objName)
+                        //dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(context.Background(), objName, metav1.DeleteOptions{})
 		} else {
 			response.Write([]byte("Error: Custom Resource instance cannot be deleted. It is not ready yet."))
 			return
@@ -376,7 +382,7 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 }
 
 func deleteHelmRelease(helmreleaseNS, helmrelease string) bool {
-	fmt.Printf("Helm release:%s\n", helmrelease)
+	//fmt.Printf("Helm release:%s\n", helmrelease)
 	cmd := "helm delete " + helmrelease + " -n " + helmreleaseNS
 	fmt.Printf("Helm delete cmd:%s\n", cmd)
 	var output string
@@ -748,7 +754,7 @@ func getHelmReleaseName(object interface{}) (string, string) {
 		key = strings.TrimSpace(key)
 		if key == "helmrelease" {
 			helmrelease = element.(string)
-			fmt.Printf("Helm release1:%s\n", helmrelease)
+			//fmt.Printf("Helm release1:%s\n", helmrelease)
 			lines := strings.Split(helmrelease, "\n")
 			releaseLine := strings.TrimSpace(lines[0])
 			parts := strings.Split(releaseLine,":")
@@ -798,6 +804,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	cpu_lim := request.QueryParameter("cpu_lim")
 	mem_req := request.QueryParameter("mem_req")
 	mem_lim := request.QueryParameter("mem_lim")
+	labels := request.QueryParameter("labels")
 	if err != nil {
 		fmt.Printf("Error encountered in decoding overrides:%v\n", err)
 		fmt.Printf("Not continuing...")
@@ -808,8 +815,25 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	fmt.Printf("Custom Resource:%s\n", customresource)
 	fmt.Printf("Resource Composition:%s\n", platformWorkflowName)
 	fmt.Printf("Namespace:%s\n", namespace)
-	fmt.Printf("Overrides:%s\n", overrides)
+	//fmt.Printf("Overrides:%s\n", overrides)
 	fmt.Printf("Dryrun:%s\n", dryrun)
+	fmt.Printf("Labels:%s\n", labels)
+
+	if labels != "" {
+
+		labelsMap := map[string]interface{}{}
+		if err := json.Unmarshal([]byte(labels), &labelsMap); err != nil {
+			panic(err)
+		}
+		//fmt.Println("LabelsMap:%v\n",labelsMap)
+		isCreatedByKubePlus, ok := labelsMap["created-by"]
+		if ok && isCreatedByKubePlus == "kubeplus" {
+			// This is the call triggered by creation of CRD instance.
+			// Nothing to do.
+			response.Write([]byte(string("")))
+			return
+		}
+	}
 
 	kinds := make([]string, 0)
 	//ok := false
@@ -828,7 +852,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 
 		resourceCompositionNS := KUBEPLUS_NAMESPACE
 		platformWorkflow1, err := sampleclientset.WorkflowsV1alpha1().ResourceCompositions(resourceCompositionNS).Get(context.Background(), platformWorkflowName, metav1.GetOptions{})
-		fmt.Printf("PlatformWorkflow:%v\n", platformWorkflow1)
+		//fmt.Printf("PlatformWorkflow:%v\n", platformWorkflow1)
 		if err != nil {
 			fmt.Errorf("Error:%s\n", err)
 		}
@@ -841,7 +865,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
     		plural := customAPI.Resource.Plural
     		chartURL := customAPI.ChartURL
     		chartName := customAPI.ChartName
- 			fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s\n ChartName:%s", kind, group, version, plural, chartURL, chartName)
+ 		fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s\n ChartName:%s", kind, group, version, plural, chartURL, chartName)
  			
  			kinddetails := kindDetails{
  				Group: group,
@@ -1001,16 +1025,16 @@ func runHelmInstall(cmdRunnerPod, helmInstallCmd, releaseNameInCmd, kind, group,
 	 						}
 	 				}
 					if releaseFound {
-						statusToUpdate := releaseName + "\n" + notes
-						go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, statusToUpdate)
+						//statusToUpdate := releaseName + "\n" + notes
+						go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseName, notes)
 						if (cpu_req != "" && cpu_lim != "" && mem_req != "" && mem_lim != "") {
 							go createResourceQuota(targetNSName, releaseName, cpu_req, cpu_lim, mem_req, mem_lim)
 						}
 						go createNetworkPolicy(targetNSName, releaseName)
 		 			}
 	 			} else {
-					statusToUpdate := releaseNameInCmd + "\n" + execOutput
-		 			go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, statusToUpdate)
+					//statusToUpdate := releaseNameInCmd + "\n" + execOutput
+		 			go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseNameInCmd, execOutput)
 					errOp := string(execOutput)
 					instanceExists := strings.Contains(errOp, "cannot re-use a name that is still in use")
 					if !instanceExists {
@@ -1122,11 +1146,11 @@ func untarChart(chartName2, cmdRunnerPod, namespace string) string {
 	 			untarCmd := "tar -xvzf " + chartName2
 	  			fmt.Printf("untar cmd:%s\n", untarCmd)
 	 			_, op := executeExecCall(cmdRunnerPod, untarCmd)
-	 			fmt.Printf("Untar output:%s",op)
+	 			//fmt.Printf("Untar output:%s",op)
 	 			lines := strings.Split(op, "\n")
 	 			chartName := ""
 	 			parts := strings.Split(lines[0],"/")
-	 			fmt.Printf("ABC:%v",parts)
+	 			//fmt.Printf("ABC:%v",parts)
 	 			chartName = strings.TrimSpace(parts[0])
 	 			fmt.Printf("Chart Name:%s\n", chartName)
 
@@ -1135,7 +1159,8 @@ func untarChart(chartName2, cmdRunnerPod, namespace string) string {
 	 			return chartName
 }
 
-func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, releaseName string) {
+func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, releaseName, notes string) {
+	fmt.Println("Inside updateStatus")
 
 	res := schema.GroupVersionResource{Group: group,
 									   Version: version,
@@ -1148,18 +1173,24 @@ func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, re
 	count := 0
 	for {
 		obj, err := dynamicClient.Resource(res).Namespace(crdObjNS).Get(context.Background(), instance, metav1.GetOptions{})
-		fmt.Printf("Error:%v\n", err)
-		fmt.Printf("Obj:%v\n",obj)
+		//fmt.Printf("Error:%v\n", err)
+		//fmt.Printf("Obj:%v\n",obj)
 		if err == nil {
 			objData := obj.UnstructuredContent()
 			helmrelease := make(map[string]interface{},0)
 			// Helm release will be done in the target namespace where the customresource instance
 			// is deployed.
 			releaseName = strings.ReplaceAll(releaseName, "\n", "")
-			helmrelease["helmrelease"] = targetNS + ":" + releaseName
+			helmrelease["helmrelease"] = targetNS + ":" + releaseName + "\n" + notes
 			objData["status"] = helmrelease
 			//fmt.Printf("objData:%v\n",objData)
 			obj.SetUnstructuredContent(objData)
+			currentLabels := obj.GetLabels()
+			if currentLabels == nil {
+				currentLabels = make(map[string]string,1)
+			}
+			currentLabels["created-by"] = "kubeplus"
+			obj.SetLabels(currentLabels)
 			dynamicClient.Resource(res).Namespace(crdObjNS).Update(context.Background(), obj, metav1.UpdateOptions{})
 			//fmt.Printf("UpdatedObj:%v, err1:%v\n",updatedObj, err1) //add the respective variables if want to print.
 			// break out of the for loop

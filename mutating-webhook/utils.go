@@ -853,7 +853,7 @@ func CheckApplicationNodeName(nodeName string) bool  {
 
 // http://10.80.10.160:90/apis/kubeplus/deploy?platformworkflow=hello-world-service-composition&customresource=hello-world-tenant1&namespace=default&overrides={"greeting":"Hello Kubernauts - This is KubePlus"}
 // http://10.80.10.160:90/apis/kubeplus/deploy?platformworkflow=hello-world-service-composition&customresource=hello-world-tenant1&namespace=default&overrides={"greeting":"Hi"}
-func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides, cpu_req, cpu_lim, mem_req, mem_lim string) []byte {
+func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides, cpu_req, cpu_lim, mem_req, mem_lim, labels string) []byte {
 	encodedOverrides := url.QueryEscape(overrides)
 	//fp, _ := os.Create("/crdinstances/" + platformworkflow + "-" + customresource)
 	//fp.WriteString(encodedOverrides)
@@ -861,7 +861,7 @@ func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides,
 
         CreateOverrides(platformworkflow, customresource)
 
-	args := fmt.Sprintf("platformworkflow=%s&customresource=%s&namespace=%s&overrides=%s&cpu_req=%s&cpu_lim=%s&mem_req=%s&mem_lim=%s", platformworkflow, customresource, namespace, encodedOverrides, cpu_req, cpu_lim, mem_req, mem_lim)
+	args := fmt.Sprintf("platformworkflow=%s&customresource=%s&namespace=%s&overrides=%s&cpu_req=%s&cpu_lim=%s&mem_req=%s&mem_lim=%s&labels=%s", platformworkflow, customresource, namespace, encodedOverrides, cpu_req, cpu_lim, mem_req, mem_lim,labels)
 	fmt.Printf("Inside QueryDeployEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deploy?%s", serviceHost, servicePort, args)
