@@ -740,8 +740,9 @@ if __name__ == '__main__':
                 The default value is ~/.kube/config''')
         parser.add_argument("-s", "--apiserverurl", help='''This flag is to be used to pass the API Server URL of the
                 API server on which KubePlus is installed. This API Server URL will be used in constructing the
-                server endpoint in the provider kubeconfig. Use the parse-api-server-url.sh script available in KubePlus repo
-                to get the API Server URL.''')
+                server endpoint in the provider kubeconfig. Use the command
+                `kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
+                to retrieve the API Server URL.''')
         parser.add_argument("-f", "--filename", help='''This flag is used to specify the
                 output file name in which generated provider kubeconfig will be store
                 (The default value is kubeplus-saas-provider.json)''')
