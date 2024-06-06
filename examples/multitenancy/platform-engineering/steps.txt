@@ -29,7 +29,7 @@ Platform Engineering team
        $ python ../../../provider-kubeconfig.py create default -s $server
    - Install KubePlus
 
-     $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.40.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json 
+     $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.41.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json 
    - Wait till KubePlus Pod is Running
      $ kubectl get pods -A
 
