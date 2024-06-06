@@ -331,8 +331,8 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 		//fmt.Printf("objData:%v\n", objData)
 		status := objData["status"]
 		//fmt.Printf("Status:%v\n", status)
-		//labels := instanceObj.GetLabels()
-                //forcedDelete, _ := labels["delete"] 
+		labels := instanceObj.GetLabels()
+                forcedDelete, _ := labels["delete"]
 		if status != nil { //|| forcedDelete != "" {
 			helmreleaseNS, helmrelease := getHelmReleaseName(status)
 			fmt.Printf("Helm release NS and release name:%s, %s\n", helmreleaseNS, helmrelease)
@@ -360,8 +360,9 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 					dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(context.Background(), objName, metav1.DeleteOptions{})
 				}
 			}
-                        //fmt.Printf("Deleting the object %s\n", objName)
-                        //dynamicClient.Resource(ownerRes).Namespace(namespace).Delete(context.Background(), objName, metav1.DeleteOptions{})
+		} else if forcedDelete != "" {
+                	fmt.Printf("Force delete the object %s\n", objName)
+			response.Write([]byte(""))
 		} else {
 			response.Write([]byte("Error: Custom Resource instance cannot be deleted. It is not ready yet."))
 			return

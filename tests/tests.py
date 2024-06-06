@@ -173,6 +173,53 @@ class TestKubePlus(unittest.TestCase):
                 timer = timer + 1
         return installed
 
+    def test_force_delete_application(self):
+        if not TestKubePlus._is_kubeplus_running():
+            print("KubePlus is not running. Deploy KubePlus and then run tests")
+            sys.exit(0)
+
+        start_clean = "kubectl delete ns tenant1"
+        TestKubePlus.run_command(start_clean)
+
+        create_ns = "kubectl create ns tenant1"
+        TestKubePlus.run_command(create_ns)
+
+        cmd1 = "kubectl create -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd1)
+
+        crd = "wordpressservices.platformapi.kubeplus"
+        crd_installed = self._check_crd_installed(crd)
+        if not crd_installed:
+            print("CRD " + crd + " not installed. Exiting this test.")
+            return
+
+        cmd = "kubectl create -f tenant1.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+
+        cmd = "kubectl delete -f tenant1.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        #print("Out:" + out)
+        #print("Err:" + err)
+        self.assertTrue("Custom Resource instance cannot be deleted. It is not ready yet." in err)
+
+        cmd = "kubectl delete -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        self.assertTrue("ResourceComposition instance cannot be deleted. It has an application instance starting up." in err)
+
+        cmd = "kubectl label WordpressService tenant1 delete=true"
+        TestKubePlus.run_command(cmd)
+
+        cmd = "kubectl delete -f tenant1.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        self.assertTrue(err == "")
+
+        cmd = "kubectl delete -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        self.assertTrue(err == "")
+
+        clean_up = "kubectl delete ns tenant1"
+        TestKubePlus.run_command(clean_up)
+
 
     def test_res_comp_with_no_podpolicies(self):
         if not TestKubePlus._is_kubeplus_running():
