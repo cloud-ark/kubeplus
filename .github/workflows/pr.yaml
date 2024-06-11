@@ -17,10 +17,16 @@ jobs:
     - name: Deploy KubePlus and application to minikube 
       run: |
         export SHELL=/bin/bash
+        eval $(minikube -p minikube docker-env)
+        echo "Installing helm..."
         wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz
         gunzip helm-v3.12.1-linux-amd64.tar.gz
         tar -xvf helm-v3.12.1-linux-amd64.tar
         sudo mv linux-amd64/helm /usr/local/bin/.
+        echo "Installing golang..."
+        rm -rf /usr/local/go && tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
+        export PATH=$PATH:/usr/local/go/bin
+        go version
         export KUBEPLUS_HOME=`pwd`
         export PATH=$KUBEPLUS_HOME/plugins:$PATH
         echo "PATH:$PATH"
@@ -34,7 +40,29 @@ jobs:
         echo "API_SERVER_URL:$apiserver"
         python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
         deactivate
-        helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+        echo "Building platform-operator..."
+        cd platform-operator
+        ./build-artifact.sh latest
+        cd helm-pod
+        echo "Building helmer..."
+        ./build-artifact.sh latest
+        cd ../../mutating-webhook
+        echo "Building mutating-webhook..."
+        ./build-artifact.sh latest
+        cd ../deploy
+        echo "Building kubeconfiggenerator..."
+        ./build-artifact-kubeconfiggenerator.sh latest
+        echo "Building webhook_init_container..."
+        ./build-artifact.sh latest
+        echo "Building resource cleaner..."
+        ./build-artifact-clean.sh latest
+        cd ../consumerui
+        echo "Building consumer ui..."
+        ./build-artifact.sh latest
+
+        echo "Installing KubePlus..."
+        helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json --set WEBHOOK_INIT_CONTAINER=gcr.io/cloudark-kubeplus/webhook-tls-getter:latest --set CRD_REGISTRATION_HELPER=gcr.io/cloudark-kubeplus/kubeconfiggenerator:latest --set MUTATING_WEBHOOK=gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:latest --set PLATFORM_OPERATOR=gcr.io/cloudark-kubeplus/platform-operator:latest --set CONSUMERUI=gcr.io/cloudark-kubeplus/consumerui:latest --set HELMER=gcr.io/cloudark-kubeplus/helm-pod:latest --set RESOURCE_CLEANER=gcr.io/cloudark-kubeplus/delete-kubeplus-resources:latest  -n $KUBEPLUS_NS
+
         until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done 
         kubectl upload chart ./examples/multitenancy/application-hosting/wordpress/wordpress-chart-0.0.3.tgz kubeplus-saas-provider.json
         echo "Sleeping for 10 seconds before continuing..."
