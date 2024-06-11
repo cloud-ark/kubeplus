@@ -28,8 +28,8 @@ import (
 	"k8s.io/gengo/args"
 	"k8s.io/kube-openapi/pkg/generators"
 
-	generatorargs "k8s.io/code-generator/cmd/openapi-gen/args"
-	"k8s.io/code-generator/pkg/util"
+	generatorargs "k8s.io/kube-openapi/cmd/openapi-gen/args"
+	"k8s.io/kube-openapi/pkg/util"
 )
 
 func main() {
