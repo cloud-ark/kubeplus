@@ -29,11 +29,14 @@ jobs:
         sudo tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
         export PATH=$PATH:/usr/local/go/bin
         go version
-        cd $HOME
         echo "Current directory:`pwd`"
         echo "Folders:`ls`"
+        kubeplus_folder="$(basename `pwd`)"
+        echo "KubePlus folder name:$kubeplus_folder"
         mkdir -p $HOME/go/src/github.com/cloud-ark
-        mv kubeplus $HOME/go/src/github.com/cloud-ark/.
+        cd ..
+        echo "Current directory:`pwd`"
+        mv $kubeplus_folder $HOME/go/src/github.com/cloud-ark/kubeplus
         cd $HOME/go/src/github.com/cloud-ark/kubeplus
         export KUBEPLUS_HOME=`pwd`
         export PATH=$KUBEPLUS_HOME/plugins:$PATH
