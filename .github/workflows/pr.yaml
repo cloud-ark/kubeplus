@@ -29,6 +29,12 @@ jobs:
         sudo tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
         export PATH=$PATH:/usr/local/go/bin
         go version
+        cd $HOME
+        echo "Current directory:`pwd`"
+        echo "Folders:`ls`"
+        mkdir -p $HOME/go/src/github.com/cloud-ark
+        mv kubeplus $HOME/go/src/github.com/cloud-ark/.
+        cd $HOME/go/src/github.com/cloud-ark/kubeplus
         export KUBEPLUS_HOME=`pwd`
         export PATH=$KUBEPLUS_HOME/plugins:$PATH
         echo "PATH:$PATH"
@@ -42,25 +48,34 @@ jobs:
         echo "API_SERVER_URL:$apiserver"
         python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
         deactivate
-        echo "Building platform-operator..."
-        cd platform-operator
-        ./build-artifact.sh latest
-        cd helm-pod
-        echo "Building helmer..."
-        ./build-artifact.sh latest
-        cd ../../mutating-webhook
+
         echo "Building mutating-webhook..."
+        cd $KUBEPLUS_HOME/mutating-webhook
+        export GO111MODULE=on; go get github.com/googleapis/gnostic@v0.4.0
         ./build-artifact.sh latest
-        cd ../deploy
+
+        echo "Building helmer..."
+        cd $KUBEPLUS_HOME/platform-operator/helm-pod/
+        go mod vendor
+        ./build-artifact.sh latest
+
+        echo "Building platform-operator..."
+        cd $KUBEPLUS_HOME/platform-operator
+        ./build-artifact.sh latest
+
         echo "Building kubeconfiggenerator..."
+        cd $KUBEPLUS_HOME/deploy
         ./build-artifact-kubeconfiggenerator.sh latest
         echo "Building webhook_init_container..."
         ./build-artifact.sh latest
         echo "Building resource cleaner..."
         ./build-artifact-clean.sh latest
-        cd ../consumerui
+
+        cd $KUBEPLUS_HOME/consumerui
         echo "Building consumer ui..."
         ./build-artifact.sh latest
+
+        cd $KUBEPLUS_HOME
 
         echo "Installing KubePlus..."
         helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json --set WEBHOOK_INIT_CONTAINER=gcr.io/cloudark-kubeplus/webhook-tls-getter:latest --set CRD_REGISTRATION_HELPER=gcr.io/cloudark-kubeplus/kubeconfiggenerator:latest --set MUTATING_WEBHOOK=gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:latest --set PLATFORM_OPERATOR=gcr.io/cloudark-kubeplus/platform-operator:latest --set CONSUMERUI=gcr.io/cloudark-kubeplus/consumerui:latest --set HELMER=gcr.io/cloudark-kubeplus/helm-pod:latest --set RESOURCE_CLEANER=gcr.io/cloudark-kubeplus/delete-kubeplus-resources:latest  -n $KUBEPLUS_NS
