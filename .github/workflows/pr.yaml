@@ -86,7 +86,7 @@ jobs:
 
         kubectl get pods -A
 
-        until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; kubectl get pods; done 
+        until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; kubectl get pods | grep kubeplus | awk '{print $1}' | kubectl describe pods; done 
         kubectl upload chart ./examples/multitenancy/application-hosting/wordpress/wordpress-chart-0.0.3.tgz kubeplus-saas-provider.json
         echo "Sleeping for 10 seconds before continuing..."
         sleep 10
