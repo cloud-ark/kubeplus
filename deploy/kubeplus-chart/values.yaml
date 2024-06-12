@@ -4,7 +4,7 @@ CHECK_KYVERNO_POLICIES: NO
 WEBHOOK_INIT_CONTAINER: gcr.io/cloudark-kubeplus/webhook-tls-getter:3.0.28
 CRD_REGISTRATION_HELPER: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.28
 MUTATING_WEBHOOK: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.15
-PLATFORM_OPERATOR: gcr.io/cloudark-kubeplus/platform-operator:3.0.6
+PLATFORM_OPERATOR: gcr.io/cloudark-kubeplus/platform-operator:3.0.7
 CONSUMERUI: gcr.io/cloudark-kubeplus/consumerui:0.0.7
 HELMER: gcr.io/cloudark-kubeplus/helm-pod:3.0.21
 RESOURCE_CLEANER: gcr.io/cloudark-kubeplus/delete-kubeplus-resources:3.0.28
