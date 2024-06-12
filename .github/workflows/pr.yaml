@@ -37,6 +37,7 @@ jobs:
         echo "KubePlus folder name:$kubeplus_folder"
         mkdir -p $HOME/go/src/github.com/cloud-ark
         cd ..
+        runner_dir=`pwd`
         echo "Current directory:`pwd`"
         mv $kubeplus_folder $HOME/go/src/github.com/cloud-ark/kubeplus
         cd $HOME/go/src/github.com/cloud-ark/kubeplus
@@ -115,3 +116,5 @@ jobs:
         source venv/bin/activate
         cd tests
         python3 -m unittest -v tests
+        cd ../..
+        mv kubeplus $runner_dir
