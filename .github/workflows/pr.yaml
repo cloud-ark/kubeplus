@@ -87,7 +87,7 @@ jobs:
 
         kubectl get pods -A
 
-        until kubectl get pods -A | grep kubeplus | grep -i Crash; do echo "Waiting for KubePlus to start.."; sleep 1; kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`; kubectl describe pods $kubeplus_pod;  done 
+        until kubectl get pods -A | grep kubeplus | grep -i Running; do echo "Waiting for KubePlus to start.."; sleep 1; kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`; kubectl get pods $kubeplus_pod;  done 
         kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`
         echo "helmer logs..."
         kubectl logs $kubeplus_pod -c helmer
