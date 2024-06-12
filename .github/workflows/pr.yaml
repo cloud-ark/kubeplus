@@ -6,7 +6,7 @@ env:
   KUBEPLUS_TEST_OUTPUT: yes
 jobs:
   job1:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     name: Deploy to minikube
     steps:
     - uses: actions/checkout@v2
@@ -18,6 +18,8 @@ jobs:
       run: |
         export SHELL=/bin/bash
         eval $(minikube -p minikube docker-env)
+        echo "Glibc version"
+        ldd --version
         echo "Installing helm..."
         wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz
         gunzip helm-v3.12.1-linux-amd64.tar.gz
