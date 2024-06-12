@@ -66,24 +66,27 @@ jobs:
         cd $KUBEPLUS_HOME/platform-operator
         ./build-artifact.sh latest
 
-        echo "Building kubeconfiggenerator..."
-        cd $KUBEPLUS_HOME/deploy
-        ./build-artifact-kubeconfiggenerator.sh latest
-        echo "Building webhook_init_container..."
-        ./build-artifact.sh latest
-        echo "Building resource cleaner..."
-        ./build-artifact-clean.sh latest
+        #echo "Building kubeconfiggenerator..."
+        #cd $KUBEPLUS_HOME/deploy
+        #./build-artifact-kubeconfiggenerator.sh latest
+        #echo "Building webhook_init_container..."
+        #./build-artifact.sh latest
+        #echo "Building resource cleaner..."
+        #./build-artifact-clean.sh latest
 
-        cd $KUBEPLUS_HOME/consumerui
-        echo "Building consumer ui..."
-        ./build-artifact.sh latest
+        #cd $KUBEPLUS_HOME/consumerui
+        #echo "Building consumer ui..."
+        #./build-artifact.sh latest
 
         cd $KUBEPLUS_HOME
+        ls
 
         echo "Installing KubePlus..."
-        helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json --set WEBHOOK_INIT_CONTAINER=gcr.io/cloudark-kubeplus/webhook-tls-getter:latest --set CRD_REGISTRATION_HELPER=gcr.io/cloudark-kubeplus/kubeconfiggenerator:latest --set MUTATING_WEBHOOK=gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:latest --set PLATFORM_OPERATOR=gcr.io/cloudark-kubeplus/platform-operator:latest --set CONSUMERUI=gcr.io/cloudark-kubeplus/consumerui:latest --set HELMER=gcr.io/cloudark-kubeplus/helm-pod:latest --set RESOURCE_CLEANER=gcr.io/cloudark-kubeplus/delete-kubeplus-resources:latest  -n $KUBEPLUS_NS
+        helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json --set MUTATING_WEBHOOK=gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:latest --set PLATFORM_OPERATOR=gcr.io/cloudark-kubeplus/platform-operator:latest --set HELMER=gcr.io/cloudark-kubeplus/helm-pod:latest -n $KUBEPLUS_NS
 
-        until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done 
+        kubectl get pods -A
+
+        until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; kubectl get pods; done 
         kubectl upload chart ./examples/multitenancy/application-hosting/wordpress/wordpress-chart-0.0.3.tgz kubeplus-saas-provider.json
         echo "Sleeping for 10 seconds before continuing..."
         sleep 10
