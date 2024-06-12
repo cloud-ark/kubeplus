@@ -80,13 +80,21 @@ jobs:
 
         cd $KUBEPLUS_HOME
         ls
+        docker images
 
         echo "Installing KubePlus..."
         helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json --set MUTATING_WEBHOOK=gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:latest --set PLATFORM_OPERATOR=gcr.io/cloudark-kubeplus/platform-operator:latest --set HELMER=gcr.io/cloudark-kubeplus/helm-pod:latest -n $KUBEPLUS_NS
 
         kubectl get pods -A
 
-        until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`; kubectl logs $kubeplus_pod -c helmer ; done 
+        until kubectl get pods -A | grep kubeplus | grep -i Crash; do echo "Waiting for KubePlus to start.."; sleep 1; kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`; kubectl describe pods $kubeplus_pod;  done 
+        kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`
+        echo "helmer logs..."
+        kubectl logs $kubeplus_pod -c helmer
+        echo "platform-operator logs..."
+        kubectl logs $kubeplus_pod -c platform-operator
+        echo "crd-hook logs..."
+        kubectl logs $kubeplus_pod -c crd-hook
         kubectl upload chart ./examples/multitenancy/application-hosting/wordpress/wordpress-chart-0.0.3.tgz kubeplus-saas-provider.json
         echo "Sleeping for 10 seconds before continuing..."
         sleep 10
