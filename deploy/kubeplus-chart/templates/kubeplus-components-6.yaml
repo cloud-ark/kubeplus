@@ -319,6 +319,9 @@ spec:
       - name: kubeconfiggenerator
         image: {{ .Values.CRD_REGISTRATION_HELPER }}  #gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.27
         imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            ephemeral-storage: "70Mi"
         env:
           - name: KUBEPLUS_NAMESPACE
             valueFrom:
@@ -334,6 +337,9 @@ spec:
       - name: crd-hook
         image: {{ .Values.MUTATING_WEBHOOK }}    #gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.14
         imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            ephemeral-storage: "10Mi"
         env:
           - name: CHECK_KYVERNO_POLICIES
             value: "{{ .Values.CHECK_KYVERNO_POLICIES }}"
@@ -352,14 +358,23 @@ spec:
       - name: platform-operator
         image: {{ .Values.PLATFORM_OPERATOR }}   #gcr.io/cloudark-kubeplus/platform-operator:3.0.6
         imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            ephemeral-storage: "5Mi"
         command: [ "/platform-operator"]
       - name: consumerui
         image: {{ .Values.CONSUMERUI }}   #gcr.io/cloudark-kubeplus/consumerui:0.0.6
         imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            ephemeral-storage: "10Mi"
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
         image: {{ .Values.HELMER  }}  #gcr.io/cloudark-kubeplus/helm-pod:3.0.17
         imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            ephemeral-storage: "10Mi"
         command: ["/root/helm-pod"]
         volumeMounts:
         - mountPath: /chart
