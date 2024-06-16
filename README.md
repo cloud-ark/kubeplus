@@ -193,9 +193,24 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 ## Use cases
 
+KubePlus can be used in the following use cases.
+
 - [Application Hosting](./examples/multitenancy/application-hosting/wordpress/steps.txt)
 - [Platform Engineering](./examples/multitenancy/platform-engineering/steps.txt)
 - [Managed Service](./examples/multitenancy/managed-service/appday2ops/steps.txt)
+
+In order to try these examples, follow these steps:
+
+   ```
+   git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
+   cd kubeplus
+   export KUBEPLUS_HOME=`pwd`
+   export PATH=$KUBEPLUS_HOME/plugins:$PATH
+   ```
+
+Go to appropriate examples directory and follow `steps.txt` there in.
+Make sure you have installed latest version of kubectl and you have created a minikube/kind cluster.
+
 
 ## Architecture
 
