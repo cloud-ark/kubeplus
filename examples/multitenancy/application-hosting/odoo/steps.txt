@@ -5,7 +5,7 @@ This example shows delivering Bitnami Odoo Helm chart as-a-service using KubePlu
 
 1. Download Odoo helm chart from Bitnami:
    $ helm repo add bitnami https://charts.bitnami.com/bitnami
-   $ helm pull bitnami/odoo
+   $ helm pull bitnami/odoo --version 23.0.4
 
 2. Install KubePlus and setup KubePlus kubectl plugins:
    - Create provider kubeconfig:
@@ -24,17 +24,11 @@ This example shows delivering Bitnami Odoo Helm chart as-a-service using KubePlu
    - Wait till KubePlus Pod is Running
      $ kubectl get pods -A
 
-   - Setup KubePlus kubectl plugins
-     $ wget https://github.com/cloud-ark/kubeplus/blob/master/kubeplus-kubectl-plugins.tar.gz
-     $ gunzip kubeplus-kubectl-plugins.tar.gz
-     $ tar -xvf kubeplus-kubectl-plugins
-     $ export KUBEPLUS_HOME=`pwd`
-     $ export PATH=$KUBEPLUS_HOME/plugins:$PATH
 
 3. Create OdooService API wrapping the Helm chart:
    - Check odoo-service-composition-localchart.yaml. Notice that we are specifying the odoo chart from a file system based path.
      So first we have to upload this chart to KubePlus Pod.
-   $ kubectl upload chart odoo-23.0.4.tgz 
+   $ kubectl upload chart odoo-23.0.4.tgz kubeplus-saas-provider.json
    $ kubectl create -f odoo-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json 
    $ kubectl get crds --kubeconfig=kubeplus-saas-provider.json
      - verify that odooservice crd has been created
@@ -44,8 +38,8 @@ This example shows delivering Bitnami Odoo Helm chart as-a-service using KubePlu
 4. Download the consumer kubeconfig file:
    - Direct
      $ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
-   - Using kubeplus plugin (use when working on GKE)
-     $ kubectl retrieve kubeconfig consumer default -s https://$server:443 -k kubeplus-saas-provider.json > consumer.conf
+   - Using kubeplus plugin 
+     $ kubectl retrieve kubeconfig consumer default -s $server -k kubeplus-saas-provider.json > consumer.conf
 
 5. Check permissions for provider and consumer service accounts, which are created by KubePlus:
    $ kubectl auth can-i --list --as=system:serviceaccount:default:kubeplus-saas-provider

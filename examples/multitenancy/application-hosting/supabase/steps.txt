@@ -4,21 +4,30 @@ Pre-requisites:
 - KubePlus kubectl plugins are available on PATH
 
 
-Test Supase creation:
+Test Supabase creation:
 - helm repo add bitnami https://charts.bitnami.com/bitnami
-- helm pull bitnami/supabase
-- Open Supabase.yaml and change chartURL to the version of supabase tgz that you received from helm pull.
+- helm pull bitnami/supabase --version 0.1.4
+- kubectl upload chart supabase-0.1.4.tgz kubeplus-saas-provider.json
+- python3 ../../../../provider-kubeconfig.py update default -p supabase-perms.json 
 - kubectl create -f Supabase.yaml --kubeconfig=kubeplus-saas-provider.json
 - kubectl get resourcecompositions
 - kubectl describe resourcecomposition supabase-res-composition
-- kubectl get crds
+- Verify that supabases crd is registered in the cluster
+  - kubectl get crds 
 - kubectl man Supabase -k kubeplus-saas-provider.json > sample-supabase.yaml
 - kubectl create -f sample-supabase.yaml
 - kubectl get supabases
 - kubectl describe supabase sample-supabase
 - kubectl get pods -A
 
+
 Cleanup:
+- Wait till the "Status" field is populated in the output of:
+  - kubectl describe supabase sample-supabase
 - kubectl delete supabase sample-supabase
 - kubectl get pods -A
 - kubectl delete -f Supabase.yaml --kubeconfig=kubeplus-saas-provider.json 
+- Verify resourcecomposition is deleted
+  - kubectl get resourcecompositions
+- Verify all the Supabase CRDs are deleted
+  - kubectl get crds
