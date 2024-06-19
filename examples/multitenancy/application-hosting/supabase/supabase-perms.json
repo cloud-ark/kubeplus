@@ -1,0 +1,1 @@
+{"perms": {"": [{"secrets/resourceName::kptc-jwt": ["create", "delete", "get", "list", "patch", "update", "watch"]}]}}
