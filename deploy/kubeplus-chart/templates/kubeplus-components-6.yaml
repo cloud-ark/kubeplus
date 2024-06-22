@@ -295,6 +295,8 @@ spec:
       name: kubeplus
       labels:
         app: kubeplus
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
     spec:
       serviceAccount: kubeplus-saas-provider
       initContainers:
