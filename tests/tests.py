@@ -196,7 +196,11 @@ class TestKubePlus(unittest.TestCase):
         if os.getenv("KUBEPLUS_HOME") == '':
             print("Skipping test as KUBEPLUS_HOME is not set.")
             return
-
+        
+        # add Kubeplus provider
+        cmd = "cp ../kubeplus-saas-provider.json ./application-upgrade/provider.conf"
+        TestKubePlus.run_command(cmd)
+        
         # chart uploads
         cmd = "kubectl upload chart ./application-upgrade/resource-composition-0.0.1.tgz ./application-upgrade/provider.conf"
         TestKubePlus.run_command(cmd)
