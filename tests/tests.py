@@ -47,8 +47,8 @@ class TestKubePlus(unittest.TestCase):
 
         cmd = "kubectl create -f wordpress-service-composition-chart-withns.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
-        #print("Out:" + out)
-        #print("Err:" + err)
+        # print("Out:" + out)
+        # print("Err:" + err)
         self.assertTrue('Namespace object is not allowed in the chart' in err)
 
     def test_create_res_comp_for_chart_with_shared_storage(self):
@@ -61,8 +61,8 @@ class TestKubePlus(unittest.TestCase):
 
         cmd = "kubectl create -f storage-isolation/wordpress-service-composition.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
-        #print("Out:" + out)
-        #print("Err:" + err)
+        # print("Out:" + out)
+        # print("Err:" + err)
         self.assertTrue('Storage class with reclaim policy Retain not allowed' in err)
 
         cmd = "kubectl delete -f storage-class-fast.yaml"
@@ -75,31 +75,32 @@ class TestKubePlus(unittest.TestCase):
 
         cmd = "kubectl create -f resource-quota/wordpress-service-composition-1.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
-        #print("Out:" + out)
-        #print("Err:" + err)
-        self.assertTrue('If quota is specified, specify all four values: requests.cpu, requests.memory, limits.cpu, limits.memory' in err)
+        # print("Out:" + out)
+        # print("Err:" + err)
+        self.assertTrue(
+            'If quota is specified, specify all four values: requests.cpu, requests.memory, limits.cpu, limits.memory' in err)
 
     def test_application_update(self):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
             sys.exit(0)
-        
+
         start_clean = "kubectl delete ns hs1"
         TestKubePlus.run_command(start_clean)
 
         kubeplus_home = os.getenv("KUBEPLUS_HOME")
-        #print("KubePlus home:" + kubeplus_home)
+        # print("KubePlus home:" + kubeplus_home)
         path = os.getenv("PATH")
-        #print("Path:" + path)
+        # print("Path:" + path)
         if kubeplus_home == '':
             print("Skipping the test as KUBEPLUS_HOME is not set.")
             return
-        
+
         cmd = "kubectl upload chart ../examples/multitenancy/hello-world/hello-world-chart-0.0.3.tgz ../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
         cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
-        
+
         crd = "helloworldservices.platformapi.kubeplus"
         crd_installed = self._check_crd_installed(crd)
         if not crd_installed:
@@ -123,7 +124,7 @@ class TestKubePlus(unittest.TestCase):
         all_running = False
         cmd = "kubectl get pods -n hs1"
 
-        target_pod_count = 2 
+        target_pod_count = 2
         pods, count, all_running = self._check_pod_status(cmd, target_pod_count)
         if count == target_pod_count:
             self.assertTrue(True)
@@ -136,6 +137,175 @@ class TestKubePlus(unittest.TestCase):
         cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
 
+    def test_application_upgrade(self):
+        # imports
+        from kubernetes import config
+        from kubernetes.client import Configuration
+        from kubernetes.client.api import core_v1_api
+        from kubernetes.stream import portforward
+        import select
+        from bs4 import BeautifulSoup
+
+        # assume appropriate plugins installation and PATH update
+
+        # helper methods
+
+        # from kubernetes python client example -- pod_portforward.py
+        def make_http_request(port):
+            http = pf.socket(port)
+            http.setblocking(True)
+            http.sendall(b'GET /users HTTP/1.1\r\n')
+            http.sendall(b'Host: 127.0.0.1\r\n')
+            http.sendall(b'Connection: close\r\n')
+            http.sendall(b'Accept: */*\r\n')
+            http.sendall(b'\r\n')
+            response = b''
+            while True:
+                select.select([http], [], [])
+                data = http.recv(1024)
+                if not data:
+                    break
+                response += data
+            http.close()
+            
+            error = pf.error(port)
+            if error is None:
+                print("No port forward errors on port %d." % port)
+            else:
+                print(f"Port {port} has the following error: {error}")
+            http.close()
+            return response.decode('utf-8')
+        
+        # get number of users from HTML response
+        def count_users(response):
+            num_users = 0
+            if "No users" not in response:
+                soup = BeautifulSoup(response, 'lxml')
+                td_tags = soup.find_all('td')
+                for td in td_tags:
+                    users = td.get_text(strip=True)
+                    for _ in users.split(" "):
+                        num_users += 1
+            return num_users
+
+        # preliminary checks
+        if not TestKubePlus._is_kubeplus_running():
+            print("KubePlus is not running. Deploy KubePlus and then run tests")
+            sys.exit(0)
+
+        if os.getenv("KUBEPLUS_HOME") == '':
+            print("Skipping test as KUBEPLUS_HOME is not set.")
+            return
+
+        # chart uploads
+        cmd = "kubectl upload chart ./application-upgrade/resource-composition-0.0.1.tgz ./application-upgrade/provider.conf"
+        TestKubePlus.run_command(cmd)
+        cmd = "kubectl upload chart ./application-upgrade/resource-composition-0.0.2.tgz ./application-upgrade/provider.conf"
+        TestKubePlus.run_command(cmd)
+
+        # create API
+        cmd = "kubectl create -f ./application-upgrade/resource-composition-localchart.yaml --kubeconfig=./application-upgrade/provider.conf"
+        TestKubePlus.run_command(cmd)
+
+        # CRDs check
+        crd = "webappservices.platformapi.kubeplus"
+        crd_installed = self._check_crd_installed(crd)
+        if not crd_installed:
+            print("CRD " + crd + " not installed. Exiting this test.")
+            return
+
+        # create app instance
+        cmd = "kubectl create -f ./application-upgrade/tenant1.yaml --kubeconfig=./application-upgrade/provider.conf"
+        out, err = TestKubePlus.run_command(cmd)
+
+        namespace = 'bwa-tenant1'
+        port = 5000
+
+        # let the app pods come up
+        time.sleep(30)
+
+        # grab name of deployed pod
+        cmd = "kubectl get pods -n %s" % namespace
+        out, err = TestKubePlus.run_command(cmd)
+        name = None
+        for line in out.split("\n"):
+            if "web-app" in line:
+                parts = line.split(" ")
+                for part in parts:
+                    if "web-app" in part:
+                        name = part.strip()
+                break
+
+        # port forwarding
+        # CLI: kubectl port-forward pod-name -n bwa-tenant1 5000:5000
+        config.load_kube_config()
+        c = Configuration.get_default_copy()
+        c.assert_hostname = False
+        Configuration.set_default(c)
+        api_instance = core_v1_api.CoreV1Api()
+
+        # https://github.com/kubernetes-client/python/blob/master/examples/pod_portforward.py
+        pf = portforward(api_instance.connect_get_namespaced_pod_portforward,
+                         name,
+                         namespace,
+                         ports=str(port))
+
+        response = make_http_request(port).strip(" ")
+        num_users_first = count_users(response)
+        
+        # upgrade to version 2
+        data = None
+        with open('./application-upgrade/resource-composition-localchart.yaml', 'r') as f:
+            data = yaml.safe_load(f)
+        
+        data['spec']['newResource']['chartURL'] = 'file:///resource-composition-0.0.2.tgz'
+
+        with open('./application-upgrade/resource-composition-localchart.yaml', 'w') as f:   
+            yaml.safe_dump(data, f, default_flow_style=False)
+
+        cmd = 'kubectl apply -f ./application-upgrade/resource-composition-localchart.yaml --kubeconfig=./application-upgrade/provider.conf'
+        out, err = TestKubePlus.run_command(cmd)
+
+        # sleep to let the pods run
+        time.sleep(60)
+
+        # grab name of deployed pod
+        cmd = "kubectl get pods -n %s" % namespace
+        out, err = TestKubePlus.run_command(cmd)
+        name = None
+        for line in out.split("\n"):
+            if "web-app" in line:
+                parts = line.split(" ")
+                for part in parts:
+                    if "web-app" in part:
+                        name = part.strip()
+
+        # check data at port after upgrade -- should be more users 
+        pf = portforward(api_instance.connect_get_namespaced_pod_portforward,
+                         name,
+                         namespace,
+                         ports=str(port))
+        
+        response = make_http_request(port).strip(" ")
+        num_users_second = count_users(response)
+
+        # cleanup 
+        cmd = 'kubectl delete -f ./application-upgrade/resource-composition-localchart.yaml --kubeconfig=./application-upgrade/provider.conf'
+        TestKubePlus.run_command(cmd)
+
+        # restore chart
+        data = None
+        with open('./application-upgrade/resource-composition-localchart.yaml', 'r') as f:
+            data = yaml.safe_load(f)
+        
+        data['spec']['newResource']['chartURL'] = 'file:///resource-composition-0.0.1.tgz'
+
+        with open('./application-upgrade/resource-composition-localchart.yaml', 'w') as f:   
+            yaml.safe_dump(data, f, default_flow_style=False)
+        
+        # check if upgrade worked
+        self.assertTrue(num_users_second > num_users_first)
+        
 
     def _check_pod_status(self, cmd, num_of_pods):
         all_running = False
@@ -158,7 +328,6 @@ class TestKubePlus(unittest.TestCase):
                 break
 
         return pods, count, all_running
-
 
     def _check_crd_installed(self, crd):
         installed = False
@@ -198,13 +367,14 @@ class TestKubePlus(unittest.TestCase):
 
         cmd = "kubectl delete -f tenant1.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
-        #print("Out:" + out)
-        #print("Err:" + err)
+        # print("Out:" + out)
+        # print("Err:" + err)
         self.assertTrue("Custom Resource instance cannot be deleted. It is not ready yet." in err)
 
         cmd = "kubectl delete -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
-        self.assertTrue("ResourceComposition instance cannot be deleted. It has an application instance starting up." in err)
+        self.assertTrue(
+            "ResourceComposition instance cannot be deleted. It has an application instance starting up." in err)
 
         cmd = "kubectl label WordpressService tenant1 delete=true"
         TestKubePlus.run_command(cmd)
@@ -219,7 +389,6 @@ class TestKubePlus(unittest.TestCase):
 
         clean_up = "kubectl delete ns tenant1"
         TestKubePlus.run_command(clean_up)
-
 
     def test_res_comp_with_no_podpolicies(self):
         if not TestKubePlus._is_kubeplus_running():
@@ -249,22 +418,22 @@ class TestKubePlus(unittest.TestCase):
         if count < target_pod_count:
             print("Application Pod not started..")
         else:
-            #print(pods)
+            # print(pods)
             # Check container configs
             for pod in pods:
                 cmd = "kubectl get pod " + pod + " -n tenant1 -o json "
                 out, err = TestKubePlus.run_command(cmd)
                 json_obj = json.loads(out)
-                #print(json_obj)
-                #print(json_obj['spec']['containers'][0])
+                # print(json_obj)
+                # print(json_obj['spec']['containers'][0])
                 resources = json_obj['spec']['containers'][0]['resources']
                 if not resources:
                     self.assertTrue(True)
                 else:
                     self.assertTrue(False)
 
-        #clean up
-        #wait and then clean up
+        # clean up
+        # wait and then clean up
         time.sleep(30)
         cmd = "kubectl delete -f tenant1.yaml --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)
@@ -300,7 +469,7 @@ class TestKubePlus(unittest.TestCase):
         kind = "wp"
         ns = "default"
         kubeplus_saas_provider = kubeplus_home + "/kubeplus-saas-provider.json"
-        cmdsuffix = kind + " " + instance + " " + ns + " -k " + kubeplus_saas_provider 
+        cmdsuffix = kind + " " + instance + " " + ns + " -k " + kubeplus_saas_provider
         cmd = "kubectl connections " + cmdsuffix
 
     @unittest.skip("Skipping Kyverno integration test")
@@ -318,8 +487,8 @@ class TestKubePlus(unittest.TestCase):
 
         cmd = "kubectl create -f resource-quota/wordpress-service-composition.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
-        #print("Out:" + out)
-        #print("Err:" + err)
+        # print("Out:" + out)
+        # print("Err:" + err)
 
         for line in err.split("\n"):
             if 'block-stale-images' in line.strip():
@@ -332,4 +501,3 @@ class TestKubePlus(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    
