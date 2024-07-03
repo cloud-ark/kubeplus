@@ -6,6 +6,12 @@ import sys
 import os
 import yaml
 import time
+from kubernetes import config
+from kubernetes.client import Configuration
+from kubernetes.client.api import core_v1_api
+from kubernetes.stream import portforward
+import select
+from bs4 import BeautifulSoup
 
 class TestKubePlus(unittest.TestCase):
 
@@ -138,13 +144,6 @@ class TestKubePlus(unittest.TestCase):
         out, err = TestKubePlus.run_command(cmd)
 
     def test_application_upgrade(self):
-        # imports
-        from kubernetes import config
-        from kubernetes.client import Configuration
-        from kubernetes.client.api import core_v1_api
-        from kubernetes.stream import portforward
-        import select
-        from bs4 import BeautifulSoup
 
         # assume appropriate plugins installation and PATH update
 
@@ -200,7 +199,7 @@ class TestKubePlus(unittest.TestCase):
         # add Kubeplus provider
         cmd = "cp ../kubeplus-saas-provider.json ./application-upgrade/provider.conf"
         TestKubePlus.run_command(cmd)
-        
+
         # chart uploads
         cmd = "kubectl upload chart ./application-upgrade/resource-composition-0.0.1.tgz ./application-upgrade/provider.conf"
         TestKubePlus.run_command(cmd)
