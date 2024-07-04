@@ -60,14 +60,13 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    ```
    wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
    tar -zxvf kubeplus-kubectl-plugins.tar.gz
-   export KUBEPLUS_HOME=`pwd`
-   export PATH=$KUBEPLUS_HOME/plugins:$PATH
+   export PATH=$(pwd)/plugins:$PATH
    kubectl kubeplus commands
    ```
 
 3. Set the Namespace in which to deploy KubePlus
 
-   `export KUBEPLUS_NS=default`
+   `export KUBEPLUS_NS=kubeplus-example`
 
 4. Create provider kubeconfig using provider-kubeconfig.py
 
@@ -78,7 +77,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    source venv/bin/activate
    pip3 install -r requirements.txt
    apiserver=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
-   python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
+   python3 provider-kubeconfig.py create $KUBEPLUS_NS -s $apiserver
    deactivate
    ```
 
@@ -95,8 +94,8 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
    ```
    kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
-   kubectl get resourcecompositions
-   kubectl describe resourcecomposition wordpress-service-composition
+   kubectl get resourcecompositions -n $KUBEPLUS_NS
+   kubectl describe resourcecomposition wordpress-service-composition -n $KUBEPLUS_NS
    ```
 
    If the status of the `wordpress-service-composition` indicates that the new CRD has been created successfully, verify it:
@@ -122,7 +121,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 9.  Check created WordpressService instances
 
    ```
-   kubectl get wordpressservices
+   kubectl get wordpressservices -n $KUBEPLUS_NS
 
    NAME             AGE
    wp-tenant1   86s
@@ -132,13 +131,13 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 10. Check the details of created instance:
 
    ```
-   kubectl describe wordpressservices wp-tenant1
+   kubectl describe wordpressservices wp-tenant1 -n $KUBEPLUS_NS
    ```
 
 11. Check created application resources. Notice that the `WordpressService` instance resources are deployed in a Namespace `wp-tenant1`, which was created by KubePlus.
 
    ```
-   kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
+   kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json -n $KUBEPLUS_NS
 
    NAMESPACE                 KIND                      NAME                      
    default                   WordpressService          wp-tenant1                
@@ -183,7 +182,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
     kubectl delete wordpressservice wp-tenant2 --kubeconfig=kubeplus-saas-provider.json
     kubectl delete resourcecomposition wordpress-service-composition --kubeconfig=kubeplus-saas-provider.json
     helm delete kubeplus -n $KUBEPLUS_NS
-    python3 provider-kubeconfig.py delete $KUBEPLUS_NS
+    python3 provider-kubeconfig.py delete -n $KUBEPLUS_NS
     ```
 
 <!--

@@ -53,7 +53,7 @@ jobs:
         pip3 install -r requirements.txt
         apiserver=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
         echo "API_SERVER_URL:$apiserver"
-        python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
+        python3 provider-kubeconfig.py create $KUBEPLUS_NS -s $apiserver
         deactivate
 
         echo "Building mutating-webhook..."
