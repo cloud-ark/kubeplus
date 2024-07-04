@@ -1,6 +1,7 @@
 *~
 venv
 provider-kubeconfig.log
+kubeplus-saas-provider.json
 bak
 vendor
 operator-deployer/artifacts/deployment/operator-deployer

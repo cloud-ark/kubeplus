@@ -78,7 +78,7 @@ The spec properties of the Kubernetes CRD wrapping the application Helm chart ar
    source venv/bin/activate
    pip3 install -r requirements.txt
    apiserver=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
-   python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
+   python3 provider-kubeconfig.py create -s $apiserver $KUBEPLUS_NS
    deactivate
    ```
 
