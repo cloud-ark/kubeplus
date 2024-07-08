@@ -20,6 +20,7 @@ jobs:
         eval $(minikube -p minikube docker-env)
         echo "Glibc version"
         ldd --version
+        sudo apt-get install python3-lxml
         echo "Installing helm..."
         wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz
         gunzip helm-v3.12.1-linux-amd64.tar.gz
@@ -113,8 +114,11 @@ jobs:
         kubectl delete resourcecomposition wordpress-service-composition --kubeconfig=kubeplus-saas-provider.json
         echo "Running tests..starting in 5 seconds"
         sleep 5
-        source venv/bin/activate
         cd tests
+        python3 -m venv venv
+        source venv/bin/activate
+        pip3 install -r requirements.txt
         python3 -m unittest -v tests
+        deactivate
         cd ../..
         mv kubeplus $runner_dir
