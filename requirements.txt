@@ -1,5 +1,1 @@
 pyyaml
-kubernetes
-bs4
-lxml
-select
