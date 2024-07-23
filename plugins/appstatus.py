@@ -1,0 +1,102 @@
+import subprocess
+import sys
+import json
+from crmetrics import CRBase
+
+'''
+    new plugin app-status -- takes in kind and instance and displays 
+    kind, namespace, name and status and lists pods in that application 
+    with their status
+
+    application name is the namespace and pods will be under this namespace
+    for application status itself, name would just be the helm release
+
+    Input: name of kind and name of application instance
+
+    TODO: reexamine all error checks for plugins
+'''
+
+
+class AppStatusFinder(CRBase):
+
+    def get_app_instance_status(self, kind, instance, kubeconfig):
+        cmd = 'kubectl get %s %s -o json %s' % (kind, instance, kubeconfig)
+        out, err = self._run_command(cmd)
+        if err != "":
+            print("Something went wrong while getting app instance status.")
+            print(err)
+            exit(1)
+        ''' 
+        with response, check if status exists
+            check if helmrelease exists and extract name of instance
+            or check if status contains an error
+        otherwise (i.e. status missing), display "App not deployed properly"
+        '''
+        # response = json.dumps(json.loads(out), indent=4)
+        response = json.loads(out)
+        if 'status' in response:
+            if 'helmrelease' in response['status']:
+                helm_release = response['status']['helmrelease'].strip('\n')
+                ns, name = helm_release.split(':')
+                return name, ns, True, None
+            else:
+                # an error has occurred
+                status = response['status']
+                return status, None, False, None
+            
+        else:
+            return '', 'Application not deployed properly', False, None
+
+
+
+
+    def get_app_pods(self, namespace, kubeconfig):
+        cmd = 'kubectl get pods -n %s %s -o json' % (namespace, kubeconfig)
+        # pods = self._get_resources(None, 'pods', namespace, kubeconfig)
+        out, err = self._run_command(cmd)
+        # format?
+        response = json.loads(out)
+        pods = []
+        for pod in response['items']:
+            name = pod['metadata']['name']
+            typ = pod['kind']
+            ns = pod['metadata']['namespace']
+            phase = pod['status']['phase']
+            pods.append((name, typ, ns, phase))
+        return pods
+
+
+if __name__ == '__main__':
+    appStatusFinder = AppStatusFinder()
+    kind = sys.argv[1]
+    instance = sys.argv[2]
+    kubeconfig = sys.argv[3]
+
+    valid_consumer_api = appStatusFinder.verify_kind_is_consumerapi(kind, kubeconfig)
+    if not valid_consumer_api:
+        print(("{} is not a valid Consumer API.").format(kind))
+        exit(0)
+
+    res_exists, ns, err = appStatusFinder.check_res_exists(kind, instance, kubeconfig)
+    if not res_exists:
+        print(err)
+        exit(0)
+    
+    release_name_or_status, release_ns, deployed, err = appStatusFinder.get_app_instance_status(kind, instance, kubeconfig)
+    if err is not None:
+        print(err)
+        exit(1)
+    
+    if deployed:
+        deploy_str = 'Deployed'
+    else:
+        print(release_name_or_status)
+        exit(1)
+
+    # if not deployed, there's probably an error -- maybe display a different response in this case
+    pods = appStatusFinder.get_app_pods(instance, kubeconfig)
+
+    print("{:<35} {:<35} {:<35} {:<35}".format("NAME", "TYPE", "NAMESPACE", "STATUS"))
+    print("{:<35} {:<35} {:<35} {:<35}".format(release_name_or_status, 'helmrelease', release_ns, deploy_str))
+    for pod_name, typ, pod_ns, phase in pods:
+        print("{:<35} {:<35} {:<35} {:<35}".format(pod_name, typ, pod_ns, phase))
