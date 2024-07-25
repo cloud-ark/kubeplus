@@ -237,7 +237,8 @@ class CRMetrics(CRBase):
 		num_of_not_running_pods = 0
 		for pod in pod_list:
 			json_output = self._get_pod(pod, kubeconfig=kubecfg)
-			if json_output['status']['phase'] != 'Running':
+			phase = json_output['status']['phase'].strip()
+			if phase != 'Running' and phase != 'Succeeded':
 				num_of_not_running_pods = num_of_not_running_pods + 1
 
 		return num_of_not_running_pods
