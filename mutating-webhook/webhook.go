@@ -1409,6 +1409,32 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
 	if platformWorkflowName != "" {
 
+		// Check if Namespace corresponding to crname is not in Terminating state
+		cfg, err := rest.InClusterConfig()
+		if err != nil {
+			fmt.Printf("Error:%s\n", err.Error())
+			return ""
+		}
+
+		kubeClient, err := kubernetes.NewForConfig(cfg)
+        	if err != nil {
+                	fmt.Printf("Error:%s\n", err.Error())
+                	return ""
+        	}
+		nsObj, nsGetErr := kubeClient.CoreV1().Namespaces().Get(context.Background(), crname, metav1.GetOptions{})
+		if nsGetErr != nil {
+			nsPhase := nsObj.Status.Phase
+			fmt.Printf("Namespace for %s exists. Current status is: %s\n", crname, nsPhase)
+			if nsPhase == "Terminating" {
+				msg := fmt.Sprintf("Previous Namespace for custom resource %s is in terminating state. Wait for it to terminate and then re-deploy\n", crname)
+				return &v1.AdmissionResponse{
+					Result: &metav1.Status{
+						Message: msg,
+					},
+				}
+			}
+		}
+
 		lengthCheck := kind + "-" + crname
 		if len(lengthCheck) > maxAllowedLength {
 			kindLength := len(kind)
