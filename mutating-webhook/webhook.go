@@ -1410,17 +1410,18 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	if platformWorkflowName != "" {
 
 		// Check if Namespace corresponding to crname is not in Terminating state
-		cfg, err := rest.InClusterConfig()
+		config, err := rest.InClusterConfig()
 		if err != nil {
-			fmt.Printf("Error:%s\n", err.Error())
-			return ""
+                	fmt.Printf("Error:%s\n", err.Error())
+			panic(err.Error())
 		}
 
-		kubeClient, err := kubernetes.NewForConfig(cfg)
+		kubeClient, err := kubernetes.NewForConfig(config)
         	if err != nil {
                 	fmt.Printf("Error:%s\n", err.Error())
-                	return ""
+			panic(err.Error())
         	}
+
 		nsObj, nsGetErr := kubeClient.CoreV1().Namespaces().Get(context.Background(), crname, metav1.GetOptions{})
 		if nsGetErr != nil {
 			nsPhase := nsObj.Status.Phase
@@ -1448,10 +1449,6 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 			}
 		}
 
-		config, err := rest.InClusterConfig()
-		if err != nil {
-			panic(err.Error())
-		}
 
 		var sampleclientset platformworkflowclientset.Interface
 		sampleclientset = platformworkflowclientset.NewForConfigOrDie(config)
