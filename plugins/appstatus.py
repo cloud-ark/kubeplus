@@ -82,6 +82,11 @@ if __name__ == '__main__':
         print(err)
         exit(0)
     
+    working, error = appStatusFinder.validate_kind_and_instance(kind, instance, ns)
+    if working == False:
+        print(err)
+        exit(1)
+    
     release_name_or_status, release_ns, deployed, err = appStatusFinder.get_app_instance_status(kind, instance, kubeconfig)
     if err is not None:
         print(err)

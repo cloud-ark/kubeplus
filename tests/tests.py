@@ -454,13 +454,61 @@ class TestKubePlus(unittest.TestCase):
                 removed = True
             else:
                 time.sleep(1)
+    
+    def test_appstatus_plugin(self):
 
+        def cleanup():
+            cmd = "cd ./hello-world"
+            TestKubePlus.run_command(cmd)
+            cmd = "kubectl delete -f hs1.yaml --kubeconfig=provider.conf"
+            TestKubePlus.run_command(cmd)
+            cmd = "kubectl delete -f hello-world-service-composition.yaml --kubeconfig=provider.conf"
+
+        if not TestKubePlus._is_kubeplus_running():
+            print("KubePlus is not running. Deploy KubePlus and then run tests")
+            sys.exit(0)
+
+        if os.getenv("KUBEPLUS_HOME") == '':
+            print("Skipping test as KUBEPLUS_HOME is not set.")
+            return
+        
+        # add Kubeplus provider
+        cmd = "cp ../kubeplus-saas-provider.json ./hello-world/provider.conf"
+        TestKubePlus.run_command(cmd)
+
+        # register HelloWorldService API
+        cmd = "kubectl create -f ./hello-world/hello-world-service-composition.yaml --kubeconfig=./hello-world/provider.conf"
+        TestKubePlus.run_command(cmd)
+
+        # check CRD installation
+        crd = "helloworldservices.platformapi.kubeplus"
+        crd_installed = self._check_crd_installed(crd)
+        if not crd_installed:
+            print("CRD " + crd + " not installed. Exiting this test.")
+            return
+        
+        # create app instance
+        cmd = "kubectl create -f ./hello-world/hs1.yaml --kubeconfig=./hello-world/provider.conf"
+        out, err = TestKubePlus.run_command(cmd)
+
+        # test plugin
+        cmd = "kubectl appstatus HelloWorldService hs1"
+        out, err = TestKubePlus.run_command(cmd)
+        
+        if err != '':
+            print("Something went wrong with the plugin.")
+            cleanup()
+            sys.exit(1)
+        
+        cleanup()
     # TODO: Add tests for
     # kubectl connections
     # kubectl appresources
     # kubectl appurl
     # kubectl applogs
     # kubectl metrics
+    # TODO: pos test case for kubectl appstatus with HelloWorld
+    # maybe write/find a method for setting up HelloWorld instance and reuse here
     @unittest.skip("Skipping CLI test")
     def test_kubeplus_cli(self):
         kubeplus_home = os.getenv("KUBEPLUS_HOME")

@@ -170,6 +170,12 @@ class CRBase(object):
 		  is needed and the user must be informed
 		  otherwise, proceed as normal
 	'''
+	def validate_kind_and_instance(self, kind, instance, namespace):
+		cmd = 'kubectl get %s %s -n %s' % (kind, instance, namespace)
+		_, err = self._run_command(cmd)
+		if err == '': # or None?
+			return True, None
+		return False, err
 	
 
 class CRMetrics(CRBase):
