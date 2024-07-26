@@ -586,17 +586,17 @@ func getReleaseName(ar *v1.AdmissionReview) string {
 }
 
 func saveResource(ar *v1.AdmissionReview) {
-	fmt.Printf("Inside saveResource")
+	fmt.Printf("Inside saveResource\n")
 	kind, resName, _ := getObjectDetails(ar)
 	//key := kind + "/" + namespace + "/" + resName
 	key := kind + "-" + resName
-	fmt.Printf("Res Key:%s\n", key)
-	val, ok := resourceNameObjMap[key]
+	//fmt.Printf("Res Key:%s\n", key)
+	_, ok := resourceNameObjMap[key]
 	if !ok {
 		resourceNameObjMap[key] = ar
 	} else {
 		fmt.Printf("Key %s already present in resourceNameObjMap\n", key)
-		fmt.Printf("%v\n", val)
+		//fmt.Printf("%v\n", val)
 	}
 }
 
@@ -1423,7 +1423,7 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
         	}
 
 		nsObj, nsGetErr := kubeClient.CoreV1().Namespaces().Get(context.Background(), crname, metav1.GetOptions{})
-		if nsGetErr != nil {
+		if nsGetErr == nil {
 			nsPhase := nsObj.Status.Phase
 			fmt.Printf("Namespace for %s exists. Current status is: %s\n", crname, nsPhase)
 			if nsPhase == "Terminating" {
