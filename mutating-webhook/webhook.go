@@ -1423,8 +1423,6 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
         	}
 
 		nsObj, nsGetErr := kubeClient.CoreV1().Namespaces().Get(context.Background(), crname, metav1.GetOptions{})
-		//fmt.Printf("nsObj:%v\n", nsObj)
-		//fmt.Printf("nsGetErr:%v\n", nsGetErr)
 		if nsGetErr == nil {
 			nsPhase := nsObj.Status.Phase
 			fmt.Printf("Namespace for %s exists. Current status is: %s\n", crname, nsPhase)
