@@ -3,19 +3,6 @@ import sys
 import json
 from crmetrics import CRBase
 
-'''
-    new plugin app-status -- takes in kind and instance and displays 
-    kind, namespace, name and status and lists pods in that application 
-    with their status
-
-    application name is the namespace and pods will be under this namespace
-    for application status itself, name would just be the helm release
-
-    Input: name of kind and name of application instance
-
-    TODO: reexamine all error checks for plugins
-'''
-
 
 class AppStatusFinder(CRBase):
 
@@ -26,13 +13,7 @@ class AppStatusFinder(CRBase):
             print("Something went wrong while getting app instance status.")
             print(err)
             exit(1)
-        ''' 
-        with response, check if status exists
-            check if helmrelease exists and extract name of instance
-            or check if status contains an error
-        otherwise (i.e. status missing), display "App not deployed properly"
-        '''
-        # response = json.dumps(json.loads(out), indent=4)
+
         response = json.loads(out)
         if 'status' in response:
             if 'helmrelease' in response['status']:
@@ -48,11 +29,8 @@ class AppStatusFinder(CRBase):
             return '', 'Application not deployed properly', False, None
 
 
-
-
     def get_app_pods(self, namespace, kubeconfig):
         cmd = 'kubectl get pods -n %s %s -o json' % (namespace, kubeconfig)
-        # pods = self._get_resources(None, 'pods', namespace, kubeconfig)
         out, err = self._run_command(cmd)
         # format?
         response = json.loads(out)
