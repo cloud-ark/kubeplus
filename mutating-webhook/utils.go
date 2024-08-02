@@ -814,10 +814,10 @@ func GetPlural(kind, group string) []byte {
 }
 
 func CheckResource(kind, plural string) []byte {
-	fmt.Printf("Inside CheckResource...\n")
+	//fmt.Printf("Inside CheckResource...\n")
 	args := fmt.Sprintf("kind=%s&plural=%s", kind, plural)
 	url1 := fmt.Sprintf("http://%s:%s/apis/kubeplus/checkResource?%s", serviceHost, servicePort, args)
-	fmt.Printf("Url:%s\n", url1)
+	//fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body
 }
@@ -862,12 +862,23 @@ func QueryDeployEndpoint(platformworkflow, customresource, namespace, overrides,
         CreateOverrides(platformworkflow, customresource)
 
 	args := fmt.Sprintf("platformworkflow=%s&customresource=%s&namespace=%s&overrides=%s&cpu_req=%s&cpu_lim=%s&mem_req=%s&mem_lim=%s&labels=%s", platformworkflow, customresource, namespace, encodedOverrides, cpu_req, cpu_lim, mem_req, mem_lim,labels)
-	fmt.Printf("Inside QueryDeployEndpoint...\n")
+	//fmt.Printf("Inside QueryDeployEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deploy?%s", serviceHost, servicePort, args)
-	fmt.Printf("Url:%s\n", url1)
+	//fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body
+}
+
+func CheckLicense(kind, webhook_namespace string) string {
+	//fmt.Printf("Inside CheckLicense...\n")
+	args := fmt.Sprintf("kind=%s&namespace=%s", kind, webhook_namespace)
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/checklicense?%s", serviceHost, verificationServicePort, args)
+	//fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	bodyString := string(body)
+	return bodyString
 }
 
 func DryRunChart(platformworkflow, namespace string) []byte {
@@ -892,25 +903,25 @@ func TestChartDeployment(kind, namespace, chartName, chartURL string) []byte {
 }
 
 func CreateOverrides(platformworkflow, customresource string) []byte {
-	fmt.Printf("Inside CreateOverrides...\n")
+	//fmt.Printf("Inside CreateOverrides...\n")
 	args := fmt.Sprintf("platformworkflow=%s&customresource=%s", platformworkflow, customresource)
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/overrides?%s", serviceHost, verificationServicePort, args)
-	fmt.Printf("Url:%s\n", url1)
+	//fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body
 }
 
 func CheckClusterCapacity(cpuRequests, cpuLimits, memRequests, memLimits string) (bool, string) {
-	fmt.Printf("Inside CheckClusterCapacity...\n")
+	//fmt.Printf("Inside CheckClusterCapacity...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/cluster_capacity", serviceHost, verificationServicePort)
-	fmt.Printf("Url:%s\n", url1)
+	//fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 
 	var clusterCapacity ClusterCapacity
         json.Unmarshal(body, &clusterCapacity)
-	fmt.Printf("Cluster Capacity:%v\n", clusterCapacity)
+	//fmt.Printf("Cluster Capacity:%v\n", clusterCapacity)
 
 	bodyString := string(body)
 	//jsonresp := bodyString.(map[string]string) 
@@ -926,9 +937,9 @@ func CheckClusterCapacity(cpuRequests, cpuLimits, memRequests, memLimits string)
 	memParts := strings.Split(parts[1],":")
 	totalAllocatableMemoryGB, _ := strconv.ParseFloat(strings.TrimSpace(memParts[1]), 64)
 	
-	fmt.Printf("Total Allocatable CPU:%d\n", totalAllocatableCPU)
+	/*fmt.Printf("Total Allocatable CPU:%d\n", totalAllocatableCPU)
 	fmt.Printf("Total Allocatable Memory:%f\n", totalAllocatableMemoryGB)
-
+	*/
 	cpuRequestsI, _ := strconv.Atoi(strings.TrimSpace(strings.ReplaceAll(cpuRequests, "m", "")))
 	cpuLimitsI, _ := strconv.Atoi(strings.TrimSpace(strings.ReplaceAll(cpuLimits, "m", "")))
 
@@ -962,23 +973,23 @@ func GetExistingResourceCompositions() []byte {
 }
 
 func CheckChartExists(chartURL string) []byte {
-	fmt.Printf("Inside CheckChartExists...\n")
+	//fmt.Printf("Inside CheckChartExists...\n")
 	encodedChartURL := url.QueryEscape(chartURL)
 	args := fmt.Sprintf("chartURL=%s", encodedChartURL)
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/checkchartexists?%s", serviceHost, verificationServicePort, args)
-	fmt.Printf("Url:%s\n", url1)
+	//fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body
 }
 
 func LintChart(chartURL string) []byte {
-	fmt.Printf("Inside LintChart...\n")
+	//fmt.Printf("Inside LintChart...\n")
 	encodedChartURL := url.QueryEscape(chartURL)
 	args := fmt.Sprintf("chartURL=%s", encodedChartURL)
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/dryrunchart?%s", serviceHost, verificationServicePort, args)
-	fmt.Printf("Url:%s\n", url1)
+	//fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body
 }
@@ -1015,10 +1026,10 @@ func QueryCompositionEndpoint(kind, namespace, crdKindName string) []byte {
 
 func GetValuesYaml(platformworkflow, namespace string) []byte {
 	args := fmt.Sprintf("platformworkflow=%s&namespace=%s", platformworkflow, namespace)
-	fmt.Printf("Inside GetValuesYaml...\n")
+	//fmt.Printf("Inside GetValuesYaml...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/getchartvalues?%s", serviceHost, servicePort, args)
-	fmt.Printf("Url:%s\n", url1)
+	//fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body
 }
@@ -1052,7 +1063,7 @@ func getServiceEndpoint(servicename string) (string, string) {
 
 // Rename this function to a more generic name since we use it to trigger Custom Resource deployment as well.
 func queryKubeDiscoveryService(url1 string) []byte {
-	fmt.Printf("..inside queryKubeDiscoveryService")
+	//fmt.Printf("..inside queryKubeDiscoveryService")
 	u, err := url.Parse(url1)
 	//fmt.Printf("URL:%s\n",u)
 	if err != nil {
@@ -1074,9 +1085,9 @@ func queryKubeDiscoveryService(url1 string) []byte {
 	defer resp.Body.Close()
 	resp_body, _ := ioutil.ReadAll(resp.Body)
 
-	fmt.Println("Response status:%s\n",resp.Status)
-	fmt.Println("Response body:%s\n",string(resp_body))
-	fmt.Println("Exiting queryKubeDiscoveryService")
+	//fmt.Println("Response status:%s\n",resp.Status)
+	//fmt.Println("Response body:%s\n",string(resp_body))
+	//fmt.Println("Exiting queryKubeDiscoveryService")
 	return resp_body
 }
 

@@ -1,3 +1,10 @@
+get_kubeplus_ns() {
+	local kubeconfig=$1
+	kubeplus_ns=`kubectl get deployments --kubeconfig=$kubeconfig -A | grep kubeplus | awk '{print $1}'`
+	echo $kubeplus_ns
+}
+
+
 check_namespace() {
   local ns=$1
   local kubeconfg=$2
@@ -21,14 +28,14 @@ check_kind() {
   local kind=$1
   local kubeconfg=$2
 
-  canonicalKindPresent=`kubectl api-resources --kubeconfig=$kubeconfg | grep -w $kind`
+  canonicalKindPresent=`kubectl api-resources --api-group='platformapi.kubeplus' --kubeconfig=$kubeconfg | grep -w $kind`
   OLDIFS=$IFS
   IFS=' '
   read -a canonicalKindPresentArr <<< "$canonicalKindPresent"
   IFS=$OLDIFS
 
   if [[ "${#canonicalKindPresentArr}" == 0 ]]; then
-    echo "Unknown Kind $kind"
+    echo "Unknown Kind $kind in the platformapi.kubeplus api group."
     exit 0
   fi
 
