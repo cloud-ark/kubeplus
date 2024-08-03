@@ -76,17 +76,10 @@ if __name__ == '__main__':
         print("Kind " + kind + " does not exist in the cluster in the platformapi.kubeplus api group.")
         exit(0)
     
-    if action == "create" or action == "update":
+    if action == "create":
         if expiry == '' and appinstances == '':
             print("Both expiry date and number of app instances to create is empty.")
             print("Specify at least one criteria.")
             exit(0)
-        #op = "Action:{action} Kind:{kind} License File:{lfile} Expiry:{expiry} App Instances:{appinstances}".format(action=action, kind=kind, lfile=license_file, expiry=expiry, appinstances=appinstances)
 
-        #print(op)
-
-    if action == "create":
         license_mgr.create_license(kind, license_file, expiry, appinstances, kubeconfig)
-
-
-

@@ -18,8 +18,8 @@ print_help () {
     echo "        kubectl show provider permissions"
     echo "        kubectl show consumer permissions"
     echo "        kubectl license create"
-    echo "        kubectl license delete"
     echo "        kubectl license get"
+    echo "        kubectl license delete"
     echo ""
     echo "DESCRIPTION"
     echo "        KubePlus provides a suite of kubectl plugins to discover, monitor and troubleshoot Kubernetes applications."
@@ -52,8 +52,8 @@ print_help () {
     echo "        - kubectl show consumer permissions shows the permissions for kubeplus-saas-consumer service account in the namespace where kubeplus is installed."
     echo "        License Management."
     echo "        - kubectl license create - creates license for a Kind"
-    echo "        - kubectl license delete - deletes license for a Kind"
     echo "        - kubectl license get    - gets license for a Kind"
+    echo "        - kubectl license delete - deletes license for a Kind"
     exit 0
 }
 
