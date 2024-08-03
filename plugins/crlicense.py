@@ -68,7 +68,7 @@ if __name__ == '__main__':
     appinstances = ''
     if args.appinstances:
         appinstances = args.appinstances
-        if int(appinstances) < 0:
+        if int(appinstances) <= 0:
             print("App instances should be > 0.")
             exit(0)
 

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#python3 crlicense.py get "$@"
-
 source utils.sh
 
 print_help () {

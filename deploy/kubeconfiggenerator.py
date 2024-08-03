@@ -1209,17 +1209,17 @@ def check_license():
 
     msg = ""
 
-    cmd1 = "kubectl get " + kind
-    out1, err1 = run_command(cmd1)
-    created_instances = 0
-    for line in out1.split("\n"):
-        line = line.strip()
-        app.logger.info("Line:" + line + "\n")
-        if "NAME" not in line and "AGE" not in line and line != "":
-            created_instances = created_instances + 1
-    app.logger.info("Already created instances:" + str(created_instances))
-
     if allowed_instances != "":
+        cmd1 = "kubectl get " + kind
+        out1, err1 = run_command(cmd1)
+        created_instances = 0
+        for line in out1.split("\n"):
+            line = line.strip()
+            app.logger.info("Line:" + line + "\n")
+            if "NAME" not in line and "AGE" not in line and line != "":
+                created_instances = created_instances + 1
+        app.logger.info("Already created instances:" + str(created_instances))
+
         if created_instances >= int(allowed_instances):
             msg = msg + "Allowed number of instances reached."
 
