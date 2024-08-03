@@ -2,9 +2,10 @@ FROM ubuntu:20.04
 
 RUN apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata && apt-get install -y python3-pip python-setuptools  curl wget tar sudo apt-transport-https ca-certificates socat python-yaml vim graphviz
 
-RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-
-RUN cp /usr/bin/python3.8 /usr/bin/python
+RUN arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/) && \
+curl -LO https://dl.k8s.io/release/v1.26.0/bin/linux/${arch}/kubectl && \
+install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
+cp /usr/bin/python3.8 /usr/bin/python
 
 RUN wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz && gunzip kubeplus-kubectl-plugins.tar.gz && tar -xvf kubeplus-kubectl-plugins.tar && cp -r /plugins/* bin/
 
