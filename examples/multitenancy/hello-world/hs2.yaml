@@ -3,5 +3,6 @@ kind: HelloWorldService
 metadata:
   name: hs2
 spec:
-  greeting: Hello1 hello hello
+  greeting: Hello hello hello - hs2
+  replicas: 1 
 

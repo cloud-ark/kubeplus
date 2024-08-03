@@ -86,6 +86,79 @@ class TestKubePlus(unittest.TestCase):
         self.assertTrue(
             'If quota is specified, specify all four values: requests.cpu, requests.memory, limits.cpu, limits.memory' in err)
 
+    def test_license_plugin(self):
+        if not TestKubePlus._is_kubeplus_running():
+            print("KubePlus is not running. Deploy KubePlus and then run tests")
+            sys.exit(0)
+
+        start_clean = "kubectl delete ns hs1"
+        TestKubePlus.run_command(start_clean)
+
+        kubeplus_home = os.getenv("KUBEPLUS_HOME")
+        path = os.getenv("PATH")
+        if kubeplus_home == '':
+            print("Skipping the test as KUBEPLUS_HOME is not set.")
+            return
+
+        cmd = "kubectl upload chart ../examples/multitenancy/hello-world/hello-world-chart-0.0.3.tgz ../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+
+        crd = "helloworldservices.platformapi.kubeplus"
+        crd_installed = self._check_crd_installed(crd)
+        if not crd_installed:
+            print("CRD " + crd + " not installed. Exiting this test.")
+            return
+
+        # Test with license that restricts number of instances (1)
+        cmd = "kubectl license create HelloWorldService license.txt -n 1  -k ../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hs1.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+
+        all_running = False
+        cmd = "kubectl get pods -n hs1"
+
+        target_pod_count = 1
+        pods, count, all_running = self._check_pod_status(cmd, target_pod_count)
+        if count == target_pod_count:
+            self.assertTrue(True)
+        else:
+            self.assertTrue(False)
+
+        # Second instance creation should be denied
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hs2.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        self.assertTrue("Allowed number of instances reached" in err)
+        cmd = "kubectl license delete HelloWorldService -k ../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+
+        # Test with expired license
+        cmd = "kubectl license create HelloWorldService license.txt -e 01/01/2024 -k ../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hs2.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        self.assertTrue("License expired (expiry date):01/01/2024" in err)
+        cmd = "kubectl license delete HelloWorldService -k ../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+
+        # Test with expired license and restriction on number of instances
+        cmd = "kubectl license create HelloWorldService license.txt -n 1 -e 01/01/2024 -k ../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hs2.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        self.assertTrue("License expired (expiry date):01/01/2024" in err)
+        self.assertTrue("Allowed number of instances reached" in err)
+        cmd = "kubectl license delete HelloWorldService -k ../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+        
+        # cleanup
+        cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+
+
     def test_application_update(self):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")

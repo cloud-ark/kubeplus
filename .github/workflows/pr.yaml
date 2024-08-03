@@ -70,9 +70,9 @@ jobs:
         cd $KUBEPLUS_HOME/platform-operator
         ./build-artifact.sh latest
 
-        #echo "Building kubeconfiggenerator..."
-        #cd $KUBEPLUS_HOME/deploy
-        #./build-artifact-kubeconfiggenerator.sh latest
+        echo "Building kubeconfiggenerator..."
+        cd $KUBEPLUS_HOME/deploy
+        ./build-artifact-kubeconfiggenerator.sh latest
         #echo "Building webhook_init_container..."
         #./build-artifact.sh latest
         #echo "Building resource cleaner..."
@@ -87,7 +87,7 @@ jobs:
         docker images
 
         echo "Installing KubePlus..."
-        helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json --set MUTATING_WEBHOOK=gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:latest --set PLATFORM_OPERATOR=gcr.io/cloudark-kubeplus/platform-operator:latest --set HELMER=gcr.io/cloudark-kubeplus/helm-pod:latest -n $KUBEPLUS_NS
+      helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json --set MUTATING_WEBHOOK=gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:latest --set PLATFORM_OPERATOR=gcr.io/cloudark-kubeplus/platform-operator:latest --set HELMER=gcr.io/cloudark-kubeplus/helm-pod:latest --set CRD_REGISTRATION_HELPER=gcr.io/cloudark-kubeplus/kubeconfiggenerator:latest  -n $KUBEPLUS_NS
 
         kubectl get pods -A
 
