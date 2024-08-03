@@ -184,17 +184,17 @@ func setup() {
 func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v1.AdmissionResponse {
 	req := ar.Request
 
-	fmt.Println("=== Request ===")
-	fmt.Println(req.Kind.Kind)
-	fmt.Println(req.Name)
-	fmt.Println(req.Namespace)
-	fmt.Println(httpMethod)
+	//fmt.Println("=== Request ===")
+	//fmt.Println(req.Kind.Kind)
+	//fmt.Println(req.Name)
+	//fmt.Println(req.Namespace)
+	//fmt.Println(httpMethod)
 	//fmt.Printf("%s\n", string(req.Object.Raw))
-	fmt.Println("=== Request ===")
+	//fmt.Println("=== Request ===")
 
-	fmt.Println("=== User ===")
-	fmt.Println(req.UserInfo.Username)
-	fmt.Println("=== User ===")
+	//fmt.Println("=== User ===")
+	//fmt.Println(req.UserInfo.Username)
+	//fmt.Println("=== User ===")
 
 	user := req.UserInfo.Username
 
@@ -266,7 +266,7 @@ func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v
 
 	patchOperations = append(patchOperations, annotationPatch)
 
-	errResponse := handleCustomAPIs(ar)
+	errResponse := handleCustomAPIs(ar, httpMethod)
 	if errResponse != nil {
 		return errResponse
 	}
@@ -282,10 +282,10 @@ func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v
                         allLabels, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "labels")
                         if err == nil {
                                 json.Unmarshal(allLabels, &labels)
-                                fmt.Printf("Pod all labels:%v\n", labels)
+                                //fmt.Printf("Pod all labels:%v\n", labels)
                         }
                         labels["partof"] = strings.ToLower(rootKind + "-" + rootName)
-                        fmt.Printf("All labels:%v\n", labels)
+                        //fmt.Printf("All labels:%v\n", labels)
 
                         podLabelPatch := patchOperation{
                                 Op:    "add",
@@ -331,7 +331,7 @@ func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v
 		}
 	}
 
-	fmt.Printf("PatchOperations:%v\n", patchOperations)
+	//fmt.Printf("PatchOperations:%v\n", patchOperations)
 	patchBytes, _ := json.Marshal(patchOperations)
 	//fmt.Printf("---------------------------------\n")
 	// marshal the struct into bytes to pass into AdmissionResponse
@@ -346,14 +346,14 @@ func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v
 }
 
 func getStatusMessage(ar *v1.AdmissionReview) string {
-	fmt.Println("Inside getStatusMessage")
+	//fmt.Println("Inside getStatusMessage")
 	req := ar.Request
         body := req.Object.Raw
         status, err := jsonparser.GetUnsafeString(body, "status","status")
         if err != nil {
                 fmt.Errorf("Error:%s\n", err)
         }
-	fmt.Printf("getStatusMessage:%s\n", status)
+	//fmt.Printf("getStatusMessage:%s\n", status)
 	return status
 }
 
@@ -586,7 +586,7 @@ func getReleaseName(ar *v1.AdmissionReview) string {
 }
 
 func saveResource(ar *v1.AdmissionReview) {
-	fmt.Printf("Inside saveResource\n")
+	//fmt.Printf("Inside saveResource\n")
 	kind, resName, _ := getObjectDetails(ar)
 	//key := kind + "/" + namespace + "/" + resName
 	key := kind + "-" + resName
@@ -594,18 +594,20 @@ func saveResource(ar *v1.AdmissionReview) {
 	_, ok := resourceNameObjMap[key]
 	if !ok {
 		resourceNameObjMap[key] = ar
-	} else {
+	} 
+	/*else {
 		fmt.Printf("Key %s already present in resourceNameObjMap\n", key)
 		//fmt.Printf("%v\n", val)
-	}
+	}*/
 }
 
 func saveResourcePolicy(ar *v1.AdmissionReview) {
 	req := ar.Request
 	body := req.Object.Raw
 
-	resPolicyName, _ := jsonparser.GetUnsafeString(body, "metadata", "name")
+	/*resPolicyName, _ := jsonparser.GetUnsafeString(body, "metadata", "name")
 	fmt.Printf("Resource Policy Name:%s\n", resPolicyName)
+	*/
 
 	var resourcePolicy platformworkflowv1alpha1.ResourcePolicy
 	err = json.Unmarshal(body, &resourcePolicy)
@@ -617,52 +619,52 @@ func saveResourcePolicy(ar *v1.AdmissionReview) {
 	lowercaseKind := strings.ToLower(kind)
 	group := resourcePolicy.Spec.Resource.Group
 	version := resourcePolicy.Spec.Resource.Version
-	fmt.Printf("Kind:%s, Group:%s, Version:%s\n", kind, group, version)
+	//fmt.Printf("Kind:%s, Group:%s, Version:%s\n", kind, group, version)
 
 	podPolicy := resourcePolicy.Spec.Policy
-	fmt.Printf("Pod Policy:%v\n", podPolicy)
+	//fmt.Printf("Pod Policy:%v\n", podPolicy)
 
  	customAPI := group + "/" + version + "/" + lowercaseKind
  	resourcePolicyMap[customAPI] = podPolicy
- 	fmt.Printf("Resource Policy Map:%v\n", resourcePolicyMap)
+ 	//fmt.Printf("Resource Policy Map:%v\n", resourcePolicyMap)
 }
 
 func checkServiceLevelPolicyApplicability(ar *v1.AdmissionReview) (string, string, string, string) {
-	fmt.Printf("Inside checkServiceLevelPolicyApplicability")
+	//fmt.Printf("Inside checkServiceLevelPolicyApplicability")
 
 	req := ar.Request
 	body := req.Object.Raw
 
 	//fmt.Printf("Body:%v\n", body)
 	namespace := req.Namespace
-	fmt.Println("Namespace:%s\n",namespace)
+	//fmt.Println("Namespace:%s\n",namespace)
 
 	// TODO: looks like we can just keep one - namespace or namespace1
-	namespace1, _, _, err := jsonparser.Get(body, "metadata", "namespace")
-	if err == nil {
+	namespace1, _, _, _ := jsonparser.Get(body, "metadata", "namespace")
+	/*if err == nil {
 		fmt.Printf("Namespace1:%s\n", namespace1)
-	}
+	}*/
 
 	ownerKind, _, _, err1 := jsonparser.Get(body, "metadata", "ownerReferences", "[0]", "kind")
 	if err1 != nil {
 		fmt.Printf("Error:%v\n", err1)
-	} else {
+	} /*else {
 		fmt.Printf("ownerKind:%v\n", string(ownerKind))
-	}
+	}*/
 
 	ownerName, _, _, err1 := jsonparser.Get(body, "metadata", "ownerReferences", "[0]", "name")
 	if err1 != nil {
 		fmt.Printf("Error:%v\n", err1)
-	} else {
+	} /*else {
 		fmt.Printf("ownerName:%v\n", string(ownerName))
-	}
+	}*/
 
 	ownerAPIVersion, _, _, err1 := jsonparser.Get(body, "metadata", "ownerReferences", "[0]", "apiVersion")
 	if err1 != nil {
 		fmt.Printf("Error:%v\n", err1)
-	} else {
+	} /*else {
 		fmt.Printf("ownerAPIVersion:%v\n", string(ownerAPIVersion))
-	}
+	}*/
 
 	ownerKindS := string(ownerKind)
 	ownerNameS := string(ownerName)
@@ -689,17 +691,17 @@ func checkServiceLevelPolicyApplicability(ar *v1.AdmissionReview) (string, strin
 		rootKind, rootName, rootAPIVersion = findRoot(namespace, ownerKindS, ownerNameS, ownerAPIVersionS)
 	}
 
-	fmt.Printf("Root Kind:%s\n", rootKind)
+	/*fmt.Printf("Root Kind:%s\n", rootKind)
 	fmt.Printf("Root Name:%s\n", rootName)
-	fmt.Printf("Root API Version:%s\n", rootAPIVersion)
+	fmt.Printf("Root API Version:%s\n", rootAPIVersion)*/
 
 	lowercaseKind := strings.ToLower(rootKind)
 
 	// Check if the rootKind, rootName, rootAPIVersion is registered to be applied policies on.
  	customAPI := rootAPIVersion + "/" + lowercaseKind
- 	fmt.Printf("Custom API:%s\n", customAPI)
- 	if podPolicy, ok := resourcePolicyMap[customAPI]; ok {
-	 	fmt.Printf("Resource Policy:%v\n", podPolicy)
+ 	//fmt.Printf("Custom API:%s\n", customAPI)
+ 	if _, ok := resourcePolicyMap[customAPI]; ok {
+	 	//fmt.Printf("Resource Policy:%v\n", podPolicy)
 	 	return customAPI, rootKind, rootName, string(namespace1)
  	}
 	return "", "", "", ""
@@ -725,23 +727,23 @@ func findRoot(namespace, kind, name, apiVersion string) (string, string, string)
 
 	time.Sleep(10)
 
-	group, version := getGroupVersion(apiVersion)
+	/*group, version := getGroupVersion(apiVersion)
 	fmt.Printf("Group:%s\n", group)
 	fmt.Printf("Version:%s\n", version)
 	fmt.Printf("ResName:%s\n", name)
 	fmt.Printf("Namespace:%s\n", namespace)
-
+	*/
 	ownerResKindPlural, _, ownerResApiVersion, ownerResGroup := getKindAPIDetails(kind)
 
-	fmt.Printf("ownerResKindPlural:%s\n", ownerResKindPlural)
+	/*fmt.Printf("ownerResKindPlural:%s\n", ownerResKindPlural)
 	fmt.Printf("ownerResApiVersion:%s\n", ownerResApiVersion)
 	fmt.Printf("ownerResGroup:%s\n", ownerResGroup)
-
+	*/
 	ownerRes := schema.GroupVersionResource{Group: ownerResGroup,
 									 		Version: ownerResApiVersion,
 									   		Resource: ownerResKindPlural}
 
-	fmt.Printf("OwnerRes:%v\n", ownerRes)
+	//fmt.Printf("OwnerRes:%v\n", ownerRes)
 	dynamicClient, err1 := getDynamicClient1()
 	if err1 != nil {
 		fmt.Printf("Error 1:%v\n", err1)
@@ -762,9 +764,9 @@ func findRoot(namespace, kind, name, apiVersion string) (string, string, string)
 		// Reached the root
 		// Jump of from the Helm annotation; should be of type <plural>-<name>
 
-		fmt.Printf("Intermediate Root kind:%s\n", kind)
+		/*fmt.Printf("Intermediate Root kind:%s\n", kind)
 		fmt.Printf("Intermediate Root name:%s\n", name)
-		fmt.Printf("Intermediate Root APIVersion:%s\n", apiVersion)
+		fmt.Printf("Intermediate Root APIVersion:%s\n", apiVersion)*/
 
 		annotations := instanceObj.GetAnnotations()
 		releaseName := annotations["meta.helm.sh/release-name"]
@@ -795,9 +797,9 @@ func getAPIDetailsFromHelmReleaseAnnotation(releaseName string) (string, string,
 		} else if len(parts) == 2 {
 			oinstance = parts[1]
 		}
-		fmt.Printf("KindPluralMap2:%v\n", kindPluralMap)
+		//fmt.Printf("KindPluralMap2:%v\n", kindPluralMap)
 		oplural := kindPluralMap[okindLowerCase]
-		fmt.Printf("OPlural:%s OInstance:%s\n", oplural, oinstance)
+		//fmt.Printf("OPlural:%s OInstance:%s\n", oplural, oinstance)
 		customAPI := ""
 		for k, v := range customKindPluralMap {
 			if v == oplural {
@@ -805,13 +807,13 @@ func getAPIDetailsFromHelmReleaseAnnotation(releaseName string) (string, string,
 				break
 			}
 		}
-		fmt.Printf("CustomAPI:%s\n", customAPI)
+		//fmt.Printf("CustomAPI:%s\n", customAPI)
 		if customAPI != "" {
 			capiParts := strings.Split(customAPI, "/")
 			capiGroup = capiParts[0]
 			capiVersion = capiParts[1]
 			capiKind = capiParts[2]
-			fmt.Printf("capiGroup:%s capiVersion:%s capiKind:%s\n", capiGroup, capiVersion, capiKind)
+			//fmt.Printf("capiGroup:%s capiVersion:%s capiKind:%s\n", capiGroup, capiVersion, capiKind)
 		}
 	} else {
 		return "","","",""
@@ -823,9 +825,9 @@ func applyPolicies(ar *v1.AdmissionReview, customAPI, rootKind, rootName, rootNa
 	req := ar.Request
 	body := req.Object.Raw
 
+	/*
 	podName, _ := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
-
-	fmt.Printf("Pod Name:%s\n", podName)
+	fmt.Printf("Pod Name:%s\n", podName)*/
 
 	/*
 	res1, _, _, _ := jsonparser.Get(body, "spec", "containers")
@@ -837,22 +839,22 @@ func applyPolicies(ar *v1.AdmissionReview, customAPI, rootKind, rootName, rootNa
 	}*/
 
 	// TODO: Defaulting to the first container. Take input for additional containers
-	res, dataType, _, err1 := jsonparser.Get(body, "spec", "containers", "[0]", "resources")
+	_, _, _, err1 := jsonparser.Get(body, "spec", "containers", "[0]", "resources")
 	if err1 != nil {
 		fmt.Printf("Error:%v\n", err1)
-	} else {
-		fmt.Printf("Resources:%v\n", string(res))
-	}
+	} /*else {
+		//fmt.Printf("Resources:%v\n", string(res))
+	}*/
 
 	var operation string
-	fmt.Printf("DataType:%s\n", dataType)
+	//fmt.Printf("DataType:%s\n", dataType)
 	operation = "add"
 
 	podPolicy := resourcePolicyMap[customAPI]
-	fmt.Printf("PodPolicy:%v\n", podPolicy)
+	//fmt.Printf("PodPolicy:%v\n", podPolicy)
 
-	xType := fmt.Sprintf("%T", podPolicy)
-	fmt.Printf("Pod Policy type:%s\n", xType) // "[]int"
+	/*xType := fmt.Sprintf("%T", podPolicy)
+	fmt.Printf("Pod Policy type:%s\n", xType) // "[]int"*/
 
 	patchOperations := make([]patchOperation, 0)
 
@@ -862,17 +864,17 @@ func applyPolicies(ar *v1.AdmissionReview, customAPI, rootKind, rootName, rootNa
 	cpuRequest := podPolicy1.PolicyResources.Requests.CPU
 	memRequest := podPolicy1.PolicyResources.Requests.Memory
 	if cpuRequest != "" && memRequest != "" {
-		fmt.Printf("CPU Request:%s\n", cpuRequest)
+		//fmt.Printf("CPU Request:%s\n", cpuRequest)
 		if strings.Contains(cpuRequest, "values") {
 			cpuRequest = getFieldValueFromInstance(cpuRequest,rootKind, rootName)
 		}
-		fmt.Printf("CPU Request1:%s\n", cpuRequest)
+		//fmt.Printf("CPU Request1:%s\n", cpuRequest)
 
-		fmt.Printf("Mem Request:%s\n", memRequest)
+		//fmt.Printf("Mem Request:%s\n", memRequest)
 		if strings.Contains(memRequest, "values") {
 			memRequest = getFieldValueFromInstance(memRequest,rootKind, rootName)
 		}
-		fmt.Printf("Mem Request1:%s\n", memRequest)
+		//fmt.Printf("Mem Request1:%s\n", memRequest)
 
 		podResRequest := make(map[string]string,0)
 		podResRequest["cpu"] = cpuRequest
@@ -890,8 +892,8 @@ func applyPolicies(ar *v1.AdmissionReview, customAPI, rootKind, rootName, rootNa
 	cpuLimit := podPolicy1.PolicyResources.Limits.CPU
 	memLimit := podPolicy1.PolicyResources.Limits.Memory
 	if cpuLimit != "" && memLimit != "" {
-		fmt.Printf("CPU Limit:%s\n", cpuLimit)
-		fmt.Printf("Mem Limit:%s\n", memLimit)
+		//fmt.Printf("CPU Limit:%s\n", cpuLimit)
+		//fmt.Printf("Mem Limit:%s\n", memLimit)
 
 		podResLimits := make(map[string]string,0)
 		podResLimits["cpu"] = cpuLimit
@@ -908,7 +910,7 @@ func applyPolicies(ar *v1.AdmissionReview, customAPI, rootKind, rootName, rootNa
 	// 3. Node Selector
 	nodeSelector := podPolicy1.PolicyResources.NodeSelector
 	if nodeSelector != "" {
-		fmt.Printf("Node Selector:%s\n", nodeSelector)
+		//fmt.Printf("Node Selector:%s\n", nodeSelector)
 		fieldValueS := getFieldValueFromInstance(nodeSelector, rootKind, rootName)
 		if fieldValueS != "" {
 			podNodeSelector := make(map[string]string,0)
@@ -930,24 +932,24 @@ func getFieldValueFromInstance(fieldName, rootKind, rootName string) string {
 	parts := strings.Split(fieldName, ".")
 	field := parts[1]
 	field = strings.TrimSpace(field)
-	fmt.Printf("Field:%s\n", field)
+	//fmt.Printf("Field:%s\n", field)
 
 		//kind, resName, namespace := getObjectDetails(ar)
 	lowercaseRootKind := strings.ToLower(rootKind)
 		//rootkey := lowercaseRootKind + "/" + rootNamespace + "/" + rootName
 	rootkey := lowercaseRootKind + "-" + rootName
-	fmt.Printf("Root Key:%s\n", rootkey)
+	//fmt.Printf("Root Key:%s\n", rootkey)
 	arSaved := resourceNameObjMap[rootkey].(*v1.AdmissionReview)
 	reqObject := arSaved.Request
 	reqspec := reqObject.Object.Raw
 
-	fieldValue, _, _, err2 := jsonparser.Get(reqspec, "spec", field)
+	fieldValue, _, _, _ := jsonparser.Get(reqspec, "spec", field)
 	fieldValueS := string(fieldValue)
-	if err2 != nil {
+	/*if err2 != nil {
 		fmt.Printf("Error:%v\n", err2)
 	} else {
 		fmt.Printf("Fields:%v\n", string(fieldValue))
-	}
+	}*/
 	return fieldValueS
 }
 
@@ -1041,7 +1043,7 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	//lint_chart := os.Getenv("LINT_CHART")
 	//if strings.EqualFold(lint_chart, "yes") {
 		message1 := string(LintChart(chartURL))
-		fmt.Printf("After LintChart - message:%s\n", message1)
+		//fmt.Printf("After LintChart - message:%s\n", message1)
 		if !strings.Contains(message1, "Chart is good") {
 			return &v1.AdmissionResponse{
 				Result: &metav1.Status{
@@ -1053,7 +1055,7 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 
 	parts := strings.Split(message1, "\n")
 	kindString := parts[1]
-	fmt.Printf("Kind string:%s\n", kindString)
+	//fmt.Printf("Kind string:%s\n", kindString)
 	chartKindMap[platformWorkflowName] = kindString
 
 	check_kyverno_policies := os.Getenv("CHECK_KYVERNO_POLICIES")
@@ -1071,16 +1073,16 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	}
 
 	quota_cpu_requests, _ := jsonparser.GetUnsafeString(body, "spec","respolicy","spec","policy","quota","requests.cpu")
-	fmt.Printf("CPU requests(quota):%s\n", quota_cpu_requests)
+	//fmt.Printf("CPU requests(quota):%s\n", quota_cpu_requests)
 
 	quota_memory_requests, _ := jsonparser.GetUnsafeString(body, "spec","respolicy","spec","policy","quota","requests.memory")
-	fmt.Printf("Memory requests(quota):%s\n", quota_memory_requests)
+	//fmt.Printf("Memory requests(quota):%s\n", quota_memory_requests)
 
 	quota_cpu_limits, _ := jsonparser.GetUnsafeString(body, "spec","respolicy","spec","policy","quota","limits.cpu")
-	fmt.Printf("CPU limits(quota):%s\n", quota_cpu_limits)
+	//fmt.Printf("CPU limits(quota):%s\n", quota_cpu_limits)
 
 	quota_memory_limits, _ := jsonparser.GetUnsafeString(body, "spec","respolicy","spec","policy","quota","limits.memory")
-	fmt.Printf("Memory limits(quota):%s\n", quota_memory_limits)
+	//fmt.Printf("Memory limits(quota):%s\n", quota_memory_limits)
 
 	empty_quota_fields := 0
 	if (quota_cpu_requests == "") {
@@ -1108,7 +1110,7 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	}
 
 	_, message2 := CheckClusterCapacity(quota_cpu_requests, quota_cpu_limits, quota_memory_requests, quota_memory_limits)
-	fmt.Printf("After CheckClusterCapacity - message:%s\n", message2)
+	//fmt.Printf("After CheckClusterCapacity - message:%s\n", message2)
 	if !strings.Contains(message2, "Quota is within limits.") {
 		return &v1.AdmissionResponse{
 			Result: &metav1.Status{
@@ -1126,7 +1128,6 @@ func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 
 	customAPIQuotaMap[customAPI] = quota_map
 
-	fmt.Printf("10101010101\n")
 	return nil
 }
 
@@ -1169,7 +1170,7 @@ func registerManPage(kind, apiVersion, platformworkflow, namespace string) strin
 
     valuesYaml := prefix
 
-    fmt.Printf("Values YAML:%s\n",valuesYaml)
+    //fmt.Printf("Values YAML:%s\n",valuesYaml)
 
 	configMapName := lowercaseKind + "-usage"
 
@@ -1206,7 +1207,7 @@ func registerManPage(kind, apiVersion, platformworkflow, namespace string) strin
 	}
 
 	usageAnnotationValue := configMapName + ".spec"
-	fmt.Printf("Usage Annotation:%s\n", usageAnnotationValue)
+	//fmt.Printf("Usage Annotation:%s\n", usageAnnotationValue)
 	return usageAnnotationValue
 }
 
@@ -1292,7 +1293,7 @@ func getPaCAnnotation(ar *v1.AdmissionReview) map[string]string {
 
 
 func checkCRDNameValidity(ar *v1.AdmissionReview) string {
-	fmt.Printf("Inside checkCRDNameValidity...\n")
+	//fmt.Printf("Inside checkCRDNameValidity...\n")
 
         req := ar.Request
         body := req.Object.Raw
@@ -1314,32 +1315,31 @@ func checkCRDNameValidity(ar *v1.AdmissionReview) string {
 
 
 func checkChartExists(ar *v1.AdmissionReview) string {
-	fmt.Printf("Inside checkChartExists...\n")
+	//fmt.Printf("Inside checkChartExists...\n")
 
         req := ar.Request
         body := req.Object.Raw
-        kind, err := jsonparser.GetUnsafeString(body, "kind")
+        _, err := jsonparser.GetUnsafeString(body, "kind")
         if err != nil {
                 fmt.Errorf("Error:%s\n", err)
         }
 
-	crname, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
-        fmt.Printf("CR Name:%s\n", crname)
-        fmt.Printf("Kind:%s\n", kind)
+	//_, err = jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
+        //fmt.Printf("CR Name:%s\n", crname)
+        //fmt.Printf("Kind:%s\n", kind)
 
 	chartURL, err := jsonparser.GetUnsafeString(req.Object.Raw, "spec", "newResource", "chartURL")
 
-	fmt.Printf("%%%%% CHART URL:%s %%%%%\n", chartURL)
+	//fmt.Printf("%%%%% CHART URL:%s %%%%%\n", chartURL)
 
 	message1 := string(CheckChartExists(chartURL))
-        fmt.Printf("After CheckChartExists - message:%s\n", message1)
+        //fmt.Printf("After CheckChartExists - message:%s\n", message1)
 
 	return message1
 }
 
 
-func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
-	fmt.Printf("Inside handleCustomAPIs...\n")
+func handleCustomAPIs(ar *v1.AdmissionReview, httpMethod string) *v1.AdmissionResponse {
 	req := ar.Request
 	body := req.Object.Raw
 	//fmt.Printf("%v\n", req)
@@ -1358,9 +1358,6 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	}
 	//fmt.Printf("Namespace:%s\n", namespace)
 	crname, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
-	fmt.Printf("CR Name:%s\n", crname)
-	fmt.Printf("Kind:%s\n", kind)
-
 
 	//cruid, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "uid")
 	// We have to generate a uid as when the request is received there is no uid yet.
@@ -1371,20 +1368,14 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 
 	labelsBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "metadata", "labels")
 	labels := string(labelsBytes)
-	fmt.Printf("******\n")
-	fmt.Printf("labels:%s\n", labels)
-	fmt.Printf("******\n")
 
 	overridesBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "spec")
 	overrides := string(overridesBytes)
-	fmt.Printf("******\n")
-	fmt.Printf("Overrides:%s\n", overrides)
-	fmt.Printf("******\n")
 
 	nodeName, err := jsonparser.GetUnsafeString(req.Object.Raw, "spec", "nodeName")
-	fmt.Printf("nodeName in Spec:%s\n", nodeName)
 
 	if nodeName != "" {
+		fmt.Printf("nodeName in Spec:%s\n", nodeName)
 		validNodeName := CheckApplicationNodeName(nodeName)
 		if !validNodeName {
 			msg := fmt.Sprintf("Invalid node name specified %s\n", nodeName)
@@ -1406,8 +1397,28 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 
 	platformWorkflowName := customAPIPlatformWorkflowMap[customAPI]
 
-	fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
 	if platformWorkflowName != "" {
+		fmt.Printf("=========\n")
+		fmt.Printf("Inside handleCustomAPIs...\n")
+		fmt.Printf("ResourceComposition:%s\n", platformWorkflowName)
+		fmt.Printf("CR Name:%s\n", crname)
+		fmt.Printf("Kind:%s\n", kind)
+		fmt.Printf("labels:%s\n", labels)
+		fmt.Printf("Overrides:%s\n", overrides)
+		fmt.Printf("HTTP method:%v\n", httpMethod)
+
+		// Check license
+		if httpMethod == "CREATE" {
+			license_ok := CheckLicense(kind, webhook_namespace)
+			if license_ok != "" {
+           		msg := fmt.Sprintf("%s Update license for %s and then re-try.\n", license_ok, kind)
+           		return &v1.AdmissionResponse{
+                		  Result: &metav1.Status{
+                        		    Message: msg,
+                  		},
+           		}
+			}
+		}
 
 		// Check if Namespace corresponding to crname is not in Terminating state
 		config, err := rest.InClusterConfig()
@@ -1459,17 +1470,17 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 			fmt.Errorf("Error:%s\n", err)
 		}
 
-		kind := platformWorkflow1.Spec.NewResource.Resource.Kind
+		chartURL := platformWorkflow1.Spec.NewResource.ChartURL
+		/*kind := platformWorkflow1.Spec.NewResource.Resource.Kind
 		group := platformWorkflow1.Spec.NewResource.Resource.Group
 		version := platformWorkflow1.Spec.NewResource.Resource.Version
 		plural := platformWorkflow1.Spec.NewResource.Resource.Plural
-		chartURL := platformWorkflow1.Spec.NewResource.ChartURL
 		chartName := platformWorkflow1.Spec.NewResource.ChartName
- 		fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s, ChartName:%s\n", kind, group, version, plural, chartURL, chartName)
+ 		//fmt.Printf("Kind:%s, Group:%s, Version:%s, Plural:%s, ChartURL:%s, ChartName:%s\n", kind, group, version, plural, chartURL, chartName)*/
 
 		// If chart is local, check if it exists - it will not if KubePlus Pod has restarted due to cluster restart
                 message1 := string(CheckChartExists(chartURL))
-                fmt.Printf("After CheckChartExists - message:%s\n", message1)
+                //fmt.Printf("After CheckChartExists - message:%s\n", message1)
                 if message1 != "" {
                         return &v1.AdmissionResponse{
                                 Result: &metav1.Status{
@@ -1490,7 +1501,7 @@ func handleCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 		mem_requests_q = quota_map["requests.memory"]
 		mem_limits_q = quota_map["limits.memory"]
 
-		fmt.Printf("cpu_req:%s cpu_lim:%s mem_req:%s mem_lim:%s\n", cpu_requests_q, cpu_limits_q, mem_requests_q, mem_limits_q)
+		//fmt.Printf("cpu_req:%s cpu_lim:%s mem_req:%s mem_lim:%s\n", cpu_requests_q, cpu_limits_q, mem_requests_q, mem_limits_q)
 	}
 
 		//Save raw bytes of the request; We will create overrides in kubeconfiggenerator
@@ -1768,7 +1779,7 @@ func searchAnnotation(entries []Entry, instanceName, namespace, key string) (str
 
 // Serve method for webhook server
 func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
-	fmt.Print("## Received request ##")
+	//fmt.Print("## Received request ##")
 	var body []byte
 	if r.Body != nil {
 		if data, err := ioutil.ReadAll(r.Body); err == nil {
@@ -1800,8 +1811,8 @@ func (whsvr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		//fmt.Printf("%v\n", ar.Request)
-		fmt.Printf("####### METHOD:%s #######\n", ar.Request.Operation)
-		fmt.Println(r.URL.Path)
+		//fmt.Printf("####### METHOD:%s #######\n", ar.Request.Operation)
+		//fmt.Println(r.URL.Path)
 		if r.URL.Path == "/mutate" {
 			method := string(ar.Request.Operation)
 			admissionResponse = whsvr.mutate(&ar, method)

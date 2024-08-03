@@ -5,6 +5,7 @@ import sys
 import os
 import yaml
 import time
+from datetime import date
 
 from logging.config import dictConfig
 
@@ -1179,6 +1180,66 @@ def create_network_policy():
 
     err_string = str(err)
     return err_string
+
+
+@app.route("/checklicense")
+def check_license():
+    app.logger.info("Inside checklicense..")
+    namespace = request.args.get("namespace").strip()
+    kind = request.args.get("kind").strip()
+    app.logger.info("Namespace:" + namespace + " kind:" + kind)
+    license_cfgmap = kind.lower() + "-license"
+    app.logger.info("License configmap:" + license_cfgmap)
+    cmd = "kubectl get configmap " + license_cfgmap + " -n " + namespace + " -o json "
+    out, err = run_command(cmd)
+    if "NotFound" in err:
+        app.logger.info(str(err))
+        app.logger.info("License not defined. No checks are needed.")
+        return ""
+    
+    json_op = json.loads(out)
+    allowed_instances = ""
+    expiry = ""
+    if "allowed_instances" in json_op["metadata"]["annotations"]:
+        allowed_instances = json_op["metadata"]["annotations"]["allowed_instances"]
+        app.logger.info("Allowed instances:" + allowed_instances)
+    if "expiry" in json_op["metadata"]["annotations"]:
+        expiry = json_op["metadata"]["annotations"]["expiry"]
+        app.logger.info("Expiry:" + expiry)
+
+    msg = ""
+
+    if allowed_instances != "":
+        cmd1 = "kubectl get " + kind
+        out1, err1 = run_command(cmd1)
+        created_instances = 0
+        for line in out1.split("\n"):
+            line = line.strip()
+            app.logger.info("Line:" + line + "\n")
+            if "NAME" not in line and "AGE" not in line and line != "":
+                created_instances = created_instances + 1
+        app.logger.info("Already created instances:" + str(created_instances))
+
+        if created_instances >= int(allowed_instances):
+            msg = msg + "Allowed number of instances reached."
+
+    if expiry != "":
+        parts = expiry.split("/")
+        if len(parts) == 3 :
+            month = int(parts[0].strip())
+            day = int(parts[1].strip())
+            year = int(parts[2].strip())
+
+            expiry_date = date(year, month, day)
+            today = date.today()
+            app.logger.info("Expiry date:" + str(expiry_date))
+            app.logger.info("Today:" + str(today))
+            if today > expiry_date:
+                msg = msg + " License expired (expiry date):" + str(expiry) + "."
+
+    app.logger.info("License check message:" + msg)
+
+    return msg
 
 
 @app.route("/resource_quota")

@@ -8,7 +8,7 @@ from crmetrics import CRBase
 
 class AppResourcesFinder(CRBase):
 
-    def _run_command(self, cmd):
+    def run_command(self, cmd):
         cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
         out = cmdOut[0].decode('utf-8')
         err = cmdOut[1].decode('utf-8')
@@ -16,7 +16,7 @@ class AppResourcesFinder(CRBase):
    
     def _get_resources(self, kind, plural, targetNS, kubeconfig):
         cmd = "kubectl get " + plural + " -n " + targetNS + " " + kubeconfig
-        out, err = self._run_command(cmd)
+        out, err = self.run_command(cmd)
         resources = []
         for line in out.split("\n"):
             res_details = {}
@@ -33,7 +33,7 @@ class AppResourcesFinder(CRBase):
 
     def get_kubeplus_ns(self, kubeconfig):
         cmd = 'kubectl get deployments -A ' + kubeconfig
-        out, err = self._run_command(cmd)
+        out, err = self.run_command(cmd)
         for line in out.split("\n"):
             if 'NAME' not in line:
                 if 'kubeplus-deployment' in line:
@@ -44,7 +44,7 @@ class AppResourcesFinder(CRBase):
 
     def get_target_ns(self, kubeplus_ns, kind, instance, kubeconfig):
         cmd = 'kubectl get ' + kind + ' ' + instance + " -n " + kubeplus_ns + ' -o json ' + kubeconfig 
-        out, err = self._run_command(cmd)
+        out, err = self.run_command(cmd)
         targetNS = ''
         releaseName = ''
         out = out.strip()
@@ -61,7 +61,7 @@ class AppResourcesFinder(CRBase):
     def get_helm_resources(self, targetNS, helmrelease, kubeconfig):
         #print("Inside helm_resources")
         cmd = "helm get all " + helmrelease + " -n " + targetNS + ' ' + kubeconfig
-        out, err = self._run_command(cmd)
+        out, err = self.run_command(cmd)
 
         resources = []
         kind = ''
@@ -98,7 +98,7 @@ class AppResourcesFinder(CRBase):
 
     def check_res_exists(self, kind, instance, kubeconfig):
         cmd = 'kubectl get ' + kind + ' -A ' + kubeconfig
-        out, err = self._run_command(cmd)
+        out, err = self.run_command(cmd)
         for line in out.split("\n"):
             if instance in line:
                 parts = line.split(" ")
@@ -112,7 +112,7 @@ class AppResourcesFinder(CRBase):
             return False
 
         cmd = 'kubectl get crds ' + kubeconfig
-        out, err = self._run_command(cmd)
+        out, err = self.run_command(cmd)
         for line in out.split("\n"):
             parts = line.split(" ")
             fqn = parts[0].strip()
