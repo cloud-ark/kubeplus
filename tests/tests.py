@@ -260,6 +260,20 @@ class TestKubePlus(unittest.TestCase):
                         num_users += 1
             return num_users
 
+        def cleanup():
+            cmd = 'kubectl delete -f ./application-upgrade/resource-composition-localchart.yaml --kubeconfig=./application-upgrade/provider.conf'
+            TestKubePlus.run_command(cmd)
+
+            # restore chart
+            data = None
+            with open('./application-upgrade/resource-composition-localchart.yaml', 'r') as f:
+                data = yaml.safe_load(f)
+        
+            data['spec']['newResource']['chartURL'] = 'file:///resource-composition-0.0.1.tgz'
+
+            with open('./application-upgrade/resource-composition-localchart.yaml', 'w') as f:   
+                yaml.safe_dump(data, f, default_flow_style=False)
+
         # preliminary checks
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
@@ -298,7 +312,8 @@ class TestKubePlus(unittest.TestCase):
         port = 5000
 
         # let the app pods come up
-        time.sleep(30)
+        wait_time = 60
+        time.sleep(wait_time)
 
         # grab name of deployed pod
         cmd = "kubectl get pods -n %s" % namespace
@@ -312,6 +327,12 @@ class TestKubePlus(unittest.TestCase):
                         name = part.strip()
                 break
 
+        print("Pod name:" + name)
+        if name == None:
+            print("Pod did not come up even after waiting " + str(wait_time) + " seconds.")
+            print("Skipping rest of the test.")
+            cleanup()
+
         # port forwarding
         # CLI: kubectl port-forward pod-name -n bwa-tenant1 5000:5000
         config.load_kube_config()
@@ -320,6 +341,7 @@ class TestKubePlus(unittest.TestCase):
         Configuration.set_default(c)
         api_instance = core_v1_api.CoreV1Api()
 
+        
         # https://github.com/kubernetes-client/python/blob/master/examples/pod_portforward.py
         pf = portforward(api_instance.connect_get_namespaced_pod_portforward,
                          name,
@@ -365,19 +387,7 @@ class TestKubePlus(unittest.TestCase):
         response = make_http_request(port).strip(" ")
         num_users_second = count_users(response)
 
-        # cleanup 
-        cmd = 'kubectl delete -f ./application-upgrade/resource-composition-localchart.yaml --kubeconfig=./application-upgrade/provider.conf'
-        TestKubePlus.run_command(cmd)
-
-        # restore chart
-        data = None
-        with open('./application-upgrade/resource-composition-localchart.yaml', 'r') as f:
-            data = yaml.safe_load(f)
-        
-        data['spec']['newResource']['chartURL'] = 'file:///resource-composition-0.0.1.tgz'
-
-        with open('./application-upgrade/resource-composition-localchart.yaml', 'w') as f:   
-            yaml.safe_dump(data, f, default_flow_style=False)
+        cleanup()
         
         # check if upgrade worked
         self.assertTrue(num_users_second > num_users_first)

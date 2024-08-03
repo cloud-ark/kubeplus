@@ -27,7 +27,7 @@ The KubePlus Operator does not need any admin-level permissions on a cluster for
 
 ### Resource utilization
 
-KubePlus provides controls to set per-namespace resource quotas. It also monitors usage of CPU, memory, storage, and network traffic at the application instance level. The collected metrics are available in different formats and can be pulled into Prometheus for historical usage tracking.
+KubePlus provides controls to set per-namespace resource quotas. It also monitors usage of CPU, memory, storage, and network traffic at the application instance level. The collected metrics are available in different formats and can be pulled into Prometheus for historical usage tracking. KubePlus also supports ability to define licenses for the CRDs. A license defines the number of application instances that can be created for that CRD, and an expiry date. KubePlus prevents creation of application instances if the license terms are not met.
 
 ### Upgrades
 
@@ -37,7 +37,8 @@ A new version of an application can be deployed by updating the application Helm
 
 ### Customization
 
-The spec properties of the Kubernetes CRD wrapping the application Helm chart are the fields defined in the chart’s values.yaml file. Application deployments can be customized by specifying different values for these spec properties. KubePlus also supports ability to define licenses for the CRDs. A license defines the number of application instances that can be created for that CRD, and an expiry date. KubePlus prevents creation of application instances if the license terms are not met.
+The spec properties of the Kubernetes CRD wrapping the application Helm chart are the fields defined in the chart’s values.yaml file. Application deployments can be customized by specifying different values for these spec properties. 
+
 
 ## Demo
 
