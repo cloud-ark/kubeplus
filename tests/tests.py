@@ -86,6 +86,79 @@ class TestKubePlus(unittest.TestCase):
         self.assertTrue(
             'If quota is specified, specify all four values: requests.cpu, requests.memory, limits.cpu, limits.memory' in err)
 
+    def test_license_plugin(self):
+        if not TestKubePlus._is_kubeplus_running():
+            print("KubePlus is not running. Deploy KubePlus and then run tests")
+            sys.exit(0)
+
+        start_clean = "kubectl delete ns hs1"
+        TestKubePlus.run_command(start_clean)
+
+        kubeplus_home = os.getenv("KUBEPLUS_HOME")
+        path = os.getenv("PATH")
+        if kubeplus_home == '':
+            print("Skipping the test as KUBEPLUS_HOME is not set.")
+            return
+
+        cmd = "kubectl upload chart ../examples/multitenancy/hello-world/hello-world-chart-0.0.3.tgz ../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+
+        crd = "helloworldservices.platformapi.kubeplus"
+        crd_installed = self._check_crd_installed(crd)
+        if not crd_installed:
+            print("CRD " + crd + " not installed. Exiting this test.")
+            return
+
+        # Test with license that restricts number of instances (1)
+        cmd = "kubectl license create HelloWorldService license.txt -n 1  -k ../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hs1.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+
+        all_running = False
+        cmd = "kubectl get pods -n hs1"
+
+        target_pod_count = 1
+        pods, count, all_running = self._check_pod_status(cmd, target_pod_count)
+        if count == target_pod_count:
+            self.assertTrue(True)
+        else:
+            self.assertTrue(False)
+
+        # Second instance creation should be denied
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hs2.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        self.assertTrue("Allowed number of instances reached" in err)
+        cmd = "kubectl license delete HelloWorldService -k ../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+
+        # Test with expired license
+        cmd = "kubectl license create HelloWorldService license.txt -e 01/01/2024 -k ../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hs2.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        self.assertTrue("License expired (expiry date):01/01/2024" in err)
+        cmd = "kubectl license delete HelloWorldService -k ../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+
+        # Test with expired license and restriction on number of instances
+        cmd = "kubectl license create HelloWorldService license.txt -n 1 -e 01/01/2024 -k ../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hs2.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+        self.assertTrue("License expired (expiry date):01/01/2024" in err)
+        self.assertTrue("Allowed number of instances reached" in err)
+        cmd = "kubectl license delete HelloWorldService -k ../kubeplus-saas-provider.json"
+        TestKubePlus.run_command(cmd)
+        
+        # cleanup
+        cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        out, err = TestKubePlus.run_command(cmd)
+
+
     def test_application_update(self):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
@@ -187,6 +260,20 @@ class TestKubePlus(unittest.TestCase):
                         num_users += 1
             return num_users
 
+        def cleanup():
+            cmd = 'kubectl delete -f ./application-upgrade/resource-composition-localchart.yaml --kubeconfig=./application-upgrade/provider.conf'
+            TestKubePlus.run_command(cmd)
+
+            # restore chart
+            data = None
+            with open('./application-upgrade/resource-composition-localchart.yaml', 'r') as f:
+                data = yaml.safe_load(f)
+        
+            data['spec']['newResource']['chartURL'] = 'file:///resource-composition-0.0.1.tgz'
+
+            with open('./application-upgrade/resource-composition-localchart.yaml', 'w') as f:   
+                yaml.safe_dump(data, f, default_flow_style=False)
+
         # preliminary checks
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
@@ -225,7 +312,8 @@ class TestKubePlus(unittest.TestCase):
         port = 5000
 
         # let the app pods come up
-        time.sleep(30)
+        wait_time = 60
+        time.sleep(wait_time)
 
         # grab name of deployed pod
         cmd = "kubectl get pods -n %s" % namespace
@@ -239,6 +327,12 @@ class TestKubePlus(unittest.TestCase):
                         name = part.strip()
                 break
 
+        print("Pod name:" + name)
+        if name == None:
+            print("Pod did not come up even after waiting " + str(wait_time) + " seconds.")
+            print("Skipping rest of the test.")
+            cleanup()
+
         # port forwarding
         # CLI: kubectl port-forward pod-name -n bwa-tenant1 5000:5000
         config.load_kube_config()
@@ -247,6 +341,7 @@ class TestKubePlus(unittest.TestCase):
         Configuration.set_default(c)
         api_instance = core_v1_api.CoreV1Api()
 
+        
         # https://github.com/kubernetes-client/python/blob/master/examples/pod_portforward.py
         pf = portforward(api_instance.connect_get_namespaced_pod_portforward,
                          name,
@@ -292,19 +387,7 @@ class TestKubePlus(unittest.TestCase):
         response = make_http_request(port).strip(" ")
         num_users_second = count_users(response)
 
-        # cleanup 
-        cmd = 'kubectl delete -f ./application-upgrade/resource-composition-localchart.yaml --kubeconfig=./application-upgrade/provider.conf'
-        TestKubePlus.run_command(cmd)
-
-        # restore chart
-        data = None
-        with open('./application-upgrade/resource-composition-localchart.yaml', 'r') as f:
-            data = yaml.safe_load(f)
-        
-        data['spec']['newResource']['chartURL'] = 'file:///resource-composition-0.0.1.tgz'
-
-        with open('./application-upgrade/resource-composition-localchart.yaml', 'w') as f:   
-            yaml.safe_dump(data, f, default_flow_style=False)
+        cleanup()
         
         # check if upgrade worked
         self.assertTrue(num_users_second > num_users_first)
@@ -456,13 +539,14 @@ class TestKubePlus(unittest.TestCase):
                 time.sleep(1)
     
     def test_appstatus_plugin(self):
-
+        kubeplus_home = os.getenv("KUBEPLUS_HOME")
+        provider = kubeplus_home + '/kubeplus-saas-provider.json'
+        
         def cleanup():
-            cmd = "cd ./hello-world"
+            cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hs1.yaml --kubeconfig=%s" % provider
             TestKubePlus.run_command(cmd)
-            cmd = "kubectl delete -f hs1.yaml --kubeconfig=provider.conf"
+            cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition.yaml --kubeconfig=%s" % provider
             TestKubePlus.run_command(cmd)
-            cmd = "kubectl delete -f hello-world-service-composition.yaml --kubeconfig=provider.conf"
 
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
@@ -471,13 +555,9 @@ class TestKubePlus(unittest.TestCase):
         if os.getenv("KUBEPLUS_HOME") == '':
             print("Skipping test as KUBEPLUS_HOME is not set.")
             return
-        
-        # add Kubeplus provider
-        cmd = "cp ../kubeplus-saas-provider.json ./hello-world/provider.conf"
-        TestKubePlus.run_command(cmd)
 
         # register HelloWorldService API
-        cmd = "kubectl create -f ./hello-world/hello-world-service-composition.yaml --kubeconfig=./hello-world/provider.conf"
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition.yaml --kubeconfig=%s" % provider
         TestKubePlus.run_command(cmd)
 
         # check CRD installation
@@ -488,18 +568,25 @@ class TestKubePlus(unittest.TestCase):
             return
         
         # create app instance
-        cmd = "kubectl create -f ./hello-world/hs1.yaml --kubeconfig=./hello-world/provider.conf"
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hs1.yaml --kubeconfig=%s" % provider
         out, err = TestKubePlus.run_command(cmd)
 
+        time.sleep(10)
         # test plugin
-        cmd = "kubectl appstatus HelloWorldService hs1"
+        cmd = "kubectl appstatus HelloWorldService hs1 -k %s" % provider
         out, err = TestKubePlus.run_command(cmd)
         
         if err != '':
             print("Something went wrong with the plugin.")
+            print(err)
             cleanup()
             sys.exit(1)
         
+        # asserts
+        lines = out.split('\n')
+        self.assertTrue('Deployed' in lines[1])
+        self.assertTrue('Running' in lines[2])
+
         cleanup()
     # TODO: Add tests for
     # kubectl connections

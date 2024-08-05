@@ -8,10 +8,32 @@ from crmetrics import CRBase
 
 
 class AppResourcesFinder(CRBase):
+    def run_command(self, cmd):
+        cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
+        out = cmdOut[0].decode('utf-8')
+        err = cmdOut[1].decode('utf-8')
+        return out, err
+   
+    def _get_resources(self, kind, plural, targetNS, kubeconfig):
+        cmd = "kubectl get " + plural + " -n " + targetNS + " " + kubeconfig
+        out, err = self.run_command(cmd)
+        resources = []
+        for line in out.split("\n"):
+            res_details = {}
+            line = line.strip()
+            if 'NAME' not in line and line != '' and line != '\n':
+                line1 = ' '.join(line.split())
+                parts = line1.split(" ")
+                res_name = parts[0].strip()
+                res_details['name'] = res_name
+                res_details['namespace'] = targetNS
+                res_details['kind'] = kind 
+                resources.append(res_details)
+        return resources
 
     def get_kubeplus_ns(self, kubeconfig):
         cmd = 'kubectl get deployments -A ' + kubeconfig
-        out, err = self._run_command(cmd)
+        out, err = self.run_command(cmd)
         for line in out.split("\n"):
             if 'NAME' not in line:
                 if 'kubeplus-deployment' in line:
@@ -21,8 +43,8 @@ class AppResourcesFinder(CRBase):
                     return kubeplus_ns
 
     def get_target_ns(self, kubeplus_ns, kind, instance, kubeconfig):
-        cmd = 'kubectl get ' + kind + ' ' + instance + " -n " + kubeplus_ns + ' -o json ' + kubeconfig
-        out, err = self._run_command(cmd)
+        cmd = 'kubectl get ' + kind + ' ' + instance + " -n " + kubeplus_ns + ' -o json ' + kubeconfig 
+        out, err = self.run_command(cmd)
         targetNS = ''
         releaseName = ''
         out = out.strip()
@@ -39,7 +61,7 @@ class AppResourcesFinder(CRBase):
     def get_helm_resources(self, targetNS, helmrelease, kubeconfig):
         # print("Inside helm_resources")
         cmd = "helm get all " + helmrelease + " -n " + targetNS + ' ' + kubeconfig
-        out, err = self._run_command(cmd)
+        out, err = self.run_command(cmd)
 
         resources = []
         kind = ''
@@ -74,6 +96,32 @@ class AppResourcesFinder(CRBase):
         resources = self._get_resources('Pod', 'pods', targetNS, kubeconfig)
         return resources
 
+    def check_res_exists(self, kind, instance, kubeconfig):
+        cmd = 'kubectl get ' + kind + ' -A ' + kubeconfig
+        out, err = self.run_command(cmd)
+        for line in out.split("\n"):
+            if instance in line:
+                parts = line.split(" ")
+                ns = parts[0].strip()
+                return True, ns, ''
+        return False, '', kind + ' ' + instance + ' not found.'  
+
+    def verify_kind_is_consumerapi(self, kind, kubeconfig):
+
+        if kind.lower() in 'resourcecompositions':
+            return False
+
+        cmd = 'kubectl get crds ' + kubeconfig
+        out, err = self.run_command(cmd)
+        for line in out.split("\n"):
+            parts = line.split(" ")
+            fqn = parts[0].strip()
+            parts1 = fqn.split(".")
+            plural = parts1[0]
+            singular = plural[0:len(plural)-1]
+            if kind.lower() == singular:
+                return True
+        return False
 
 if __name__ == '__main__':
     appResourcesFinder = AppResourcesFinder()

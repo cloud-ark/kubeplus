@@ -8,7 +8,7 @@ class AppStatusFinder(CRBase):
 
     def get_app_instance_status(self, kind, instance, kubeconfig):
         cmd = 'kubectl get %s %s -o json %s' % (kind, instance, kubeconfig)
-        out, err = self._run_command(cmd)
+        out, err = self.run_command(cmd)
         if err != "":
             print("Something went wrong while getting app instance status.")
             print(err)
@@ -19,19 +19,19 @@ class AppStatusFinder(CRBase):
             if 'helmrelease' in response['status']:
                 helm_release = response['status']['helmrelease'].strip('\n')
                 ns, name = helm_release.split(':')
-                return name, ns, True, None
+                return name, ns, True
             else:
                 # an error has occurred
                 status = response['status']
-                return status, None, False, None
+                return status, None, False
             
         else:
-            return '', 'Application not deployed properly', False, None
+            return 'Application not deployed properly', None, False
 
 
     def get_app_pods(self, namespace, kubeconfig):
         cmd = 'kubectl get pods -n %s %s -o json' % (namespace, kubeconfig)
-        out, err = self._run_command(cmd)
+        out, err = self.run_command(cmd)
         # format?
         response = json.loads(out)
         pods = []
@@ -65,10 +65,7 @@ if __name__ == '__main__':
         print(err)
         exit(1)
     
-    release_name_or_status, release_ns, deployed, err = appStatusFinder.get_app_instance_status(kind, instance, kubeconfig)
-    if err is not None:
-        print(err)
-        exit(1)
+    release_name_or_status, release_ns, deployed = appStatusFinder.get_app_instance_status(kind, instance, kubeconfig)
     
     if deployed:
         deploy_str = 'Deployed'
@@ -76,10 +73,9 @@ if __name__ == '__main__':
         print(release_name_or_status)
         exit(1)
 
-    # if not deployed, there's probably an error -- maybe display a different response in this case
     pods = appStatusFinder.get_app_pods(instance, kubeconfig)
 
-    print("{:<35} {:<35} {:<35} {:<35}".format("NAME", "TYPE", "NAMESPACE", "STATUS"))
-    print("{:<35} {:<35} {:<35} {:<35}".format(release_name_or_status, 'helmrelease', release_ns, deploy_str))
+    print("{:<55} {:<55} {:<55} {:<55}".format("NAME", "TYPE", "NAMESPACE", "STATUS"))
+    print("{:<55} {:<55} {:<55} {:<55}".format(release_name_or_status, 'helmrelease', release_ns, deploy_str))
     for pod_name, typ, pod_ns, phase in pods:
-        print("{:<35} {:<35} {:<35} {:<35}".format(pod_name, typ, pod_ns, phase))
+        print("{:<55} {:<55} {:<55} {:<55}".format(pod_name, typ, pod_ns, phase))

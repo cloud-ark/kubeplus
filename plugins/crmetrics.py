@@ -10,11 +10,29 @@ import yaml
 import utils
 
 class CRBase(object):
-	def _run_command(self, cmd):
+	
+	def run_command(self, cmd):
 		cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
 		out = cmdOut[0].decode('utf-8')
 		err = cmdOut[1].decode('utf-8')
 		return out, err
+
+	def check_kind(self, kind, kubeconfigfile):
+		cmd = "kubectl api-resources --api-group='platformapi.kubeplus' --no-headers --kubeconfig=" + kubeconfigfile
+		out, err = self.run_command(cmd)
+		if out != "":
+			available_kinds = []
+			for line in out.split("\n"):
+				if "NAME" not in line:
+					line1 = ' '.join(line.split())
+					parts = line1.split(' ')
+					available_kind = parts[-1].strip()
+					available_kinds.append(available_kind)
+
+			if kind in available_kinds:
+				return True
+			else:
+				return False
 
 	def parse_pod_details(self, out, instance):
 		pod_list = []
@@ -76,9 +94,9 @@ class CRBase(object):
 		#print(pod_list)
 		return pod_list
 
-	def _get_kubeplus_namespace(self):
+	def get_kubeplus_namespace(self, kubeconfig):
 		kb_namespace = 'default'
-		cmd = "kubectl get pods -A | grep kubeplus-deployment | awk '{print $1}'"
+		cmd = "kubectl get pods -A --kubeconfig=" + kubeconfig + " | grep kubeplus-deployment | awk '{print $1}'"
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
 									stderr=subprocess.PIPE, shell=True).communicate()[0]
@@ -101,7 +119,7 @@ class CRBase(object):
 		else:
 			print("OS not supported:" + platf)
 			return json_output
-		kb_ns = self._get_kubeplus_namespace()
+		kb_ns = self.get_kubeplus_namespace(kubeconfig)
 		cmd = cmd + kind + ' ' + instance + ' ' + namespace + ' --output=json ' + kubeconfig + ' --ignore=ServiceAccount:default,Namespace:' + kb_ns
 		#print(cmd)
 		out = ''
@@ -138,7 +156,7 @@ class CRBase(object):
 
 	def check_res_exists(self, kind, instance, kubeconfig):
 		cmd = 'kubectl get ' + kind + ' -A ' + kubeconfig
-		out, err = self._run_command(cmd)
+		out, err = self.run_command(cmd)
 		for line in out.split("\n"):
 			if instance in line:
 				parts = line.split(" ")
@@ -152,7 +170,7 @@ class CRBase(object):
 			return False
 
 		cmd = 'kubectl get crds ' + kubeconfig
-		out, err = self._run_command(cmd)
+		out, err = self.run_command(cmd)
 		for line in out.split("\n"):
 			parts = line.split(" ")
 			fqn = parts[0].strip()
@@ -163,16 +181,10 @@ class CRBase(object):
 				return True
 		return False
 	
-	'''
-	TODO: add method that accepts kind name (HelloWorldService), instance name (hs1), and namespace
-		  (KUBEPLUS_NS)
-		  it will run `kubectl get kind_name instance_name -n namespace` and if this errors out, no further check
-		  is needed and the user must be informed
-		  otherwise, proceed as normal
-	'''
+
 	def validate_kind_and_instance(self, kind, instance, namespace):
 		cmd = 'kubectl get %s %s -n %s' % (kind, instance, namespace)
-		_, err = self._run_command(cmd)
+		_, err = self.run_command(cmd)
 		if err == '': # or None?
 			return True, None
 		return False, err
@@ -635,7 +647,7 @@ class CRMetrics(CRBase):
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
 		cmd = ''
-		kb_ns = self._get_kubeplus_namespace()
+		kb_ns = self.get_kubeplus_namespace(kubeconfig)
 		if platf == "Darwin":
 			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' --output=' + conn_op_format + ' --ignore=ServiceAccount:default,Namespace:' + kb_ns
 		if platf == "Linux":

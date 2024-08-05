@@ -31,7 +31,7 @@ $ apiserver=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.ser
 $ python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
 $ cp kubeplus-saas-provider.json examples/multitenancy/hello-world/provider.conf
 $ cd examples/multitenancy/hello-world/
-$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.44.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=provider.conf
+$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.46.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=provider.conf
 $ kubectl get pods (wait till kubeplus pod is Running)
 
 
