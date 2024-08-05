@@ -13,20 +13,23 @@ class AppStatusFinder(CRBase):
             print("Something went wrong while getting app instance status.")
             print(err)
             exit(1)
-
+        
+        deployed = False
+        ns = None
         response = json.loads(out)
         if 'status' in response:
             if 'helmrelease' in response['status']:
                 helm_release = response['status']['helmrelease'].strip('\n')
                 ns, name = helm_release.split(':')
-                return name, ns, True
+                deployed = True
+                return name, ns, deployed
             else:
                 # an error has occurred
                 status = response['status']
-                return status, None, False
+                return status, ns, deployed
             
         else:
-            return 'Application not deployed properly', None, False
+            return 'Application not deployed properly', ns, deployed
 
 
     def get_app_pods(self, namespace, kubeconfig):

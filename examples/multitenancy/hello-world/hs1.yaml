@@ -4,4 +4,4 @@ metadata:
   name: hs1
 spec:
   greeting: Hello hello hello 
-
+  replicas: 1

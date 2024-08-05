@@ -594,8 +594,6 @@ class TestKubePlus(unittest.TestCase):
     # kubectl appurl
     # kubectl applogs
     # kubectl metrics
-    # TODO: pos test case for kubectl appstatus with HelloWorld
-    # maybe write/find a method for setting up HelloWorld instance and reuse here
     @unittest.skip("Skipping CLI test")
     def test_kubeplus_cli(self):
         kubeplus_home = os.getenv("KUBEPLUS_HOME")
