@@ -545,7 +545,7 @@ class TestKubePlus(unittest.TestCase):
         def cleanup():
             cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hs1.yaml --kubeconfig=%s" % provider
             TestKubePlus.run_command(cmd)
-            cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition.yaml --kubeconfig=%s" % provider
+            cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=%s" % provider
             TestKubePlus.run_command(cmd)
 
         if not TestKubePlus._is_kubeplus_running():
@@ -557,7 +557,7 @@ class TestKubePlus(unittest.TestCase):
             return
 
         # register HelloWorldService API
-        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition.yaml --kubeconfig=%s" % provider
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=%s" % provider
         TestKubePlus.run_command(cmd)
 
         # check CRD installation
