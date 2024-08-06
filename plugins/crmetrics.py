@@ -6,7 +6,7 @@ import os
 import platform
 import pprint
 import time
-
+import yaml
 import utils
 
 class CRBase(object):
@@ -137,6 +137,58 @@ class CRBase(object):
 				print(e)
 		return json_output
 
+	def _get_resources(self, kind, plural, targetNS, kubeconfig):
+		cmd = "kubectl get " + plural + " -n " + targetNS + " " + kubeconfig
+		out, err = self._run_command(cmd)
+		resources = []
+		for line in out.split("\n"):
+			res_details = {}
+			line = line.strip()
+			if 'NAME' not in line and line != '' and line != '\n':
+				line1 = ' '.join(line.split())
+				parts = line1.split(" ")
+				res_name = parts[0].strip()
+				res_details['name'] = res_name
+				res_details['namespace'] = targetNS
+				res_details['kind'] = kind
+				resources.append(res_details)
+		return resources
+
+	def check_res_exists(self, kind, instance, kubeconfig):
+		cmd = 'kubectl get ' + kind + ' -A ' + kubeconfig
+		out, err = self.run_command(cmd)
+		for line in out.split("\n"):
+			if instance in line:
+				parts = line.split(" ")
+				ns = parts[0].strip()
+				return True, ns, ''
+		return False, '', kind + ' ' + instance + ' not found.'
+
+	def verify_kind_is_consumerapi(self, kind, kubeconfig):
+
+		if kind.lower() in 'resourcecompositions':
+			return False
+
+		cmd = 'kubectl get crds ' + kubeconfig
+		out, err = self.run_command(cmd)
+		for line in out.split("\n"):
+			parts = line.split(" ")
+			fqn = parts[0].strip()
+			parts1 = fqn.split(".")
+			plural = parts1[0]
+			singular = plural[0:len(plural) - 1]
+			if kind.lower() == singular:
+				return True
+		return False
+	
+
+	def validate_kind_and_instance(self, kind, instance, namespace):
+		cmd = 'kubectl get %s %s -n %s' % (kind, instance, namespace)
+		_, err = self.run_command(cmd)
+		if err == '': # or None?
+			return True, None
+		return False, err
+	
 
 class CRMetrics(CRBase):
 

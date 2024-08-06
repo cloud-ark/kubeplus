@@ -537,7 +537,57 @@ class TestKubePlus(unittest.TestCase):
                 removed = True
             else:
                 time.sleep(1)
+    
+    def test_appstatus_plugin(self):
+        kubeplus_home = os.getenv("KUBEPLUS_HOME")
+        provider = kubeplus_home + '/kubeplus-saas-provider.json'
+        
+        def cleanup():
+            cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hs1.yaml --kubeconfig=%s" % provider
+            TestKubePlus.run_command(cmd)
+            cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=%s" % provider
+            TestKubePlus.run_command(cmd)
 
+        if not TestKubePlus._is_kubeplus_running():
+            print("KubePlus is not running. Deploy KubePlus and then run tests")
+            sys.exit(0)
+
+        if os.getenv("KUBEPLUS_HOME") == '':
+            print("Skipping test as KUBEPLUS_HOME is not set.")
+            return
+
+        # register HelloWorldService API
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=%s" % provider
+        TestKubePlus.run_command(cmd)
+
+        # check CRD installation
+        crd = "helloworldservices.platformapi.kubeplus"
+        crd_installed = self._check_crd_installed(crd)
+        if not crd_installed:
+            print("CRD " + crd + " not installed. Exiting this test.")
+            return
+        
+        # create app instance
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hs1.yaml --kubeconfig=%s" % provider
+        out, err = TestKubePlus.run_command(cmd)
+
+        time.sleep(10)
+        # test plugin
+        cmd = "kubectl appstatus HelloWorldService hs1 -k %s" % provider
+        out, err = TestKubePlus.run_command(cmd)
+        
+        if err != '':
+            print("Something went wrong with the plugin.")
+            print(err)
+            cleanup()
+            sys.exit(1)
+        
+        # asserts
+        lines = out.split('\n')
+        self.assertTrue('Deployed' in lines[1])
+        self.assertTrue('Running' in lines[2])
+
+        cleanup()
     # TODO: Add tests for
     # kubectl connections
     # kubectl appresources

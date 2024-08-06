@@ -6,8 +6,8 @@ import platform
 import os
 from crmetrics import CRBase
 
-class AppResourcesFinder(CRBase):
 
+class AppResourcesFinder(CRBase):
     def run_command(self, cmd):
         cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
         out = cmdOut[0].decode('utf-8')
@@ -56,10 +56,10 @@ class AppResourcesFinder(CRBase):
                 targetNS = parts[0].strip()
                 releaseName = parts[1].strip().split("\n")[0]
                 return targetNS, releaseName
-        return targetNS, releaseName 
+        return targetNS, releaseName
 
     def get_helm_resources(self, targetNS, helmrelease, kubeconfig):
-        #print("Inside helm_resources")
+        # print("Inside helm_resources")
         cmd = "helm get all " + helmrelease + " -n " + targetNS + ' ' + kubeconfig
         out, err = self.run_command(cmd)
 
@@ -74,7 +74,7 @@ class AppResourcesFinder(CRBase):
                     res_details = {}
                     res_details['name'] = res_name
                     res_details['namespace'] = targetNS
-                    res_details['kind'] = kind 
+                    res_details['kind'] = kind
                     resources.append(res_details)
 
                     new_resource = False
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     instance = sys.argv[2]
     kubeconfig = sys.argv[3]
 
-    #print("kind:" + kind + " instance:" + instance + " kubeconfig:" + kubeconfig)
+    # print("kind:" + kind + " instance:" + instance + " kubeconfig:" + kubeconfig)
 
     valid_consumer_api = appResourcesFinder.verify_kind_is_consumerapi(kind, kubeconfig)
     if not valid_consumer_api:
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     targetNS, helmrelease = appResourcesFinder.get_target_ns(res_ns, kind, instance, kubeconfig)
     if targetNS == '' and helmrelease == '':
         print("No Helm release found for {} resource {}".format(kind, instance))
-    #print(targetNS + " " + helmrelease)
+    # print(targetNS + " " + helmrelease)
     pods = appResourcesFinder.get_pods(targetNS, kind, instance, kubeconfig)
     networkpolicies = appResourcesFinder.get_networkpolicies(targetNS, kind, instance, kubeconfig)
     resourcequotas = appResourcesFinder.get_resourcequotas(targetNS, kind, instance, kubeconfig)
@@ -162,10 +162,10 @@ if __name__ == '__main__':
 
     # Ref: https://www.educba.com/python-print-table/
     # https://stackoverflow.com/questions/20309255/how-to-pad-a-string-to-a-fixed-length-with-spaces-in-python
-    print ("{:<25} {:<25} {:<25} ".format("NAMESPACE", "KIND", "NAME"))
-    print ("{:<25} {:<25} {:<25} ".format(kubeplus_ns, kind, instance))
+    print("{:<25} {:<25} {:<25} ".format("NAMESPACE", "KIND", "NAME"))
+    print("{:<25} {:<25} {:<25} ".format(kubeplus_ns, kind, instance))
     for res in allresources:
         ns = res['namespace']
         kind = res['kind']
         name = res['name']
-        print ("{:<25} {:<25} {:<25} ".format(ns, kind, name))
+        print("{:<25} {:<25} {:<25} ".format(ns, kind, name))
