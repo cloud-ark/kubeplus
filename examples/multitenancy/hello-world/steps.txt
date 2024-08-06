@@ -61,10 +61,10 @@ You can use either the provider.conf or consumer.conf in below commands.
    You will see that this is a Kubernetes CRD with a spec property "greeting".
 
 2. Create a hello world instance
-   - more hs1.yaml
+   - more hs1-no-replicas.yaml
    Notice that this is an instance of HelloWorldService named 'hs1'. The "greetings" spec property
    value is set to "Hello hello hello".
-   - kubectl create -f hs1.yaml --kubeconfig=consumer.conf
+   - kubectl create -f hs1-no-replicas.yaml --kubeconfig=consumer.conf
 
 3. Check that the application instance Pods are created in a new namespace
    - kubectl get pods -A --kubeconfig=consumer.conf
@@ -123,7 +123,7 @@ You can use either the provider.conf or consumer.conf in below commands.
 Clean up:
 -----------
 - As consumer:
-  - kubectl delete -f hs1.yaml --kubeconfig=consumer.conf
+  - kubectl delete -f hs1-no-replicas.yaml --kubeconfig=consumer.conf
   - kubectl delete -f hello-world-service-composition.yaml --kubeconfig=consumer.conf
     - should get permission denied error, like below:
 	Error from server (Forbidden): error when deleting "hello-world-service-composition.yaml": resourcecompositions.workflows.kubeplus "hello-world-service-composition" is forbidden: User "system:serviceaccount:default:kubeplus-saas-consumer" cannot delete resource "resourcecompositions" in API group "workflows.kubeplus" in the namespace "default"
