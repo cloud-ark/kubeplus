@@ -944,15 +944,16 @@ func deployChart(request *restful.Request, response *restful.Response) {
 					// Install the Helm chart in the namespace that is created for that instance
 					helmInstallCmd := "helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + targetNSName
 	  				fmt.Printf("ABC helm install cmd:%s\n", helmInstallCmd)
-					go runHelmInstall(cmdRunnerPod, helmInstallCmd, releaseName, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim)
+					go runHelmInstallUpgrade(cmdRunnerPod, "install", helmInstallCmd, releaseName, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim)
 					}
 
 					if doHelmUpgrade {
 						helmUpgradeCmd := "helm upgrade " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + targetNSName
 	  					fmt.Printf("ABC helm upgrade cmd:%s\n", helmUpgradeCmd)
+						go runHelmInstallUpgrade(cmdRunnerPod, "upgrade", helmUpgradeCmd, releaseName, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim)
 
-						_, helmUpgradeOutput := executeExecCall(cmdRunnerPod, helmUpgradeCmd)
-						fmt.Printf("Helm upgrade o/p:%v\n", helmUpgradeOutput)
+						//_, helmUpgradeOutput := executeExecCall(cmdRunnerPod, helmUpgradeCmd)
+						//fmt.Printf("Helm upgrade o/p:%v\n", helmUpgradeOutput)
 					}
 				}
 
@@ -994,7 +995,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	response.Write([]byte(string("")))
 }
 
-func runHelmInstall(cmdRunnerPod, helmInstallCmd, releaseNameInCmd, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim string) {
+func runHelmInstallUpgrade(cmdRunnerPod, cmd, helmInstallCmd, releaseNameInCmd, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim string) {
 
 	ok, execOutput := executeExecCall(cmdRunnerPod, helmInstallCmd)
 	 			if ok {
@@ -1028,20 +1029,24 @@ func runHelmInstall(cmdRunnerPod, helmInstallCmd, releaseNameInCmd, kind, group,
 					if releaseFound {
 						//statusToUpdate := releaseName + "\n" + notes
 						go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseName, notes)
-						if (cpu_req != "" && cpu_lim != "" && mem_req != "" && mem_lim != "") {
-							go createResourceQuota(targetNSName, releaseName, cpu_req, cpu_lim, mem_req, mem_lim)
+						if cmd == "install" {
+							if (cpu_req != "" && cpu_lim != "" && mem_req != "" && mem_lim != "") {
+								go createResourceQuota(targetNSName, releaseName, cpu_req, cpu_lim, mem_req, mem_lim)
+							}
+							go createNetworkPolicy(targetNSName, releaseName)
 						}
-						go createNetworkPolicy(targetNSName, releaseName)
 		 			}
 	 			} else {
 					//statusToUpdate := releaseNameInCmd + "\n" + execOutput
 		 			go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseNameInCmd, execOutput)
-					errOp := string(execOutput)
-					instanceExists := strings.Contains(errOp, "cannot re-use a name that is still in use")
-					if !instanceExists {
-						deleteNSCmd := "./root/kubectl delete ns " + customresource
-						_, execOutput1 := executeExecCall(cmdRunnerPod, deleteNSCmd)
-						fmt.Printf("Output of delete NS Cmd:%v\n", execOutput1)
+					if cmd == "install" {
+						errOp := string(execOutput)
+						instanceExists := strings.Contains(errOp, "cannot re-use a name that is still in use")
+						if !instanceExists {
+							deleteNSCmd := "./root/kubectl delete ns " + customresource
+							_, execOutput1 := executeExecCall(cmdRunnerPod, deleteNSCmd)
+							fmt.Printf("Output of delete NS Cmd:%v\n", execOutput1)
+						}
 					}
 					// there was some error
 					/*response.Write([]byte(string(execOutput)))*/
