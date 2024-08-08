@@ -322,7 +322,12 @@ class TestKubePlus(unittest.TestCase):
         if name == None:
             print("Pod did not come up even after waiting " + str(wait_time) + " seconds.")
             print("Skipping rest of the test.")
+            cmd = "kubectl label WebAppService bwa-tenant1 delete=true"
+            TestKubePlus.run_command(cmd)
+            cmd1 = "kubectl delete -f ./application-upgrade/tenant1.yaml --kubeconfig=./application-upgrade/provider.conf"
+            TestKubePlus.run_command(cmd)
             cleanup()
+            return
 
         # port forwarding
         # CLI: kubectl port-forward pod-name -n bwa-tenant1 5000:5000
