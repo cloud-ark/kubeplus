@@ -13,7 +13,7 @@ Install KubePlus:
 $ KUBEPLUS_NS=default
 $ python ../../../provider-kubeconfig.py create $KUBEPLUS_NS
 $ cp kubeplus-saas-provider.json provider.conf
-$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.46.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=provider.conf
+$ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.47.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=provider.conf
 $ until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done
 
 
