@@ -6,5 +6,5 @@ CRD_REGISTRATION_HELPER: gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.29
 MUTATING_WEBHOOK: gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.17
 PLATFORM_OPERATOR: gcr.io/cloudark-kubeplus/platform-operator:3.0.7
 CONSUMERUI: gcr.io/cloudark-kubeplus/consumerui:0.0.7
-HELMER: gcr.io/cloudark-kubeplus/helm-pod:3.0.21
-RESOURCE_CLEANER: gcr.io/cloudark-kubeplus/delete-kubeplus-resources:3.0.28
+HELMER: gcr.io/cloudark-kubeplus/helm-pod:3.0.22
+RESOURCE_CLEANER: gcr.io/cloudark-kubeplus/delete-kubeplus-resources:3.0.30
