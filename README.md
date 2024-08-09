@@ -86,7 +86,7 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 5. Install KubePlus Operator using the generated provider kubeconfig 
 
    ```
-   helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-3.0.47.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+   helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-4.0.0.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
    until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done
    ```
 
@@ -217,6 +217,22 @@ Make sure you have installed latest version of kubectl and you have created a mi
 
 KubePlus architecture details are available [here](https://cloud-ark.github.io/kubeplus/docs/html/html/index.html).
 KubePlus is a referenced solution for [multi-customer tenancy in Kubernetes](https://kubernetes.io/docs/concepts/security/multi-tenancy/#multi-customer-tenancy).
+
+### Migrate to version 4.0.0+
+
+If you are using KubePlus chart version < 4.0.0, follow these steps to migrate to 4.0.0+ versions.
+In versions < 4.0.0, the KubePlus's built-in CRDs like `ResourceComposition` were included in the chart's
+`templates` folder. This led to them getting deleted on KubePlus's upgrade. In 4.0.0+ version, the CRDs
+have been moved to the `crds` folder, which avoids this issue.
+
+```
+kubectl annotate customresourcedefinition resourcepolicies.workflows.kubeplus helm.sh/resource-policy=keep
+kubectl annotate customresourcedefinition resourceevents.workflows.kubeplus helm.sh/resource-policy=keep
+kubectl annotate customresourcedefinition resourcemonitors.workflows.kubeplus helm.sh/resource-policy=keep
+kubectl annotate customresourcedefinition resourcecompositions.workflows.kubeplus helm.sh/resource-policy=keep
+
+helm upgrade kubeplus <4.0.0+ version> -n $KUBEPLUS_NS --kubeconfig=kubeplus-saas-provider.json
+```
 
 ## Contributing
 
