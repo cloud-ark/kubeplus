@@ -55,7 +55,9 @@ The spec properties of the Kubernetes CRD wrapping the application Helm chart ar
 
 * Set the Namespace in which to deploy KubePlus
 
-   `export KUBEPLUS_NS=default`
+   ```sh
+   export KUBEPLUS_NS=default
+   ```
 
 * Unzip KubePlus plugins and set up the PATH
 
@@ -65,12 +67,6 @@ The spec properties of the Kubernetes CRD wrapping the application Helm chart ar
    export KUBEPLUS_HOME=`pwd`
    export PATH=$KUBEPLUS_HOME/plugins:$PATH
    kubectl kubeplus commands
-   ```
-
-* Set the Namespace in which to deploy KubePlus
-
-   ```sh
-   export KUBEPLUS_NS=default
    ```
 
 * Create provider kubeconfig using provider-kubeconfig.py
