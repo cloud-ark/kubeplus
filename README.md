@@ -17,13 +17,15 @@ KubePlus takes an application Helm chart and wraps it under a Kubernetes API (CR
 <img src="./docs/kubeplus-with-properties.png" width="700" height="250" class="center">
 </p>
 
+## Key Features
+
 ### Isolation
 
-KubePlus takes an application Helm chart and wraps it in a Kubernetes API (CRD). This API is used to provision application instances on a cluster. KubePlus isolates each application instance in a separate namespace. It adds a safety perimeter around such namespaces using Kubernetes network policies and non-shared persistent volumes ensuring that each application instance is appropriately isolated from other instances. Additionally, it provides controls for application providers to deploy different tenant application instances on different worker nodes for node isolation. 
+KubePlus takes an application Helm chart and wraps it in a Kubernetes API (CRD). This API is used to provision application instances on a cluster. KubePlus isolates each application instance in a separate namespace. It adds a safety perimeter around such namespaces using Kubernetes network policies and non-shared persistent volumes ensuring that each application instance is appropriately isolated from other instances. Additionally, it provides controls for application providers to deploy different tenant application instances on different worker nodes for node isolation.
 
 ### Security
 
-The KubePlus Operator does not need any admin-level permissions on a cluster for application providers. This allows application providers to offer their managed services on any K8s clusters including those owned by their customers. KubePlus comes with a small utility that allows you to create provider specific kubeconfig on a cluster in order to enable application deployments and management. Providers have an ability to create a consumer specific further limited kubeconfig to allow for self-service provisioning of application instances as well. 
+The KubePlus Operator does not need any admin-level permissions on a cluster for application providers. This allows application providers to offer their managed services on any K8s clusters including those owned by their customers. KubePlus comes with a small utility that allows you to create provider specific kubeconfig on a cluster in order to enable application deployments and management. Providers have an ability to create a consumer specific further limited kubeconfig to allow for self-service provisioning of application instances as well.
 
 ### Resource utilization
 
@@ -32,23 +34,18 @@ KubePlus provides controls to set per-namespace resource quotas. It also monitor
 ### Upgrades
 
 A running application instance can be updated by making changes to the spec properties of the CRD instance and applying it.
-KubePlus will update that application instance (i.e. helm upgrade of the corresponding helm release). 
+KubePlus will update that application instance (i.e. helm upgrade of the corresponding helm release).
 A new version of an application can be deployed by updating the application Helm chart under the existing Kubernetes CRD or registering the new chart under a new Kubernetes CRD. If the existing Kubernetes CRD object is updated, KubePlus will update all the running application instances (helm releases) to the new version of the application Helm chart.
 
 ### Customization
 
-The spec properties of the Kubernetes CRD wrapping the application Helm chart are the fields defined in the chart’s values.yaml file. Application deployments can be customized by specifying different values for these spec properties. 
+The spec properties of the Kubernetes CRD wrapping the application Helm chart are the fields defined in the chart’s values.yaml file. Application deployments can be customized by specifying different values for these spec properties.
 
+## Installation
 
-## Demo
+### Manual steps
 
-https://github.com/cloud-ark/kubeplus/assets/732525/efb255ff-fc73-446b-a583-4b89dbf61638
-
-## Getting Started with an example
-
-Let’s look at an example of creating a multi-instance WordPress Service using KubePlus. The WordPress service provider goes through the following steps towards this on their cluster:
-
-1. Create cluster or use an existing cluster. For testing purposes you can create a [minikube](https://minikube.sigs.k8s.io/docs/) or [kind](https://kind.sigs.k8s.io/) cluster:
+* Create cluster or use an existing cluster. For testing purposes you can create a [minikube](https://minikube.sigs.k8s.io/docs/) or [kind](https://kind.sigs.k8s.io/) cluster:
 
    `minikube start`
 
@@ -56,9 +53,13 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
    `kind create cluster`
 
-2. Unzip KubePlus plugins and set up the PATH
+* Set the Namespace in which to deploy KubePlus
 
-   ```
+   `export KUBEPLUS_NS=default`
+
+* Unzip KubePlus plugins and set up the PATH
+
+   ```sh
    wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
    tar -zxvf kubeplus-kubectl-plugins.tar.gz
    export KUBEPLUS_HOME=`pwd`
@@ -66,13 +67,15 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    kubectl kubeplus commands
    ```
 
-3. Set the Namespace in which to deploy KubePlus
+* Set the Namespace in which to deploy KubePlus
 
-   `export KUBEPLUS_NS=default`
-
-4. Create provider kubeconfig using provider-kubeconfig.py
-
+   ```sh
+   export KUBEPLUS_NS=default
    ```
+
+* Create provider kubeconfig using provider-kubeconfig.py
+
+   ```sh
    wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/requirements.txt
    wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/provider-kubeconfig.py
    python3 -m venv venv
@@ -83,109 +86,28 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    deactivate
    ```
 
-5. Install KubePlus Operator using the generated provider kubeconfig 
+* Install KubePlus Operator using the generated provider kubeconfig
 
-   ```
+   ```sh
    helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-4.0.0.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
    until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done
    ```
 
-6. Create Kubernetes CRD representing WordPress Helm chart.
-   
-   *The WordPress Helm chart can be specified as a [public url](./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition.yaml) or can be [available locally](./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml).*
+### Script for linux
 
-   ```
-   kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
-   kubectl get resourcecompositions
-   kubectl describe resourcecomposition wordpress-service-composition
-   ```
+* To install KubePlus and its kubectl plugin, use the following commands:
 
-   If the status of the `wordpress-service-composition` indicates that the new CRD has been created successfully, verify it:
-
-   ```
-   kubectl get crds
-   ```
-   
-   You should see `wordpressservices.platformapi.kubeplus` CRD registered.
-
-7. Create WordpressService instance `wp-tenant1`
-
-   ```
-   kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
+   ```sh
+   wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/install.sh
+   chmod +x install.sh
+   ./install.sh --kubeplus --kubeplus-plugin
    ```
 
-8. Create WordpressService instance `wp-tenant2`
+## Demo
 
-   ```
-   kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json
-   ```
+https://github.com/cloud-ark/kubeplus/assets/732525/efb255ff-fc73-446b-a583-4b89dbf61638
 
-9.  Check created WordpressService instances
-
-   ```
-   kubectl get wordpressservices
-
-   NAME             AGE
-   wp-tenant1   86s
-   wp-tenant2   26s
-   ```
-   
-10. Check the details of created instance:
-
-   ```
-   kubectl describe wordpressservices wp-tenant1
-   ```
-
-11. Check created application resources. Notice that the `WordpressService` instance resources are deployed in a Namespace `wp-tenant1`, which was created by KubePlus.
-
-   ```
-   kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
-
-   NAMESPACE                 KIND                      NAME                      
-   default                   WordpressService          wp-tenant1                
-   wp-tenant1                PersistentVolumeClaim     mysql-pv-claim            
-   wp-tenant1                PersistentVolumeClaim     wp-for-tenant1            
-   wp-tenant1                Service                   wordpress-mysql           
-   wp-tenant1                Service                   wp-for-tenant1            
-   wp-tenant1                Deployment                mysql                     
-   wp-tenant1                Deployment                wp-for-tenant1            
-   wp-tenant1                Pod                       mysql-76d6d9bdfd-2wl2p    
-   wp-tenant1                Pod                       wp-for-tenant1-87c4c954-s2cct 
-   wp-tenant1                NetworkPolicy             allow-external-traffic    
-   wp-tenant1                NetworkPolicy             restrict-cross-ns-traffic 
-   wp-tenant1                ResourceQuota             wordpressservice-wp-tenant1
-   ```
-
-12. Check application resource consumption
-   
-   ```
-   kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
-
-   ---------------------------------------------------------- 
-   Kubernetes Resources created:
-       Number of Sub-resources: -
-       Number of Pods: 2
-           Number of Containers: 2
-           Number of Nodes: 1
-           Number of Not Running Pods: 0
-   Underlying Physical Resoures consumed:
-       Total CPU(cores): 0.773497m
-       Total MEMORY(bytes): 516.30859375Mi
-       Total Storage(bytes): 40Gi
-       Total Network bytes received: 0
-       Total Network bytes transferred: 0
-   ---------------------------------------------------------- 
-   ```
-
-13. Cleanup
-
-    ```
-    kubectl delete wordpressservice wp-tenant1 --kubeconfig=kubeplus-saas-provider.json
-    kubectl delete wordpressservice wp-tenant2 --kubeconfig=kubeplus-saas-provider.json
-    kubectl delete resourcecomposition wordpress-service-composition --kubeconfig=kubeplus-saas-provider.json
-    helm delete kubeplus -n $KUBEPLUS_NS
-    python3 provider-kubeconfig.py delete $KUBEPLUS_NS
-    ```
+To get started with an example, follow: [kubeplus/examples/getting-started.md](kubeplus/examples/getting-started.md)
 
 <!--
 <p align="center">
@@ -196,13 +118,13 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
 
 KubePlus can be used in the following use cases.
 
-- [Application Hosting](./examples/multitenancy/application-hosting/wordpress/steps.txt)
-- [Platform Engineering](./examples/multitenancy/platform-engineering/steps.txt)
-- [Managed Service](./examples/multitenancy/managed-service/appday2ops/steps.txt)
+* [Application Hosting](./examples/multitenancy/application-hosting/wordpress/steps.txt)
+* [Platform Engineering](./examples/multitenancy/platform-engineering/steps.txt)
+* [Managed Service](./examples/multitenancy/managed-service/appday2ops/steps.txt)
 
 In order to try these examples, follow these steps:
 
-   ```
+   ```sh
    git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
    cd kubeplus
    export KUBEPLUS_HOME=`pwd`
@@ -211,7 +133,6 @@ In order to try these examples, follow these steps:
 
 Go to appropriate examples directory and follow `steps.txt` there in.
 Make sure you have installed latest version of kubectl and you have created a minikube/kind cluster.
-
 
 ## Architecture
 
@@ -225,7 +146,7 @@ In versions < 4.0.0, the KubePlus's built-in CRDs like `ResourceComposition` wer
 `templates` folder. This led to them getting deleted on KubePlus's upgrade. In 4.0.0+ version, the CRDs
 have been moved to the `crds` folder, which avoids this issue.
 
-```
+```sh
 kubectl annotate customresourcedefinition resourcepolicies.workflows.kubeplus helm.sh/resource-policy=keep
 kubectl annotate customresourcedefinition resourceevents.workflows.kubeplus helm.sh/resource-policy=keep
 kubectl annotate customresourcedefinition resourcemonitors.workflows.kubeplus helm.sh/resource-policy=keep
@@ -270,7 +191,6 @@ We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kub
 We meet every Tuesday at 10.30 a.m. US CST. We use Slack huddle in `#kubeplus` channel on CNCF workspace
 The meeting agenda is [here](https://docs.google.com/document/d/18PDo2XtvspP__3EemADyHh94O1-yActrLMCOntOiv1Y/edit?usp=sharing).
 Please join us in our meetings. Your participation is welcome.
-
 
 ## Contact
 
