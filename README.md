@@ -103,7 +103,7 @@ The spec properties of the Kubernetes CRD wrapping the application Helm chart ar
 
 https://github.com/cloud-ark/kubeplus/assets/732525/efb255ff-fc73-446b-a583-4b89dbf61638
 
-To get started with an example, follow: [kubeplus/examples/getting-started.md](kubeplus/examples/getting-started.md)
+To get started with an hands-on example, follow: [Getting Started](examples/getting-started.md)
 
 <!--
 <p align="center">
