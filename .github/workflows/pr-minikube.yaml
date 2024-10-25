@@ -1,0 +1,124 @@
+name: CI-Minikube
+on:
+  - pull_request
+env:
+  ACTIONS_RUNNER_DEBUG: true
+  KUBEPLUS_TEST_OUTPUT: yes
+jobs:
+  job1:
+    runs-on: ubuntu-20.04
+    name: Deploy to minikube
+    steps:
+    - uses: actions/checkout@v2
+    - name: Start minikube
+      uses: medyagh/setup-minikube@master
+    - name: Try the cluster !
+      run: kubectl get pods -A
+    - name: Deploy KubePlus and application to minikube 
+      run: |
+        export SHELL=/bin/bash
+        eval $(minikube -p minikube docker-env)
+        echo "Glibc version"
+        ldd --version
+        sudo apt-get install python3-lxml
+        echo "Installing helm..."
+        wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz
+        gunzip helm-v3.12.1-linux-amd64.tar.gz
+        tar -xvf helm-v3.12.1-linux-amd64.tar
+        sudo mv linux-amd64/helm /usr/local/bin/.
+        echo "Installing golang..."
+        rm -rf /usr/local/go 
+        wget https://go.dev/dl/go1.22.4.linux-amd64.tar.gz
+        sudo tar -C /usr/local -xzf go1.22.4.linux-amd64.tar.gz
+        export PATH=$PATH:/usr/local/go/bin
+        go version
+        echo "Current directory:`pwd`"
+        echo "Folders:`ls`"
+        kubeplus_folder="$(basename `pwd`)"
+        echo "KubePlus folder name:$kubeplus_folder"
+        mkdir -p $HOME/go/src/github.com/cloud-ark
+        cd ..
+        runner_dir=`pwd`
+        echo "Current directory:`pwd`"
+        mv $kubeplus_folder $HOME/go/src/github.com/cloud-ark/kubeplus
+        cd $HOME/go/src/github.com/cloud-ark/kubeplus
+        export KUBEPLUS_HOME=`pwd`
+        export PATH=$KUBEPLUS_HOME/plugins:$PATH
+        echo "PATH:$PATH"
+        echo "KUBEPLUS_HOME:$KUBEPLUS_HOME"
+        kubectl kubeplus commands
+        export KUBEPLUS_NS=default
+        python3 -m venv venv
+        source venv/bin/activate
+        pip3 install -r requirements.txt
+        apiserver=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
+        echo "API_SERVER_URL:$apiserver"
+        python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
+        deactivate
+
+        echo "Building mutating-webhook..."
+        cd $KUBEPLUS_HOME/mutating-webhook
+        export GO111MODULE=on; go get github.com/googleapis/gnostic@v0.4.0
+        ./build-artifact.sh latest
+
+        echo "Building helmer..."
+        cd $KUBEPLUS_HOME/platform-operator/helm-pod/
+        go mod vendor
+        ./build-artifact.sh latest
+
+        echo "Building platform-operator..."
+        cd $KUBEPLUS_HOME/platform-operator
+        ./build-artifact.sh latest
+
+        echo "Building kubeconfiggenerator..."
+        cd $KUBEPLUS_HOME/deploy
+        ./build-artifact-kubeconfiggenerator.sh latest
+        #echo "Building webhook_init_container..."
+        #./build-artifact.sh latest
+        #echo "Building resource cleaner..."
+        #./build-artifact-clean.sh latest
+
+        #cd $KUBEPLUS_HOME/consumerui
+        #echo "Building consumer ui..."
+        #./build-artifact.sh latest
+
+        cd $KUBEPLUS_HOME
+        ls
+        docker images
+
+        echo "Installing KubePlus..."
+        helm install kubeplus ./deploy/kubeplus-chart --kubeconfig=kubeplus-saas-provider.json --set MUTATING_WEBHOOK=gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:latest --set PLATFORM_OPERATOR=gcr.io/cloudark-kubeplus/platform-operator:latest --set HELMER=gcr.io/cloudark-kubeplus/helm-pod:latest --set CRD_REGISTRATION_HELPER=gcr.io/cloudark-kubeplus/kubeconfiggenerator:latest  -n $KUBEPLUS_NS
+
+        kubectl get pods -A
+
+        until kubectl get pods -A | grep kubeplus | grep -i Running; do echo "Waiting for KubePlus to start.."; sleep 1; kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`; kubectl get pods $kubeplus_pod;  done 
+        kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`
+        echo "helmer logs..."
+        kubectl logs $kubeplus_pod -c helmer
+        echo "platform-operator logs..."
+        kubectl logs $kubeplus_pod -c platform-operator
+        echo "crd-hook logs..."
+        kubectl logs $kubeplus_pod -c crd-hook
+        kubectl upload chart ./examples/multitenancy/application-hosting/wordpress/wordpress-chart-0.0.3.tgz kubeplus-saas-provider.json
+        echo "Sleeping for 10 seconds before continuing..."
+        sleep 10
+        kubectl create -f ./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml --kubeconfig=kubeplus-saas-provider.json
+        until kubectl get crds | grep wordpressservices.platformapi.kubeplus; do echo "Waiting for CRD to be registered.."; sleep 1; done
+        kubectl create -f ./examples/multitenancy/application-hosting/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
+        kubectl get resourcecompositions
+        kubectl describe resourcecomposition wordpress-service-composition
+        until kubectl get pods -n wp-tenant1 | grep -e Running -e Pending; do kubectl describe pods -n wp-tenant1; echo "Waiting for Application Pods to start.."; sleep 1; done
+        kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
+        kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+        kubectl delete wordpressservice wp-tenant1 --kubeconfig=kubeplus-saas-provider.json
+        kubectl delete resourcecomposition wordpress-service-composition --kubeconfig=kubeplus-saas-provider.json
+        echo "Running tests..starting in 5 seconds"
+        sleep 5
+        cd tests
+        python3 -m venv venv
+        source venv/bin/activate
+        pip3 install -r requirements.txt
+        python3 -m unittest -v tests
+        deactivate
+        cd ../..
+        mv kubeplus $runner_dir
