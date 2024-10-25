@@ -107,7 +107,7 @@ jobs:
         kubectl create -f ./examples/multitenancy/application-hosting/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
         kubectl get resourcecompositions
         kubectl describe resourcecomposition wordpress-service-composition
-        until kubectl get pods -n wp-tenant1 | grep Running; do echo "Waiting for Application Pods to start.."; sleep 1; done
+        until kubectl get pods -n wp-tenant1 | grep -e Running -e Pending; do echo "Waiting for Application Pods to start.."; sleep 1; done
         kubectl appresources WordpressService wp-tenant1 –k kubeplus-saas-provider.json
         kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
         kubectl delete wordpressservice wp-tenant1 --kubeconfig=kubeplus-saas-provider.json

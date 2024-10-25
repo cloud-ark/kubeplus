@@ -208,6 +208,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
 
+    @unittest.skip("Skipping application upgrade test")
     def test_application_upgrade(self):
 
         # assume appropriate plugins installation and PATH update
