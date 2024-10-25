@@ -117,12 +117,13 @@ https://github.com/cloud-ark/kubeplus/assets/732525/efb255ff-fc73-446b-a583-4b89
 <img src="./docs/app-metrics.png" width="700" height="250" class="center">
 </p>-->
 
+## To get started with an hands-on example
+
+Follow: [Getting Started](examples/getting-started.md)
 ## Use Cases
 
 KubePlus can be used for:
 
-
-- To get started with an hands-on example, follow: [Getting Started](examples/getting-started.md)
 - [Application Hosting](./examples/multitenancy/application-hosting/wordpress/steps.txt)
 - [Platform Engineering](./examples/multitenancy/platform-engineering/steps.txt)
 - [Managed Service](./examples/multitenancy/managed-service/appday2ops/steps.txt)
