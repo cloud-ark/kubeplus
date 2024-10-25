@@ -2,7 +2,7 @@
 
 ## Intro
 
-KubePlus is a turn-key solution to transform any containerized application into a multi-instance SaaS.
+KubePlus is a turn-key solution that transforms any containerized application into a multi-instance SaaS.
 
 <p align="center">
 <img src="./docs/application-stacks-1.png" width="700" height="150" class="center">
@@ -22,12 +22,12 @@ KubePlus takes an application Helm chart and wraps it under a Kubernetes API (CR
 ### Isolation
 
 KubePlus takes an application Helm chart and wraps it in a Kubernetes API (CRD). This API is used to provision application instances on a cluster. KubePlus isolates each application instance in a separate namespace. It adds a safety perimeter around such namespaces using Kubernetes network policies and non-shared persistent volumes ensuring that each application instance is appropriately isolated from other instances. Additionally, it provides controls for application providers to deploy different tenant application instances on different worker nodes for node isolation.
-
 ### Security
 
 The KubePlus Operator does not need any admin-level permissions on a cluster for application providers. This allows application providers to offer their managed services on any K8s clusters including those owned by their customers. KubePlus comes with a small utility that allows you to create provider specific kubeconfig on a cluster in order to enable application deployments and management. Providers have an ability to create a consumer specific further limited kubeconfig to allow for self-service provisioning of application instances as well.
 
-### Resource utilization
+
+### Resource Utilization
 
 KubePlus provides controls to set per-namespace resource quotas. It also monitors usage of CPU, memory, storage, and network traffic at the application instance level. The collected metrics are available in different formats and can be pulled into Prometheus for historical usage tracking. KubePlus also supports ability to define licenses for the CRDs. A license defines the number of application instances that can be created for that CRD, and an expiry date. KubePlus prevents creation of application instances if the license terms are not met.
 
@@ -43,23 +43,28 @@ The spec properties of the Kubernetes CRD wrapping the application Helm chart ar
 
 ## Installation
 
-### Manual steps
+### Manual Installation Steps
 
-* Create cluster or use an existing cluster. For testing purposes you can create a [minikube](https://minikube.sigs.k8s.io/docs/) or [kind](https://kind.sigs.k8s.io/) cluster:
+1. **Create or use an existing Kubernetes cluster:**  
+For testing purposes you can create a [minikube](https://minikube.sigs.k8s.io/docs/) or [kind](https://kind.sigs.k8s.io/) cluster:
 
-   `minikube start`
+   ```sh
+   minikube start
+   ```
 
    or
 
-   `kind create cluster`
+   ```sh
+   kind create cluster
+   ```
 
-* Set the Namespace in which to deploy KubePlus
+2. **Set the Namespace for KubePlus deployment:**
 
    ```sh
    export KUBEPLUS_NS=default
    ```
 
-* Unzip KubePlus plugins and set up the PATH
+3. **Unzip KubePlus plugins and set up the PATH:**
 
    ```sh
    wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
@@ -69,7 +74,7 @@ The spec properties of the Kubernetes CRD wrapping the application Helm chart ar
    kubectl kubeplus commands
    ```
 
-* Create provider kubeconfig using provider-kubeconfig.py
+4. **Create the provider kubeconfig using the `provider-kubeconfig.py` utility:**
 
    ```sh
    wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/requirements.txt
@@ -82,50 +87,55 @@ The spec properties of the Kubernetes CRD wrapping the application Helm chart ar
    deactivate
    ```
 
-* Install KubePlus Operator using the generated provider kubeconfig
+5. **Install KubePlus Operator using the generated provider kubeconfig:**
 
    ```sh
    helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-4.0.0.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
    until kubectl get pods -A | grep kubeplus | grep Running; do echo "Waiting for KubePlus to start.."; sleep 1; done
    ```
 
-### Script for linux
+### Automated Installation (Script)
 
-* To install KubePlus and its kubectl plugin, use the following commands:
+The following script automates the steps outlined above for Linux systems,To install KubePlus and its kubectl plugin:
 
-   ```sh
-   wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/install.sh
-   chmod +x install.sh
-   ./install.sh --kubeplus --kubeplus-plugin
-   ```
+```sh
+wget https://raw.githubusercontent.com/cloud-ark/kubeplus/master/install.sh
+chmod +x install.sh
+./install.sh --kubeplus --kubeplus-plugin
+```
+
+> **Note:** The script is a simplified method for installing KubePlus and its kubectl plugin. It combines the manual steps into a single execution for ease of use. It is recommended for those who want a quick setup without manually configuring each step.
 
 ## Demo
 
 https://github.com/cloud-ark/kubeplus/assets/732525/efb255ff-fc73-446b-a583-4b89dbf61638
 
-To get started with an hands-on example, follow: [Getting Started](examples/getting-started.md)
+
 
 <!--
 <p align="center">
 <img src="./docs/app-metrics.png" width="700" height="250" class="center">
 </p>-->
 
-## Use cases
+## To get started with an hands-on example
 
-KubePlus can be used in the following use cases.
+Follow: [Getting Started](examples/getting-started.md)
+## Use Cases
 
-* [Application Hosting](./examples/multitenancy/application-hosting/wordpress/steps.txt)
-* [Platform Engineering](./examples/multitenancy/platform-engineering/steps.txt)
-* [Managed Service](./examples/multitenancy/managed-service/appday2ops/steps.txt)
+KubePlus can be used for:
 
-In order to try these examples, follow these steps:
+- [Application Hosting](./examples/multitenancy/application-hosting/wordpress/steps.txt)
+- [Platform Engineering](./examples/multitenancy/platform-engineering/steps.txt)
+- [Managed Service](./examples/multitenancy/managed-service/appday2ops/steps.txt)
 
-   ```sh
-   git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
-   cd kubeplus
-   export KUBEPLUS_HOME=`pwd`
-   export PATH=$KUBEPLUS_HOME/plugins:$PATH
-   ```
+To try these examples:
+
+```sh
+git clone --depth 1 https://github.com/cloud-ark/kubeplus.git
+cd kubeplus
+export KUBEPLUS_HOME=`pwd`
+export PATH=$KUBEPLUS_HOME/plugins:$PATH
+```
 
 Go to appropriate examples directory and follow `steps.txt` there in.
 Make sure you have installed latest version of kubectl and you have created a minikube/kind cluster.
