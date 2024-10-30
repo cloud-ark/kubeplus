@@ -98,6 +98,7 @@ if $INSTALL_KUBEPLUS; then
             exit 1
         fi
         echo "Waiting for KubePlus to start.."
+        kubectl get pods --namespace $KUBEPLUS_NAMESPACE
         sleep 1
         elapsed=$((elapsed + 1))
     done

@@ -1,10 +1,10 @@
 name: CI
 on:
-#  pull_request:
   workflow_dispatch:
-#  push:
-#    branches:
-#      - master
+  pull_request:
+  push:
+    branches:
+    - master
 env:
   ACTIONS_RUNNER_DEBUG: true
   KUBEPLUS_TEST_OUTPUT: yes
