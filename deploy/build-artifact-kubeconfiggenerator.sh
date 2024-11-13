@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit on error
+set -e
+
 if (( $# < 1 )); then
     echo "./build-artifact-kubeconfiggenerator.sh <latest | versioned>"
 fi
