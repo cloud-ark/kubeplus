@@ -29,7 +29,7 @@ $ kubectl kubeplus commands
      $ cd examples/multitenancy/wordpress/
 
 4. Install KubePlus Operator:
-   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-4.0.0.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=kubeplus-saas-provider.json
+   $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-4.0.1.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=kubeplus-saas-provider.json
 
 5. Extract consumer kubeconfig:
    $ kubectl retrieve kubeconfig consumer $KUBEPLUS_NS -s $apiserver > consumer.conf
