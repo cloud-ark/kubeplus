@@ -43,9 +43,40 @@ func main() {
 	whsvr := &WebhookServer{
 		server: &http.Server{
 			Addr:      fmt.Sprintf(":%v", parameters.port),
-			TLSConfig: &tls.Config{Certificates: []tls.Certificate{pair}},
-		},
-		// client: kubeClient,
+			TLSConfig: &tls.Config{MinVersion: tls.VersionTLS12,
+					       MaxVersion: tls.VersionTLS12,
+					       Certificates: []tls.Certificate{pair},
+			                       CipherSuites: []uint16{
+								// TLS 1.0 - 1.2 cipher suites.
+								tls.TLS_RSA_WITH_RC4_128_SHA,
+								tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+								tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+								tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+								tls.TLS_RSA_WITH_AES_128_CBC_SHA256,
+								tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+								tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+								tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
+								tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+								tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+								tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
+								tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
+								tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+								tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+								tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+								tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+								tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+								tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+								tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+								tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+								tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+								tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+								// TLS 1.3 cipher suites.
+								tls.TLS_AES_128_GCM_SHA256,
+								tls.TLS_AES_256_GCM_SHA384,
+								tls.TLS_CHACHA20_POLY1305_SHA256,
+								},
+							},
+				},
 	}
 
 	// define http server and server handler
