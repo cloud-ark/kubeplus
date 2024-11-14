@@ -271,6 +271,8 @@ func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v
 		return errResponse
 	}
 
+	/*
+	// Deprecating support for Pod-level policies.
 	if req.Kind.Kind == "Pod" {
 		customAPI, rootKind, rootName, rootNamespace := checkServiceLevelPolicyApplicability(ar)
 		var podResourcePatches []patchOperation
@@ -303,6 +305,7 @@ func (whsvr *WebhookServer) mutate(ar *v1.AdmissionReview, httpMethod string) *v
 			patchOperations = append(patchOperations, podPatch)
 		}
 	}
+	*/
 
 	if req.Kind.Kind == "Namespace" {
 
@@ -368,7 +371,7 @@ func handleDelete(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	//fmt.Printf("Body:%v\n", body)
 	apiv1 := req.Kind
 	apiv2 := req.Resource
-	fmt.Printf("&&&&&\n")
+	//fmt.Printf("&&&&&\n")
 	fmt.Printf("APIv1:%s, APIv2:%s\n", apiv1, apiv2)
 	group := req.Resource.Group
 	version := req.Resource.Version
@@ -510,9 +513,9 @@ func checkAndApplyNSPolicies(ar *v1.AdmissionReview) []patchOperation {
 	// come from arSaved.
 
 	podNamespace := req.Namespace
-	fmt.Printf("Pod Namespace:%s\n", podNamespace)
+	//fmt.Printf("Pod Namespace:%s\n", podNamespace)
 	releaseName := namespaceHelmAnnotationMap[podNamespace]
-	fmt.Printf("Release Name:%s\n", releaseName)
+	//fmt.Printf("Release Name:%s\n", releaseName)
 
 	customAPI := ""
 	serviceKind := ""
@@ -610,10 +613,10 @@ func saveResourcePolicy(ar *v1.AdmissionReview) {
 	*/
 
 	var resourcePolicy platformworkflowv1alpha1.ResourcePolicy
-	err = json.Unmarshal(body, &resourcePolicy)
-	if err != nil {
+	json.Unmarshal(body, &resourcePolicy)
+	/*if err != nil {
 	    fmt.Println(err)	
-	}
+	}*/
 
 	kind := resourcePolicy.Spec.Resource.Kind
 	lowercaseKind := strings.ToLower(kind)
@@ -681,12 +684,12 @@ func checkServiceLevelPolicyApplicability(ar *v1.AdmissionReview) (string, strin
 			//fmt.Printf("All Annotations:%v\n", annotations1)
 		}
 		releaseName := annotations1["meta.helm.sh/release-name"]
-		fmt.Printf("Helm release name:%s\n", releaseName)
+		//fmt.Printf("Helm release name:%s\n", releaseName)
 		capiGroup := ""
 		capiVersion := ""
         rootKind, rootName, capiGroup, capiVersion = getAPIDetailsFromHelmReleaseAnnotation(releaseName)
         rootAPIVersion = capiGroup + "/" + capiVersion
-        fmt.Printf("RK:%s, RN:%s, RAPI:%s\n", rootKind, rootName, rootAPIVersion)
+        //fmt.Printf("RK:%s, RN:%s, RAPI:%s\n", rootKind, rootName, rootAPIVersion)
 	} else {
 		rootKind, rootName, rootAPIVersion = findRoot(namespace, ownerKindS, ownerNameS, ownerAPIVersionS)
 	}
@@ -754,8 +757,8 @@ func findRoot(namespace, kind, name, apiVersion string) (string, string, string)
 																				   name,
 																	   		 	   metav1.GetOptions{})
 	if err2 != nil {
-		fmt.Printf("Error 2:%v\n", err2)
-	    fmt.Println(err2)
+		//fmt.Printf("Error 2:%v\n", err2)
+	    //fmt.Println(err2)
 		return rootKind, rootName, rootAPIVersion
 	}
 
@@ -822,8 +825,8 @@ func getAPIDetailsFromHelmReleaseAnnotation(releaseName string) (string, string,
 }
 
 func applyPolicies(ar *v1.AdmissionReview, customAPI, rootKind, rootName, rootNamespace string) []patchOperation {
-	req := ar.Request
-	body := req.Object.Raw
+	//req := ar.Request
+	//body := req.Object.Raw
 
 	/*
 	podName, _ := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
@@ -839,12 +842,11 @@ func applyPolicies(ar *v1.AdmissionReview, customAPI, rootKind, rootName, rootNa
 	}*/
 
 	// TODO: Defaulting to the first container. Take input for additional containers
+	/*
 	_, _, _, err1 := jsonparser.Get(body, "spec", "containers", "[0]", "resources")
 	if err1 != nil {
 		fmt.Printf("Error:%v\n", err1)
-	} /*else {
-		//fmt.Printf("Resources:%v\n", string(res))
-	}*/
+	} */
 
 	var operation string
 	//fmt.Printf("DataType:%s\n", dataType)
@@ -880,6 +882,7 @@ func applyPolicies(ar *v1.AdmissionReview, customAPI, rootKind, rootName, rootNa
 		podResRequest["cpu"] = cpuRequest
 		podResRequest["memory"] = memRequest
 
+		//TODO: Defaulting to the first container. Take input for additional containers
 		patch1 := patchOperation{
 			Op:    operation,
 			Path:  "/spec/containers/0/resources/requests",
@@ -899,6 +902,7 @@ func applyPolicies(ar *v1.AdmissionReview, customAPI, rootKind, rootName, rootNa
 		podResLimits["cpu"] = cpuLimit
 		podResLimits["memory"] = memLimit
 
+		//TODO: Defaulting to the first container. Take input for additional containers
 		patch2 := patchOperation{
 			Op:    operation,
 			Path:  "/spec/containers/0/resources/limits",
@@ -939,12 +943,21 @@ func getFieldValueFromInstance(fieldName, rootKind, rootName string) string {
 		//rootkey := lowercaseRootKind + "/" + rootNamespace + "/" + rootName
 	rootkey := lowercaseRootKind + "-" + rootName
 	//fmt.Printf("Root Key:%s\n", rootkey)
-	arSaved := resourceNameObjMap[rootkey].(*v1.AdmissionReview)
-	reqObject := arSaved.Request
-	reqspec := reqObject.Object.Raw
+	/*fmt.Printf("Printing resourceNameObjMap -- \n")
+	for key, value := range resourceNameObjMap {
+        	fmt.Println(key, ":", value)
+    	}
+	fmt.Printf("--\n")*/
 
-	fieldValue, _, _, _ := jsonparser.Get(reqspec, "spec", field)
-	fieldValueS := string(fieldValue)
+	val := resourceNameObjMap[rootkey]
+	fieldValueS := ""
+	if val != nil {
+		arSaved := resourceNameObjMap[rootkey].(*v1.AdmissionReview)
+		reqObject := arSaved.Request
+		reqspec := reqObject.Object.Raw
+		fieldValue, _, _, _ := jsonparser.Get(reqspec, "spec", field)
+		fieldValueS = string(fieldValue)
+	}
 	/*if err2 != nil {
 		fmt.Printf("Error:%v\n", err2)
 	} else {
@@ -972,18 +985,19 @@ func getObjectDetails(ar *v1.AdmissionReview) (string, string, string) {
 }
 
 func trackCustomAPIs(ar *v1.AdmissionReview) *v1.AdmissionResponse {
+	fmt.Printf("Inside trackCustomAPIs...")
 	req := ar.Request
 	body := req.Object.Raw
 
 	var platformWorkflow platformworkflowv1alpha1.ResourceComposition
-	err := json.Unmarshal(body, &platformWorkflow)
-	if err != nil {
+	json.Unmarshal(body, &platformWorkflow)
+	/*if err != nil {
 	    fmt.Println(err)
-	}
+	}*/
 
 	platformWorkflowName, _ := jsonparser.GetUnsafeString(body, "metadata", "name")
 
-	namespace1, _, _, err := jsonparser.Get(body, "metadata", "namespace")
+	namespace1, _, _, _ := jsonparser.Get(body, "metadata", "namespace")
 	namespace := string(namespace1)
 	if namespace == "" {
 		namespace = "default"
@@ -1221,11 +1235,11 @@ func getPaCAnnotation(ar *v1.AdmissionReview) map[string]string {
 	crdplural, _ := jsonparser.GetUnsafeString(body, "spec", "names", "plural")
 	crdversion, _ := jsonparser.GetUnsafeString(body, "spec", "versions","[0]","name")
 	crdgroup, _ := jsonparser.GetUnsafeString(body, "spec", "group")
-	fmt.Printf("CRDKind:%s, CRDPlural:%s, CRDVersion:%s\n", crdkind, crdplural, crdversion)
+	//fmt.Printf("CRDKind:%s, CRDPlural:%s, CRDVersion:%s\n", crdkind, crdplural, crdversion)
 	customAPI := crdgroup + "/" + crdversion + "/" + crdkind
 	apiVersion := crdgroup + "/" + crdversion
 	platformWorkflowName, ok := customAPIPlatformWorkflowMap[customAPI]
-	fmt.Printf("PlatformWorkflowName:%s, ok:%v\n", platformWorkflowName, ok)
+	//fmt.Printf("PlatformWorkflowName:%s, ok:%v\n", platformWorkflowName, ok)
 	chartKinds := ""
 	if ok {
 
@@ -1234,7 +1248,7 @@ func getPaCAnnotation(ar *v1.AdmissionReview) map[string]string {
 	 		chartKindsB := DryRunChart(platformWorkflowName, namespace)
 	 		chartKinds = string(chartKindsB)*/
 			chartKinds = chartKindMap[platformWorkflowName]
-	 		fmt.Printf("Chart Kinds:%v\n", chartKinds)
+	 		//fmt.Printf("Chart Kinds:%v\n", chartKinds)
 
 	 		// If no kinds are found in the dry run then there is nothing to be done.
 	 		if chartKinds == "" {
@@ -1258,7 +1272,7 @@ func getPaCAnnotation(ar *v1.AdmissionReview) map[string]string {
 
 	 	//fmt.Printf("Unique kinds:%v\n", uniqueKinds)
 	 	chartKinds = strings.Join(uniqueKinds, ";")
-	  	fmt.Printf("Annotating %s\n", chartKinds)
+	  	//fmt.Printf("Annotating %s\n", chartKinds)
 
 		allAnnotations, _, _, err := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
 		if err == nil {
@@ -1278,7 +1292,7 @@ func getPaCAnnotation(ar *v1.AdmissionReview) map[string]string {
 
 	 	namespace = GetNamespace()
 	 	manpageConfigMapName := registerManPage(crdkind, apiVersion, platformWorkflowName, namespace)
-	 	fmt.Printf("### ManPage ConfigMap Name:%s ####\n", manpageConfigMapName)
+	 	//fmt.Printf("### ManPage ConfigMap Name:%s ####\n", manpageConfigMapName)
 
 	    manPageAnnotation := "resource/usage"
 	    manPageAnnotationValue := manpageConfigMapName
@@ -1302,9 +1316,9 @@ func checkCRDNameValidity(ar *v1.AdmissionReview) string {
                 fmt.Errorf("Error:%s\n", err)
         }
 
-	crname, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
-        fmt.Printf("CR Name:%s\n", crname)
-        fmt.Printf("Kind:%s\n", kind)
+	//crname, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
+        //fmt.Printf("CR Name:%s\n", crname)
+        //fmt.Printf("Kind:%s\n", kind)
 
 	message1 := "";
 	if strings.Contains(kind, ".") {
