@@ -1,10 +1,10 @@
 package main
 
 import (
-	"flag"
-	"time"
 	"context"
+	"flag"
 	"sync"
+	"time"
 
 	"github.com/golang/glog"
 	kubeinformers "k8s.io/client-go/informers"
@@ -47,7 +47,6 @@ func main() {
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 	platformInformerFactory := informers.NewSharedInformerFactory(platformOperatorClient, time.Second*30)
 	platformController := NewPlatformController(kubeClient, platformOperatorClient, kubeInformerFactory, platformInformerFactory)
-	//resourcePolicyController := NewResourcePolicyController(kubeClient, platformOperatorClient, kubeInformerFactory, platformInformerFactory)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -56,13 +55,6 @@ func main() {
 		defer wg.Done()
 		platformController.Run(1, ctx.Done())
 	}()
-
-	/*
-	go func() {
-		defer wg.Done()
-		resourcePolicyController.Run(1, ctx.Done())
-	}()
-	*/
 
 	go kubeInformerFactory.Start(ctx.Done())
 	go platformInformerFactory.Start(ctx.Done())
