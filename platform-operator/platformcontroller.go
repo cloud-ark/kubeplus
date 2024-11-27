@@ -1,25 +1,23 @@
 package main
 
 import (
+	"context"
+	gerrors "errors"
 	"fmt"
-	"time"
 	"io/ioutil"
 	"log"
+	"reflect"
 	"strconv"
 	"strings"
-	"context"
-	gerrors "errors" 
-	"reflect"
+	"time"
 
-	_ "github.com/lib/pq"
 	"net/http"
 	"net/url"
-	
-	"gopkg.in/yaml.v3"
+
+	_ "github.com/lib/pq"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-        apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
@@ -63,10 +61,10 @@ const (
 	MessageResourceSynced = "PlatformStack synced successfully"
 
 	// Annotations to put on Consumer CRDs.
-	CREATED_BY_KEY = "created-by"
+	CREATED_BY_KEY   = "created-by"
 	CREATED_BY_VALUE = "kubeplus"
-	HELMER_HOST = "localhost"
-	HELMER_PORT = "8090"
+	HELMER_HOST      = "localhost"
+	HELMER_PORT      = "8090"
 )
 
 // Controller is the controller implementation for Foo resources
@@ -76,10 +74,10 @@ type Controller struct {
 	// sampleclientset is a clientset for our own API group
 	platformStackclientset clientset.Interface
 
-	deploymentsLister appslisters.DeploymentLister
-	deploymentsSynced cache.InformerSynced
-	platformStacksLister        listers.ResourceCompositionLister
-	platformStacksSynced        cache.InformerSynced
+	deploymentsLister    appslisters.DeploymentLister
+	deploymentsSynced    cache.InformerSynced
+	platformStacksLister listers.ResourceCompositionLister
+	platformStacksSynced cache.InformerSynced
 
 	// workqueue is a rate limited work queue. This is used to queue work to be
 	// processed instead of performing it as soon as a change happens. This
@@ -115,14 +113,14 @@ func NewPlatformController(
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
 	controller := &Controller{
-		kubeclientset:     kubeclientset,
-		platformStackclientset:   platformStackclientset,
-		deploymentsLister: deploymentInformer.Lister(),
-		deploymentsSynced: deploymentInformer.Informer().HasSynced,
-		platformStacksLister:        platformStackInformer.Lister(),
-		platformStacksSynced:        platformStackInformer.Informer().HasSynced,
-		workqueue:         workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "PlatformStacks"),
-		recorder:          recorder,
+		kubeclientset:          kubeclientset,
+		platformStackclientset: platformStackclientset,
+		deploymentsLister:      deploymentInformer.Lister(),
+		deploymentsSynced:      deploymentInformer.Informer().HasSynced,
+		platformStacksLister:   platformStackInformer.Lister(),
+		platformStacksSynced:   platformStackInformer.Informer().HasSynced,
+		workqueue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "PlatformStacks"),
+		recorder:               recorder,
 	}
 
 	glog.Info("Setting up event handlers")
@@ -132,8 +130,6 @@ func NewPlatformController(
 		UpdateFunc: func(old, new interface{}) {
 			newDepl := new.(*platformworkflowv1alpha1.ResourceComposition)
 			oldDepl := old.(*platformworkflowv1alpha1.ResourceComposition)
-			//fmt.Println("New Version:%s", newDepl.ResourceVersion)
-			//fmt.Println("Old Version:%s", oldDepl.ResourceVersion)
 			if newDepl.ResourceVersion == oldDepl.ResourceVersion {
 				// Periodic resync will send update events for all known Deployments.
 				// Two different versions of the same Deployment will always have different RVs.
@@ -144,9 +140,9 @@ func NewPlatformController(
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-		        _, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+			_, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			if err == nil {
-			   controller.deleteFoo(obj)
+				controller.deleteFoo(obj)
 			}
 		},
 	})
@@ -297,14 +293,13 @@ func (c *Controller) handleObject(obj interface{}) {
 	}
 }
 
-
 func (c *Controller) deleteFoo(obj interface{}) {
 
 	fmt.Println("Inside delete Foo")
 
 	var err error
 	if _, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
-	   panic(err)
+		panic(err)
 	}
 
 	foo := obj.(*platformworkflowv1alpha1.ResourceComposition)
@@ -333,13 +328,11 @@ func (c *Controller) deleteFoo(obj interface{}) {
 	action := "delete"
 	handleCRD(foo.Name, kind, version, group, plural, action, namespace, chartURL, chartName)
 
- 	resPolicySpec := foo.Spec.ResPolicy
- 	//fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
+	resPolicySpec := foo.Spec.ResPolicy
 
 	deleteResourcePolicy(resPolicySpec, namespace)
 
- 	resMonitorSpec := foo.Spec.ResMonitor
- 	//fmt.Printf("ResMonitorSpec:%v\n",resMonitorSpec)
+	resMonitorSpec := foo.Spec.ResMonitor
 
 	deleteResourceMonitor(resMonitorSpec, namespace)
 
@@ -367,11 +360,11 @@ func (c *Controller) updateFoo(oldObj, newObj interface{}) {
 	}
 	fmt.Printf("GHI - update\n")
 	fmt.Printf("NS:%s", namespace)
-	kind      := newFoo.Spec.NewResource.Resource.Kind
-	group     := newFoo.Spec.NewResource.Resource.Group
-	version   := newFoo.Spec.NewResource.Resource.Version
-	plural    := newFoo.Spec.NewResource.Resource.Plural
-	chartURL  := newFoo.Spec.NewResource.ChartURL
+	kind := newFoo.Spec.NewResource.Resource.Kind
+	group := newFoo.Spec.NewResource.Resource.Group
+	version := newFoo.Spec.NewResource.Resource.Version
+	plural := newFoo.Spec.NewResource.Resource.Plural
+	chartURL := newFoo.Spec.NewResource.ChartURL
 	chartName := newFoo.Spec.NewResource.ChartName
 	fmt.Printf("Kind:%s, Version:%s Group:%s, Plural:%s\n", kind, version, group, plural)
 	fmt.Printf("ChartURL:%s, ChartName:%s\n", chartURL, chartName)
@@ -442,14 +435,14 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
- 	resPolicySpec := foo.Spec.ResPolicy
- 	fmt.Printf("ResPolicySpec:%v\n",resPolicySpec)
+	resPolicySpec := foo.Spec.ResPolicy
+	fmt.Printf("ResPolicySpec:%v\n", resPolicySpec)
 
 	// Instantiate ResourcePolicy object
 	createResourcePolicy(resPolicySpec, namespace)
 
- 	resMonitorSpec := foo.Spec.ResMonitor
- 	fmt.Printf("ResMonitorSpec:%v\n",resMonitorSpec)
+	resMonitorSpec := foo.Spec.ResMonitor
+	fmt.Printf("ResMonitorSpec:%v\n", resMonitorSpec)
 
 	// Instantiate ResourceMonitor object
 	createResourceMonitor(resMonitorSpec, namespace)
@@ -469,23 +462,22 @@ func (c *Controller) updateResourceCompositionStatus(foo *platformworkflowv1alph
 	timeout := 300
 	count := 0
 	for {
-	_, err := c.platformStackclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Update(context.Background(), fooCopy, metav1.UpdateOptions{})
-	//_, err := c.sampleclientset.MoodlecontrollerV1().Moodles(foo.Namespace).Update(fooCopy)
-	if err != nil {
-		fmt.Printf("Platformcontroller.go  : ERROR in UpdateResourceCompositionStatus %e\n", err)
-		fmt.Printf("Platformcontroller.go  : ERROR %v\n", err)
-		time.Sleep(1 * time.Second)
-		count = count + 1
-	} else {
-		fmt.Printf("Successfully updated Resource Composition status.")
-		break
-	}
-	if count >= timeout {
-		fmt.Printf("\n--")
-		fmt.Printf("CR instance %v not ready till timeout.\n", foo)
-		fmt.Printf("---")
-		break
-	}
+		_, err := c.platformStackclientset.WorkflowsV1alpha1().ResourceCompositions(namespace).Update(context.Background(), fooCopy, metav1.UpdateOptions{})
+		if err != nil {
+			fmt.Printf("Platformcontroller.go  : ERROR in UpdateResourceCompositionStatus %e\n", err)
+			fmt.Printf("Platformcontroller.go  : ERROR %v\n", err)
+			time.Sleep(1 * time.Second)
+			count = count + 1
+		} else {
+			fmt.Printf("Successfully updated Resource Composition status.")
+			break
+		}
+		if count >= timeout {
+			fmt.Printf("\n--")
+			fmt.Printf("CR instance %v not ready till timeout.\n", foo)
+			fmt.Printf("---")
+			break
+		}
 	}
 }
 
@@ -510,15 +502,11 @@ func createResourceMonitor(resMonitorSpec interface{}, namespace string) {
 	}
 }
 
-func deleteResourceMonitor(resMonitorSpec interface{}, namespace string) {	
+func deleteResourceMonitor(resMonitorSpec interface{}, namespace string) {
 	fmt.Println("Inside deleteResourceMonitor")
 	resMonitorObject := resMonitorSpec.(platformworkflowv1alpha1.ResourceMonitor)
 	inputResMonitorName := resMonitorObject.ObjectMeta.Name
-	/*namespace := resMonitorObject.ObjectMeta.Namespace
-	if namespace == "" {
-		namespace = "default"
-	}*/
-	fmt.Printf("ResMonitor:%s, Namespace:%s\n",inputResMonitorName,namespace)
+	fmt.Printf("ResMonitor:%s, Namespace:%s\n", inputResMonitorName, namespace)
 
 	// Using Typed client
 	config, err := rest.InClusterConfig()
@@ -566,15 +554,11 @@ func createResourcePolicy(resPolicySpec interface{}, namespace string) {
 	}
 }
 
-func deleteResourcePolicy(resPolicySpec interface{}, namespace string) {	
+func deleteResourcePolicy(resPolicySpec interface{}, namespace string) {
 	fmt.Println("Inside deleteResourcePolicy.")
 	resPolicyObject := resPolicySpec.(platformworkflowv1alpha1.ResourcePolicy)
 	inputResPolicyName := resPolicyObject.ObjectMeta.Name
-	/*namespace := resPolicyObject.ObjectMeta.Namespace
-	if namespace == "" {
-		namespace = "default"
-	}*/
-	fmt.Printf("ResPolicy:%s, Namespace:%s\n",inputResPolicyName,namespace)
+	fmt.Printf("ResPolicy:%s, Namespace:%s\n", inputResPolicyName, namespace)
 
 	// Using Typed client
 	config, err := rest.InClusterConfig()
@@ -601,91 +585,6 @@ func deleteResourcePolicy(resPolicySpec interface{}, namespace string) {
 	}
 }
 
-func flatten(yaml_contents map[string]interface{}, types_dict map[string]apiextensionsv1beta1.JSONSchemaProps) map[string]apiextensionsv1beta1.JSONSchemaProps {
-	for key, value := range yaml_contents {
-		//fmt.Printf("Key:%s ", key)
-		//fmt.Printf("Value:%s Type:%T\n", value, value)
-		_, ok := value.(string)
-		if ok {
-			//str_dict := map[string]apiextensionsv1beta1.JSONSchemaProps{"type": apiextensionsv1beta1.JSONSchemaProps{Type: "string"}}
-			types_dict[key] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
-		}
-		_, ok = value.(int)
-		if ok {
-			//str_dict := map[string]apiextensionsv1beta1.JSONSchemaProps{"type": apiextensionsv1beta1.JSONSchemaProps{Type: "integer"}}
-			types_dict[key] = apiextensionsv1beta1.JSONSchemaProps{Type: "integer"}
-		}
-		_, ok = value.(bool)
-		if ok {
-			//str_dict := map[string]apiextensionsv1beta1.JSONSchemaProps{"type": apiextensionsv1beta1.JSONSchemaProps{Type: "boolean"}}
-			types_dict[key] = apiextensionsv1beta1.JSONSchemaProps{Type: "boolean"} 
-		}
-		_, ok = value.(map[string]interface{})
-		if ok {
-			value1, _ := value.(map[string]interface{})
-			inner_prop_dict := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
-			inner_prop_dict = flatten(value1, inner_prop_dict)
-		        
-			var jsonSchemaInner apiextensionsv1beta1.JSONSchemaProps
-        		jsonSchemaInner.Type = "object"
-        		jsonSchemaInner.Properties = inner_prop_dict
-
-			types_dict[key] = jsonSchemaInner
-		}
-		_, ok = value.([]interface{})
-		if ok {
-			items_dict := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
-			items_dict["type"] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
-			//prop_dict["items"] = items_dict
-		        
-			var jsonSchemaInner apiextensionsv1beta1.JSONSchemaProps
-        		jsonSchemaInner.Type = "array"
-        		jsonSchemaInner.Properties = items_dict
-
-			types_dict[key] = jsonSchemaInner
-		}
-
-	}
-	//fmt.Println(types_dict)
-	return types_dict
-}
-
-func getChartValueTypes(data []byte) map[string]apiextensionsv1beta1.JSONSchemaProps {
-
-	// Create a map to hold the YAML data
-	var yaml_contents  map[string]interface{}
-
-	openAPIV3SchemaPropertiesInnerDetails := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
-
-	// Unmarshal the YAML data into the map
-	err := yaml.Unmarshal(data, &yaml_contents)
-	if err != nil {
-		fmt.Println(err)
-		return openAPIV3SchemaPropertiesInnerDetails
-	}
-
-	/*attr_types := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
-	openAPIV3SchemaObj := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
-	openAPIV3SchemaProperties := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
-	openAPIV3SchemaPropertiesInner := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
-	*/
-
-	openAPIV3SchemaPropertiesInnerDetails = flatten(yaml_contents, openAPIV3SchemaPropertiesInnerDetails)
-	//fmt.Println(openAPIV3SchemaPropertiesInnerDetails)
-	//fmt.Println("=====")
-
-	/*openAPIV3SchemaPropertiesInner["type"] = apiextensionsv1beta1.JSONSchemaProps{Type: "object"}
-	openAPIV3SchemaPropertiesInner["properties"] = openAPIV3SchemaPropertiesInnerDetails
-	openAPIV3SchemaProperties["spec"] = openAPIV3SchemaPropertiesInner
-	openAPIV3SchemaObj["type"] = apiextensionsv1beta1.JSONSchemaProps{Type: "object"}
-	openAPIV3SchemaObj["properties"] = openAPIV3SchemaProperties
-	attr_types["openAPIV3Schema"] = openAPIV3SchemaObj
-
-	attr_types_json, _ := json.Marshal(attr_types)*/
-	return openAPIV3SchemaPropertiesInnerDetails
-
-}
-
 func handleCRD(rescomposition, kind, version, group, plural, action, namespace, chartURL, chartName string) error {
 	fmt.Printf("Inside handleCRD %s\n", action)
 	cfg, err := rest.InClusterConfig()
@@ -699,88 +598,6 @@ func handleCRD(rescomposition, kind, version, group, plural, action, namespace, 
 	kubePlusAnnotation[CREATED_BY_KEY] = CREATED_BY_VALUE
 
 	fmt.Printf("Getting values.yaml of the service Helm chart\n")
-
-	//chartValuesBytes := GetValuesYaml(rescomposition, namespace)
-	/*
-	valuesYaml := string(chartValuesBytes)
-	fmt.Printf("%v\n", valuesYaml)
-	lines := strings.Split(valuesYaml, "\n")
-
-	properties := make([]string,0)
-	for i:=0; i<len(lines);i++ {
-		line1 := strings.TrimSpace(lines[i])
-		if line1 != "" {
-			fmt.Printf("ABC %s\n", line1)
-			parts := strings.Split(line1, ":")
-			if len(parts) == 2 {
-				propName := strings.TrimSpace(parts[0])
-				properties = append(properties, propName)
-			}
-		}
-	}
-
-	fmt.Printf("=====================\n")
-	fmt.Printf("%v\n", properties)
-	fmt.Printf("=====================\n")
-	*/
-	/*
-	for i:=0; i<len(properties); i++ {
-		fieldName := properties[i]
-		specProperties[fieldName] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
-	}*/
-
-	//chartValuesTypes := GetValuesTypes(rescomposition, namespace)
-
-	/*
-	specProperties := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
-	specProperties = getChartValueTypes(chartValuesBytes)
-
-	// Add "nodeName" to the specProperties to support node isolation.
-	specProperties["nodeName"] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
-
-	fmt.Printf("SpecProperties:%v\n", specProperties)
-
-	var jsonSchemaInner apiextensionsv1beta1.JSONSchemaProps
-	jsonSchemaInner.Type = "object"
-	jsonSchemaInner.Properties = specProperties
-
-	statusProperties := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
-	statusProperties["helmrelease"] = apiextensionsv1beta1.JSONSchemaProps{Type: "string"}
-	var jsonSchemaStatus apiextensionsv1beta1.JSONSchemaProps
-	jsonSchemaStatus.Type = "object"
-	jsonSchemaStatus.Properties = statusProperties
-
-	specField := make(map[string]apiextensionsv1beta1.JSONSchemaProps)
-	specField["spec"] = jsonSchemaInner
-	specField["status"] = jsonSchemaStatus
-	var jsonSchemaOuter apiextensionsv1beta1.JSONSchemaProps
-	jsonSchemaOuter.Type = "object"
-	jsonSchemaOuter.Properties = specField
-
-	crd := &apiextensionsv1beta1.CustomResourceDefinition{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: plural + "." + group,
-			Annotations: kubePlusAnnotation,
-		},
-		Spec: apiextensionsv1beta1.CustomResourceDefinitionSpec{
-			Group: group,
-			Versions: []apiextensionsv1beta1.CustomResourceDefinitionVersion{
-				{
-					Name: version,
-					Served: true,
-					Storage: true,
-					Schema: &apiextensionsv1beta1.CustomResourceValidation{OpenAPIV3Schema: &jsonSchemaOuter},
-					//Schema: &apiextensionsv1beta1.CustomResourceValidation{OpenAPIV3Schema: &apiextensionsv1beta1.JSONSchemaProps{Type: "object"}},
-				},
-			},
-			Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
-				Plural: plural,
-				Kind: kind,
-			},
-			Scope: "Namespaced",
-		},
-	}
-	*/
 
 	crdPresent := false
 	crdList, err := crdClient.CustomResourceDefinitions().List(context.Background(), metav1.ListOptions{})
@@ -798,10 +615,8 @@ func handleCRD(rescomposition, kind, version, group, plural, action, namespace, 
 		}
 		group1 := crdObj.Spec.Group
 		version1 := crdObj.Spec.Versions[0].Name
-		//endpoint := "apis/" + group + "/" + version
 		kind1 := crdObj.Spec.Names.Kind
 		plural1 := crdObj.Spec.Names.Plural
-		//fmt.Printf("Kind:%s, Group:%s, Version:%s, Endpoint:%s, Plural:%s\n",kind1, group1, version1, endpoint, plural1)
 
 		if group == group1 && kind == kind1 && version == version1 && plural == plural1 {
 			crdPresent = true
@@ -811,17 +626,12 @@ func handleCRD(rescomposition, kind, version, group, plural, action, namespace, 
 
 	if !crdPresent {
 		if action == "create" {
-		/*	_, err1 := crdClient.CustomResourceDefinitions().Create(context.Background(), crd, metav1.CreateOptions{})
-			if err1 != nil {
-				panic(err1.Error())
+			resp := CreateCRD(kind, version, group, plural, chartURL, chartName)
+			respString := string(resp)
+			fmt.Printf("\nCreate CRD response:%s\n", respString)
+			if strings.Contains(respString, "Error") {
+				return gerrors.New(respString)
 			}
-		*/
-		resp := CreateCRD(kind, version, group, plural, chartURL, chartName)
-		respString := string(resp)
-		fmt.Printf("\nCreate CRD response:%s\n", respString)
-		if strings.Contains(respString, "Error") {
-			return gerrors.New(respString)
-		 }
 		}
 	} else {
 		fmt.Printf("CRD Group:%s Version:%s Kind:%s Plural:%s found.\n", group, version, kind, plural)
@@ -845,54 +655,34 @@ func handleCRD(rescomposition, kind, version, group, plural, action, namespace, 
 }
 
 func GetValuesYaml(platformworkflow, namespace string) []byte {
-        args := fmt.Sprintf("platformworkflow=%s&namespace=%s", platformworkflow, namespace)
-        fmt.Printf("Inside GetValuesYaml...\n")
-        //serviceHost, servicePort := getServiceEndpoint("kubeplus")
-        //fmt.Printf("After getServiceEndpoint...\n")
-        var url1 string
-        url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/getchartvalues?%s", HELMER_HOST, HELMER_PORT, args)
-        fmt.Printf("Url:%s\n", url1)
-        body := queryKubeDiscoveryService(url1)
-        return body
+	args := fmt.Sprintf("platformworkflow=%s&namespace=%s", platformworkflow, namespace)
+	fmt.Printf("Inside GetValuesYaml...\n")
+	var url1 string
+	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/getchartvalues?%s", HELMER_HOST, HELMER_PORT, args)
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
 }
 
 func CreateCRD(kind, version, group, plural, chartURL, chartName string) []byte {
-        args := fmt.Sprintf("kind=%s&version=%s&group=%s&plural=%s&chartURL=%s&chartName=%s",kind, version, group, plural, chartURL, chartName)
-        fmt.Printf("Inside CreateCRD...\n")
-        var url1 string
+	args := fmt.Sprintf("kind=%s&version=%s&group=%s&plural=%s&chartURL=%s&chartName=%s", kind, version, group, plural, chartURL, chartName)
+	fmt.Printf("Inside CreateCRD...\n")
+	var url1 string
 	url1 = fmt.Sprintf("http://localhost:5005/registercrd?%s", args)
-        fmt.Printf("Url:%s\n", url1)
-        body := queryKubeDiscoveryService(url1)
-        return body
+	fmt.Printf("Url:%s\n", url1)
+	body := queryKubeDiscoveryService(url1)
+	return body
 }
-
-
-func GetValuesTypes(platformworkflow, namespace string) []byte {
-        args := fmt.Sprintf("platformworkflow=%s&namespace=%s", platformworkflow, namespace)
-        fmt.Printf("Inside GetValuesTypes...\n")
-        //serviceHost, servicePort := getServiceEndpoint("kubeplus")
-        //fmt.Printf("After getServiceEndpoint...\n")
-        var url1 string
-        url1 = fmt.Sprintf("http://localhost:5005/getchartvaluetypes?%s", args)
-        fmt.Printf("Url:%s\n", url1)
-        body := queryKubeDiscoveryService(url1)
-        return body
-}
-
-
 
 func deleteCRDInstances(kind, group, version, plural, namespace string) []byte {
 	fmt.Printf("Inside deleteCRDInstances...\n")
 	args := fmt.Sprintf("kind=%s&group=%s&version=%s&plural=%s&namespace=%s", kind, group, version, plural, namespace)
-	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
-	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deletecrdinstances?%s", HELMER_HOST, HELMER_PORT, args)
 	fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body
 }
-
 
 func updateCRDInstances(kind, group, version, plural, namespace, chartURL, chartName string) []byte {
 	fmt.Printf("Inside updateCRDInstances...\n")
@@ -905,20 +695,15 @@ func updateCRDInstances(kind, group, version, plural, namespace, chartURL, chart
 	return body
 }
 
-
-
 func deleteChartCRDs(chartName string) []byte {
 	fmt.Printf("Inside deleteChartCRDs...\n")
 	args := fmt.Sprintf("chartName=%s", chartName)
-	//serviceHost, servicePort := getServiceEndpoint("kubeplus")
-	//fmt.Printf("After getServiceEndpoint...\n")
 	var url1 string
 	url1 = fmt.Sprintf("http://%s:%s/apis/kubeplus/deletechartcrds?%s", HELMER_HOST, HELMER_PORT, args)
 	fmt.Printf("Url:%s\n", url1)
 	body := queryKubeDiscoveryService(url1)
 	return body
 }
-
 
 func getServiceEndpoint(servicename string) (string, string) {
 	fmt.Printf("..Inside getServiceEndpoint...\n")
@@ -931,20 +716,19 @@ func getServiceEndpoint(servicename string) (string, string) {
 	host := discoveryServiceObj.Spec.ClusterIP
 	port := discoveryServiceObj.Spec.Ports[0].Port
 	stringPort := strconv.Itoa(int(port))
-    fmt.Printf("Host:%s, Port:%s\n", host, stringPort)
+	fmt.Printf("Host:%s, Port:%s\n", host, stringPort)
 	return host, stringPort
 }
 
 func getKubePlusNamespace() string {
 	filePath := "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 	content, err := ioutil.ReadFile(filePath)
-    if err != nil {
-     	fmt.Printf("Namespace file reading error:%v\n", err)
-    }
-    ns := string(content)
-    ns = strings.TrimSpace(ns)
-    //fmt.Printf("CRD Hook NS:%s\n", ns)
-    return ns
+	if err != nil {
+		fmt.Printf("Namespace file reading error:%v\n", err)
+	}
+	ns := string(content)
+	ns = strings.TrimSpace(ns)
+	return ns
 }
 
 func queryKubeDiscoveryService(url1 string) []byte {
@@ -967,10 +751,6 @@ func queryKubeDiscoveryService(url1 string) []byte {
 	}
 	defer resp.Body.Close()
 	resp_body, _ := ioutil.ReadAll(resp.Body)
-
-	//fmt.Println(resp.Status)
-	//fmt.Println(string(resp_body))
-	//fmt.Println("Exiting QueryCompositionEndpoint")
 	return resp_body
 }
 
