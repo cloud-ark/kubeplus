@@ -460,6 +460,18 @@ class KubeconfigGenerator(object):
                 ruleGroup22["verbs"] = verbsGroup22
                 all_resources.extend(resourceGroup22)
 
+                # PersistentVolumes and PersistentVolumeClaims for charts storage in helmer container 
+                ruleGroup23 = {}
+                apiGroup23 = [""]
+                resourceGroup23 = ["persistentvolumes", "persistentvolumeclaims"]
+                verbsGroup23 = ["get", "watch", "list", "create", "delete", "update", "patch"]
+                ruleGroup23["apiGroups"] = apiGroup23
+                ruleGroup23["resources"] = resourceGroup23
+                ruleGroup23["verbs"] = verbsGroup23
+                all_resources.extend(resourceGroup23)
+
+                
+
                 ruleList = []
                 ruleList.append(ruleGroup1)
                 ruleList.append(ruleGroup2)
@@ -483,6 +495,7 @@ class KubeconfigGenerator(object):
                 ruleList.append(ruleGroup20)
                 ruleList.append(ruleGroup21)
                 ruleList.append(ruleGroup22)
+                ruleList.append(ruleGroup23)
 
                 role["rules"] = ruleList
 

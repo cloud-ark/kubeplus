@@ -280,6 +280,37 @@ spec:
   selector:
     app: kubeplus
 ---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: kubeplus-pv  
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: "keep" 
+spec:
+  capacity:
+    storage: 1Gi  # Adjust the size as needed
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /kubeplus  # This can be a path on the host system where charts will be stored.
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kubeplus-pvc  
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: "keep" 
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi  # Make sure this matches the PV size
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -387,7 +418,8 @@ spec:
         - name: shared-data
           emptyDir: {}
         - name: chart-volume
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: kubeplus-pvc
         - name: webhook-certs
           secret:
             secretName: webhook-tls-certificates
