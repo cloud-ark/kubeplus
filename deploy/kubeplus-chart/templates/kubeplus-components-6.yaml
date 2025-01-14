@@ -355,6 +355,8 @@ spec:
         resources:
           requests:
             ephemeral-storage: "70Mi"
+          limits:
+            ephemeral-storage: "75Mi"
         env:
           - name: KUBEPLUS_NAMESPACE
             valueFrom:
@@ -373,6 +375,8 @@ spec:
         resources:
           requests:
             ephemeral-storage: "10Mi"
+          limits:
+            ephemeral-storage: "15Mi"
         env:
           - name: CHECK_KYVERNO_POLICIES
             value: "{{ .Values.CHECK_KYVERNO_POLICIES }}"
@@ -394,6 +398,8 @@ spec:
         resources:
           requests:
             ephemeral-storage: "5Mi"
+          limits:
+            ephemeral-storage: "10Mi"
         command: [ "/platform-operator"]
       - name: consumerui
         image: {{ .Values.CONSUMERUI }}   #gcr.io/cloudark-kubeplus/consumerui:0.0.6
@@ -401,6 +407,8 @@ spec:
         resources:
           requests:
             ephemeral-storage: "10Mi"
+          limits:
+            ephemeral-storage: "20Mi"
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
         image: {{ .Values.HELMER  }}  #gcr.io/cloudark-kubeplus/helm-pod:3.0.17
@@ -408,6 +416,8 @@ spec:
         resources:
           requests:
             ephemeral-storage: "10Mi"
+          limits:
+            ephemeral-storage: "15Mi"
         command: ["/root/helm-pod"]
         volumeMounts:
         - mountPath: /chart
