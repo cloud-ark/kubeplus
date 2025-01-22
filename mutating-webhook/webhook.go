@@ -11,7 +11,7 @@ import (
 	"os"
 
 	"github.com/buger/jsonparser"
-	guuid "github.com/google/uuid"
+	//guuid "github.com/google/uuid"
 
 	"k8s.io/api/admission/v1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1"
@@ -1376,8 +1376,8 @@ func handleCustomAPIs(ar *v1.AdmissionReview, httpMethod string) *v1.AdmissionRe
 	//cruid, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "uid")
 	// We have to generate a uid as when the request is received there is no uid yet.
 	// When the object is persisted Kubernetes will overwrite the uid with a new value - that is okay.
-	id := guuid.New()
-	cruid := id.String()
+	//id := guuid.New()
+	//cruid := id.String()
 	//fmt.Printf("CR Uid:%s\n", cruid)
 
 	labelsBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "metadata", "labels")
@@ -1404,10 +1404,10 @@ func handleCustomAPIs(ar *v1.AdmissionReview, httpMethod string) *v1.AdmissionRe
 	customAPI := apiVersion + "/" + kind
 	//fmt.Printf("CustomAPI:%s\n", customAPI)
 
-	// Save name:uid mapping
-	customAPIInstance := customAPI + "/" + namespace + "/" + crname
-
-	customAPIInstanceUIDMap[customAPIInstance] = cruid
+	// No longer being used - runs into concurrent map writes error (#1385)
+	// Save name:uid mapping 
+	//customAPIInstance := customAPI + "/" + namespace + "/" + crname
+	//customAPIInstanceUIDMap[customAPIInstance] = cruid
 
 	platformWorkflowName := customAPIPlatformWorkflowMap[customAPI]
 
