@@ -104,3 +104,69 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    helm delete kubeplus -n $KUBEPLUS_NS
    python3 provider-kubeconfig.py delete $KUBEPLUS_NS
    ```
+
+## Network Isolation Testing
+
+This section verifies that the network policies are correctly isolating HelloWorldService instances.
+
+### Steps
+
+#### Install a Network Driver
+
+On Minikube, install a network driver capable of recognizing `NetworkPolicy` objects (e.g., Cilium):
+
+```bash
+$ minikube start --cni=cilium
+$ eval $(minikube docker-env)
+```
+
+#### Refer for main readme for installing the kubeplus operator and plugings
+
+#### Create HelloWorldService Instances
+
+```bash
+$ kubectl create -f hello-world-service-composition.yaml --kubeconfig=provider.conf
+$ kubectl create -f hs1.yaml --kubeconfig=consumer.conf
+$ kubectl create -f hs2.yaml --kubeconfig=consumer.conf
+```
+
+#### Test Network Isolation
+
+- **Ping/HTTP Test from `hs1` to `hs2`:**
+
+  ```bash
+  $ HELLOWORLD_POD_HS1=$(kubectl get pods -n hs1 --kubeconfig=consumer.conf -o jsonpath='{.items[0].metadata.name}')
+  $ kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=consumer.conf -- curl <hs2-app-endpoint>
+  ```
+
+  The connection should be denied.
+
+- **Ping/HTTP Test from `hs2` to `hs1`:**
+
+  ```bash
+  $ HELLOWORLD_POD_HS2=$(kubectl get pods -n hs2 --kubeconfig=consumer.conf -o jsonpath='{.items[0].metadata.name}')
+  $ kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=consumer.conf -- curl <hs1-app-endpoint>
+  ```
+
+  The connection should be denied.
+
+---
+
+## Clean Up
+
+### As Consumer
+
+```bash
+$ kubectl delete -f hs1-no-replicas.yaml --kubeconfig=consumer.conf
+$ kubectl delete -f hs2-no-replicas.yaml --kubeconfig=consumer.conf
+$ kubectl delete -f hello-world-service-composition.yaml --kubeconfig=consumer.conf
+```
+
+### As Provider
+
+```bash
+$ kubectl delete -f hello-world-service-composition.yaml --kubeconfig=provider.conf
+$ kubectl get crds
+```
+
+Ensure the `helloworldservices.platformapi.kubeplus` CRD is removed.
