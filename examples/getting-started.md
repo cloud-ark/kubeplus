@@ -126,8 +126,8 @@ $ eval $(minikube docker-env)
 
 ```bash
 $ kubectl create -f hello-world-service-composition.yaml --kubeconfig=provider.conf
-$ kubectl create -f hs1.yaml --kubeconfig=consumer.conf
-$ kubectl create -f hs2.yaml --kubeconfig=consumer.conf
+$ kubectl create -f hs1.yaml --kubeconfig=provider.conf
+$ kubectl create -f hs2.yaml --kubeconfig=provider.conf
 ```
 
 #### Test Network Isolation
@@ -135,8 +135,8 @@ $ kubectl create -f hs2.yaml --kubeconfig=consumer.conf
 - **Ping/HTTP Test from `hs1` to `hs2`:**
 
   ```bash
-  $ HELLOWORLD_POD_HS1=$(kubectl get pods -n hs1 --kubeconfig=consumer.conf -o jsonpath='{.items[0].metadata.name}')
-  $ kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=consumer.conf -- curl <hs2-app-endpoint>
+  $ HELLOWORLD_POD_HS1=$(kubectl get pods -n hs1 --kubeconfig=provider.conf -o jsonpath='{.items[0].metadata.name}')
+  $ kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=provider.conf -- curl <hs2-app-endpoint>
   ```
 
   The connection should be denied.
@@ -144,8 +144,8 @@ $ kubectl create -f hs2.yaml --kubeconfig=consumer.conf
 - **Ping/HTTP Test from `hs2` to `hs1`:**
 
   ```bash
-  $ HELLOWORLD_POD_HS2=$(kubectl get pods -n hs2 --kubeconfig=consumer.conf -o jsonpath='{.items[0].metadata.name}')
-  $ kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=consumer.conf -- curl <hs1-app-endpoint>
+  $ HELLOWORLD_POD_HS2=$(kubectl get pods -n hs2 --kubeconfig=provider.conf -o jsonpath='{.items[0].metadata.name}')
+  $ kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=provider.conf -- curl <hs1-app-endpoint>
   ```
 
   The connection should be denied.
@@ -157,16 +157,10 @@ $ kubectl create -f hs2.yaml --kubeconfig=consumer.conf
 ### As Consumer
 
 ```bash
-$ kubectl delete -f hs1-no-replicas.yaml --kubeconfig=consumer.conf
-$ kubectl delete -f hs2-no-replicas.yaml --kubeconfig=consumer.conf
-$ kubectl delete -f hello-world-service-composition.yaml --kubeconfig=consumer.conf
-```
-
-### As Provider
-
-```bash
+$ kubectl delete -f hs1-no-replicas.yaml --kubeconfig=provider.conf
+$ kubectl delete -f hs2-no-replicas.yaml --kubeconfig=provider.conf
 $ kubectl delete -f hello-world-service-composition.yaml --kubeconfig=provider.conf
-$ kubectl get crds
 ```
+
 
 Ensure the `helloworldservices.platformapi.kubeplus` CRD is removed.
