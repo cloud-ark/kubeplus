@@ -408,7 +408,7 @@ spec:
           requests:
             ephemeral-storage: "10Mi"
           limits:
-            ephemeral-storage: "20Mi"
+            ephemeral-storage: "500Mi"
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
         image: {{ .Values.HELMER  }}  #gcr.io/cloudark-kubeplus/helm-pod:3.0.17
