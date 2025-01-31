@@ -104,3 +104,72 @@ Let’s look at an example of creating a multi-instance WordPress Service using 
    helm delete kubeplus -n $KUBEPLUS_NS
    python3 provider-kubeconfig.py delete $KUBEPLUS_NS
    ```
+
+## Network Isolation Testing
+
+This section verifies that the network policies are correctly isolating application instances.
+
+### Steps
+
+#### Install a Network Driver
+
+On Minikube, install a network driver capable of recognizing `NetworkPolicy` objects (e.g., Cilium):
+
+```bash
+$ minikube start --cni=cilium
+$ eval $(minikube docker-env)
+```
+
+#### Refer main README for installing the kubeplus operator and plugings
+
+#### Create HelloWorldService Instances
+
+```bash
+$ kubectl create -f hello-world-service-composition.yaml --kubeconfig=provider.conf
+$ kubectl create -f hs1.yaml --kubeconfig=provider.conf
+$ kubectl create -f hs2.yaml --kubeconfig=provider.conf
+```
+
+#### Test Network Isolation
+
+- **Ping/HTTP Test from `hs1` to `hs2`:**
+
+  ```bash
+  # Get the Pod name for hs1
+  HELLOWORLD_POD_HS1=$(kubectl get pods -n hs1 --kubeconfig=provider.conf -o jsonpath='{.items[0].metadata.name}')
+
+  # Get the Pod IP for hs2
+  HS2_POD_IP=$(kubectl get pods -n hs2 --kubeconfig=provider.conf -o jsonpath='{.items[0].status.podIP}')
+
+  # Test connectivity from hs1 to hs2 using the IP
+  kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=provider.conf -- curl $HS2_POD_IP
+  ```
+
+  The connection should be denied.
+
+- **Ping/HTTP Test from `hs2` to `hs1`:**
+
+  ```bash
+  # Get the Pod name for hs2
+  HELLOWORLD_POD_HS2=$(kubectl get pods -n hs2 --kubeconfig=provider.conf -o jsonpath='{.items[0].metadata.name}')
+
+  # Get the Pod IP for hs1
+  HS1_POD_IP=$(kubectl get pods -n hs1 --kubeconfig=provider.conf -o jsonpath='{.items[0].status.podIP}')
+
+  # Test connectivity from hs2 to hs1 using the IP
+  kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=provider.conf -- curl $HS1_POD_IP
+  ```
+
+  The connection should be denied.
+
+## Clean Up
+
+
+```bash
+$ kubectl delete -f hs1-no-replicas.yaml --kubeconfig=provider.conf
+$ kubectl delete -f hs2-no-replicas.yaml --kubeconfig=provider.conf
+$ kubectl delete -f hello-world-service-composition.yaml --kubeconfig=provider.conf
+```
+
+
+Ensure the `helloworldservices.platformapi.kubeplus` CRD is removed.
