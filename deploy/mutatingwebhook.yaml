@@ -22,14 +22,10 @@ webhooks:
     timeoutSeconds: 30    
     rules:
       - operations: [ "CREATE"]
-        apiGroups: ["workflows.kubeplus", "apps", "extensions", "", "apiextensions.k8s.io", "platformapi.kubeplus"]
-        apiVersions: ["v1alpha1", "v1", "v1beta1"]
-        resources: ["resourcepolicies", "resourcecompositions", "resourcemonitors", "resourceevents", "pods", "customresourcedefinitions","namespaces","*"]
-      - operations: [ "DELETE","UPDATE"]
+        apiGroups: ["", "apiextensions.k8s.io"]
+        apiVersions: ["v1"]
+        resources: ["customresourcedefinitions","namespaces"]
+      - operations: ["CREATE","DELETE","UPDATE"]
         apiGroups: ["workflows.kubeplus", "platformapi.kubeplus"]
         apiVersions: ["v1alpha1"]
         resources: ["resourcepolicies", "resourcecompositions", "resourcemonitors", "resourceevents","*"]
-      - operations: [ "UPDATE"]
-        apiGroups: ["workflows.kubeplus"]
-        apiVersions: ["v1alpha1"]
-        resources: ["resourcepolicies", "resourcecompositions", "resourcemonitors", "resourceevents"]
