@@ -1,0 +1,26 @@
+1. kubectl upload chart helloappv1-chart-0.0.1.tgz kubeplus-saas-provider.json
+2. kubectl upload chart helloappv2-chart-0.0.1.tgz kubeplus-saas-provider.json
+3. kubectl create -f helloappv1-res-composition.yaml --kubeconfig=kubeplus-saas-provider.json
+4. kubectl create -f helloappv2-res-composition.yaml --kubeconfig=kubeplus-saas-provider.json
+5. kubectl create -f helloappv1.yaml
+6. kubectl get helloappv1s -o json
+7. kubectl get pods -n hs1
+8. APP1_URL=`kubectl appurl HelloAppV1 hs1 default -k kubeplus-saas-provider.json`
+9. curl $APP1_URL
+10. kubectl create -f helloappv1-1.yaml
+11. kubectl get helloappv2s -o json
+12. kubectl get pods -n hs1
+13. APP2_URL=`kubectl appurl HelloAppV2 hs1 default -k kubeplus-saas-provider.json`
+14. curl $APP2_URL
+15. kubectl describe helloappv1s
+16. kubectl delete -f helloappv1.yaml 
+17. kubectl get ns
+18. curl $APP2_URL
+19. kubectl delete -f helloappv1-1.yaml
+20. kubectl get helloappv2s
+21. kubectl get ns
+23. kubectl create -f helloappv1.yaml
+24. kubectl get ns
+25. kubectl create -f helloappv1-1-invalidkind.yaml
+26. kubectl delete -f helloappv1-res-composition.yaml --kubeconfig=kubeplus-saas-provider.json
+27. kubectl delete -f helloappv2-res-composition.yaml --kubeconfig=kubeplus-saas-provider.json
