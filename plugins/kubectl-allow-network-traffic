@@ -1,0 +1,6 @@
+#!/bin/bash
+
+source utils.sh  # if you have common utility functions; else remove this line
+
+# This wrapper passes all arguments to our Python script.
+python3 "$KUBEPLUS_HOME/plugins/network_traffic.py" allow "$@"
