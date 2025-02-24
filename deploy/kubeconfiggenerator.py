@@ -1318,19 +1318,17 @@ def kp_state_restore():
 
                 if 'respolicy' in json_op['spec']:
                     if 'policy' in json_op['spec']['respolicy']['spec']:
-                        if 'podconfig' in json_op['spec']['respolicy']['spec']['policy']:
-                            podconfig = json_op['spec']['respolicy']['spec']['policy']['podconfig']
+                        if 'quota' in json_op['spec']['respolicy']['spec']['policy']:
+                            quota_obj = json_op['spec']['respolicy']['spec']['policy']['quota']
                             res_comp['policy'] = json_op['spec']['respolicy']['spec']['policy']
-                            if 'limits' in podconfig:
-                                if 'cpu' in podconfig['limits']:
-                                    res_comp['cpu_limits'] = podconfig['limits']['cpu']
-                                if 'memory' in podconfig['limits']:
-                                    res_comp['mem_limits'] = podconfig['limits']['memory']
-                            if 'requests' in podconfig:
-                                if 'cpu' in podconfig['requests']:
-                                    res_comp['cpu_requests'] = podconfig['requests']['cpu']
-                                if 'memory' in podconfig['requests']:
-                                    res_comp['mem_requests'] = podconfig['requests']['memory']
+                            if 'limits.cpu' in quota_obj:
+                                res_comp['cpu_limits'] = quota_obj['limits.cpu']
+                            if 'limits.memory' in quota_obj: 
+                                res_comp['mem_limits'] = quota_obj['limits.memory']
+                            if 'requests.cpu' in quota_obj:
+                                res_comp['cpu_requests'] = quota_obj['requests.cpu']
+                            if 'requests.memory' in quota_obj:
+                                res_comp['mem_requests'] = quota_obj['requests.memory']
 
 
                 res_comp['name'] = name

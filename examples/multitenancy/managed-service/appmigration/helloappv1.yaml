@@ -1,0 +1,6 @@
+apiVersion: platformapi.kubeplus/v1alpha1
+kind: HelloAppV1
+metadata:
+  name: hs1
+spec:
+  greeting: Hello hello hello 
