@@ -179,7 +179,7 @@ In some scenarios, you might want to enable controlled communication between ins
 kubectl allow network traffic hs1 hs2 -k provider.conf
 ```
 
-When you no longer want to allow controlled communication between instances running in different namespaces, you can revoke the previously granted permissions
+To deny the traffic between namespace 
 
 ```sh
 kubectl deny network traffic hs1 hs2 -k provider.conf
