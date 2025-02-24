@@ -1,8 +1,0 @@
-apiVersion: platformapi.kubeplus/v1alpha1
-kind: HelloWorldService 
-metadata:
-  name: hello-world-tenant1
-spec:
-  # Change this value appropriately for your setup
-  #nodeName: gke-cluster-1-default-pool-cd58e87e-5nmr
-  nodeName: minikube
