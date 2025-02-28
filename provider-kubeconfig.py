@@ -143,7 +143,11 @@ class KubeconfigGenerator(object):
                 role["kind"] = "ClusterRole"
                 metadata = {}
                 metadata["name"] = sa
+                metadata["namespace"] = namespace
                 role["metadata"] = metadata
+
+                # all resources
+                all_resources = []
 
                 # Read all resources
                 ruleGroup1 = {}
@@ -153,6 +157,16 @@ class KubeconfigGenerator(object):
                 ruleGroup1["apiGroups"] = apiGroup1
                 ruleGroup1["resources"] = resourceGroup1
                 ruleGroup1["verbs"] = verbsGroup1
+                all_resources.extend(resourceGroup1)
+
+                ruleGroup8 = {}
+                apiGroup8 = ["apps"]
+                resourceGroup8 = ["deployments","daemonsets","deployments/rollback","deployments/scale","replicasets","replicasets/scale","statefulsets","statefulsets/scale"]
+                verbsGroup8 = ["get","watch","list","create","delete","update","patch","deletecollection"]
+                ruleGroup8["apiGroups"] = apiGroup8
+                ruleGroup8["resources"] = resourceGroup8
+                ruleGroup8["verbs"] = verbsGroup8
+                all_resources.extend(resourceGroup8)
 
                 # Impersonate users, groups, serviceaccounts
                 ruleGroup9 = {}
@@ -162,6 +176,7 @@ class KubeconfigGenerator(object):
                 ruleGroup9["apiGroups"] = apiGroup9
                 ruleGroup9["resources"] = resourceGroup9
                 ruleGroup9["verbs"] = verbsGroup9
+                all_resources.extend(resourceGroup9)
 
                 # Pod/portforward to open consumerui
                 ruleGroup10 = {}
@@ -171,11 +186,13 @@ class KubeconfigGenerator(object):
                 ruleGroup10["apiGroups"] = apiGroup10
                 ruleGroup10["resources"] = resourceGroup10
                 ruleGroup10["verbs"] = verbsGroup10
+                all_resources.extend(resourceGroup10)
 
                 ruleList = []
                 ruleList.append(ruleGroup1)
                 ruleList.append(ruleGroup9)
                 ruleList.append(ruleGroup10)
+                ruleList.append(ruleGroup8)
                 role["rules"] = ruleList
 
                 roleName = sa + "-role-impersonate.yaml"
@@ -186,6 +203,7 @@ class KubeconfigGenerator(object):
                 roleBinding["kind"] = "ClusterRoleBinding"
                 metadata = {}
                 metadata["name"] = sa
+                metadata["namespace"] = namespace
                 roleBinding["metadata"] = metadata
 
                 subject = {}
@@ -206,12 +224,26 @@ class KubeconfigGenerator(object):
                 roleBindingName = sa + "-rolebinding-impersonate.yaml"
                 create_role_rolebinding(roleBinding, roleBindingName, kubeconfig)
 
+               # create configmap to store all resources
+                cfg_map_filename = sa + "-perms.txt"
+                fp = open(cfg_map_filename, "w")
+                all_resources.sort()
+                all_resources_uniq = []
+                [all_resources_uniq.append(x) for x in all_resources if x not in all_resources_uniq]
+                fp.write(str(all_resources_uniq))
+                fp.close()
+                cfg_map_name = sa + "-perms"
+                cmd = "kubectl create configmap " + cfg_map_name + " -n " + namespace  + " --from-file=" + cfg_map_filename
+                self.run_command(cmd)
+
+
         def _apply_provider_rbac(self, sa, namespace, kubeconfig):
                 role = {}
                 role["apiVersion"] = "rbac.authorization.k8s.io/v1"
                 role["kind"] = "ClusterRole"
                 metadata = {}
                 metadata["name"] = sa
+                metadata["namespace"] = namespace
                 role["metadata"] = metadata
 
                 # all resources
@@ -428,6 +460,18 @@ class KubeconfigGenerator(object):
                 ruleGroup22["verbs"] = verbsGroup22
                 all_resources.extend(resourceGroup22)
 
+                # PersistentVolumes and PersistentVolumeClaims for charts storage in helmer container 
+                ruleGroup23 = {}
+                apiGroup23 = [""]
+                resourceGroup23 = ["persistentvolumes", "persistentvolumeclaims"]
+                verbsGroup23 = ["get", "watch", "list", "create", "delete", "update", "patch"]
+                ruleGroup23["apiGroups"] = apiGroup23
+                ruleGroup23["resources"] = resourceGroup23
+                ruleGroup23["verbs"] = verbsGroup23
+                all_resources.extend(resourceGroup23)
+
+                
+
                 ruleList = []
                 ruleList.append(ruleGroup1)
                 ruleList.append(ruleGroup2)
@@ -451,6 +495,7 @@ class KubeconfigGenerator(object):
                 ruleList.append(ruleGroup20)
                 ruleList.append(ruleGroup21)
                 ruleList.append(ruleGroup22)
+                ruleList.append(ruleGroup23)
 
                 role["rules"] = ruleList
 
@@ -462,6 +507,7 @@ class KubeconfigGenerator(object):
                 roleBinding["kind"] = "ClusterRoleBinding"
                 metadata = {}
                 metadata["name"] = sa
+                metadata["namespace"] = namespace
                 roleBinding["metadata"] = metadata
 
                 subject = {}
@@ -483,13 +529,15 @@ class KubeconfigGenerator(object):
                 create_role_rolebinding(roleBinding, roleBindingName, kubeconfig)
 
                 # create configmap to store all resources
-                fp = open("kubeplus-saas-provider-perms.txt", "w")
+                cfg_map_filename = sa + "-perms.txt"
+                fp = open(cfg_map_filename, "w")
                 all_resources.sort()
                 all_resources_uniq = []
                 [all_resources_uniq.append(x) for x in all_resources if x not in all_resources_uniq]
                 fp.write(str(all_resources_uniq))
                 fp.close()
-                cmd = "kubectl create configmap kubeplus-saas-provider-perms -n " + namespace  + " --from-file=kubeplus-saas-provider-perms.txt"
+                cfg_map_name = sa + "-perms"
+                cmd = "kubectl create configmap " + cfg_map_name + " -n " + namespace  + " --from-file=" + cfg_map_filename 
                 self.run_command(cmd)
 
         def _update_rbac(self, permissionfile, sa, namespace, kubeconfig):
@@ -498,6 +546,7 @@ class KubeconfigGenerator(object):
                 role["kind"] = "ClusterRole"
                 metadata = {}
                 metadata["name"] = sa + "-update"
+                metadata["namespace"] = namespace
                 role["metadata"] = metadata
                 
                 ruleList = []
@@ -546,6 +595,7 @@ class KubeconfigGenerator(object):
                 roleBinding["kind"] = "ClusterRoleBinding"
                 metadata = {}
                 metadata["name"] = sa + "-update"
+                metadata["namespace"] = namespace
                 roleBinding["metadata"] = metadata
 
                 subject = {}
@@ -567,14 +617,16 @@ class KubeconfigGenerator(object):
                 create_role_rolebinding(roleBinding, roleBindingName, kubeconfig)
 
                 # Read configmap to get earlier permissions; delete it and create it with all new permissions:
-                cmd = "kubectl get configmap kubeplus-saas-provider-perms -o json -n " + namespace
+                cfg_map_name = sa + "-perms"
+                cfg_map_filename = sa + "-perms.txt"
+                cmd = "kubectl get configmap " + cfg_map_name + " -o json -n " + namespace
                 out1, err1 = self.run_command(cmd)
                 print("Original Perms Out:" + str(out1))
                 print("Perms Err:" + str(err1))
                 kubeplus_perms = []
                 if out1 != '':
                     json_op = json.loads(out1)
-                    perms = json_op['data']['kubeplus-saas-provider-perms.txt']
+                    perms = json_op['data'][cfg_map_filename]
                     print(perms)
                     k_perms = perms.split(",")
                     for p in k_perms:
@@ -588,17 +640,17 @@ class KubeconfigGenerator(object):
 
                 print("New perms:" + str(new_resources))
 
-                cmd = "kubectl delete configmap kubeplus-saas-provider-perms -n " + namespace
+                cmd = "kubectl delete configmap " + cfg_map_name + " -n " + namespace
                 self.run_command(cmd)
 
                 # create configmap to store all resources
-                fp = open("kubeplus-saas-provider-perms.txt", "w")
+                fp = open(cfg_map_filename, "w")
                 new_resources.sort()
                 new_resources_uniq = []
                 [new_resources_uniq.append(x) for x in new_resources if x not in new_resources_uniq]
                 fp.write(str(new_resources_uniq))
                 fp.close()
-                cmd = "kubectl create configmap kubeplus-saas-provider-perms -n " + namespace  + " --from-file=kubeplus-saas-provider-perms.txt"
+                cmd = "kubectl create configmap " + cfg_map_name + " -n " + namespace  + " --from-file=" + cfg_map_filename 
                 self.run_command(cmd)
     
 
@@ -750,28 +802,29 @@ if __name__ == '__main__':
         permission_help = permission_help + "Should be a JSON file with the following structure:\n"
         permission_help = permission_help + "{perms:{<apiGroup1>:[{resource1|resource/resourceName::<resourceName>: [verb1, verb2, ...]}, {resource2: [..]}], {<apiGroup2>:[...]}}}"
         parser.add_argument("-p", "--permissionfile", help=permission_help)
-        args = parser.parse_args()
-        #print(args.action)
-        #print(args.namespace)
+        parser.add_argument("-c", "--consumer", help="Generate kubeconfig for consumer")
+        pargs = parser.parse_args()
+        #print(pargs.action)
+        #print(pargs.namespace)
 
-        action = args.action
-        namespace = args.namespace
+        action = pargs.action
+        namespace = pargs.namespace
 
-        if args.kubeconfig:
-            #print("Kubeconfig file:" + args.kubeconfig)
-            kubeconfigPath = args.kubeconfig
+        if pargs.kubeconfig:
+            #print("Kubeconfig file:" + pargs.kubeconfig)
+            kubeconfigPath = pargs.kubeconfig
 
         kubeconfigString = " --kubeconfig=" + kubeconfigPath
 
         api_s_ip = ''
-        if args.apiserverurl:
-            #print("Server ip:" + args.serverip)
-            api_s_ip = args.apiserverurl
+        if pargs.apiserverurl:
+            #print("Server ip:" + pargs.serverip)
+            api_s_ip = pargs.apiserverurl
 
         permission_file = ''
-        if args.permissionfile:
-            #print("Permission file:" + args.permissionfile)
-            permission_file = args.permissionfile
+        if pargs.permissionfile:
+            #print("Permission file:" + pargs.permissionfile)
+            permission_file = pargs.permissionfile
 
         if action == 'update' and permission_file == '':
             print("Permission file missing. Please provide permission file.")
@@ -779,11 +832,14 @@ if __name__ == '__main__':
             exit(0)
 
         kubeconfigGenerator = KubeconfigGenerator()
+
         sa = 'kubeplus-saas-provider'
+        if pargs.consumer:
+            sa = pargs.consumer
 
         filename = sa
-        if args.filename:
-            filename = args.filename
+        if pargs.filename:
+            filename = pargs.filename
         if not filename.endswith(".json"):
             filename += ".json"
 
@@ -801,9 +857,14 @@ if __name__ == '__main__':
                 run_command(cmd)
 
                 # 1. Generate Provider kubeconfig
-                kubeconfigGenerator._generate_kubeconfig(sa, namespace, filename, api_server_ip=api_s_ip, kubeconfig=kubeconfigString)
-                kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider', kubeconfig=kubeconfigString)
-                print("Provider kubeconfig created: " + filename)
+                if sa == "kubeplus-saas-provider":
+                    kubeconfigGenerator._generate_kubeconfig(sa, namespace, filename, api_server_ip=api_s_ip, kubeconfig=kubeconfigString)
+                    kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider', kubeconfig=kubeconfigString)
+                    print("Provider kubeconfig created: " + filename)
+                else:
+                    kubeconfigGenerator._generate_kubeconfig(sa, namespace, filename, api_server_ip=api_s_ip, kubeconfig=kubeconfigString)
+                    kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer', kubeconfig=kubeconfigString)
+                    print("Consumer kubeconfig created: " + filename)
 
         if action == "extract":
                 kubeconfigGenerator._extract_kubeconfig(sa, namespace, filename, serverip=api_s_ip, kubecfg=kubeconfigString)
@@ -821,14 +882,17 @@ if __name__ == '__main__':
                 run_command("kubectl delete clusterrolebinding " + sa + " -n " + namespace + kubeconfigString)
                 run_command("kubectl delete clusterrole " + sa + "-update" + " -n " + namespace + kubeconfigString)
                 run_command("kubectl delete clusterrolebinding " + sa + "-update" +  " -n " + namespace + kubeconfigString)
-                run_command("kubectl delete configmap kubeplus-saas-provider-perms -n " + namespace)
+                perms_cfg_map = sa + "-perms"
+                run_command("kubectl delete configmap " + perms_cfg_map + " -n " + namespace)
                 cwd = os.getcwd()
-                run_command("rm " + cwd + "/kubeplus-saas-provider-secret.yaml")
+                run_command("rm " + cwd + "/" + sa + "-secret.yaml")
                 run_command("rm " + cwd + "/" + filename)
-                run_command("rm " + cwd + "/kubeplus-saas-provider-role.yaml")
-                run_command("rm " + cwd + "/kubeplus-saas-provider-update-role.yaml")
-                run_command("rm " + cwd + "/kubeplus-saas-provider-rolebinding.yaml")
-                run_command("rm " + cwd + "/kubeplus-saas-provider-update-rolebinding.yaml")
-                run_command("rm " + cwd + "/kubeplus-saas-provider-perms.txt")
-                run_command("rm " + cwd + "/kubeplus-saas-provider-perms-update.txt")
+                run_command("rm " + cwd + "/" + sa + "-role.yaml")
+                run_command("rm " + cwd + "/" + sa + "-update-role.yaml")
+                run_command("rm " + cwd + "/" + sa + "-rolebinding.yaml")
+                run_command("rm " + cwd + "/" + sa + "-role-impersonate.yaml")
+                run_command("rm " + cwd + "/" + sa + "-rolebinding-impersonate.yaml")
+                run_command("rm " + cwd + "/" + sa + "-update-rolebinding.yaml")
+                run_command("rm " + cwd + "/" + sa + "-perms.txt")
+                run_command("rm " + cwd + "/" + sa + "-perms-update.txt")
 

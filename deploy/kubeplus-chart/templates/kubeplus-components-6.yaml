@@ -280,6 +280,37 @@ spec:
   selector:
     app: kubeplus
 ---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: kubeplus-pv  
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: "keep" 
+spec:
+  capacity:
+    storage: 1Gi  # Adjust the size as needed
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /kubeplus  # This can be a path on the host system where charts will be stored.
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kubeplus-pvc  
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: "keep" 
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi  # Make sure this matches the PV size
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -324,6 +355,8 @@ spec:
         resources:
           requests:
             ephemeral-storage: "70Mi"
+          limits:
+            ephemeral-storage: "75Mi"
         env:
           - name: KUBEPLUS_NAMESPACE
             valueFrom:
@@ -342,6 +375,8 @@ spec:
         resources:
           requests:
             ephemeral-storage: "10Mi"
+          limits:
+            ephemeral-storage: "15Mi"
         env:
           - name: CHECK_KYVERNO_POLICIES
             value: "{{ .Values.CHECK_KYVERNO_POLICIES }}"
@@ -363,6 +398,8 @@ spec:
         resources:
           requests:
             ephemeral-storage: "5Mi"
+          limits:
+            ephemeral-storage: "10Mi"
         command: [ "/platform-operator"]
       - name: consumerui
         image: {{ .Values.CONSUMERUI }}   #gcr.io/cloudark-kubeplus/consumerui:0.0.6
@@ -370,6 +407,8 @@ spec:
         resources:
           requests:
             ephemeral-storage: "10Mi"
+          limits:
+            ephemeral-storage: "500Mi"
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
         image: {{ .Values.HELMER  }}  #gcr.io/cloudark-kubeplus/helm-pod:3.0.17
@@ -377,6 +416,8 @@ spec:
         resources:
           requests:
             ephemeral-storage: "10Mi"
+          limits:
+            ephemeral-storage: "15Mi"
         command: ["/root/helm-pod"]
         volumeMounts:
         - mountPath: /chart
@@ -387,7 +428,8 @@ spec:
         - name: shared-data
           emptyDir: {}
         - name: chart-volume
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: kubeplus-pvc
         - name: webhook-certs
           secret:
             secretName: webhook-tls-certificates

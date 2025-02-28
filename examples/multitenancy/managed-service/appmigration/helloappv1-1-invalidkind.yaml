@@ -1,0 +1,8 @@
+apiVersion: platformapi.kubeplus/v1alpha1
+kind: HelloAppV2
+metadata:
+  name: hs1
+  annotations:
+    kubeplus/migrate-from: HelloAppV1123
+spec:
+  greeting: Hi Hi 

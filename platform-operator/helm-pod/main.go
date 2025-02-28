@@ -756,11 +756,14 @@ func getHelmReleaseName(object interface{}) (string, string) {
 		if key == "helmrelease" {
 			helmrelease = element.(string)
 			//fmt.Printf("Helm release1:%s\n", helmrelease)
-			lines := strings.Split(helmrelease, "\n")
-			releaseLine := strings.TrimSpace(lines[0])
-			parts := strings.Split(releaseLine,":")
-			helmreleaseNS = strings.TrimSpace(parts[0])
-			helmreleaseName = strings.TrimSpace(parts[1])
+			//helmrelease is set to empty string on the source kind instance during migration
+			if helmrelease != "" {
+				lines := strings.Split(helmrelease, "\n")
+				releaseLine := strings.TrimSpace(lines[0])
+				parts := strings.Split(releaseLine,":")
+				helmreleaseNS = strings.TrimSpace(parts[0])
+				helmreleaseName = strings.TrimSpace(parts[1])
+			}
 			break
 		}
 	}
@@ -806,6 +809,8 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	mem_req := request.QueryParameter("mem_req")
 	mem_lim := request.QueryParameter("mem_lim")
 	labels := request.QueryParameter("labels")
+	sourceKind := request.QueryParameter("sourceKind")
+	sourceKindPlural := request.QueryParameter("sourceKindPlural")
 	if err != nil {
 		fmt.Printf("Error encountered in decoding overrides:%v\n", err)
 		fmt.Printf("Not continuing...")
@@ -819,6 +824,8 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	//fmt.Printf("Overrides:%s\n", overrides)
 	fmt.Printf("Dryrun:%s\n", dryrun)
 	fmt.Printf("Labels:%s\n", labels)
+	fmt.Printf("Source Kind:%s\n", sourceKind)
+	fmt.Printf("Source Kind Plural:%s\n", sourceKindPlural)
 
 	if labels != "" {
 
@@ -880,6 +887,11 @@ func deployChart(request *restful.Request, response *restful.Response) {
 
 	 		lowercaseKind := strings.ToLower(kind)
 	 		releaseName := lowercaseKind + "-" + customresource
+			// Check for migration from sourceKind;
+			if sourceKind != "" {
+				sourceKindLower := strings.ToLower(sourceKind)
+				releaseName = sourceKindLower + "-" + customresource
+			}
 	 		fmt.Printf("Release name:%s\n", releaseName)
  			if chartURL != "" {
 
@@ -944,13 +956,13 @@ func deployChart(request *restful.Request, response *restful.Response) {
 					// Install the Helm chart in the namespace that is created for that instance
 					helmInstallCmd := "helm install " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + targetNSName
 	  				fmt.Printf("ABC helm install cmd:%s\n", helmInstallCmd)
-					go runHelmInstallUpgrade(cmdRunnerPod, "install", helmInstallCmd, releaseName, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim)
+					go runHelmInstallUpgrade(cmdRunnerPod, "install", helmInstallCmd, releaseName, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim, sourceKind, sourceKindPlural)
 					}
 
 					if doHelmUpgrade {
 						helmUpgradeCmd := "helm upgrade " + releaseName + " ./" + parsedChartName  + " -f " + overRidesFile + " -n " + targetNSName
 	  					fmt.Printf("ABC helm upgrade cmd:%s\n", helmUpgradeCmd)
-						go runHelmInstallUpgrade(cmdRunnerPod, "upgrade", helmUpgradeCmd, releaseName, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim)
+						go runHelmInstallUpgrade(cmdRunnerPod, "upgrade", helmUpgradeCmd, releaseName, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim, sourceKind, sourceKindPlural)
 
 						//_, helmUpgradeOutput := executeExecCall(cmdRunnerPod, helmUpgradeCmd)
 						//fmt.Printf("Helm upgrade o/p:%v\n", helmUpgradeOutput)
@@ -995,7 +1007,7 @@ func deployChart(request *restful.Request, response *restful.Response) {
 	response.Write([]byte(string("")))
 }
 
-func runHelmInstallUpgrade(cmdRunnerPod, cmd, helmInstallCmd, releaseNameInCmd, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim string) {
+func runHelmInstallUpgrade(cmdRunnerPod, cmd, helmInstallCmd, releaseNameInCmd, kind, group, version, plural, customresource, crObjNamespace, targetNSName, cpu_req, cpu_lim, mem_req, mem_lim, sourceKind, sourceKindPlural string) {
 
 	ok, execOutput := executeExecCall(cmdRunnerPod, helmInstallCmd)
 	 			if ok {
@@ -1028,7 +1040,7 @@ func runHelmInstallUpgrade(cmdRunnerPod, cmd, helmInstallCmd, releaseNameInCmd, 
 	 				}
 					if releaseFound {
 						//statusToUpdate := releaseName + "\n" + notes
-						go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseName, notes)
+						go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseName, notes, sourceKind, sourceKindPlural)
 						if cmd == "install" {
 							if (cpu_req != "" && cpu_lim != "" && mem_req != "" && mem_lim != "") {
 								go createResourceQuota(targetNSName, releaseName, cpu_req, cpu_lim, mem_req, mem_lim)
@@ -1038,7 +1050,7 @@ func runHelmInstallUpgrade(cmdRunnerPod, cmd, helmInstallCmd, releaseNameInCmd, 
 		 			}
 	 			} else {
 					//statusToUpdate := releaseNameInCmd + "\n" + execOutput
-		 			go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseNameInCmd, execOutput)
+		 			go updateStatus(kind, group, version, plural, customresource, crObjNamespace, targetNSName, releaseNameInCmd, execOutput, sourceKind, sourceKindPlural)
 					if cmd == "install" {
 						errOp := string(execOutput)
 						instanceExists := strings.Contains(errOp, "cannot re-use a name that is still in use")
@@ -1165,7 +1177,7 @@ func untarChart(chartName2, cmdRunnerPod, namespace string) string {
 	 			return chartName
 }
 
-func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, releaseName, notes string) {
+func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, releaseName, notes, sourceKind, sourceKindPlural string) {
 	fmt.Println("Inside updateStatus")
 
 	res := schema.GroupVersionResource{Group: group,
@@ -1209,6 +1221,26 @@ func updateStatus(kind, group, version, plural, instance, crdObjNS, targetNS, re
 		fmt.Printf("CR instance %s not ready till timeout\n.", instance)
 		break
 	    }
+	}
+	// If this is was a migration operation then remove the releasename from object instance corresponding to the sourceKind
+	if sourceKind != "" && sourceKindPlural != "" {
+		fmt.Printf("Updating the status of the object of type sourceKind:%s\n",sourceKind)
+		res1 := schema.GroupVersionResource{Group: group,Version: version,Resource: sourceKindPlural}
+		obj1, err := dynamicClient.Resource(res1).Namespace(crdObjNS).Get(context.Background(), instance, metav1.GetOptions{})
+                //fmt.Printf("Error:%v\n", err)
+                //fmt.Printf("Obj:%v\n",obj)
+                if err == nil {
+                        objData := obj1.UnstructuredContent()
+                        helmrelease := make(map[string]interface{},0)
+                        helmrelease["helmrelease"] = "" // Set helmrelease to empty
+                        objData["status"] = helmrelease
+                        obj1.SetUnstructuredContent(objData)
+			_, err2 := dynamicClient.Resource(res1).Namespace(crdObjNS).Update(context.Background(), obj1, metav1.UpdateOptions{})
+			fmt.Printf("Error in updating status of sourceKind:%v\n",err2)
+                } else {
+			fmt.Printf("Obj instance corresponding to sourceKind:%s could not be updated.\n", sourceKind)
+			fmt.Printf("%v\n", err)
+                }
 	}
 	fmt.Printf("Done updating status of the CR instance:%s\n", instance)
 }

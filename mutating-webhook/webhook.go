@@ -11,7 +11,7 @@ import (
 	"os"
 
 	"github.com/buger/jsonparser"
-	guuid "github.com/google/uuid"
+	//guuid "github.com/google/uuid"
 
 	"k8s.io/api/admission/v1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1"
@@ -378,7 +378,7 @@ func handleDelete(ar *v1.AdmissionReview) *v1.AdmissionResponse {
 	kind := req.Kind.Kind
 
 	fmt.Printf("Group:%s, version:%s\n", group, version)
-	plural := string(GetPlural(kind, group))
+	plural := string(GetPlural(kind))
 	apiVersion := group + "/" + version
 
 	fmt.Printf("NS:%s, Kind:%s, apiVersion:%s, group:%s, version:%s plural:%s resName:%s\n",
@@ -1376,12 +1376,35 @@ func handleCustomAPIs(ar *v1.AdmissionReview, httpMethod string) *v1.AdmissionRe
 	//cruid, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "uid")
 	// We have to generate a uid as when the request is received there is no uid yet.
 	// When the object is persisted Kubernetes will overwrite the uid with a new value - that is okay.
-	id := guuid.New()
-	cruid := id.String()
+	//id := guuid.New()
+	//cruid := id.String()
 	//fmt.Printf("CR Uid:%s\n", cruid)
 
 	labelsBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "metadata", "labels")
 	labels := string(labelsBytes)
+
+	annotations1 := make(map[string]string, 0)
+        allAnnotations, _, _, _ := jsonparser.Get(req.Object.Raw, "metadata", "annotations")
+        json.Unmarshal(allAnnotations, &annotations1)
+        sourceKind := ""
+	sourceKindPlural := ""
+        for key, value := range annotations1 {
+                if key == "kubeplus/migrate-from" {
+                        sourceKind = strings.TrimSpace(string(value))
+			sourceKindPlural = string(GetPlural(sourceKind))
+			sourceKindPlural = strings.TrimSpace(sourceKindPlural)
+			fmt.Printf("Migration specificed from %s %s\n", sourceKind, sourceKindPlural)
+			// Check nwhether the sourceKind exists in the cluster.
+			if sourceKindPlural == "" {
+				msg := fmt.Sprintf("Invalid kind specified in migrate-from annotation %s.\n", sourceKind)
+				return &v1.AdmissionResponse{
+					Result: &metav1.Status{
+						Message: msg,
+					},
+				}
+			}
+                }
+        }
 
 	overridesBytes, _, _, _ := jsonparser.Get(req.Object.Raw, "spec")
 	overrides := string(overridesBytes)
@@ -1404,10 +1427,10 @@ func handleCustomAPIs(ar *v1.AdmissionReview, httpMethod string) *v1.AdmissionRe
 	customAPI := apiVersion + "/" + kind
 	//fmt.Printf("CustomAPI:%s\n", customAPI)
 
-	// Save name:uid mapping
-	customAPIInstance := customAPI + "/" + namespace + "/" + crname
-
-	customAPIInstanceUIDMap[customAPIInstance] = cruid
+	// No longer being used - runs into concurrent map writes error (#1385)
+	// Save name:uid mapping 
+	//customAPIInstance := customAPI + "/" + namespace + "/" + crname
+	//customAPIInstanceUIDMap[customAPIInstance] = cruid
 
 	platformWorkflowName := customAPIPlatformWorkflowMap[customAPI]
 
@@ -1525,7 +1548,7 @@ func handleCustomAPIs(ar *v1.AdmissionReview, httpMethod string) *v1.AdmissionRe
         	fp.Close()
 
 		deploymentStatus := QueryDeployEndpoint(platformWorkflowName, crname, namespace, overrides, cpu_requests_q,
-	                           cpu_limits_q, mem_requests_q, mem_limits_q, labels)
+	                           cpu_limits_q, mem_requests_q, mem_limits_q, labels, sourceKind, sourceKindPlural)
 
 
 		if string(deploymentStatus) != "" {
@@ -1567,7 +1590,7 @@ func setOwnerReference(ar *v1.AdmissionReview) {
 
 	cname, err := jsonparser.GetUnsafeString(req.Object.Raw, "metadata", "name")
 	fmt.Printf("CR Name:%s\n", cname)
-	cplural := string(GetPlural(ckind, cgroup))
+	cplural := string(GetPlural(ckind))
 	fmt.Printf("Child Plural:%s\n",cplural)
 
 	annotations1 := make(map[string]string, 0)
@@ -1608,7 +1631,7 @@ func setOwnerReference(ar *v1.AdmissionReview) {
 					fmt.Printf("CR API Namespace:%s", namespace)
 					fmt.Printf("CR API Name:%s", oinstance)
 
-					oplural := string(GetPlural(okind, ogroup))
+					oplural := string(GetPlural(okind))
 					fmt.Printf("OwnerPlural:%s\n",oplural)
 
 					//if uid != "" && apiVersion != "" && kind != "" && name != "" {

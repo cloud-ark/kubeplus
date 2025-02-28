@@ -1,27 +1,27 @@
 apiVersion: workflows.kubeplus/v1alpha1
 kind: ResourceComposition
 metadata:
-  name: hello-world-service-composition
+  name: helloappv2-composition
 spec:
   # newResource defines the new CRD to be installed define a workflow.
   newResource:
     resource:
-      kind: HelloWorldService
+      kind: HelloAppV2
       group: platformapi.kubeplus
       version: v1alpha1
-      plural: helloworldservices 
+      plural: helloappv2s 
     # URL of the Helm chart that contains Kubernetes resources that represent a workflow.
-    chartURL: file:///hello-world-chart-0.0.3.tgz
-    chartName: hello-world-chart
+    chartURL: file:///helloappv2-chart-0.0.1.tgz
+    chartName: helloappv2-chart 
   # respolicy defines the resource policy to be applied to instances of the specified custom resource.
   respolicy:
     apiVersion: workflows.kubeplus/v1alpha1
     kind: ResourcePolicy 
     metadata:
-      name: hello-world-service-policy
+      name: helloappv2-policy
     spec:
       resource:
-        kind: HelloWorldService 
+        kind: HelloAppV2 
         group: platformapi.kubeplus
         version: v1alpha1
   # resmonitor identifies the resource instances that should be monitored for CPU/Memory/Storage.
@@ -32,10 +32,10 @@ spec:
     apiVersion: workflows.kubeplus/v1alpha1
     kind: ResourceMonitor
     metadata:
-      name: hello-world-service-monitor
+      name: helloappv2-monitor
     spec:
       resource:
-        kind: HelloWorldService 
+        kind: HelloAppV2 
         group: platformapi.kubeplus
         version: v1alpha1
       # This attribute indicates that Pods that are reachable through all the relationships should be used
