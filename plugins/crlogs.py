@@ -41,47 +41,6 @@ class CRLogs(CRBase):
 		except Exception as e:
 			print(e)
 
-	def get_resources_composition(self, kind, instance, namespace, kubeconfig):
-		platf = platform.system()
-		kubeplus_home = os.getenv('KUBEPLUS_HOME')
-		cmd = ''
-		json_output = {}
-		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos composition ' 
-		elif platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux composition '
-		else:
-			print("OS not supported:" + platf)
-			return json_output
-		cmd = cmd + kind + ' ' + instance + ' ' + namespace + ' ' + kubeconfig
-		out = ''
-		try:
-			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-								   stderr=subprocess.PIPE, shell=True).communicate()[0]
-			out = out.decode('utf-8')
-		except Exception as e:
-			print(e)
-		if out:
-			print(out)
-			try:
-				json_output = json.loads(out)
-			except Exception as e:
-				print(e)
-		return json_output
-
-	def get_pods1(self, resources):
-		pod_list = []
-		for resource in resources:
-			if resource['Kind'] == 'Pod':
-				present = False
-				for p in pod_list:
-					if p['Name'] == resource['Name']:
-						present = True
-						break
-				if not present:
-					pod_list.append(resource)
-		return pod_list
-
 if __name__ == '__main__':
 	crLogs = CRLogs()
 	kind = sys.argv[1]
