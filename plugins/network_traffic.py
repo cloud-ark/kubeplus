@@ -157,14 +157,6 @@ def do_deny(ns1, ns2, kubeconfig):
         sys.exit(1)
 
 def main():
-    # If the first argument is not 'allow' or 'deny', infer it from the executable name.
-    valid_commands = {"allow", "deny"}
-    if len(sys.argv) > 1 and sys.argv[1] not in valid_commands:
-        prog = os.path.basename(sys.argv[0]).lower()
-        if "deny" in prog:
-            sys.argv.insert(1, "deny")
-        elif "allow" in prog:
-            sys.argv.insert(1, "allow")
 
     parser = argparse.ArgumentParser(
         description="Manage bidirectional NetworkPolicy rules for cross-namespace traffic."

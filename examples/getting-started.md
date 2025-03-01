@@ -179,10 +179,29 @@ In some scenarios, you might want to enable controlled communication between ins
 kubectl allow network traffic hs1 hs2 -k provider.conf
 ```
 
+```sh 
+# Test connectivity from hs1 to hs2 using the IP
+kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=provider.conf -- curl $HS2_POD_IP:5000
+
+# Test connectivity from hs2 to hs1 using the IP 
+kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=provider.conf -- curl $HS1_POD_IP:5000
+```
+
+The connection should be allowed
+
+
 To deny the traffic between namespace 
 
 ```sh
 kubectl deny network traffic hs1 hs2 -k provider.conf
+```
+
+```sh 
+# Test connectivity from hs1 to hs2 using the IP
+kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=provider.conf -- curl $HS2_POD_IP:5000
+
+# Test connectivity from hs2 to hs1 using the IP 
+kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=provider.conf -- curl $HS1_POD_IP:5000
 ```
 
 You should see that each policy’s ingress section now includes a rule that uses a namespaceSelector matching the other namespace (using the label `kubernetes.io/metadata.name`).
