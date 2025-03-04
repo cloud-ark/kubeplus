@@ -92,8 +92,10 @@ jobs:
 
         kubectl get pods -A
 
-        until kubectl get pods -A | grep kubeplus | grep -e Running -e Error -e CrashLoopBackOff; do echo "Waiting for KubePlus to start.."; sleep 10; kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`; kubectl get pods $kubeplus_pod; done 
+        until kubectl get pods -A | grep kubeplus | grep -e Running -e Error -e CrashLoopBackOff -e ErrImagePull -e ImagePullBackOff; do echo "Waiting for KubePlus to start.."; sleep 10; kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`; kubectl get pods $kubeplus_pod; done 
         kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`
+        echo "Describing kubeplus pods..."
+        kubectl describe pods $kubeplus_pod
         echo "helmer logs..."
         kubectl logs $kubeplus_pod -c helmer
         echo "platform-operator logs..."
