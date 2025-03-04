@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 USER root
 RUN apt-get update && apt-get upgrade && apt-get install -y curl openssl jq python3 python3-pip && pip3 install pyyaml
 ADD webhook-create-self-signed-ca-cert.sh /

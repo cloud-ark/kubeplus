@@ -11,7 +11,7 @@ env:
   KUBEPLUS_CI: true
 jobs:
   job1:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     name: Test kubeplus deployment on kind
     steps:
     - name: Checkout Code
