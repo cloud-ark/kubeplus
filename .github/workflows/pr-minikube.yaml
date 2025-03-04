@@ -7,7 +7,7 @@ env:
   KUBEPLUS_TEST_OUTPUT: yes
 jobs:
   job1:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     name: Deploy to minikube
     steps:
     - uses: actions/checkout@v2
@@ -92,7 +92,7 @@ jobs:
 
         kubectl get pods -A
 
-        until kubectl get pods -A | grep kubeplus | grep -i Running; do echo "Waiting for KubePlus to start.."; sleep 1; kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`; kubectl get pods $kubeplus_pod;  done 
+        until kubectl get pods -A | grep kubeplus | grep -i Running; do echo "Waiting for KubePlus to start.."; sleep 1; kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`; kubectl get pods $kubeplus_pod; echo "Describing kubeplus pod";  kubectl describe pod $kubeplus_pod;  done 
         kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`
         echo "helmer logs..."
         kubectl logs $kubeplus_pod -c helmer
