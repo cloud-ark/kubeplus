@@ -7,7 +7,7 @@ env:
   KUBEPLUS_TEST_OUTPUT: yes
 jobs:
   job1:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     name: Deploy to minikube
     steps:
     - uses: actions/checkout@v2
