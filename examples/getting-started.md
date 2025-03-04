@@ -185,7 +185,14 @@ kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=provider.conf -- curl $
 
 # Test connectivity from hs2 to hs1 using the IP 
 kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=provider.conf -- curl $HS1_POD_IP:5000
+
+kubectl get networkpolicy -o yaml restrict-cross-ns-traffic -n hs1 
+kubectl get networkpolicy -o yaml restrict-cross-ns-traffic -n hs2
 ```
+
+
+You should see that each policy’s ingress section now includes a rule that uses a namespaceSelector matching the other namespace (using the label `kubernetes.io/metadata.name`).
+
 
 The connection should be allowed
 
@@ -204,7 +211,7 @@ kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=provider.conf -- curl $
 kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=provider.conf -- curl $HS1_POD_IP:5000
 ```
 
-You should see that each policy’s ingress section now includes a rule that uses a namespaceSelector matching the other namespace (using the label `kubernetes.io/metadata.name`).
+
 
 ## Clean Up
 
