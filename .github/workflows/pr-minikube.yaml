@@ -92,7 +92,7 @@ jobs:
 
         kubectl get pods -A
 
-        until kubectl get pods -A | grep kubeplus | grep -i Running; do echo "Waiting for KubePlus to start.."; sleep 1; kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`; kubectl get pods $kubeplus_pod; echo "Describing kubeplus pod";  kubectl describe pod $kubeplus_pod;  done 
+        until kubectl get pods -A | grep kubeplus | grep -i Running; do echo "Waiting for KubePlus to start.."; sleep 10; kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`; kubectl get pods $kubeplus_pod; echo "Getting helmer logs";  kubectl logs $kubeplus_pod -c helmer;  done 
         kubeplus_pod=`kubectl get pods | grep kubeplus | awk '{print $1}'`
         echo "helmer logs..."
         kubectl logs $kubeplus_pod -c helmer
