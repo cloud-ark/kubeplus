@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 USER root
-RUN apt-get update && apt-get upgrade && apt-get install -y curl openssl jq python3 python3-pip && pip3 install pyyaml
+RUN apt-get update && apt-get upgrade -y && apt-get install -y curl openssl jq python3 python3-pip && pip3 install pyyaml
 ADD webhook-create-self-signed-ca-cert.sh /
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 RUN install -o root -g root -m 0755 kubectl bin/kubectl
