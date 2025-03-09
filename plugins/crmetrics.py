@@ -45,11 +45,29 @@ class CRBase(object):
 				pod_info['Namespace'] = instance
 				pod_list.append(pod_info)
 		return pod_list
-        	
+
+	def get_service_name_from_ns(self, instanceName, orgPath):
+		service_name_in_annotation = ""
+		get_ns_cm = "kubectl get ns " + instanceName + " " + orgPath + " -o json "
+		out_a, err_a = self.run_command(get_ns_cm)
+		out_a = out_a.strip()
+		err_a = err_a.strip()
+		if  "NotFound" not in err_a:
+			json_obj = json.loads(out_a)
+			helm_release_name = json_obj["metadata"]["annotations"]["meta.helm.sh/release-name"]
+			parts = helm_release_name.split("-" + instanceName)
+			service_name_in_annotation = parts[0].strip()
+			service_name_in_annotation = service_name_in_annotation.replace('"','')
+		return service_name_in_annotation
+
 	def get_pods_in_ns(self, kind, instance, kubeconfig):
 		pod_list = []
 		labelSelector = "partof=" + kind + "-" + instance
 		labelSelector = labelSelector.lower()
+		service_name_in_annotation = self.get_service_name_from_ns(instance, kubeconfig)
+		service_name_in_annotation = service_name_in_annotation.lower()
+		if service_name_in_annotation != kind.lower():
+			return pod_list
 		cmd = "kubectl get pods -n  " + instance + " " + kubeconfig
 		#print(cmd)
 		out = ''
@@ -1146,16 +1164,17 @@ class CRMetrics(CRBase):
 			millis = int(round(time.time() * 1000))
 			timeInMillis = str(millis)
 			metricsToReturn = ''
-			cpuMetrics = 'cpu{custom_resource="'+custom_res_instance+'"} ' + str(cpu) + ' ' + timeInMillis
-			memoryMetrics = 'memory{custom_resource="'+custom_res_instance+'"} ' + str(memory) + ' ' + timeInMillis
-			storageMetrics = 'storage{custom_resource="'+custom_res_instance+'"} ' + str(total_storage) + ' ' + timeInMillis
-			networkReceiveBytes = 'network_receive_bytes_total{custom_resource="'+custom_res_instance+'"} ' + str(networkReceiveBytesTotal) + ' ' + timeInMillis
-			networkTransmitBytes = 'network_transmit_bytes_total{custom_resource="'+custom_res_instance+'"} ' + str(networkTransmitBytesTotal) + ' ' + timeInMillis
-			numOfPods = 'pods{custom_resource="'+custom_res_instance+'"} ' + str(num_of_pods) + ' ' + timeInMillis
-			numOfContainers = 'containers{custom_resource="'+custom_res_instance+'"} ' + str(num_of_containers) + ' ' + timeInMillis
-			numOfNotRunningPods = 'not_running_pods{custom_resource="'+custom_res_instance+'"} ' + str(num_of_not_running_pods) + ' ' + timeInMillis
+			fq_instance = custom_resource.lower() + "-" + custom_res_instance.lower()
+			cpuMetrics = 'cpu{custom_resource="'+fq_instance+'"} ' + str(cpu) + ' ' + timeInMillis
+			memoryMetrics = 'memory{custom_resource="'+fq_instance+'"} ' + str(memory) + ' ' + timeInMillis
+			storageMetrics = 'storage{custom_resource="'+fq_instance+'"} ' + str(total_storage) + ' ' + timeInMillis
+			networkReceiveBytes = 'network_receive_bytes_total{custom_resource="'+fq_instance+'"} ' + str(networkReceiveBytesTotal) + ' ' + timeInMillis
+			networkTransmitBytes = 'network_transmit_bytes_total{custom_resource="'+fq_instance+'"} ' + str(networkTransmitBytesTotal) + ' ' + timeInMillis
+			numOfPods = 'pods{custom_resource="'+fq_instance+'"} ' + str(num_of_pods) + ' ' + timeInMillis
+			numOfContainers = 'containers{custom_resource="'+fq_instance+'"} ' + str(num_of_containers) + ' ' + timeInMillis
+			numOfNotRunningPods = 'not_running_pods{custom_resource="'+fq_instance+'"} ' + str(num_of_not_running_pods) + ' ' + timeInMillis
 
-			oomEvents = 'oom_events{custom_resource="'+custom_res_instance+'"} ' + str(oom_events) + ' ' + timeInMillis
+			oomEvents = 'oom_events{custom_resource="'+fq_instance+'"} ' + str(oom_events) + ' ' + timeInMillis
                          
 			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers + "\n" + networkReceiveBytes + "\n" + networkTransmitBytes + "\n" + numOfNotRunningPods + "\n" + oomEvents
 			print(metricsToReturn)
