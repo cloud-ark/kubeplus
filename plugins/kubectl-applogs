@@ -21,8 +21,8 @@ fi
 kind=$1
 instance=$2
 namespace=$3
-# Only --kubeconfig specified
-kubeconfig1="$HOME/.kube/config" #default value
+
+kubeconfig1="$HOME/.kube/config" # Default value
 
 shift;
 shift;
@@ -51,8 +51,6 @@ fi
 
 check_namespace $namespace $kubeconfig
 
-#echo "$kind $instance $namespace"
-
 canonicalKind=$(get_canonical_kind $kind)
 
 if [[ $canonicalKind == *"Unknown"* ]]; then
@@ -62,16 +60,8 @@ fi
 
 resStatus=`kubectl $kubeconfig get $kind $instance -n $namespace -o json 2>&1`
 if [[ $resStatus =~ 'Error' ]]; then
-#  echo "Instance $instance of $kind not deployed properly."
   echo $resStatus
   exit 0
 fi
 
-
-
-python /$KUBEPLUS_HOME/plugins/crlogs.py connections $canonicalKind $instance $namespace $kubeconfig
-
-
-#echo "kubectl grouplogs cr connections"
-#echo "kubectl grouplogs service"
-#echo "kubectl grouplogs helmrelease"
+python /$KUBEPLUS_HOME/plugins/crlogs.py $canonicalKind $instance $namespace $kubeconfig
