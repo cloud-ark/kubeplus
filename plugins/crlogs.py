@@ -45,8 +45,7 @@ if __name__ == '__main__':
 	crLogs = CRLogs()
 	kind = sys.argv[1]
 	instance = sys.argv[2]
-	namespace = sys.argv[3]
-	kubeconfig = sys.argv[4]
+	kubeconfig = sys.argv[3]
 	resources = {}
 
 	pods = crLogs.get_pods_in_ns(kind, instance, kubeconfig)

@@ -82,7 +82,7 @@ Product team
      - this will show all the resources that KubePlus has created for the custom mysql instance
 
 6. Check logs:
-    $ kubectl applogs CustomMysqlService prod-mysql default -k consumer.conf 
+    $ kubectl applogs CustomMysqlService prod-mysql -k consumer.conf 
 
 7. Check metrics:
     $ kubectl metrics CustomMysqlService prod-mysql -k consumer.conf

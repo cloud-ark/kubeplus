@@ -75,7 +75,7 @@ $ kubectl kubeplus commands
       - should see all the created Kubernetes objects for this application instance
 
 13. Get logs:
-    $ kubectl applogs WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+    $ kubectl applogs WordpressService wp-tenant1 -k kubeplus-saas-provider.json
       - should see logs for all the containers in both the Pods
 
 14. Get metrics:
