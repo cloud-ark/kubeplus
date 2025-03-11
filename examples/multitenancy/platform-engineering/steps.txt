@@ -85,8 +85,8 @@ Product team
     $ kubectl applogs CustomMysqlService prod-mysql default -k consumer.conf 
 
 7. Check metrics:
-    $ kubectl metrics CustomMysqlService prod-mysql default -k consumer.conf
-    $ kubectl metrics CustomMysqlService prod-mysql default -k consumer.conf -o prometheus
+    $ kubectl metrics CustomMysqlService prod-mysql -k consumer.conf
+    $ kubectl metrics CustomMysqlService prod-mysql -k consumer.conf -o prometheus
 
 
 Clean up:

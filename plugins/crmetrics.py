@@ -759,65 +759,6 @@ class CRMetrics(CRBase):
 						pod_list.append(pod)
 		return pod_list
 
-	def _get_pods_for_helmrelease_2(self, release_name):
-		cmd = "helm get " + release_name
-		try:
-			output = subprocess.Popen(cmd,
-									  stdout=subprocess.PIPE,
-									  stderr=subprocess.PIPE,
-									  shell=True).communicate()[0]
-			output = output.decode('utf-8')
-			output = output.strip("\n")
-		except Exception as e:
-			print(e)
-
-		pod_list_to_return = []
-
-		output1 = output.decode("utf-8")
-		#print(output1)
-		processed_output = []
-		start = False
-		for line in output1.split("\n"):
-			if not start and line == "---":
-				start = True
-			if start:
-				processed_output.append(line)
-				processed_output.append("\n")
-
-		#print("CBC")
-		#print(processed_output)
-		yamls = ''.join(processed_output)
-		#print("DEF")
-		#print(yamls)
-		yamls_bytes = yamls.encode()
-		#print("EFG")
-		#print(yamls_bytes)
-
-		for project in yaml.load_all(yamls_bytes):
-			#pprint.pprint(project)
-			if project != None:
-				kind = project['kind']
-				name = ''
-				namespace = 'default'
-				if 'metadata' in project:
-					if 'name' in project['metadata']:
-						name = project['metadata']['name']
-					if 'namespace' in project['metadata']:
-						name = project['metadata']['namespace']
-
-				if kind not in ['ConfigMap', 'CustomResourceDefinition', 'ClusterRole', 'ClusterRoleBinding']:
-					if kind != '' and name != '' and namespace != '':
-						#print("Kind:"+ kind + " Namespace:" + namespace + " Instance:" + instance)
-						composition = self._get_composition(kind, name, namespace)
-						pod_list = self._parse_number_of_pods(composition)
-						if pod_list:
-							#print(pod_list)
-							for p in pod_list:
-								pod = {}
-								pod['Name'] = p['Name']
-								pod['Namespace'] = p['Namespace']
-								pod_list_to_return.append(pod)
-		return pod_list_to_return
 
 	def _get_pods_for_helmrelease(self, release_name):
 		cmd = "helm get manifest " + release_name
@@ -1053,82 +994,15 @@ class CRMetrics(CRBase):
 		print("    Total Storage(bytes): " + str(storage) + "Gi")
 		print("---------------------------------------------------------- ")
 
-	def get_metrics_creator_account(self, account):
-		# 1. Get all custom resource instances - their count
-		all_cpu = 0
-		all_mem = 0
-
-		print("---------------------------------------------------------- ")
-		print(" Creator Account Identity: " + account)
-		print("---------------------------------------------------------- ")
-
-		print("Checking Custom Resources..")
-		cr_cpu, cr_mem, cr_count = self._get_metrics_cr_instances(account)
-
-		# 2. Get all deployments
-		print("Checking Deployments..")
-		dep_cpu, dep_mem, dep_count = self._get_metrics_deployments(account)
-
-		# 3. Get all statefulsets
-		print("Checking StatefulSets..")
-		ssets_cpu, ssets_mem, ss_count = self._get_metrics_statefulsets(account)
-
-		# 4. Get all replicasets - 
-		# Replicasets seem to carry over annotations from deployment. 
-		# So we will ignore the memory and cpu of deployments from final totals.
-		# To correctly count replicasets we will subtract dep_count from rsets_count
-		print("Checking ReplicaSets..")
-		rsets_cpu, rsets_mem, rsets_count = self._get_metrics_replicasets(account)
-		rsets_count = rsets_count - dep_count
-
-		# 5. Get all daemonsets
-		print("Checking DaemonSets..")
-		dsets_cpu, dsets_mem, dsets_count = self._get_metrics_daemonsets(account)
-
-		# 6. Get all replicationcontrollers
-		print("Checking ReplicationControllers..")
-		rcsets_cpu, rcsets_mem, rcsets_count = self._get_metrics_replicationcontrollers(account)
-
-		# 7. Get all pods
-		print("Checking Pods..")
-		p_cpu, p_mem, p_count = self._get_metrics_pods(account)
-
-		all_cpu = cr_cpu + ssets_cpu + rsets_cpu + dsets_cpu + rcsets_cpu + p_cpu
-		all_mem = cr_mem + ssets_mem + rsets_mem + dsets_mem + rcsets_mem + p_mem
-
-		print("Kubernetes Resources created:")
-		print("    Number of Custom Resources: " + str(cr_count))
-		print("    Number of Deployments: " + str(dep_count))
-		print("    Number of StatefulSets: " + str(ss_count))
-		print("    Number of ReplicaSets: " + str(rsets_count))
-		print("    Number of DaemonSets: " + str(dsets_count))
-		print("    Number of ReplicationControllers: " + str(rcsets_count))
-		print("    Number of Pods: " + str(p_count))
-		print("Underlying Physical Resoures consumed:")
-		print("    Total CPU(cores): " + str(all_cpu) + "m")
-		print("    Total MEMORY(bytes): " + str(all_mem) + "Mi")
-		print("    Total Storage(bytes): (Upcoming)")
-
-	def get_metrics_cr(self, custom_resource, custom_res_instance, namespace, follow_connections, opformat, kubeconfig):
+	def get_metrics_cr(self, custom_resource, custom_res_instance, opformat, kubeconfig):
+		namespace = self.get_kubeplus_namespace(kubeconfig)
 		accountidentity = self._get_identity(custom_resource, custom_res_instance, namespace)
 		accountidentity = ''
 		pod_list = []
-		if follow_connections == "false":
-			composition = self._get_composition(custom_resource, custom_res_instance, namespace)
-			num_of_resources = self._parse_number_of_resources(composition)
-			pod_list = self._parse_number_of_pods(composition)
-		if follow_connections == "true":
-			num_of_resources = "-"
-			conn_op_format = "json"
-			#pod_list = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace, kubeconfig, conn_op_format)
-			#pod_list = self.get_pods(custom_resource, custom_res_instance, kubeconfig) # uses label selectors
-			pod_list = self.get_pods_in_ns(custom_resource, custom_res_instance, kubeconfig) # queries Pods in the CR NS 
-			if len(pod_list) == 0:
-			    # uses kubectl connections plugin - slower than label selectors
-			    pod_list = self._get_pods_for_cr_connections(custom_resource, custom_res_instance, namespace, kubeconfig, conn_op_format)
+		num_of_resources = "-"
+		conn_op_format = "json"
+		pod_list = self.get_pods_in_ns(custom_resource, custom_res_instance, kubeconfig) # queries Pods in the CR NS 
 
-		#cpu, memory = self._get_cpu_memory_usage(pod_list)
-		#print(pod_list)        
 		num_of_containers_conn = self._parse_number_of_containers(pod_list, kubecfg=kubeconfig)
 		total_storage_conn = self._parse_persistentvolumeclaims(pod_list, kubecfg=kubeconfig)
 		num_of_hosts_conn = self._parse_number_of_hosts(pod_list, kubecfg=kubeconfig)
@@ -1179,9 +1053,6 @@ class CRMetrics(CRBase):
 			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers + "\n" + networkReceiveBytes + "\n" + networkTransmitBytes + "\n" + numOfNotRunningPods + "\n" + oomEvents
 			print(metricsToReturn)
 		elif opformat == 'pretty':
-			#print("---------------------------------------------------------- ")
-			#print(" Creator Account Identity: " + accountidentity)
-			#print("---------------------------------------------------------- ")
 			print("---------------------------------------------------------- ")
 			print("Kubernetes Resources created:")
 			print("    Number of Sub-resources: " + str(num_of_resources))
@@ -1199,134 +1070,12 @@ class CRMetrics(CRBase):
 		else:
 			print("Unknown output format specified. Accepted values: pretty, json, prometheus")
 
-	def get_metrics_service(self, service_name, namespace):
-		print("---------------------------------------------------------- ")
-		pod_list, res_list = self._get_pods_for_service(service_name, namespace)
-		#print(res_list)
-		print("Kubernetes Resources created:")
-		print("    Total Number of Resources: " + str(len(res_list)))
-		print("    Number of Pods: " + str(len(pod_list)))
-
-		num_of_containers = self._parse_number_of_containers(pod_list)
-		print("        Number of Containers: " + str(num_of_containers))
-
-		total_storage = self._parse_persistentvolumeclaims(pod_list)
-
-		num_of_hosts = self._parse_number_of_hosts(pod_list)
-		print("        Number of Nodes: " + str(num_of_hosts))
-
-		cpu, memory = self._get_cpu_memory_usage(pod_list)
-
-		print("Underlying Physical Resoures consumed:")
-		print("    Total CPU(cores): " + str(cpu) + "m")
-		print("    Total MEMORY(bytes): " + str(memory) + "Mi")
-		print("    Total Storage(bytes): " + str(total_storage) + "Gi")
-		print("---------------------------------------------------------- ")
-
-	def get_metrics_helmrelease(self, release_name):
-		pod_list = self._get_pods_for_helmrelease(release_name)
-
-		time1 = int(round(time.time() * 1000))
-		num_of_containers = self._parse_number_of_containers(pod_list)
-		time2 = int(round(time.time() * 1000))
-
-		#print("      time:" + str(time2-time1))
-
-		# TODO: What should be the namespace parameter for Helm releases?
-		# Currently setting to "default"
-		time1 = int(round(time.time() * 1000))
-		total_storage = self._parse_persistentvolumeclaims(pod_list)
-		time2 = int(round(time.time() * 1000))
-		#print("      pvc time:" + str(time2-time1))
-
-		time1 = int(round(time.time() * 1000))
-		num_of_hosts = self._parse_number_of_hosts(pod_list)
-		time2 = int(round(time.time() * 1000))
-		#print("      time:" + str(time2-time1))
-
-		cpu, memory = self._get_cpu_memory_usage(pod_list)
-
-		metrics_helm_release = {}
-		metrics_helm_release['num_of_pods'] = str(len(pod_list))
-		metrics_helm_release['num_of_containers'] = str(num_of_containers)
-		metrics_helm_release['num_of_hosts'] = str(num_of_hosts)
-		metrics_helm_release['cpu'] = str(cpu)
-		metrics_helm_release['memory'] = str(memory)
-		metrics_helm_release['storage'] = str(total_storage)
-		return metrics_helm_release
-
-	def print_metrics_helmrelease(self, metrics_helm_release):
-		num_of_pods = metrics_helm_release['num_of_pods']
-		num_of_containers = metrics_helm_release['num_of_containers']
-		num_of_hosts = metrics_helm_release['num_of_hosts']
-		cpu = metrics_helm_release['cpu']
-		memory = metrics_helm_release['memory']
-		total_storage = metrics_helm_release['storage']
-
-		print("---------------------------------------------------------- ")
-		print("Kubernetes Resources created:")
-		print("    Number of Pods: " + num_of_pods)
-		print("        Number of Containers: " + num_of_containers)
-		print("    Number of Nodes: " + num_of_hosts)
-		print("Underlying Physical Resoures consumed:")
-		print("    Total CPU(cores): " + str(cpu) + "m")
-		print("    Total MEMORY(bytes): " + str(memory) + "Mi")
-		print("    Total Storage(bytes): " + str(total_storage) + "Gi")
-		print("---------------------------------------------------------- ")
-
-	def prometheus_metrics_helmrelease(self, release_name, metrics_helm_release):
-		millis = int(round(time.time() * 1000))
-		metricsToReturn = ''
-		cpu = metrics_helm_release['cpu']
-		memory = metrics_helm_release['memory']
-		storage = metrics_helm_release['storage']
-		num_of_pods = metrics_helm_release['num_of_pods']
-		num_of_containers = metrics_helm_release['num_of_containers']
-		cpuMetrics = 'cpu{helmrelease="'+release_name+'"} ' + str(cpu) + ' ' + str(millis)
-		memoryMetrics = 'memory{helmrelease="'+release_name+'"} ' + str(memory) + ' ' + str(millis)
-		storageMetrics = 'storage{helmrelease="'+release_name+'"} ' + str(storage) + ' ' + str(millis)
-		numOfPods = 'pods{helmrelease="'+release_name+'"} ' + str(num_of_pods) + ' ' + str(millis)
-		numOfContainers = 'containers{helmrelease="'+release_name+'"} ' + str(num_of_containers) + ' ' + str(millis)
-		metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers
-		return metricsToReturn
 
 if __name__ == '__main__':
 	crMetrics = CRMetrics()
 
-	res_type = sys.argv[1]
-
-	if res_type == "cr":
-		custom_resource = sys.argv[2]
-		custom_resource_instance = sys.argv[3]
-		namespace = sys.argv[4]
-		outputformat = sys.argv[5]
-		follow_connections = sys.argv[6]
-		kubeconfig = sys.argv[7]
-		crMetrics.get_metrics_cr(custom_resource, custom_resource_instance, namespace, follow_connections, outputformat, kubeconfig)
-	
-	if res_type == "account":
-		creator_account = sys.argv[2]
-		if len(sys.argv) == 4:
-			crMetrics._get_metrics_creator_account_with_connections(creator_account)
-		else:
-			crMetrics.get_metrics_creator_account(creator_account)
-
-	if res_type == "service":
-		service_name = sys.argv[2]
-		namespace = sys.argv[3]
-		crMetrics.get_metrics_service(service_name, namespace)
-
-	if res_type == "helmrelease":
-		release_name = sys.argv[2]
-		op_format = sys.argv[3]
-		metrics_helm_release = crMetrics.get_metrics_helmrelease(release_name)
-		if op_format == "pretty":
-			crMetrics.print_metrics_helmrelease(metrics_helm_release)
-		elif op_format == "prometheus":
-			prom_metrics = crMetrics.prometheus_metrics_helmrelease(release_name, metrics_helm_release)
-			print(prom_metrics)
-		elif op_format == "json":
-			metrics_helm_release_json = json.dumps(metrics_helm_release)
-			print(metrics_helm_release_json)
-		else:
-			print("Unrecognized output format. Supported formats - pretty/json/prometheus")
+	custom_resource = sys.argv[1]
+	custom_resource_instance = sys.argv[2]
+	outputformat = sys.argv[3]
+	kubeconfig = sys.argv[4]
+	crMetrics.get_metrics_cr(custom_resource, custom_resource_instance, outputformat, kubeconfig)

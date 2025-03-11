@@ -65,7 +65,7 @@ Multi-namespace setup
     - Should see app logs
 21. kubectl connections HelloWorldService hs1 default -i Namespace:$KUBEPLUS_NS -k consumer.conf
     - Should see created resources' listing
-22. kubectl metrics HelloWorldService hs1 default -o prometheus -k consumer.conf
+22. kubectl metrics HelloWorldService hs1 -o prometheus -k consumer.conf
     - Should see the metrics
 23. kubectl delete -f hs1.yaml --kubeconfig=consumer.conf
     - kubectl get pods -A
@@ -110,7 +110,7 @@ Single namespace setup
     - Should see app logs
 20. kubectl connections HelloWorldService hs1 kubeplus -i Namespace:$KUBEPLUS_NS -k provider.conf
     - Should see created resources' listing
-21. kubectl metrics HelloWorldService hs1 kubeplus -o prometheus -k provider.conf
+21. kubectl metrics HelloWorldService hs1 -o prometheus -k provider.conf
     - Should see the metrics
 22. kubectl delete -f hs1.yaml --kubeconfig=provider.conf
 23. kubectl get pods -A
