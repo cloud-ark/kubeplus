@@ -87,7 +87,7 @@ You can use either the provider.conf or consumer.conf in below commands.
      - should see "Hello hello hello" displayed
 
 6. Retrievel application logs
-   - kubectl applogs HelloWorldService hs1 default -k consumer.conf
+   - kubectl applogs HelloWorldService hs1 -k consumer.conf
 
 7. Retrievel application metrics
    - kubectl metrics HelloWorldService hs1 -k consumer.conf
