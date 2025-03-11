@@ -82,8 +82,8 @@ This example shows delivering Bitnami Odoo Helm chart as-a-service using KubePlu
     - Navigate to $appurl/web/login in the browser and login using ODOO_EMAIL and ODOO_PASSWORD
 
 13. Check metrics:
-    $ kubectl metrics OdooService sample-odooservice default -k kubeplus-saas-provider.json 
-    $ kubectl metrics OdooService sample-odooservice default -k kubeplus-saas-provider.json -o prometheus
+    $ kubectl metrics OdooService sample-odooservice -k kubeplus-saas-provider.json 
+    $ kubectl metrics OdooService sample-odooservice -k kubeplus-saas-provider.json -o prometheus
 
 14. Check resource topology:
     $ kubectl connections OdooService sample-odooservice default -k kubeplus-saas-provider.json

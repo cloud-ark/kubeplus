@@ -90,7 +90,7 @@ You can use either the provider.conf or consumer.conf in below commands.
    - kubectl applogs HelloWorldService hs1 default -k consumer.conf
 
 7. Retrievel application metrics
-   - kubectl metrics HelloWorldService hs1 default -k consumer.conf
+   - kubectl metrics HelloWorldService hs1 -k consumer.conf
      - Should see output of the following nature:
 	---------------------------------------------------------- 
 	Kubernetes Resources created:
@@ -113,7 +113,7 @@ You can use either the provider.conf or consumer.conf in below commands.
 9. Verify that 2 Pods are created in the hs1 namespace
     - kubectl get pods -n hs1
     - kubectl appresources HelloWorldService hs1 default -k consumer.conf
-    - kubectl metrics HelloWorldService hs1 default -k consumer.conf 
+    - kubectl metrics HelloWorldService hs1 -k consumer.conf 
 
 
 Clean up:

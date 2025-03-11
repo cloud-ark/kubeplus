@@ -78,7 +78,7 @@ wp-tenant1     ResourceQuota             wordpressservice-wp-tenant1
 ### 7. Check Application Resource Consumption
 
 ```sh
-kubectl metrics WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+kubectl metrics WordpressService wp-tenant1 -k kubeplus-saas-provider.json
 
 ---------------------------------------------------------- 
 Kubernetes Resources created:
