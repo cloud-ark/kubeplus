@@ -63,7 +63,7 @@ $ kubectl kubeplus commands
 
 11. Wait till all the wp-tenant1 instance pods are in 'Running' state, then perform following actions:
     - Get Wordpress URL
-      $ kubectl appurl WordpressService wp-tenant1 $KUBEPLUS_NS -k kubeplus-saas-provider.json
+      $ kubectl appurl WordpressService wp-tenant1 -k kubeplus-saas-provider.json
       $ curl -v <the app url output from above command>
         - Note that this IP:Port combination will be reachable through your browser only
           if you have opened up your Kubernetes cluster to traffic from outside world.

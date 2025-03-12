@@ -72,7 +72,7 @@ This example shows delivering Bitnami Odoo Helm chart as-a-service using KubePlu
     $ kubectl applogs OdooService sample-odooservice -k kubeplus-saas-provider.json 
 
 11. Get application URL:
-    $ appurl=`kubectl appurl OdooService sample-odooservice default -k kubeplus-saas-provider.json`
+    $ appurl=`kubectl appurl OdooService sample-odooservice -k kubeplus-saas-provider.json`
     $ curl $appurl/web/login
       - if the installation is successful, the curl call should return 200 OK.
 
