@@ -45,7 +45,7 @@ Platform Engineering team
      - check that OpenAPISchema has been defined on the CRD corresponding to the attributes in the values.yaml of the CustomMysql Helm chart. 
 
 5. Download the consumer kubeconfig file:
-     $ kubectl retrieve kubeconfig consumer default -s $server -k kubeplus-saas-provider.json > consumer.conf
+     $ kubectl retrieve kubeconfig consumer -s $server -k kubeplus-saas-provider.json > consumer.conf
 
    You can share consumer.conf with your product teams.
 

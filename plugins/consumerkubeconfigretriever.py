@@ -3,10 +3,11 @@ import json
 import subprocess
 import sys
 import os
-#import yaml
+import re
+from crmetrics import CRBase
 
 
-class ConsumerKubeconfigRetriever(object):
+class ConsumerKubeconfigRetriever(CRBase):
 
 	def _get_kubeplus_ns(self):
 		cmd = " kubectl get deployments -A "
@@ -23,12 +24,12 @@ class ConsumerKubeconfigRetriever(object):
 				break
 		return kubeplusNamespace
 
-	def _apply_consumer_rbac(self, kubeplusNS, kindplural, providerkubeconfig):
+	def _apply_consumer_rbac(self, kindplural, providerkubeconfig):
 
 		group = "platformapi.kubeplus"
 		version = "v1alpha1"
 		sa = 'kubeplus-saas-consumer'
-		#ksnamespace = self._get_kubeplus_ns()
+		kubeplusNS = self.get_kubeplus_namespace(providerkubeconfig)
 
 		role = {}
 		role["apiVersion"] = "rbac.authorization.k8s.io/v1"
@@ -133,9 +134,8 @@ class ConsumerKubeconfigRetriever(object):
 
 if __name__ == '__main__':
 
-	kubeplusNS = sys.argv[1]
-	kindplural = sys.argv[2]
-	providerkubeconfig = sys.argv[3]
+	kindplural = sys.argv[1]
+	providerkubeconfig = sys.argv[2]
 	consumerKfgRetriever = ConsumerKubeconfigRetriever()
-	consumerKfgRetriever._apply_consumer_rbac(kubeplusNS, kindplural, providerkubeconfig)
+	consumerKfgRetriever._apply_consumer_rbac(kindplural, providerkubeconfig)
 

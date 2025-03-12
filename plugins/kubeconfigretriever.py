@@ -2,12 +2,14 @@ import sys
 import json
 import subprocess
 import os
+from crmetrics import CRBase
 
 
-class ProviderKubeconfigRetriever(object):
+class KubeconfigRetriever(CRBase):
 
-	def retrieve_kubeconfig(self, kubeplusNS, serverURL, kubeconfigFor, kubeconfig):
+	def retrieve_kubeconfig(self, serverURL, kubeconfigFor, kubeconfig):
 
+		kubeplusNS = self.get_kubeplus_namespace(kubeconfig)
 		if kubeconfigFor == 'provider':
 			cmd = "kubectl get configmaps kubeplus-saas-provider -n " + kubeplusNS + " -o jsonpath=\"{.data.kubeplus-saas-provider\.json}\""
 		if kubeconfigFor == 'consumer':
@@ -38,9 +40,8 @@ class ProviderKubeconfigRetriever(object):
 
 if __name__ == '__main__':
 
-	kubeplusNS = sys.argv[1]
-	serverURL = sys.argv[2] # <api server url>
-	kubeconfigFor = sys.argv[3]
-	kubeconfigPath = sys.argv[4] # <complete kubeconfig path>
-	providerKfgRetriever = ProviderKubeconfigRetriever()
-	providerKfgRetriever.retrieve_kubeconfig(kubeplusNS, serverURL, kubeconfigFor, kubeconfigPath)
+	serverURL = sys.argv[1] # <api server url>
+	kubeconfigFor = sys.argv[2]
+	kubeconfigPath = sys.argv[3] # <complete kubeconfig path>
+	kfgRetriever = KubeconfigRetriever()
+	kfgRetriever.retrieve_kubeconfig(serverURL, kubeconfigFor, kubeconfigPath)

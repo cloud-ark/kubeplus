@@ -66,7 +66,7 @@ Retrieve KubePlus consumer kubeconfig as follows:
 
 .. code-block:: bash
 
-	$ kubectl retrieve kubeconfig consumer $KUBEPLUS_NS > consumer.conf
+	$ kubectl retrieve kubeconfig consumer > consumer.conf
 
 In the steps below, use the appropriate kubeconfig in the provider and consumer actions by passing the ``--kubeconfig=<provider/consumer kubeconfig file>`` flag.
 

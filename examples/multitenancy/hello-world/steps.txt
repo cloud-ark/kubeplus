@@ -36,7 +36,7 @@ $ kubectl get pods (wait till kubeplus pod is Running)
 Get Consumer kubeconfig:
 ---------------------------------------
 Extract consumer kubeconfig:
-$ kubectl retrieve kubeconfig consumer $KUBEPLUS_NS -s $apiserver > consumer.conf
+$ kubectl retrieve kubeconfig consumer -s $apiserver > consumer.conf
 OR
 $ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
 
