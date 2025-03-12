@@ -8,155 +8,103 @@ from crmetrics import CRBase
 
 class AppURLFinder(CRBase):
 
-	def get_ingresses(self, resources):
-		ingress_list = []
-		for resource in resources:
-			#print(resource)
-			if resource['Kind'] == 'Ingress':
-				present = False
-				for s in ingress_list:
-					if s['Name'] == resource['Name']:
-						present = True
-						break
-				if not present:
-					ingress_list.append(resource)
-		#print(ingress_list)
-		return ingress_list
+    def _get_node_ips(self, kubeconfig):
+        node_ip_types = []
+        node_ips = []
+        node_list = []
 
-	def get_svc(self, resources):
-		svc_list = []
-		for resource in resources:
-			#print(resource)
-			if resource['Kind'] == 'Service':
-				present = False
-				for s in svc_list:
-					if s['Name'] == resource['Name']:
-						present = True
-						break
-				if not present:
-					svc_list.append(resource)
-		#print(svc_list)
-		return svc_list
+        # get all the nodes
+        get_nodes = "kubectl get nodes " + kubeconfig
+        out, err = self.run_command(get_nodes)
+        for line in out.split("\n"):
+            line1 = ' '.join(line.split())
+            if 'NAME' not in line1 and line1 != '':
+                parts = line1.split(" ")
+                nodename = parts[0].strip()
+                node_list.append(nodename)
 
-	def get_host_from_ingress(self, ingresses, namespace, kubeconfig):
-		appURL = ""
-		for ingress in ingresses:
-			cmd = 'kubectl get ingress ' + ingress['Name'] + ' -n ' + ingress['Namespace'] + ' -o json ' + kubeconfig
-			#print(cmd)
-			try:
-				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-										stderr=subprocess.PIPE, shell=True).communicate()[0]
+        # for each node, build list of external and internal ips
+        for node in node_list:
+            describe_node = "kubectl describe node " + node + " " + kubeconfig
+            out1, err1 = self.run_command(describe_node)
+            ip_types = {}
+            for line in out1.split("\n"):
+                line1 = ' '.join(line.split())
+                if 'ExternalIP' in line1:
+                    parts = line1.split(":")
+                    nodeIP = parts[1].strip()
+                    ip_types["external"] = nodeIP
+                if 'InternalIP' in line1:
+                    parts = line1.split(":")
+                    nodeIP = parts[1].strip()
+                    ip_types["internal"] = nodeIP
+            node_ip_types.append(ip_types)
 
-				if out:
-					json_output = json.loads(out)
-					#print(json_output)
-					if 'tls' in json_output['spec']:
-						host = json_output['spec']['tls'][0]['hosts'][0]
-						appURL = "https://" + host.strip()
-					else:
-						host = json_output['spec']['rules'][0]['host']
-						appURL = "http://" + host.strip()
-					break
-			except Exception as e:
-				print(e)
-		return appURL
+        # prefer external ip; otherwise return internal ip
+        for item in node_ip_types:
+            if "external" in item:
+                node_ips.append(item["external"])
+            elif "internal" in item:
+                node_ips.append(item["internal"])
 
-	def get_svc_port(self, svcs, namespace, kubeconfig):
-		nodePort = -1
-		for svc in svcs:
-			cmd = 'kubectl get service ' + svc['Name'] + ' -n ' + svc['Namespace'] + ' -o json ' + kubeconfig
-			#print(cmd)
-			try:
-				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-										stderr=subprocess.PIPE, shell=True).communicate()[0]
+        return node_ips
 
-				if out:
-					json_output = json.loads(out)
-					#print(json_output)
-					service_type = json_output['spec']['type']
-					if service_type == 'NodePort':
-						nodePort = json_output['spec']['ports'][0]['nodePort']
-						#print("NodePort:" + str(nodePort))
-						break
-			except Exception as e:
-				print(e)
-		return nodePort
 
-	def get_node_ip(self, kubeconfig):
-		cmd = 'kubectl describe node ' + kubeconfig
-		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
-		out = out.decode('utf-8')
-		#print("Node o/p:" + out)
-		for line in out.split("\n"):
-			if 'ExternalIP' in line:
-				parts = line.split(":")
-				nodeIP = parts[1].strip()
-				#print("Node IP:" + nodeIP)
-				return nodeIP
-		return ""
+    def get_service_endpoints(self, kind, service_instance_name, kubeconfig):
+        endpoints = []
+        service_name_in_annotation = self.get_service_name_from_ns(service_instance_name, kubeconfig)
 
-	def get_server_ip(self, kubeconfig):
-		server_ip = ''
-		parts = kubeconfig.split("=")
-		kcfg = parts[1].strip()
-		#print(parts)
-		fp = open(kcfg, "r")
-		#fp = open("/root/.kube/config", "r")
-		contents = fp.read()
-		content = ''
-		try:
-			content = json.loads(contents)
-		except:
-			content = yaml.safe_load(contents)
+        if service_name_in_annotation.lower() != kind.lower():
+            print("Instance does not belong to the Service:" + kind)
+            sys.exit(1)
 
-		cluster_list = content['clusters']
-		for cluster in cluster_list:
-			cluster_name = cluster['name']
-			#print("Cluster name:" + cluster_name)
-			if cluster_name == 'kubeplus-saas-consumer' or cluster_name == 'kubeplus-saas-provider':
-				server_url = cluster['cluster']['server']
-				#print(server_url)
-				server_url = server_url.strip()
-				parts = server_url.split(":")
-				server_ip = parts[1].strip()
-				#print(server_ip)
-		return server_ip
+        ingress_cmd = "kubectl get ingress -n " + service_instance_name + " " + kubeconfig
+
+        out, err = self.run_command(ingress_cmd)
+        if "No resources found" not in err:
+            for line in out.split("\n"):
+                line1 = ' '.join(line.split())
+                if 'NAME' not in line1 and line1 != '':
+                    parts = line1.split(" ")
+                    hostname = parts[2].strip()
+                    protocol = "https://"
+                    endpoint = protocol + hostname
+                    endpoints.append(endpoint)
+        else:
+            service_cmd = "kubectl get service -n " + service_instance_name + " " + kubeconfig
+            out1, err1 = self.run_command(service_cmd)
+            for line in out1.split("\n"):
+                line1 = ' '.join(line.split())
+                endpoint = ''
+                if 'NAME' not in line1 and line1 != '':
+                    parts = line1.split(" ")
+                    port_parts = parts[4].split(",")
+                    for protocol in port_parts:
+                        proto_ports = protocol.split(":")
+                        if len(proto_ports) == 2:
+                            proto_port = proto_ports[0].strip()
+                            app_port = (proto_ports[1].strip()).split("/")[0].strip()
+                            if parts[1] == 'LoadBalancer':
+                                if proto_port == '80':
+                                    endpoint = "http://" + parts[2].strip() + ":" + app_port
+                                if proto_port == '443':
+                                    endpoint = "https://" + parts[2].strip() + ":" + app_port
+                            if parts[1] == 'NodePort':
+                                ip_address_list = self._get_node_ips(kubeconfig)
+                                for ipaddr in ip_address_list:
+                                    if proto_port == '80':
+                                        endpoint = "http://" + ipaddr.strip() + ":" + app_port
+                                    if proto_port == '443':
+                                        endpoint = "https://" + ipaddr.strip() + ":" + app_port
+                                    endpoints.append(endpoint)
+
+        return endpoints
+
 
 if __name__ == '__main__':
-	appURLFinder = AppURLFinder()
-	#crLogs.get_logs(sys.argv[1], sys.argv[2])
-	#resources = sys.argv[1]
-	relation = sys.argv[1]
-	kind = sys.argv[2]
-	instance = sys.argv[3]
-	namespace = sys.argv[4]
-	kubeconfig = sys.argv[5]
-	#print(kind + " " + instance + " " + namespace + " " + kubeconfig)
-	resources = {}
-	if relation == 'connections':
-		resources = appURLFinder.get_resources_connections(kind, instance, namespace, kubeconfig)
-		#print(resources)
-	try:
-		ingresses = appURLFinder.get_ingresses(resources)
-		if len(ingresses) > 0:
-			appURL = appURLFinder.get_host_from_ingress(ingresses, namespace, kubeconfig)
-			print(appURL)
-		else:
-			svcs = appURLFinder.get_svc(resources)
-			svcPort = appURLFinder.get_svc_port(svcs, namespace, kubeconfig)
-			appIP = appURLFinder.get_node_ip(kubeconfig)
-			if appIP == "":
-				appIP = appURLFinder.get_server_ip(kubeconfig)
-			if appIP == '':
-				print("KubePlus SaaS Consumer context not found in the kubeconfig.")
-				print("Cannot form app url.")
-				exit()
-			else:
-				if "//" not in appIP:
-					appIP = "//" + appIP
-				appURL = "http:" + appIP + ":" + str(svcPort)
-				appURL = appURL.strip()
-				#print("App port:" + str(svcPort))
-				print(appURL)
-	except Exception as e:
-		print(e)
+    appURLFinder = AppURLFinder()
+    kind = sys.argv[1]
+    instance = sys.argv[2]
+    kubeconfig = sys.argv[3]
+    endpoints = appURLFinder.get_service_endpoints(kind, instance, kubeconfig)
+    print(str(endpoints))

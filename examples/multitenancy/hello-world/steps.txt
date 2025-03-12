@@ -82,7 +82,7 @@ You can use either the provider.conf or consumer.conf in below commands.
 
 
 5. Retrievel application url
-   - kubectl appurl HelloWorldService hs1 default -k consumer.conf
+   - kubectl appurl HelloWorldService hs1 -k consumer.conf
    - curl <app-url> from above output
      - should see "Hello hello hello" displayed
 

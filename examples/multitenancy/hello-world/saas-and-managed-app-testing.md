@@ -59,7 +59,7 @@ Multi-namespace setup
     - Hello World Pod in hs1 namespace
 18. kubectl get ns
     - hs1 namespace has been created
-19. kubectl appurl HelloWorldService hs1 default -k consumer.conf
+19. kubectl appurl HelloWorldService hs1 -k consumer.conf
     - curl the IP address received. Should see "Hello hello hello"
 20. kubectl applogs HelloWorldService hs1 -k consumer.conf
     - Should see app logs
@@ -104,7 +104,7 @@ Single namespace setup
 16. kubectl create -f hs1.yaml --kubeconfig=provider.conf
 17. kubectl get pods -A
     - Hello World Pod in kubeplus namespace
-18. kubectl appurl HelloWorldService hs1 kubeplus -k provider.conf
+18. kubectl appurl HelloWorldService hs1 -k provider.conf
     - curl the IP address received. Should see "Hello hello hello"
 19. kubectl applogs HelloWorldService hs1 -k provider.conf
     - Should see app logs

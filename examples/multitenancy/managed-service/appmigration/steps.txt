@@ -5,12 +5,12 @@
 5. kubectl create -f helloappv1.yaml
 6. kubectl get helloappv1s -o json
 7. kubectl get pods -n hs1
-8. APP1_URL=`kubectl appurl HelloAppV1 hs1 default -k kubeplus-saas-provider.json`
+8. APP1_URL=`kubectl appurl HelloAppV1 hs1 -k kubeplus-saas-provider.json`
 9. curl $APP1_URL
 10. kubectl create -f helloappv1-1.yaml
 11. kubectl get helloappv2s -o json
 12. kubectl get pods -n hs1
-13. APP2_URL=`kubectl appurl HelloAppV2 hs1 default -k kubeplus-saas-provider.json`
+13. APP2_URL=`kubectl appurl HelloAppV2 hs1 -k kubeplus-saas-provider.json`
 14. curl $APP2_URL
 15. kubectl describe helloappv1s
 16. kubectl delete -f helloappv1.yaml 
