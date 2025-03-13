@@ -71,13 +71,13 @@ class KubeconfigGenerator(object):
                 #print(err)
                 return out, err
 
-        def _create_kubecfg_file(self, sa, namespace, filename, token, ca, server, kubeconfig):
+        def _create_kubecfg_file(self, sa, namespace, filename, token, ca, server, kubeconfig, cluster_name=None):
                 #print("Creating kubecfg file")
                 top_level_dict = {}
                 top_level_dict["apiVersion"] = "v1"
                 top_level_dict["kind"] = "Config"
 
-                contextName = sa
+                contextName = cluster_name if cluster_name else sa
 
                 usersList = []
                 usertoken = {}
@@ -98,12 +98,12 @@ class KubeconfigGenerator(object):
 
                 clusterInfo = {}
                 clusterInfo["cluster"] = cluster_details
-                clusterInfo["name"] = sa
+                clusterInfo["name"] = cluster_name if cluster_name else sa
                 clustersList.append(clusterInfo)
                 top_level_dict["clusters"] = clustersList
 
                 context_details = {}
-                context_details["cluster"] = sa
+                context_details["cluster"] = cluster_name if cluster_name else sa
                 context_details["user"] = sa
                 context_details["namespace"] = namespace
                 contextInfo = {}
@@ -705,7 +705,7 @@ class KubeconfigGenerator(object):
                     sys.exit()
                 return out
 
-        def _extract_kubeconfig(self, sa, namespace, filename, serverip='', kubecfg=''):
+        def _extract_kubeconfig(self, sa, namespace, filename, serverip='', kubecfg='', cluster_name=None):
             #print("Extracting kubeconfig")
             secretName = sa
             tokenFound = False
@@ -755,10 +755,10 @@ class KubeconfigGenerator(object):
                 else:
                     server = api_server_ip
                     #print("Kube API Server:" + server)
-            self._create_kubecfg_file(sa, namespace, filename, token, ca_cert, server, kubeconfig)
+            self._create_kubecfg_file(sa, namespace, filename, token, ca_cert, server, kubeconfig, cluster_name)
 
 
-        def _generate_kubeconfig(self, sa, namespace, filename, api_server_ip='', kubeconfig=''):
+        def _generate_kubeconfig(self, sa, namespace, filename, api_server_ip='', kubeconfig='', cluster_name=None):
                 cmdprefix = ""
                 cmd = " kubectl create sa " + sa + " -n " + namespace + kubeconfig
                 cmdToRun = cmdprefix + " " + cmd
@@ -778,7 +778,7 @@ class KubeconfigGenerator(object):
 
                         # Moving from here
                         #print("Got secret token")
-                        self._extract_kubeconfig(sa, namespace, filename, serverip=api_server_ip, kubecfg=kubeconfig)
+                        self._extract_kubeconfig(sa, namespace, filename, serverip=api_server_ip, kubecfg=kubeconfig, cluster_name=cluster_name)
 
 
 if __name__ == '__main__':
@@ -798,6 +798,9 @@ if __name__ == '__main__':
         parser.add_argument("-f", "--filename", help='''This flag is used to specify the
                 output file name in which generated provider kubeconfig will be store
                 (The default value is kubeplus-saas-provider.json)''')
+        parser.add_argument("-x", "--clustername", help='''This flag is used to specify the name of the cluster.
+                This name will be used in setting the value of the context attribute, along with the cluster name,
+                in the generated kubeconfig file.''')
         permission_help = "permissions file - use with update command.\n"
         permission_help = permission_help + "Should be a JSON file with the following structure:\n"
         permission_help = permission_help + "{perms:{<apiGroup1>:[{resource1|resource/resourceName::<resourceName>: [verb1, verb2, ...]}, {resource2: [..]}], {<apiGroup2>:[...]}}}"
@@ -825,6 +828,11 @@ if __name__ == '__main__':
         if pargs.permissionfile:
             #print("Permission file:" + pargs.permissionfile)
             permission_file = pargs.permissionfile
+
+        cluster_name = ''
+        if pargs.clustername:
+            #print("Cluster name:" + pargs.clustername)
+            cluster_name = pargs.clustername
 
         if action == 'update' and permission_file == '':
             print("Permission file missing. Please provide permission file.")
@@ -858,11 +866,11 @@ if __name__ == '__main__':
 
                 # 1. Generate Provider kubeconfig
                 if sa == "kubeplus-saas-provider":
-                    kubeconfigGenerator._generate_kubeconfig(sa, namespace, filename, api_server_ip=api_s_ip, kubeconfig=kubeconfigString)
+                    kubeconfigGenerator._generate_kubeconfig(sa, namespace, filename, api_server_ip=api_s_ip, kubeconfig=kubeconfigString, cluster_name=cluster_name)
                     kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider', kubeconfig=kubeconfigString)
                     print("Provider kubeconfig created: " + filename)
                 else:
-                    kubeconfigGenerator._generate_kubeconfig(sa, namespace, filename, api_server_ip=api_s_ip, kubeconfig=kubeconfigString)
+                    kubeconfigGenerator._generate_kubeconfig(sa, namespace, filename, api_server_ip=api_s_ip, kubeconfig=kubeconfigString, cluster_name=cluster_name)
                     kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer', kubeconfig=kubeconfigString)
                     print("Consumer kubeconfig created: " + filename)
 
