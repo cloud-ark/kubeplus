@@ -32,7 +32,7 @@ $ kubectl kubeplus commands
    $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-4.1.3.tgz?raw=true" -n $KUBEPLUS_NS --kubeconfig=kubeplus-saas-provider.json
 
 5. Extract consumer kubeconfig:
-   $ kubectl retrieve kubeconfig consumer $KUBEPLUS_NS -s $apiserver > consumer.conf
+   $ kubectl retrieve kubeconfig consumer -s $apiserver > consumer.conf
    OR
    $ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer.conf
 

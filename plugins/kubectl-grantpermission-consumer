@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if (( $# < 3 )); then
-    echo "kubectl grantpermission consumer <resourceplural>  <providerKubeconfig> <Namespace in which KubePlus is deployed>"
+if (( $# < 2 )); then
+    echo "kubectl grantpermission consumer <resourceplural>  <providerKubeconfig>"
     exit 0
 fi
 
@@ -11,7 +11,7 @@ providerKubeconfig=$2
 
 pythonPath=`which python3`
 if [[ $? == 0 ]]; then
-	`$pythonPath /$KUBEPLUS_HOME/plugins/consumerkubeconfigretriever.py $kubeplusNS $resPlural $providerKubeconfig`
+	`$pythonPath /$KUBEPLUS_HOME/plugins/consumerkubeconfigretriever.py $resPlural $providerKubeconfig`
 	echo "Consumer granted permission on $resPlural."
 else
 	echo "Encountered error in granting permission to consumer on $resPlural"
