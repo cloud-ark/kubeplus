@@ -5,16 +5,21 @@
 
 Let’s look at an example of creating a multi-instance WordPress Service using KubePlus. The WordPress service provider goes through the following steps on their cluster.
 
-**NOTE:** If you have not set up KubePlus, follow the [Installation](../README.md#installation) steps to set up KubePlus.
+**NOTE:**
+If you have not set up KubePlus, follow the [Installation](../README.md#installation) steps to set up KubePlus.
+Create the resourcecomposition instance and application CRD instances in the same namespace where KubePlus is deployed.
+KubePlus will ignore creation of resourcecomposition instance and application CRD instances if other namespaces are used.
+In the below steps, `KUBEPLUS_NS` is the namespace in which KubePlus is deployed.
+
 
 ### 1. Create Kubernetes CRD Representing WordPress Helm Chart
 
 *The WordPress Helm chart can be specified as a [public URL](./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition.yaml) or can be [available locally](./examples/multitenancy/application-hosting/wordpress/wordpress-service-composition-localchart.yaml).*
 
 ```sh
-kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
-kubectl get resourcecompositions
-kubectl describe resourcecomposition wordpress-service-composition
+kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/wordpress-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+kubectl get resourcecomposition -n $KUBEPLUS_NS
+kubectl describe resourcecomposition wordpress-service-composition -n $KUBEPLUS_NS
 ```
 
 If the status of the `wordpress-service-composition` indicates that the new CRD has been created successfully, verify it:
@@ -28,19 +33,19 @@ You should see `wordpressservices.platformapi.kubeplus` CRD registered.
 ### 2. Create WordpressService Instance `wp-tenant1`
 
 ```sh
-kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json
+kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/tenant1.yaml --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
 ```
 
 ### 3. Create WordpressService Instance `wp-tenant2`
 
 ```sh
-kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json
+kubectl create -f https://raw.githubusercontent.com/cloud-ark/kubeplus/master/examples/multitenancy/application-hosting/wordpress/tenant2.yaml --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
 ```
 
 ### 4. Check Created WordpressService Instances
 
 ```sh
-kubectl get wordpressservices
+kubectl get wordpressservices -n $KUBEPLUS_NS
 
 NAME         AGE
 wp-tenant1   86s
@@ -50,7 +55,7 @@ wp-tenant2   26s
 ### 5. Check the Details of the Created Instance
 
 ```sh
-kubectl describe wordpressservices wp-tenant1
+kubectl describe wordpressservices wp-tenant1 -n $KUBEPLUS_NS
 ```
 
 ### 6. Check Created Application Resources
@@ -99,9 +104,9 @@ Underlying Physical Resources consumed:
 ### 8. Cleanup
 
 ```sh
-kubectl delete wordpressservice wp-tenant1 --kubeconfig=kubeplus-saas-provider.json
-kubectl delete wordpressservice wp-tenant2 --kubeconfig=kubeplus-saas-provider.json
-kubectl delete resourcecomposition wordpress-service-composition --kubeconfig=kubeplus-saas-provider.json
+kubectl delete wordpressservice wp-tenant1 --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+kubectl delete wordpressservice wp-tenant2 --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+kubectl delete resourcecomposition wordpress-service-composition --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
 helm delete kubeplus -n $KUBEPLUS_NS
 python3 provider-kubeconfig.py delete $KUBEPLUS_NS
 ```
