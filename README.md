@@ -84,7 +84,7 @@ For testing purposes you can create a [minikube](https://minikube.sigs.k8s.io/do
    source venv/bin/activate
    pip3 install -r requirements.txt
    apiserver=`kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'`
-   python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
+   python3 provider-kubeconfig.py -s $apiserver -x <cluster_name> create $KUBEPLUS_NS
    deactivate
    ```
 
