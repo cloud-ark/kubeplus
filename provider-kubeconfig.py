@@ -560,7 +560,7 @@ class KubeconfigGenerator(object):
                 for apiGroup, res_actions in perms.items():
                     for res in res_actions:
                         for resource, verbs in res.items():
-                            print(apiGroup + " " + resource + " " + str(verbs))
+                            #print(apiGroup + " " + resource + " " + str(verbs))
                             if resource not in new_resources:
                                 new_resources.append(resource.strip())
                             ruleGroup = {}
@@ -621,13 +621,13 @@ class KubeconfigGenerator(object):
                 cfg_map_filename = sa + "-perms.txt"
                 cmd = "kubectl get configmap " + cfg_map_name + " -o json -n " + namespace
                 out1, err1 = self.run_command(cmd)
-                print("Original Perms Out:" + str(out1))
-                print("Perms Err:" + str(err1))
+                #print("Original Perms Out:" + str(out1))
+                #print("Perms Err:" + str(err1))
                 kubeplus_perms = []
                 if out1 != '':
                     json_op = json.loads(out1)
                     perms = json_op['data'][cfg_map_filename]
-                    print(perms)
+                    #print(perms)
                     k_perms = perms.split(",")
                     for p in k_perms:
                         p = p.replace("'","")
@@ -638,7 +638,7 @@ class KubeconfigGenerator(object):
 
                 new_resources.extend(kubeplus_perms)
 
-                print("New perms:" + str(new_resources))
+                #print("New perms:" + str(new_resources))
 
                 cmd = "kubectl delete configmap " + cfg_map_name + " -n " + namespace
                 self.run_command(cmd)
@@ -880,7 +880,7 @@ if __name__ == '__main__':
 
         if action == "update":
                 kubeconfigGenerator._update_rbac(permission_file, sa, namespace, kubeconfigString)
-                print("Provider kubeconfig permissions updated: " + filename)
+                print("kubeconfig permissions updated: " + filename)
 
 
         if action == "delete":
