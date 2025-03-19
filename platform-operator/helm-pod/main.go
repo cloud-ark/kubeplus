@@ -339,15 +339,12 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 			if helmreleaseNS != "" && helmrelease != "" {
 				// Do in the background as 'helm delete' and deleting NS are time consuming actions
 				go func() {
-					deleteHelmRelease(helmreleaseNS, helmrelease)
-
+					op := deleteHelmRelease(helmreleaseNS, helmrelease)
 					fmt.Printf("Helm release deleted...\n")
-					fmt.Printf("Deleting the namespace...\n")
 
-					// The namespace created to deploy the Helm chart
-					// needs to be deleted only if the helmreleaseNS does not match namespace.
-					// For managed app use-case, namespace and helmreleaseNS will be same.
-					if helmreleaseNS != namespace {
+					// Delete the Namespace only if there is no error.
+					if !strings.Contains(strings.ToLower(op), "error") {
+						fmt.Printf("Deleting the namespace...\n")
 						namespaceDeleteCmd := "./root/kubectl delete ns " + helmreleaseNS
 						cmdRunnerPod := getKubePlusPod()
 						_, op := executeExecCall(cmdRunnerPod, namespaceDeleteCmd)
@@ -382,15 +379,15 @@ func deleteCRDInstances(request *restful.Request, response *restful.Response) {
 	//sync.mutex.Unlock()
 }
 
-func deleteHelmRelease(helmreleaseNS, helmrelease string) bool {
+func deleteHelmRelease(helmreleaseNS, helmrelease string) string {
 	//fmt.Printf("Helm release:%s\n", helmrelease)
 	cmd := "helm delete " + helmrelease + " -n " + helmreleaseNS
 	fmt.Printf("Helm delete cmd:%s\n", cmd)
 	var output string
 	cmdRunnerPod := getKubePlusPod()
-	ok, output := executeExecCall(cmdRunnerPod, cmd)
+	_, output = executeExecCall(cmdRunnerPod, cmd)
 	fmt.Printf("Helm delete o/p:%v\n", output)
-	return ok
+	return output
 }
 
 func updateCRDInstances(request *restful.Request, response *restful.Response) {

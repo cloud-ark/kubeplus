@@ -1482,6 +1482,40 @@ func handleCustomAPIs(ar *v1.AdmissionReview, httpMethod string) *v1.AdmissionRe
 					},
 				}
 			}
+			nsAnnotations := nsObj.Annotations
+			releaseNameAnnotation := ""
+   			if nsAnnotations != nil {
+        			fmt.Printf("Annotations of namespace %s:\n", crname)
+        			for key, value := range nsAnnotations {
+            				fmt.Printf("%s: %s\n", key, value)
+					if key == "meta.helm.sh/release-name" {
+						releaseNameAnnotation = value
+					}
+        			}
+				if releaseNameAnnotation != "" {
+					releaseNameAnnotation = strings.Replace(releaseNameAnnotation, `"`,"",-1)
+					releaseNameAnnotation = strings.Replace(releaseNameAnnotation, `\`, "",-1)
+					fmt.Printf("Release name annotation:%s\n", releaseNameAnnotation)
+					prts := strings.Split(releaseNameAnnotation, "-")
+					kindInRelease := ""
+        				if len(prts) > 0 {
+                				kindInRelease = prts[0]
+						fmt.Printf("Kind in release:%s\n", kindInRelease)
+						fmt.Printf("Kind in Rescomp:%s\n", kind)
+						if strings.ToLower(kindInRelease) != strings.ToLower(kind) {
+			                                msg := fmt.Sprintf("App with name %s already exists for Kind %s. Use different app name.\n", crname, kindInRelease)
+                        			        return &v1.AdmissionResponse{
+                                        				Result: &metav1.Status{
+                                                			Message: msg,
+                                        			},
+                                			}
+						}
+        				}
+				}
+    			} else {
+        			fmt.Println("No annotations found.")
+    			}
+
 		}
 
 		lengthCheck := kind + "-" + crname
