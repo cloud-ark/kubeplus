@@ -1060,8 +1060,9 @@ class CRMetrics(CRBase):
 				pod_cpu_mem = ""
 				pod_cpu = val["cpu"]
 				pod_mem = val["memory"]
-				pod_cpu_mem = key + "_" + 'cpu{custom_resource="'+fq_instance+'"} ' + str(pod_cpu) + ' ' + timeInMillis + "\n"
-				pod_cpu_mem = pod_cpu_mem + key + "_" + 'memory{custom_resource="'+fq_instance+'"} ' + str(pod_mem) + ' ' + timeInMillis + "\n"
+				key_to_use = key.replace("-","_")
+				pod_cpu_mem = key_to_use + "_" + 'cpu{custom_resource="'+fq_instance+'"} ' + str(pod_cpu) + ' ' + timeInMillis + "\n"
+				pod_cpu_mem = pod_cpu_mem + key_to_use + "_" + 'memory{custom_resource="'+fq_instance+'"} ' + str(pod_mem) + ' ' + timeInMillis + "\n"
 				podMetrics = podMetrics + pod_cpu_mem
 
 			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers + "\n" + networkReceiveBytes + "\n" + networkTransmitBytes + "\n" + numOfNotRunningPods + "\n" + oomEvents + "\n" + podMetrics
