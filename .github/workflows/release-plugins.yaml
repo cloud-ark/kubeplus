@@ -1,0 +1,40 @@
+name: Plugins Release (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number (e.g v1.0.0)"
+        required: true
+      notes:
+        description: "Release notes (optional)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create tar file of the plugins folder
+        run: |
+          tar -czvf kubeplus-kubectl-plugins-${{ github.event.inputs.version }}.tar.gz -C plugins .
+
+      - name: Create GitHub release and upload asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NOTES="${{ github.event.inputs.notes }}"
+          if [ -z "$NOTES" ]; then
+            NOTES="Release of kubeplus kubectl plugins version ${{ github.event.inputs.version }}"
+          fi
+
+          gh release create kubeplus-kubectl-plugins-${{ github.event.inputs.version }} \
+            kubeplus-kubectl-plugins-${{ github.event.inputs.version }}.tar.gz \
+            --title "Release kubeplus-kubectl-plugins-${{ github.event.inputs.version }}" \
+            --notes "$NOTES"
