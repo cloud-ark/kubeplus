@@ -386,6 +386,7 @@ class CRMetrics(CRBase):
 	def _get_cpu_memory_usage_kubelet(self, pod_list, kubecfg=''):
 		total_cpu = 0
 		total_mem = 0
+		individual_pod_metrics = {}
 
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
@@ -442,6 +443,10 @@ class CRMetrics(CRBase):
 					#print("MEMORY:" + str(memoryInBytes))
 					total_cpu = total_cpu + cpuInNanoCores
 					total_mem = total_mem + memoryInBytes
+					cpu_mem_dict = {}
+					cpu_mem_dict["cpu"] = float(cpuInNanoCores) / 1000000
+					cpu_mem_dict["memory"] = float(memoryInBytes) / (1024*1024)
+					individual_pod_metrics[podName1] = cpu_mem_dict
 
 		total_cpu_milli_cores = float(total_cpu) / 1000000
 		total_mem_mib = float(total_mem) / (1024*1024)
@@ -449,7 +454,7 @@ class CRMetrics(CRBase):
 		#print("TOTAL CPU:" + str(total_cpu_milli_cores) + " mi")
 		#print("TOTAL MEM:" + str(total_mem_mib) + " Mib")
 
-		return total_cpu_milli_cores, total_mem_mib
+		return total_cpu_milli_cores, total_mem_mib, individual_pod_metrics
 
 	def _get_cpu_memory_usage_kubectl_top(self, pod_list):
 		pod_usage_map = {}
@@ -504,7 +509,7 @@ class CRMetrics(CRBase):
 			count = count + 1
 			composition = self._get_composition(kind, instance, namespace)
 			pod_list = self._parse_number_of_pods(composition)
-			cpu, memory = self._get_cpu_memory_usage_kubelet(pod_list)
+			cpu, memory, _ = self._get_cpu_memory_usage_kubelet(pod_list)
 		return cpu, memory, count
 
 	def _get_metrics_cr_instances(self, account):
@@ -623,7 +628,7 @@ class CRMetrics(CRBase):
 		pod_list = self._get_pods_for_account(account)
 		#print("Pods:")
 		#print(pod_list)
-		cpu, mem = self._get_cpu_memory_usage_kubelet(pod_list)
+		cpu, mem, _ = self._get_cpu_memory_usage_kubelet(pod_list)
 		return cpu, mem, len(pod_list)
 
 	def _get_metrics_kind(self, kind, account):
@@ -975,7 +980,7 @@ class CRMetrics(CRBase):
 			print("    " + pod['Name'])
 		#print(pod_list_for_metrics)
 
-		cpu, mem = self._get_cpu_memory_usage_kubelet(pod_list_for_metrics)
+		cpu, mem, _ = self._get_cpu_memory_usage_kubelet(pod_list_for_metrics)
 		storage = 0
 		for p in pod_list_for_metrics:
 			stor = self._parse_persistentvolumeclaims([p])
@@ -1006,7 +1011,7 @@ class CRMetrics(CRBase):
 		num_of_containers_conn = self._parse_number_of_containers(pod_list, kubecfg=kubeconfig)
 		total_storage_conn = self._parse_persistentvolumeclaims(pod_list, kubecfg=kubeconfig)
 		num_of_hosts_conn = self._parse_number_of_hosts(pod_list, kubecfg=kubeconfig)
-		cpu_conn, memory_conn = self._get_cpu_memory_usage_kubelet(pod_list, kubecfg=kubeconfig)
+		cpu_conn, memory_conn, individual_pod_metrics = self._get_cpu_memory_usage_kubelet(pod_list, kubecfg=kubeconfig)
 		networkReceiveBytesTotal, networkTransmitBytesTotal, oom_events = self._get_cadvisor_metrics(pod_list, kubecfg=kubeconfig)
 
 		num_of_not_running_pods = self._num_of_not_running_pods(pod_list, kubecfg=kubeconfig)
@@ -1049,8 +1054,17 @@ class CRMetrics(CRBase):
 			numOfNotRunningPods = 'not_running_pods{custom_resource="'+fq_instance+'"} ' + str(num_of_not_running_pods) + ' ' + timeInMillis
 
 			oomEvents = 'oom_events{custom_resource="'+fq_instance+'"} ' + str(oom_events) + ' ' + timeInMillis
-                         
-			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers + "\n" + networkReceiveBytes + "\n" + networkTransmitBytes + "\n" + numOfNotRunningPods + "\n" + oomEvents
+
+			podMetrics = ""
+			for key, val in individual_pod_metrics.items():
+				pod_cpu_mem = ""
+				pod_cpu = val["cpu"]
+				pod_mem = val["memory"]
+				pod_cpu_mem = key + "_" + 'cpu{custom_resource="'+fq_instance+'"} ' + str(pod_cpu) + ' ' + timeInMillis + "\n"
+				pod_cpu_mem = pod_cpu_mem + key + "_" + 'memory{custom_resource="'+fq_instance+'"} ' + str(pod_mem) + ' ' + timeInMillis + "\n"
+				podMetrics = podMetrics + pod_cpu_mem
+
+			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers + "\n" + networkReceiveBytes + "\n" + networkTransmitBytes + "\n" + numOfNotRunningPods + "\n" + oomEvents + "\n" + podMetrics
 			print(metricsToReturn)
 		elif opformat == 'pretty':
 			print("---------------------------------------------------------- ")
