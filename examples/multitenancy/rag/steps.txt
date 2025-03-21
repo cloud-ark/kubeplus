@@ -1,0 +1,37 @@
+RAG Architecture
+-----------------
+RAG stands for Retrieval Augmented Generation.
+
+In Generative AI tasks like Question-Answering, RAG setups
+retrieve documents that are relevant to the query, and use them
+as context when generating the answer.
+
+The steps involved in a RAG setup are:
+1. Choosing an embedding model (embedding-model-dpr.py)
+2. Store document embeddings in a Vector database (store-documentembeddings-vectordb.py)
+3. Search documents relevant to a query (search-documents.py)
+4. Integrate with RAG setup (rag-integration.py)
+
+Consider an enterprise who wants to deploy chatbots for answering questions related to different
+aspects of the company, such as HR questions, internal coding standards used within the company, and social events.
+Imagine that information about these is available on various internal tools such as Workday,
+JIRA/Confluence, internal social media apps like Signal, etc.
+The chatbots need to use all this information, distributed in different document repositories,
+when answering questions.
+
+The architecture for such a system can look as follows:
+We create one Vector database which is loaded with all the documents from different internal document sources
+(Workday, Confluence, Signal, etc.).
+We create different chatbots for different tasks (e.g.: askhr - for HR question/answers, 
+codr - for coding question/answers , tgif - for social events). Each chatbot can have special prompts
+relevant to their task. All the chatbots use the same Vector database as part of their RAG setup.
+A single Vector database shared by all the chatbots ensures that a single team can work on setting up
+this database. Also, a single database can correctly answer questions that span multiple categories
+(e.g.: What are the coding standards used during internal Hackthons? Here the question spans two categories - 
+coding standards and social events.) 
+
+We will have one Helm chart representing the Vector database, and separate Helm charts
+for the chatbots. We will deploy one instance of the Vector database CRD, which will run in its own namespace.
+Each chatbot will also be deployed as a single instance, and will run in its own namespace.
+In order to allow chatbots to use the Vector database in the RAG process, we will need to enable cross-namespace
+communication between the chatbot's namespace and the Vector database namespace.
