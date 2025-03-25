@@ -23,7 +23,10 @@ jobs:
 
       - name: Create tar file of the plugins folder
         run: |
-          tar -czvf kubeplus-kubectl-plugins-${{ github.event.inputs.version }}.tar.gz -C plugins .
+          tar -cvf kubectl-plugins-${{github.event.inputs.version}}.tar plugins/
+          gzip kubectl-plugins-${{github.event.inputs.version}}.tar
+          
+          #tar -czvf kubectl-plugins-${{ github.event.inputs.version }}.tar.gz -C plugins .
 
       - name: Create GitHub release and upload asset
         env:
@@ -34,7 +37,7 @@ jobs:
             NOTES="Release of kubeplus kubectl plugins version ${{ github.event.inputs.version }}"
           fi
 
-          gh release create kubeplus-kubectl-plugins-${{ github.event.inputs.version }} \
-            kubeplus-kubectl-plugins-${{ github.event.inputs.version }}.tar.gz \
+          gh release create kubectl-plugins-${{ github.event.inputs.version }} \
+            kubectl-plugins-${{ github.event.inputs.version }}.tar.gz \
             --title "Release kubeplus-kubectl-plugins-${{ github.event.inputs.version }}" \
             --notes "$NOTES"
