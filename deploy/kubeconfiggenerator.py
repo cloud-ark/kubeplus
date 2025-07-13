@@ -664,7 +664,9 @@ def registercrd():
     openAPIV3SchemaObj['properties'] = openAPIV3SchemaProperties
     attr_types['openAPIV3Schema'] = openAPIV3SchemaObj
     flatten(yaml_contents, flattened, openAPIV3SchemaPropertiesInnerDetails)
-    openAPIV3SchemaPropertiesInnerDetails["nodeName"] = {"type": "string"}
+
+    # We are no longer supporting Pod level policies; so no need to include nodeName in the spec
+    #openAPIV3SchemaPropertiesInnerDetails["nodeName"] = {"type": "string"}
 
     json_contents = json.dumps(flattened)
 
