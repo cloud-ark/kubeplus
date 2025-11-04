@@ -68,8 +68,13 @@ For testing purposes you can create a [minikube](https://minikube.sigs.k8s.io/do
 3. **Unzip KubePlus plugins and set up the PATH:**
 
    ```sh
-   wget https://github.com/cloud-ark/kubeplus/raw/master/kubeplus-kubectl-plugins.tar.gz
-   tar -zxvf kubeplus-kubectl-plugins.tar.gz
+   Go to https://github.com/cloud-ark/kubeplus/releases
+   Click "Assets" -> right click kubeplus-kubectl-plugins-v*.tar.gz and copy the link address
+   wget "plugin link from above step"
+   mkdir plugins
+   mv kubeplus-kubectl-plugins-v*.tar.gz plugins/.
+   cd plugins
+   tar -zxvf kubeplus-kubectl-plugins-v*.tar.gz
    export KUBEPLUS_HOME=`pwd`
    export PATH=$KUBEPLUS_HOME/plugins:$PATH
    kubectl kubeplus commands
