@@ -75,8 +75,7 @@ For testing purposes you can create a [minikube](https://minikube.sigs.k8s.io/do
    mv kubeplus-kubectl-plugins-v*.tar.gz plugins/.
    cd plugins
    tar -zxvf kubeplus-kubectl-plugins-v*.tar.gz
-   export KUBEPLUS_HOME=`pwd`
-   export PATH=$KUBEPLUS_HOME/plugins:$PATH
+   export PATH=`pwd`:$PATH
    kubectl kubeplus commands
    ```
 
