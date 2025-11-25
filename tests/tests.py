@@ -585,7 +585,167 @@ class TestKubePlus(unittest.TestCase):
     # kubectl appresources
     # kubectl appurl
     # kubectl applogs
-    # kubectl metrics
+
+
+    def test_metrics(self):
+        kubeplus_home = os.getenv("KUBEPLUS_HOME")
+        provider = kubeplus_home + '/kubeplus-saas-provider.json'
+        
+        def cleanup():
+            cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hs1.yaml --kubeconfig=%s" % provider
+            TestKubePlus.run_command(cmd)
+            cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=%s" % provider
+            TestKubePlus.run_command(cmd)
+
+        if not TestKubePlus._is_kubeplus_running():
+            print("KubePlus is not running. Deploy KubePlus and then run tests")
+            sys.exit(0)
+
+        if os.getenv("KUBEPLUS_HOME") == '':
+            print("Skipping test as KUBEPLUS_HOME is not set.")
+            return
+
+        # register HelloWorldService API
+        cmd = "kubectl upload chart ../examples/multitenancy/hello-world/hello-world-chart-0.0.3.tgz %s" % provider
+        out, err = TestKubePlus.run_command(cmd)
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=%s" % provider
+        out, err = TestKubePlus.run_command(cmd)
+
+        # check CRD installation
+        crd = "helloworldservices.platformapi.kubeplus"
+        crd_installed = self._check_crd_installed(crd)
+        if not crd_installed:
+            print("CRD " + crd + " not installed. Exiting this test.")
+            return
+        
+        # create app instance
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hs1.yaml --kubeconfig=%s" % provider
+        out, err = TestKubePlus.run_command(cmd)
+
+        time.sleep(10)
+
+        # test plugin
+        cmd = "kubectl metrics HelloWorldService hs1 -k %s -o json" % provider
+        out, err = TestKubePlus.run_command(cmd)
+        
+        if err != '':
+            print("FAIL: Something went wrong with the plugin.")
+            print(err)
+            cleanup()
+            sys.exit(1)
+
+        if out == '':
+            print("FAIL: No output produced by kubectl metrics.")
+            print(err)
+            cleanup()
+            sys.exit(1)
+
+        print("Output of kubectl metrics:")
+        print(out)
+
+        json_string = json.loads(out)
+        required_fields =  ["pods", "cpu", "storage", "memory", "networkReceiveBytes", "networkTransmitBytes"]
+        for field in required_fields:
+            if field not in json_string:
+                print(f"FAIL: The required field '{field}' does not exist in the metrics JSON output.")
+                cleanup()
+                sys.exit(1)
+
+        print("PASS: test_metrics")
+        print("---")
+        print(err)
+        cleanup()
+
+
+    def test_metrics_custom(self):
+        kubeplus_home = os.getenv("KUBEPLUS_HOME")
+        provider = kubeplus_home + '/kubeplus-saas-provider.json'
+        
+        def cleanup():
+            cmd = "kubectl delete -f ../examples/managed-service/appmetrics/custom-hello-world/custom-hs1.yaml --kubeconfig=%s" % provider
+            TestKubePlus.run_command(cmd)
+            cmd = "kubectl delete -f ../examples/managed-service/appmetrics/custom-hello-world/custom-hello-world-app-composition.yaml --kubeconfig=%s" % provider
+            TestKubePlus.run_command(cmd)
+
+        if not TestKubePlus._is_kubeplus_running():
+            print("KubePlus is not running. Deploy KubePlus and then run tests")
+            sys.exit(0)
+
+        if os.getenv("KUBEPLUS_HOME") == '':
+            print("Skipping test as KUBEPLUS_HOME is not set.")
+            return
+        
+
+        # Build application docker image
+        cmd = "chmod +x ../examples/managed-service/appmetrics/custom-hello-world/build.sh"
+        out, err = TestKubePlus.run_command(cmd)
+        cmd = "../examples/managed-service/appmetrics/custom-hello-world/build.sh"
+        out, err = TestKubePlus.run_command(cmd)
+        cmd = "docker images"
+        out, err = TestKubePlus.run_command(cmd)
+        if "custom-hello-world-app" not in out:
+            print("Docker image not found (custom-hello-world-app:latest).")
+            return
+
+        # register CustomHelloWorldService API
+        cmd = "kubectl upload chart ../examples/managed-service/appmetrics/custom-hello-world/custom-hello-chart-0.0.1.tgz %s" % provider
+        out, err = TestKubePlus.run_command(cmd)
+        cmd = "kubectl create -f ../examples/managed-service/appmetrics/custom-hello-world/custom-hello-world-app-composition.yaml --kubeconfig=%s" % provider
+        out, err = TestKubePlus.run_command(cmd)
+
+        # check CRD installation
+        crd = "customhelloworldapps.platformapi.kubeplus"
+        crd_installed = self._check_crd_installed(crd)
+        if not crd_installed:
+            print("CRD " + crd + " not installed. Exiting this test.")
+            return
+        
+        # create app instance
+        cmd = "kubectl create -f ../examples/managed-service/appmetrics/custom-hello-world/custom-hs1.yaml --kubeconfig=%s" % provider
+        out, err = TestKubePlus.run_command(cmd)
+
+        time.sleep(10)
+
+        # test plugin
+        cmd = "kubectl metrics CustomHelloWorldApp custom-hs1 -k %s -o json" % provider
+        out, err = TestKubePlus.run_command(cmd)
+        
+        if err != '':
+            print("FAIL: Something went wrong with the plugin.")
+            print(err)
+            cleanup()
+            sys.exit(1)
+
+        if out == '':
+            print("FAIL: No output produced by kubectl metrics.")
+            print(err)
+            cleanup()
+            sys.exit(1)
+
+        print("Output of kubectl metrics:")
+        print(out)
+
+        json_string = json.loads(out)
+        required_fields =  ["pods", "cpu", "storage", "memory", "networkReceiveBytes", "networkTransmitBytes"]
+        for field in required_fields:
+            if field not in json_string:
+                print(f"FAIL: The required field '{field}' does not exist in the metrics JSON output.")
+                cleanup()
+                sys.exit(1)
+
+        custom_fields = ["hello_requests_total", "bye_requests_total"]
+        for field in custom_fields:
+            if field not in json_string:
+                print(f"FAIL: The custom field '{field}' does not exist in the metrics JSON output.")
+                cleanup()
+                sys.exit(1)
+
+        print("PASS: test_metrics_custom")
+        print("---")
+        print(err)
+        cleanup()
+
+
     @unittest.skip("Skipping CLI test")
     def test_kubeplus_cli(self):
         kubeplus_home = os.getenv("KUBEPLUS_HOME")

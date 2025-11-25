@@ -1,0 +1,7 @@
+# defines an instance of the HelloWorldService kind
+apiVersion: platformapi.kubeplus/v1alpha1
+kind: CustomHelloWorldApp
+metadata:
+  name: custom-hs1
+spec:
+  # no specific specs
