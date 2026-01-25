@@ -192,7 +192,7 @@ kubectl create -f examples/multitenancy/hello-world/hs2.yaml --kubeconfig=kubepl
 In some scenarios, you might want to enable controlled communication between instances running in different namespaces. KubePlus provides a custom kubectl plugin for this purpose. To allow bi-directional traffic between the two HelloWorldService instances (deployed in namespaces `hs1` and `hs2`), run:
 
 ```sh
-kubectl allow network traffic hs1 hs2 -k kubeplus-saas-provider.json
+kubectl allow network traffic hs1 hs2
 ```
 
 ```sh 
@@ -216,7 +216,7 @@ The connection should be allowed
 To deny the traffic between namespace 
 
 ```sh
-kubectl deny network traffic hs1 hs2 -k kubeplus-saas-provider.json
+kubectl deny network traffic hs1 hs2
 ```
 
 ```sh 
