@@ -11,9 +11,9 @@ class KubeconfigRetriever(CRBase):
 
 		kubeplusNS = self.get_kubeplus_namespace(kubeconfig)
 		if kubeconfigFor == 'provider':
-			cmd = "kubectl get configmaps kubeplus-saas-provider -n " + kubeplusNS + r" -o jsonpath=\"{.data.kubeplus-saas-provider\.json}\""
+			cmd = "kubectl get configmaps kubeplus-saas-provider -n " + kubeplusNS + r" -o jsonpath='{.data.kubeplus-saas-provider\.json}'"
 		if kubeconfigFor == 'consumer':
-			cmd = "kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n " + kubeplusNS + r" -o jsonpath=\"{.data.kubeplus-saas-consumer\.json}\""			
+			cmd = "kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n " + kubeplusNS + r" -o jsonpath='{.data.kubeplus-saas-consumer\.json}'"			
 
 		#kubeconfigParts = kubeconfig.split("=")
 		#kubeconfigPath = kubeconfigParts[1].strip()

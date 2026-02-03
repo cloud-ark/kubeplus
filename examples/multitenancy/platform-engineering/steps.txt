@@ -32,6 +32,8 @@ Platform Engineering team
      $ helm install kubeplus "https://github.com/cloud-ark/operatorcharts/blob/master/kubeplus-chart-4.2.0.tgz?raw=true" --kubeconfig=kubeplus-saas-provider.json 
    - Wait till KubePlus Pod is Running
      $ kubectl get pods -A
+   - Copy the provider kubeconfig into this directory so the commands below work (run from this directory):
+     $ cp ../../../kubeplus-saas-provider.json .
 
 4. Create CustomMysqlService API wrapping the Helm chart:
    - Check custom-mysql-service-composition-localchart.yaml. Notice that we are specifying our custom mysql chart
