@@ -15,11 +15,8 @@ class KubeconfigRetriever(CRBase):
 		if kubeconfigFor == 'consumer':
 			cmd = "kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n " + kubeplusNS + r" -o jsonpath='{.data.kubeplus-saas-consumer\.json}'"			
 
-		#kubeconfigParts = kubeconfig.split("=")
-		#kubeconfigPath = kubeconfigParts[1].strip()
 		cmd = cmd + " --kubeconfig=" + kubeconfig
 		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
-		#print(out)
 		out = out.decode('utf-8')
 		json_output = {}
 		try:
