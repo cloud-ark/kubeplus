@@ -2,5 +2,20 @@
 
 source utils.sh  # if you have common utility functions; else remove this line
 
-# This wrapper passes all arguments to our Python script.
-python3 "$KUBEPLUS_HOME/plugins/network_traffic.py" deny "$@"
+# Usage (as advertised in kubectl-kubeplus-commands):
+#   kubectl deny network traffic <ns1> <ns2> [-k <kubeconfig>]
+#
+# kubectl will translate that to the plugin name:
+#   kubectl-deny-network-traffic <ns1> <ns2> [-k <kubeconfig>]
+#
+# Here we:
+#   - Take the first two positional args as namespaces
+#   - Pass any remaining args (e.g. -k <kubeconfig>) as global options
+#   - Reorder so global options come before the subcommand for argparse
+
+ns1="$1"
+ns2="$2"
+shift 2
+
+# "$@" now contains any remaining flags (e.g. -k kubeplus-saas-provider.json)
+python3 "$KUBEPLUS_HOME/plugins/network_traffic.py" "$@" deny "$ns1" "$ns2"
