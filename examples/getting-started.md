@@ -131,9 +131,20 @@ eval $(minikube docker-env)
 #### Create HelloWorldService Instances
 
 ```sh
-kubectl create -f hello-world-service-composition.yaml --kubeconfig=provider.conf
-kubectl create -f hs1.yaml --kubeconfig=provider.conf
-kubectl create -f hs2.yaml --kubeconfig=provider.conf
+kubectl create -f examples/multitenancy/hello-world/hello-world-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
+```
+
+Wait for the HelloWorldService CRD to be registered:
+
+```sh
+until kubectl get crds --kubeconfig=kubeplus-saas-provider.json | grep helloworldservices.platformapi.kubeplus ; do echo "Waiting for HelloWorldService CRD to be registered.."; sleep 1; done
+```
+
+Then create the HelloWorldService instances:
+
+```sh
+kubectl create -f examples/multitenancy/hello-world/hs1.yaml --kubeconfig=kubeplus-saas-provider.json
+kubectl create -f examples/multitenancy/hello-world/hs2.yaml --kubeconfig=kubeplus-saas-provider.json
 ```
 
 #### Test Network Isolation
@@ -142,17 +153,17 @@ kubectl create -f hs2.yaml --kubeconfig=provider.conf
 
   ```sh
   # Get the Pod name for hs1
-  HELLOWORLD_POD_HS1=$(kubectl get pods -n hs1 --kubeconfig=provider.conf -o jsonpath='{.items[0].metadata.name}')
+  HELLOWORLD_POD_HS1=$(kubectl get pods -n hs1 --kubeconfig=kubeplus-saas-provider.json -o jsonpath='{.items[0].metadata.name}')
   
   # Get the Pod IP for hs2
-  HS2_POD_IP=$(kubectl get pods -n hs2 --kubeconfig=provider.conf -o jsonpath='{.items[0].status.podIP}')
+  HS2_POD_IP=$(kubectl get pods -n hs2 --kubeconfig=kubeplus-saas-provider.json -o jsonpath='{.items[0].status.podIP}')
   
   # Update and install curl on hs1 pod
-  kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=provider.conf -- apt update
-  kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=provider.conf -- apt install curl -y
+  kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=kubeplus-saas-provider.json -- apt update
+  kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=kubeplus-saas-provider.json -- apt install curl -y
   
   # Test connectivity from hs1 to hs2 using the IP
-  kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=provider.conf -- curl $HS2_POD_IP:5000
+  kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=kubeplus-saas-provider.json -- curl $HS2_POD_IP:5000
   ```
 
   The connection should be denied.
@@ -161,17 +172,17 @@ kubectl create -f hs2.yaml --kubeconfig=provider.conf
 
   ```sh
   # Get the Pod name for hs2
-  HELLOWORLD_POD_HS2=$(kubectl get pods -n hs2 --kubeconfig=provider.conf -o jsonpath='{.items[0].metadata.name}')
+  HELLOWORLD_POD_HS2=$(kubectl get pods -n hs2 --kubeconfig=kubeplus-saas-provider.json -o jsonpath='{.items[0].metadata.name}')
   
   # Get the Pod IP for hs1
-  HS1_POD_IP=$(kubectl get pods -n hs1 --kubeconfig=provider.conf -o jsonpath='{.items[0].status.podIP}')
+  HS1_POD_IP=$(kubectl get pods -n hs1 --kubeconfig=kubeplus-saas-provider.json -o jsonpath='{.items[0].status.podIP}')
   
   # Update and install curl on hs2 pod
-  kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=provider.conf -- apt update
-  kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=provider.conf -- apt install curl -y
+  kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=kubeplus-saas-provider.json -- apt update
+  kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=kubeplus-saas-provider.json -- apt install curl -y
   
   # Test connectivity from hs2 to hs1 using the IP
-  kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=provider.conf -- curl $HS1_POD_IP:5000
+  kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=kubeplus-saas-provider.json -- curl $HS1_POD_IP:5000
   ```
 
   The connection should be denied.
@@ -181,15 +192,15 @@ kubectl create -f hs2.yaml --kubeconfig=provider.conf
 In some scenarios, you might want to enable controlled communication between instances running in different namespaces. KubePlus provides a custom kubectl plugin for this purpose. To allow bi-directional traffic between the two HelloWorldService instances (deployed in namespaces `hs1` and `hs2`), run:
 
 ```sh
-kubectl allow network traffic hs1 hs2 -k provider.conf
+kubectl allow network traffic hs1 hs2 -k kubeplus-saas-provider.json
 ```
 
 ```sh 
 # Test connectivity from hs1 to hs2 using the IP
-kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=provider.conf -- curl $HS2_POD_IP:5000
+kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=kubeplus-saas-provider.json -- curl $HS2_POD_IP:5000
 
 # Test connectivity from hs2 to hs1 using the IP 
-kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=provider.conf -- curl $HS1_POD_IP:5000
+kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=kubeplus-saas-provider.json -- curl $HS1_POD_IP:5000
 
 kubectl get networkpolicy -o yaml restrict-cross-ns-traffic -n hs1 
 kubectl get networkpolicy -o yaml restrict-cross-ns-traffic -n hs2
@@ -205,15 +216,15 @@ The connection should be allowed
 To deny the traffic between namespace 
 
 ```sh
-kubectl deny network traffic hs1 hs2 -k provider.conf
+kubectl deny network traffic hs1 hs2 -k kubeplus-saas-provider.json
 ```
 
 ```sh 
 # Test connectivity from hs1 to hs2 using the IP
-kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=provider.conf -- curl $HS2_POD_IP:5000
+kubectl exec -it $HELLOWORLD_POD_HS1 -n hs1 --kubeconfig=kubeplus-saas-provider.json -- curl $HS2_POD_IP:5000
 
 # Test connectivity from hs2 to hs1 using the IP 
-kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=provider.conf -- curl $HS1_POD_IP:5000
+kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=kubeplus-saas-provider.json -- curl $HS1_POD_IP:5000
 ```
 
 
@@ -221,9 +232,9 @@ kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=provider.conf -- curl $
 ## Clean Up
 
 ```sh
-kubectl delete -f hs1-no-replicas.yaml --kubeconfig=provider.conf
-kubectl delete -f hs2-no-replicas.yaml --kubeconfig=provider.conf
-kubectl delete -f hello-world-service-composition.yaml --kubeconfig=provider.conf
+kubectl delete -f examples/multitenancy/hello-world/hs1-no-replicas.yaml --kubeconfig=kubeplus-saas-provider.json
+kubectl delete -f examples/multitenancy/hello-world/hs2-no-replicas.yaml --kubeconfig=kubeplus-saas-provider.json
+kubectl delete -f examples/multitenancy/hello-world/hello-world-service-composition.yaml --kubeconfig=kubeplus-saas-provider.json
 ```
 
 Ensure the `helloworldservices.platformapi.kubeplus` CRD is removed.
