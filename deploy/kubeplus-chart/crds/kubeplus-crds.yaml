@@ -54,6 +54,17 @@ spec:
                       type: string
                 monitorRelationships:
                   type: string
+                appEndpoints:
+                  type: object
+                  properties:
+                    label:
+                      type: string
+                    endpoint:
+                      type: string
+                    metrics:
+                      type: array
+                      items:
+                        type: string
   names:
     kind: ResourceMonitor
     plural: resourcemonitors
@@ -184,6 +195,17 @@ spec:
                               type: string
                         monitorRelationships:
                           type: string
+                        appEndpoints:
+                          type: object
+                          properties:
+                            label:
+                              type: string
+                            endpoint:
+                              type: string
+                            metrics:
+                              type: array
+                              items:
+                                type: string
   names:
     kind: ResourceComposition 
     plural: resourcecompositions 

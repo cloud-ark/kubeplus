@@ -10,11 +10,14 @@ print_help () {
     echo "        kubectl metrics <Kind> <Instance> -k <Absolute path to kubeconfig> [-o pretty|prometheus|json]"
     echo ""
     echo "DESCRIPTION"
-    echo "        kubectl metrics collects CPU, Memory, Storage and Network consumption metrics for all the Pods for the <Instance>."
-    echo "        <Kind> is the name of the Kubernetes Kind for the <Instance>."
-    echo "        - Pod cpu and memory data is collected by querying kubelet."
-    echo "        - Pod storage data is collected from the PersistentVolumeClaims of the Pods that are associated with the input resource."
-    echo "        - Pod network consumption data is collected from cAdvisor."
+    echo "        kubectl metrics collects CPU, Memory, Storage, Network consumption, and application-specific custom metrics for all the Pods"
+    echo "        for the <Instance>. <Kind> is the name of the Kubernetes Kind for the <Instance>."
+    echo "        - CPU and Memory data is collected by querying kubelet."
+    echo "        - Storage data is collected from the PersistentVolumeClaims of the Pods that are associated with the input resource."
+    echo "        - Network consumption data is collected from cAdvisor."
+    echo "        - Application-specific custom metrics are collected from app instances."
+    echo "          Custom metrics are defined via 'appendpoints' section in the corresponding resource composition."
+    echo "          It is assumed that the custom metrics are exposed via NodePort."
     exit 0
 }
 

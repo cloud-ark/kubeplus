@@ -170,7 +170,14 @@ type ResourceMonitorStatus struct {
 type ResourceMonitorSpec struct {
 	Resource Res `json:"resource"`
 	//MonitoringPolicy Mon `json:"monitoringpolicy"`
-	MonitorRelationships string `json:"monitorRelationships"`
+	MonitorRelationships string                      `json:"monitorRelationships"`
+	AppEndpoints         ResourceMonitorAppEndpoints `json:"appEndpoints"`
+}
+
+type ResourceMonitorAppEndpoints struct {
+	Label	 string   `json:"label"`
+	Endpoint string   `json:"endpoint"`
+	Metrics  []string `json:"metrics"` 
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
