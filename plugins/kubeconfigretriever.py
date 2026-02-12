@@ -13,7 +13,7 @@ class KubeconfigRetriever(CRBase):
 		if kubeconfigFor == 'provider':
 			cmd = "kubectl get configmaps kubeplus-saas-provider -n " + kubeplusNS + r" -o jsonpath='{.data.kubeplus-saas-provider\.json}'"
 		if kubeconfigFor == 'consumer':
-			cmd = "kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n " + kubeplusNS + r" -o jsonpath='{.data.kubeplus-saas-consumer\.json}'"			
+			cmd = "kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n " + kubeplusNS + r" -o jsonpath='{.data.kubeplus-saas-consumer\.json}'"
 
 		cmd = cmd + " --kubeconfig=" + kubeconfig
 		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
