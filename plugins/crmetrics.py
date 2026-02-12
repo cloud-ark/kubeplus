@@ -8,6 +8,7 @@ import pprint
 import time
 import yaml
 import utils
+import requests
 
 class CRBase(object):
 	
@@ -993,11 +994,110 @@ class CRMetrics(CRBase):
 		print("    Number of Pods: " + str(len(pod_list_for_metrics)))
 		print("        Number of Containers: " + str(num_of_containers))
 		print("        Number of Nodes: " + str(num_of_hosts))
-		print("Underlying Physical Resoures consumed:")
+		print("Underlying Physical Resources consumed:")
 		print("    Total CPU(cores): " + str(cpu) + "m")
 		print("    Total MEMORY(bytes): " + str(mem) + "Mi")
 		print("    Total Storage(bytes): " + str(storage) + "Gi")
 		print("---------------------------------------------------------- ")
+
+
+	def _get_custom_metrics(self, custom_resource, custom_res_instance):
+		metrics_data = {}
+		metrics_descriptions = {}
+
+		# Get all ResourceCompositions
+		rc_list_raw, err = self.run_command("kubectl get resourcecompositions -o json")
+		if not rc_list_raw:
+			return metrics_data, metrics_descriptions
+
+		rc_list = json.loads(rc_list_raw)
+		for item in rc_list["items"]:
+			rc_name = item["metadata"]["name"]
+
+			# Get full ResourceComposition
+			rc_json_raw, err = self.run_command(f"kubectl get resourcecomposition {rc_name} -o json")
+			if not rc_json_raw:
+				continue
+			resource_composition = json.loads(rc_json_raw)
+
+			# Check if this ResourceComposition defines our custom_resource
+			kind_in_rc = resource_composition["spec"]["newResource"]["resource"]["kind"]
+			if kind_in_rc != custom_resource:
+				continue
+			
+			# Get appEndpoints from resmonitor
+			try:
+				app_endpoint = resource_composition["spec"]["resmonitor"]["spec"]["appEndpoints"]
+				label_selector = app_endpoint["label"]
+				endpoint_path = app_endpoint["endpoint"]
+				metrics_names = app_endpoint["metrics"]	# list of metric names to filter
+			except KeyError:
+				continue  # No endpoints defined
+
+			# label_selector, endpoint_path, and metrics_names must be non-empty
+			if not label_selector or not endpoint_path or not metrics_names:
+				continue
+
+			# Find pods matching the label
+			pods_raw, err = self.run_command(f"kubectl get pods -n {custom_res_instance} -l {label_selector} -o json")
+			if not pods_raw:
+				print(err)
+				continue
+
+			pods = json.loads(pods_raw)
+			for pod in pods["items"]:
+				pod_name = pod["metadata"]["name"]
+				host_ip = pod["status"]["hostIP"]
+				if not host_ip:
+					continue
+
+				svc_raw, err = self.run_command(f"kubectl get svc -n {custom_res_instance} -l {label_selector} -o json")
+				svc_json = json.loads(svc_raw)
+				try:
+					node_port = svc_json["items"][0]["spec"]["ports"][0]["nodePort"]
+				except KeyError:
+					continue
+
+				# Query metrics endpoint using the host_ip and node_port
+				try:
+					url = f"http://{host_ip}:{node_port}/{endpoint_path}"
+					resp = requests.get(url)
+					resp.raise_for_status()
+					metrics_string = resp.text
+				except Exception as e:
+					print(f"Failed to query metrics for pod {pod_name} at {url}: {e}")
+					continue
+
+				# Filter metrics
+				for line in metrics_string.splitlines():
+					line = line.strip()
+					if not line or line.startswith("# TYPE"):
+						continue
+
+					# Extract the description of our desired metric (for pretty format)
+					if line.startswith("# HELP"):
+						parts = line.split(' ', 3)
+						_, _, metric_name, description = parts
+						if metric_name in metrics_names:
+							metrics_descriptions[metric_name] = description
+						continue
+
+					metric_part, value = line.rsplit(' ', 1)
+					
+					# Extract base metric name (strip "{...}" if present)
+					base_name = ''
+					if '{' in metric_part:
+						base_name = metric_part.split('{', 1)[0]
+					else:
+						base_name = metric_part
+					
+					# Store the value for the given metric
+					if base_name in metrics_names:
+						metrics_data[base_name] = value
+
+
+		return metrics_data, metrics_descriptions
+
 
 	def get_metrics_cr(self, custom_resource, custom_res_instance, opformat, kubeconfig):
 		namespace = self.get_kubeplus_namespace(kubeconfig)
@@ -1013,6 +1113,7 @@ class CRMetrics(CRBase):
 		num_of_hosts_conn = self._parse_number_of_hosts(pod_list, kubecfg=kubeconfig)
 		cpu_conn, memory_conn, individual_pod_metrics = self._get_cpu_memory_usage_kubelet(pod_list, kubecfg=kubeconfig)
 		networkReceiveBytesTotal, networkTransmitBytesTotal, oom_events = self._get_cadvisor_metrics(pod_list, kubecfg=kubeconfig)
+		custom_metrics_data, custom_metrics_descriptions = self._get_custom_metrics(custom_resource, custom_res_instance)
 
 		num_of_not_running_pods = self._num_of_not_running_pods(pod_list, kubecfg=kubeconfig)
 
@@ -1037,6 +1138,11 @@ class CRMetrics(CRBase):
 			op['networkTransmitBytes'] = str(networkTransmitBytesTotal) + " bytes"
 			op['notRunningPods'] = str(num_of_not_running_pods)
 			op['oom_events'] = str(oom_events)
+
+			# Append custom metrics
+			for metric, value in custom_metrics_data.items():
+				op[f'{metric}'] = str(value)
+
 			json_op = json.dumps(op)
 			print(json_op)
 		elif opformat == 'prometheus':
@@ -1066,6 +1172,11 @@ class CRMetrics(CRBase):
 				podMetrics = podMetrics + pod_cpu_mem
 
 			metricsToReturn = cpuMetrics + "\n" + memoryMetrics + "\n" + storageMetrics + "\n" + numOfPods + "\n" + numOfContainers + "\n" + networkReceiveBytes + "\n" + networkTransmitBytes + "\n" + numOfNotRunningPods + "\n" + oomEvents + "\n" + podMetrics
+
+			# Append custom metrics
+			for metric, value in custom_metrics_data.items():
+				metricsToReturn += metric + '{custom_resource="' + fq_instance + '"} ' + str(value) + ' ' + timeInMillis + "\n"
+
 			print(metricsToReturn)
 		elif opformat == 'pretty':
 			print("---------------------------------------------------------- ")
@@ -1081,6 +1192,10 @@ class CRMetrics(CRBase):
 			print("    Total Storage(bytes): " + str(total_storage) + "Gi")
 			print("    Total Network bytes received: " + str(networkReceiveBytesTotal))
 			print("    Total Network bytes transferred: " + str(networkTransmitBytesTotal))
+			print("Custom application metrics:")
+			for metric, description in custom_metrics_descriptions.items():
+				print("    " + description + ": " + str(custom_metrics_data[metric]))
+
 			print("---------------------------------------------------------- ")
 		else:
 			print("Unknown output format specified. Accepted values: pretty, json, prometheus")
