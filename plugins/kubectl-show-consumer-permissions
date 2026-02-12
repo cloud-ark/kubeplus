@@ -7,19 +7,32 @@ print_help () {
     echo "        kubectl show consumer permissions"
     echo ""
     echo "SYNOPSIS"
-    echo "        kubectl show consumer permissions <Namespace>"
+    echo "        kubectl show consumer permissions <Namespace> <ConsumerName>"
     echo ""
     echo "DESCRIPTION"
-    echo "        kubectl show consumer permissions shows the permissions for kubeplus-saas-consumer service account in the namespace where kubeplus is installed."
+    echo "        kubectl show consumer permissions shows the RBAC permissions for a consumer service account."
+    echo "        Namespace is the namespace where the consumer service account lives."
+    echo "        ConsumerName is the name of the consumer service account."
+    echo ""
+    echo "        Two use cases for consumer service accounts:"
+    echo "        1) Instance-creation consumer: SA with permissions to create application instances (not restricted to a namespace)."
+    echo "           Typically lives in the KubePlus namespace (e.g. kubeplus-saas-consumer in default)."
+    echo "        2) Instance-scoped consumer: SA with permissions restricted to a specific instance's namespace (e.g. for debugging)."
+    echo "           Lives in the instance namespace (e.g. team1mysql when team1 created an instance named team1mysql)."
+    echo ""
+    echo "EXAMPLES"
+    echo "        kubectl show consumer permissions default kubeplus-saas-consumer"
+    echo "        kubectl show consumer permissions team1mysql team1-debug"
     exit 0
 }
 
-if (( $# < 1 || $# >= 2)); then
+if (( $# != 2)); then
   print_help
 fi
 
 namespace="$1"
+consumer="$2"
 
 check_namespace $namespace
 
-kubectl auth can-i --list --as=system:serviceaccount:$namespace:kubeplus-saas-consumer
+kubectl auth can-i --list --as=system:serviceaccount:$namespace:$consumer
