@@ -1,17 +1,23 @@
 # KubePlus - Kubernetes Operator for Multi-Instance Multi-tenancy
 
+KubePlus is a Kubernetes Operator that enables teams to deliver applications as managed, multi-tenant services on Kubernetes. It bridges the gap between deploying an application and operating it at scale for multiple customers or internal teams, automating the isolation, access control, and lifecycle management that true multi-tenancy requires.
+
+Many teams find that simply deploying a Helm chart is not enough when they need to offer the same application to many tenants or customers. Each tenant typically needs a separate instance with its own namespace, controlled access, resource limits, and upgrade paths. Building and maintaining this automation — and doing so safely for non-admin users — can require significant engineering effort.
+
+KubePlus addresses these challenges by converting a Helm chart into a Kubernetes custom API (CRD) and managing the full lifecycle of each instance. When a user creates an instance of the custom resource, KubePlus creates a dedicated namespace, applies appropriate policies and quotas, deploys the underlying Helm release, and tracks all resources owned by that instance. This model enables safe delegation and operational visibility, while keeping everything within Kubernetes’ native API machinery.
+
+
 ## Intro
 
-KubePlus is a turn-key solution that transforms any containerized application into a multi-instance SaaS.
+KubePlus is a turn-key Kubernetes Operator that transforms any containerized application packaged as a Helm chart into a managed, multi-tenant service. It implements the multi-instance multi-tenancy (MIMT) pattern, providing isolated application instances per tenant along with governance, policy enforcement, and lifecycle automation.
 
 <p align="center">
 <img src="./docs/application-stacks-1.png" width="700" height="150" class="center">
 </p>
 
-Multi-instance multi-tenancy (MIMT) is a software architecture pattern in which a separate instance of an application is provided per tenant. The typical adopters of this pattern are application hosting providers, platform engineering teams, and B2B software vendors that need to host and manage dedicated instances of a software application for different tenants and effectively deliver that application as a managed service. KubePlus is a turn-key solution to build such managed services on Kubernetes.
-It comes with end to end automation to help you deploy and manage your application on Kubernetes following the MIMT pattern. This includes isolation and security between instances along with easy to use APIs for managing upgrades, customization and resource utilization.
+In the context of Kubernetes, multi-instance multi-tenancy (MIMT) means providing each tenant with its own isolated application instance, typically in a dedicated namespace. Unlike shared multi-tenant models where many tenants share the same application instance, MIMT ensures isolation, controlled access, and predictable resource usage. KubePlus implements the MIMT pattern by automating namespace creation, policy enforcement, RBAC mappings, and lifecycle operations for each tenant instance. The typical adopters of this pattern are application hosting providers, platform engineering teams, and B2B software vendors that need to host and manage dedicated instances of a software application for different tenants and effectively deliver that application as a managed service. 
+KubePlus provides end-to-end automation to deploy and operate applications following the MIMT pattern on Kubernetes, including instance isolation, resource governance, RBAC enforcement, customization, and upgrades.
 
-KubePlus takes an application Helm chart and wraps it under a Kubernetes API (CRD). Whenever an application instance is created using this API, KubePlus ensures that every instance is created in a separate namespace and the required multi-tenancy policies are applied in order to ensure isolation between instances. The API supports CRUD operations on the instances of the CRD, RBAC, version upgrades, and additional customizations for each instance.
 
 <p align="center">
 <img src="./docs/kubeplus-with-properties.png" width="700" height="250" class="center">
@@ -25,7 +31,7 @@ KubePlus takes an application Helm chart and wraps it in a Kubernetes API (CRD).
 
 ### Security
 
-The KubePlus Operator does not need any admin-level permissions on a cluster for application providers. This allows application providers to offer their managed services on any K8s clusters including those owned by their customers. KubePlus comes with a small utility that allows you to create provider specific kubeconfig on a cluster in order to enable application deployments and management. Providers have an ability to create a consumer specific further limited kubeconfig to allow for self-service provisioning of application instances as well.
+Because KubePlus creates custom APIs and controls instance provisioning, it enables service providers to delegate service operations without granting full cluster admin rights. This makes it practical to run managed services even on customer-owned clusters or shared environments. KubePlus comes with a small utility that allows you to create provider specific kubeconfig on a cluster in order to enable application deployments and management. Providers have an ability to create a consumer specific further limited kubeconfig to allow for self-service provisioning of application instances as well.
 
 
 ### Resource Utilization
@@ -127,7 +133,7 @@ https://github.com/cloud-ark/kubeplus/assets/732525/efb255ff-fc73-446b-a583-4b89
 Follow: [Getting Started](examples/getting-started.md)
 ## Use Cases
 
-KubePlus can be used for:
+KubePlus supports a variety of production scenarios. Whether you are a platform team needing to deliver internal tools as self-service services, a hosting provider offering multiple instances of open source applications, or a software vendor building a SaaS offering on Kubernetes, KubePlus’ automation and isolation model simplifies operations.
 
 - [Application Hosting](./examples/multitenancy/application-hosting/wordpress/steps.txt)
 - [Platform Engineering](./examples/multitenancy/platform-engineering/steps.txt)
