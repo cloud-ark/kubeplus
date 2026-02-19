@@ -1,6 +1,8 @@
 *~
+__pycache__
 venv
 provider-kubeconfig.log
+kubeconfig-generator.log
 bak
 vendor
 operator-deployer/artifacts/deployment/operator-deployer

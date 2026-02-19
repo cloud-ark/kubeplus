@@ -856,10 +856,10 @@ if __name__ == '__main__':
                     print("Permissions file should be used with update command.")
                     exit(1)
 
-                create_ns = "kubectl get ns " + namespace + kubeconfigString
-                out, err = run_command(create_ns)
-                if 'not found' in out or 'not found' in err:
-                        run_command(create_ns)
+                get_ns = "kubectl get ns " + namespace + kubeconfigString
+                out, err = run_command(get_ns)
+                if 'not found' in (out or '') or 'not found' in (err or ''):
+                    run_command("kubectl create ns " + namespace + kubeconfigString)
 
                 cmd = "kubectl label --overwrite=true ns " + namespace + " managedby=kubeplus " + kubeconfigString
                 run_command(cmd)
