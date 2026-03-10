@@ -203,7 +203,7 @@ class KubeconfigGenerator(object):
                     {"apiGroups": [""], "resources": ["resourcequotas"], "verbs": ["create", "delete", "deletecollection", "patch", "update"]},
                     {"apiGroups": [""], "resources": ["persistentvolumes", "persistentvolumeclaims"], "verbs": ["get", "watch", "list", "create", "delete", "update", "patch"]},
                 ]
-                # Match original: skip "*" resources (ruleGroup1, ruleGroup5, ruleGroup14)
+                # Skip "*" wildcard resources — not meaningful in the perms inventory
                 all_resources = [
                     res for r in rule_list
                     for res in r.get("resources", [])
@@ -366,16 +366,27 @@ class KubeconfigGenerator(object):
                     else:
                         time.sleep(2)
 
-                out, _ = run_command(" kubectl get secret " + sa + " -n " + namespace + " -o json " + kubecfg)
-                json_out = json.loads(out or "{}")
-                ca_cert = json_out.get("data", {}).get("ca.crt", "").strip()
+                out, err = run_command(" kubectl get secret " + sa + " -n " + namespace + " -o json " + kubecfg)
+                if not out:
+                    raise RuntimeError(
+                        f"Failed to fetch secret {sa!r} in ns {namespace!r}: {err}"
+                    )
+                json_out = json.loads(out)
+                ca_cert = json_out["data"]["ca.crt"].strip()
 
                 if serverip:
                     server = serverip if "https" in serverip else "https://" + serverip
                 else:
-                    out2, _ = run_command("kubectl -n default get endpoints kubernetes " + kubecfg + " | awk '{print $2}' | grep -v ENDPOINTS")
+                    out2, _ = run_command(
+                        "kubectl -n default get endpoints kubernetes " + kubecfg
+                        + " | awk '{print $2}' | grep -v ENDPOINTS"
+                    )
                     server = out2.strip() if out2 else ""
                     server = "https://" + server if server else ""
+                if not server or server.rstrip("/") == "https:":
+                    raise RuntimeError(
+                        "Could not determine API server endpoint; pass -s/--apiserverurl"
+                    )
 
                 self._create_kubecfg_file(sa, namespace, filename, token, ca_cert, server, kubecfg, cluster_name)
 
