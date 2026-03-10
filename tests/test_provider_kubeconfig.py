@@ -306,6 +306,41 @@ class TestKubeconfigIntegration(unittest.TestCase):
         finally:
             self._delete_for_cleanup(root, ns)
 
+    def test_consumer_cannot_create_pod_in_other_namespacte(self):
+        """
+        Consumer kubeconfig: verify create/delete in other namespaces is forbidden.
+        Consumer RBAC should restrict operations; creating a pod in another ns should fail.
+        """
+        if not self.has_cluster:
+            self.skipTest("No cluster reachable (set KUBECONFIG)")
+        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        ns = "kubeplus-test-restrict-" + str(os.getpid())
+        other_ns = "kubeplus-test-other-" + str(os.getpid())
+        consumer_sa = "test-consumer-restrict"
+        kubeconfig_path = os.path.join(root, consumer_sa + ".json")
+        try:
+            cfg, proc = self._create_and_get_kubeconfig(root, ns, sa=consumer_sa)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self._assert_kubeconfig_valid(cfg, expected_namespace=ns, expected_user_name=consumer_sa)
+
+            # Create another namespace (as admin)
+            _run_command("kubectl create namespace " + other_ns + self.kubeconfig_flag)
+
+            # Try to create pod in other namespace using consumer kubeconfig (should fail)
+            out, err = _run_command(
+                "kubectl run nginx --image=nginx -n " + other_ns
+                + " --kubeconfig=" + kubeconfig_path
+            )
+            # Expect Forbidden or similar
+            self.assertTrue(
+                "Forbidden" in err or "forbidden" in err or "Error" in err,
+                "Consumer should not be able to create pod in other namespace; got out=%r err=%r"
+                % (out, err),
+            )
+        finally:
+            _run_command("kubectl delete namespace " + other_ns + self.kubeconfig_flag + " 2>/dev/null")
+            self._delete_for_cleanup(root, ns, sa=consumer_sa)
+
 
 if __name__ == "__main__":
     unittest.main()
