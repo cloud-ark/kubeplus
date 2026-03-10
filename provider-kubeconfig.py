@@ -358,10 +358,10 @@ class KubeconfigGenerator(object):
                         parts = line.split(":", 1)
                         if len(parts) == 2 and parts[0].strip() == "token":
                             token = parts[1].strip()
-                        if token != "":
-                            token_found = True
-                        else:
-                            time.sleep(2)
+                    if token != "":
+                        token_found = True
+                    else:
+                        time.sleep(2)
 
                 out, _ = run_command(" kubectl get secret " + sa + " -n " + namespace + " -o json " + kubecfg)
                 json_out = json.loads(out or "{}")
