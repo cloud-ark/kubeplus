@@ -347,17 +347,21 @@ class KubeconfigGenerator(object):
 
         def _extract_kubeconfig(self, sa, namespace, filename, serverip="", kubecfg="", cluster_name=None):
                 """Extract token from secret, determine server URL, build kubeconfig and store in ConfigMap."""
+                token_found = False
                 token = ""
-                while not token:
-                    out, _ = run_command(" kubectl describe secret " + sa + " -n " + namespace + kubecfg)
+                while not token_found:
+                    out, _ = run_command(
+                        " kubectl describe secret " + sa + " -n " + namespace + kubecfg
+                    )
+                    token = ""
                     for line in (out or "").split("\n"):
-                        if "token" in line:
-                            parts = line.split(":")
-                            if len(parts) > 1:
-                                token = parts[1].strip()
-                                break
-                    if not token:
-                        time.sleep(2)
+                        parts = line.split(":", 1)
+                        if len(parts) == 2 and parts[0].strip() == "token":
+                            token = parts[1].strip()
+                        if token != "":
+                            token_found = True
+                        else:
+                            time.sleep(2)
 
                 out, _ = run_command(" kubectl get secret " + sa + " -n " + namespace + " -o json " + kubecfg)
                 json_out = json.loads(out or "{}")
