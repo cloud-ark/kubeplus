@@ -137,10 +137,10 @@ class KubeconfigGenerator(object):
                 }
                 create_role_rolebinding(role_binding, sa + "-rolebinding-impersonate.yaml", kubeconfig)
 
-                all_resources = ["*", "deployments", "daemonsets", "pods/portforward", "users", "groups", "serviceaccounts"]
+                all_resources = [res for r in rule_list for res in r.get("resources", [])]
                 cfg_map_filename = sa + "-perms.txt"
                 with open(cfg_map_filename, "w", encoding="utf-8") as fp:
-                    fp.write(str(sorted(list(set(all_resources)))))
+                    fp.write(str(sorted(set(all_resources))))
                 run_command(
                     "kubectl create configmap " + sa + "-perms -n " + namespace
                     + " --from-file=" + cfg_map_filename + kubeconfig
@@ -203,9 +203,12 @@ class KubeconfigGenerator(object):
                     {"apiGroups": [""], "resources": ["resourcequotas"], "verbs": ["create", "delete", "deletecollection", "patch", "update"]},
                     {"apiGroups": [""], "resources": ["persistentvolumes", "persistentvolumeclaims"], "verbs": ["get", "watch", "list", "create", "delete", "update", "patch"]},
                 ]
-                all_resources = []
-                for r in rule_list:
-                    all_resources.extend(r.get("resources", []))
+                # Match original: skip "*" resources (ruleGroup1, ruleGroup5, ruleGroup14)
+                all_resources = [
+                    res for r in rule_list
+                    for res in r.get("resources", [])
+                    if res != "*"
+                ]
 
                 role = {
                     "apiVersion": "rbac.authorization.k8s.io/v1",
@@ -226,7 +229,7 @@ class KubeconfigGenerator(object):
 
                 cfg_map_filename = sa + "-perms.txt"
                 with open(cfg_map_filename, "w", encoding="utf-8") as fp:
-                    fp.write(str(sorted(list(set(all_resources)))))
+                    fp.write(str(sorted(set(all_resources))))
                 run_command(
                     "kubectl create configmap " + sa + "-perms -n " + namespace
                     + " --from-file=" + cfg_map_filename + kubeconfig
@@ -294,7 +297,7 @@ class KubeconfigGenerator(object):
                 new_resources.extend(kubeplus_perms)
 
                 run_command("kubectl delete configmap " + cfg_map_name + " -n " + namespace + kubeconfig)
-                new_resources = sorted(list(set(new_resources)))
+                new_resources = sorted(set(new_resources))
                 with open(cfg_map_filename, "w", encoding="utf-8") as fp:
                     fp.write(str(new_resources))
                 run_command(
@@ -439,7 +442,7 @@ if __name__ == "__main__":
         pargs = parser.parse_args()
         action = pargs.action
         namespace = pargs.namespace
-        kubeconfig_path = pargs.kubeconfig or os.path.join(os.getenv("HOME", ""), ".kube", "config")
+        kubeconfig_path = pargs.kubeconfig or os.path.join(os.path.expanduser("~"), ".kube", "config")
         kubeconfigString = " --kubeconfig=" + kubeconfig_path
         api_s_ip = pargs.apiserverurl or ""
         permission_file = pargs.permissionfile or ""

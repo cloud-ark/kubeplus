@@ -8,8 +8,6 @@ import subprocess
 import sys
 import unittest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 
 def _run_command(cmd):
     """Run shell command, return (stdout, stderr)."""
@@ -26,6 +24,7 @@ def _cluster_available(kubeconfig=""):
 
 
 SCRIPT = "provider-kubeconfig.py"
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # All CLI elements that must appear in --help
 HELP_ELEMENTS = [
@@ -43,44 +42,25 @@ HELP_ELEMENTS = [
 class TestCli(unittest.TestCase):
     """provider-kubeconfig.py exposes expected CLI (actions and flags)."""
 
-    def test_help_shows_all_actions(self):
-        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    def test_help_shows_all_actions_flags_and_namespace(self):
+        """--help must show actions, flags, and namespace argument."""
         proc = subprocess.run(
-            [sys.executable, os.path.join(root, SCRIPT), "--help"],
-            capture_output=True, text=True, cwd=root,
+            [sys.executable, os.path.join(ROOT, SCRIPT), "--help"],
+            capture_output=True, text=True, cwd=ROOT,
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
         out = proc.stdout or ""
         for elem in ["create", "delete", "update", "extract"]:
             self.assertIn(elem, out, f"Action {elem} should appear in help")
-
-    def test_help_shows_all_flags(self):
-        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        proc = subprocess.run(
-            [sys.executable, os.path.join(root, SCRIPT), "--help"],
-            capture_output=True, text=True, cwd=root,
-        )
-        self.assertEqual(proc.returncode, 0)
-        out = proc.stdout or ""
         for elem in HELP_ELEMENTS:
             self.assertIn(elem, out, f"Help should mention {elem}")
-
-    def test_help_shows_namespace_argument(self):
-        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        proc = subprocess.run(
-            [sys.executable, os.path.join(root, SCRIPT), "--help"],
-            capture_output=True, text=True, cwd=root,
-        )
-        self.assertEqual(proc.returncode, 0)
-        out = proc.stdout or ""
         self.assertIn("namespace", out.lower())
 
     def test_update_without_permissionfile_exits_with_error(self):
         """update action without -p exits with code 1."""
-        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         proc = subprocess.run(
-            [sys.executable, os.path.join(root, SCRIPT), "update", "default"],
-            capture_output=True, text=True, cwd=root,
+            [sys.executable, os.path.join(ROOT, SCRIPT), "update", "default"],
+            capture_output=True, text=True, cwd=ROOT,
         )
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("permission", (proc.stdout or proc.stderr or "").lower())
@@ -100,6 +80,10 @@ class TestKubeconfigIntegration(unittest.TestCase):
         cls.kubeconfig_arg = ["-k", cls.kubeconfig] if cls.kubeconfig else []
         cls.has_cluster = _cluster_available(cls.kubeconfig)
         cls.kubeconfig_flag = " --kubeconfig=" + cls.kubeconfig if cls.kubeconfig else ""
+
+    def setUp(self):
+        if not self.has_cluster:
+            self.skipTest("No cluster reachable (set KUBECONFIG)")
 
     def _create_and_get_kubeconfig(self, root, ns, sa="kubeplus-saas-provider", extra_args=None, output_filename=None):
         """Run create, return (kubeconfig_dict, proc). Caller must delete to cleanup."""
@@ -124,10 +108,13 @@ class TestKubeconfigIntegration(unittest.TestCase):
             cfg = json.load(fp)
         return cfg, proc
 
-    def _delete_for_cleanup(self, root, ns, sa="kubeplus-saas-provider"):
+    def _delete_for_cleanup(self, root, ns, sa="kubeplus-saas-provider", filename=None):
+        """Delete k8s resources and local files. Pass filename when -f was used (e.g. custom-provider-kubeconfig)."""
         delete_args = ["delete", ns]
         if sa != "kubeplus-saas-provider":
             delete_args += ["-c", sa]
+        if filename:
+            delete_args += ["-f", filename]
         subprocess.run(
             [sys.executable, os.path.join(root, SCRIPT)] + delete_args + self.kubeconfig_arg,
             cwd=root, capture_output=True, timeout=60,
@@ -191,12 +178,9 @@ class TestKubeconfigIntegration(unittest.TestCase):
 
     def test_provider_kubeconfig_all_fields_nonempty(self):
         """Provider kubeconfig: every field that should exist is non-empty."""
-        if not self.has_cluster:
-            self.skipTest("No cluster reachable (set KUBECONFIG)")
-        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         ns = "kubeplus-test-prov-" + str(os.getpid())
         try:
-            cfg, proc = self._create_and_get_kubeconfig(root, ns)
+            cfg, proc = self._create_and_get_kubeconfig(ROOT, ns)
             self.assertEqual(proc.returncode, 0, proc.stderr)
             self._assert_kubeconfig_valid(
                 cfg,
@@ -205,17 +189,14 @@ class TestKubeconfigIntegration(unittest.TestCase):
             )
             self.assertTrue(self._sa_exists("kubeplus-saas-provider", ns))
         finally:
-            self._delete_for_cleanup(root, ns)
+            self._delete_for_cleanup(ROOT, ns)
 
     def test_consumer_kubeconfig_all_fields_nonempty(self):
         """Consumer kubeconfig: every field non-empty, user name matches SA, namespace in context."""
-        if not self.has_cluster:
-            self.skipTest("No cluster reachable (set KUBECONFIG)")
-        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         ns = "kubeplus-test-cons-" + str(os.getpid())
         consumer_sa = "test-consumer-sa"
         try:
-            cfg, proc = self._create_and_get_kubeconfig(root, ns, sa=consumer_sa)
+            cfg, proc = self._create_and_get_kubeconfig(ROOT, ns, sa=consumer_sa)
             self.assertEqual(proc.returncode, 0, proc.stderr)
             self._assert_kubeconfig_valid(
                 cfg,
@@ -224,35 +205,29 @@ class TestKubeconfigIntegration(unittest.TestCase):
             )
             self.assertTrue(self._sa_exists(consumer_sa, ns))
         finally:
-            self._delete_for_cleanup(root, ns, sa=consumer_sa)
+            self._delete_for_cleanup(ROOT, ns, sa=consumer_sa)
 
     def test_flag_s_apiserverurl_reflected_in_kubeconfig(self):
         """-s/--apiserverurl sets cluster server in kubeconfig."""
-        if not self.has_cluster:
-            self.skipTest("No cluster reachable (set KUBECONFIG)")
-        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         ns = "kubeplus-test-s-" + str(os.getpid())
         test_server = "https://api.example.com:6443"
         try:
             cfg, proc = self._create_and_get_kubeconfig(
-                root, ns,
+                ROOT, ns,
                 extra_args=["-s", test_server],
             )
             self.assertEqual(proc.returncode, 0, proc.stderr)
             self._assert_kubeconfig_valid(cfg, expected_server=test_server, expected_namespace=ns)
         finally:
-            self._delete_for_cleanup(root, ns)
+            self._delete_for_cleanup(ROOT, ns)
 
     def test_flag_x_clustername_reflected_in_kubeconfig(self):
         """-x/--clustername sets context name and cluster name in kubeconfig."""
-        if not self.has_cluster:
-            self.skipTest("No cluster reachable (set KUBECONFIG)")
-        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         ns = "kubeplus-test-x-" + str(os.getpid())
         test_cluster = "my-test-cluster"
         try:
             cfg, proc = self._create_and_get_kubeconfig(
-                root, ns,
+                ROOT, ns,
                 extra_args=["-x", test_cluster],
             )
             self.assertEqual(proc.returncode, 0, proc.stderr)
@@ -262,38 +237,32 @@ class TestKubeconfigIntegration(unittest.TestCase):
                 expected_namespace=ns,
             )
         finally:
-            self._delete_for_cleanup(root, ns)
+            self._delete_for_cleanup(ROOT, ns)
 
     def test_flag_f_filename_uses_custom_output_file(self):
         """-f/--filename writes kubeconfig to specified file."""
-        if not self.has_cluster:
-            self.skipTest("No cluster reachable (set KUBECONFIG)")
-        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         ns = "kubeplus-test-f-" + str(os.getpid())
         custom_name = "custom-provider-kubeconfig"
         try:
             cfg, proc = self._create_and_get_kubeconfig(
-                root, ns,
+                ROOT, ns,
                 extra_args=["-f", custom_name],
                 output_filename=custom_name,
             )
             self.assertEqual(proc.returncode, 0, proc.stderr)
             self._assert_kubeconfig_valid(cfg, expected_namespace=ns)
-            self.assertTrue(os.path.exists(os.path.join(root, custom_name + ".json")))
+            self.assertTrue(os.path.exists(os.path.join(ROOT, custom_name + ".json")))
         finally:
-            self._delete_for_cleanup(root, ns)
+            self._delete_for_cleanup(ROOT, ns, filename=custom_name)
 
     def test_flags_s_and_x_combined(self):
         """-s and -x together: both server and cluster name in kubeconfig."""
-        if not self.has_cluster:
-            self.skipTest("No cluster reachable (set KUBECONFIG)")
-        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         ns = "kubeplus-test-sx-" + str(os.getpid())
         test_server = "https://api.example.com:6443"
         test_cluster = "my-test-cluster"
         try:
             cfg, proc = self._create_and_get_kubeconfig(
-                root, ns,
+                ROOT, ns,
                 extra_args=["-s", test_server, "-x", test_cluster],
             )
             self.assertEqual(proc.returncode, 0, proc.stderr)
@@ -304,22 +273,19 @@ class TestKubeconfigIntegration(unittest.TestCase):
                 expected_namespace=ns,
             )
         finally:
-            self._delete_for_cleanup(root, ns)
+            self._delete_for_cleanup(ROOT, ns)
 
-    def test_consumer_cannot_create_pod_in_other_namespacte(self):
+    def test_consumer_cannot_create_pod_in_other_namespace(self):
         """
         Consumer kubeconfig: verify create/delete in other namespaces is forbidden.
         Consumer RBAC should restrict operations; creating a pod in another ns should fail.
         """
-        if not self.has_cluster:
-            self.skipTest("No cluster reachable (set KUBECONFIG)")
-        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         ns = "kubeplus-test-restrict-" + str(os.getpid())
         other_ns = "kubeplus-test-other-" + str(os.getpid())
         consumer_sa = "test-consumer-restrict"
-        kubeconfig_path = os.path.join(root, consumer_sa + ".json")
+        kubeconfig_path = os.path.join(ROOT, consumer_sa + ".json")
         try:
-            cfg, proc = self._create_and_get_kubeconfig(root, ns, sa=consumer_sa)
+            cfg, proc = self._create_and_get_kubeconfig(ROOT, ns, sa=consumer_sa)
             self.assertEqual(proc.returncode, 0, proc.stderr)
             self._assert_kubeconfig_valid(cfg, expected_namespace=ns, expected_user_name=consumer_sa)
 
@@ -331,15 +297,15 @@ class TestKubeconfigIntegration(unittest.TestCase):
                 "kubectl run nginx --image=nginx -n " + other_ns
                 + " --kubeconfig=" + kubeconfig_path
             )
-            # Expect Forbidden or similar
+            # Expect Forbidden (authorization denial), not generic errors (DNS, image pull, etc.)
             self.assertTrue(
-                "Forbidden" in err or "forbidden" in err or "Error" in err,
+                "forbidden" in err.lower(),
                 "Consumer should not be able to create pod in other namespace; got out=%r err=%r"
                 % (out, err),
             )
         finally:
             _run_command("kubectl delete namespace " + other_ns + self.kubeconfig_flag + " 2>/dev/null")
-            self._delete_for_cleanup(root, ns, sa=consumer_sa)
+            self._delete_for_cleanup(ROOT, ns, sa=consumer_sa)
 
 
 if __name__ == "__main__":
