@@ -311,6 +311,18 @@ spec:
     requests:
       storage: 1Gi  # Make sure this matches the PV size
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-models-pvc
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -349,6 +361,33 @@ spec:
           - "--secret"
           - "webhook-tls-certificates"
       containers:
+      - name: ollama-ai
+        image: ollama:latest
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: MODEL_NAME
+            value: "gemma:2b"
+          - name: OLLAMA_MODELS
+            value: "/models"
+          - name: OLLAMA_MAX_LOADED_MODELS
+            value: "1"
+          - name: PORT
+            value: "8080"
+        ports:
+          - name: http
+            containerPort: 8080
+        volumeMounts:
+          - name: ollama-models
+            mountPath: /models
+        resources:
+          requests:
+            cpu: "1"
+            memory: "3Gi"
+            ephemeral-storage: "1Gi"
+          limits:
+            cpu: "2"
+            memory: "5Gi"
+            ephemeral-storage: "2Gi"
       - name: kubeconfiggenerator
         image: {{ .Values.CRD_REGISTRATION_HELPER }}  #gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.27
         imagePullPolicy: IfNotPresent
@@ -433,6 +472,9 @@ spec:
         - name: webhook-certs
           secret:
             secretName: webhook-tls-certificates
+        - name: ollama-models
+          persistentVolumeClaim:
+            claimName: ollama-models-pvc
 ---
 apiVersion: batch/v1
 kind: Job
