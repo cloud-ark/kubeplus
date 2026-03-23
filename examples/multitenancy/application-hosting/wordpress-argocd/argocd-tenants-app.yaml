@@ -6,12 +6,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: REPLACE_WITH_GIT_REPO_URL
-    targetRevision: REPLACE_WITH_GIT_TARGET_REVISION
+    repoURL: https://github.com/PatrickBladeeman/kubeplus
+    targetRevision: master
     path: examples/multitenancy/application-hosting/wordpress-argocd/tenants
   destination:
     server: https://kubernetes.default.svc
-    namespace: REPLACE_WITH_KUBEPLUS_NAMESPACE
+    namespace: default
   syncPolicy:
     automated:
       prune: true
