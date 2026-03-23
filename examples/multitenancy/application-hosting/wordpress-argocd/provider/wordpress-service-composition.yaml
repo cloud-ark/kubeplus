@@ -1,0 +1,48 @@
+apiVersion: workflows.kubeplus/v1alpha1
+kind: ResourceComposition
+metadata:
+  name: gitops-wordpress-service-composition
+spec:
+  newResource:
+    resource:
+      kind: GitopsWordpressService
+      group: platformapi.kubeplus
+      version: v1alpha1
+      plural: gitopswordpressservices
+    chartURL: https://github.com/cloud-ark/k8s-workshop/blob/master/wordpress-deployment-chart/wordpress-chart-0.0.3.tgz?raw=true
+    chartName: wordpress-chart
+  respolicy:
+    apiVersion: workflows.kubeplus/v1alpha1
+    kind: ResourcePolicy
+    metadata:
+      name: gitops-wordpress-service-policy
+    spec:
+      resource:
+        kind: GitopsWordpressService
+        group: platformapi.kubeplus
+        version: v1alpha1
+      policy:
+        podconfig:
+          limits:
+            cpu: 200m
+            memory: 2Gi
+          requests:
+            cpu: 100m
+            memory: 1Gi
+          nodeSelector: values.nodeName
+        quota:
+          requests.cpu: 100m
+          requests.memory: 1Gi
+          limits.cpu: 200m
+          limits.memory: 2Gi
+  resmonitor:
+    apiVersion: workflows.kubeplus/v1alpha1
+    kind: ResourceMonitor
+    metadata:
+      name: gitops-wordpress-service-monitor
+    spec:
+      resource:
+        kind: GitopsWordpressService
+        group: platformapi.kubeplus
+        version: v1alpha1
+      monitorRelationships: all
