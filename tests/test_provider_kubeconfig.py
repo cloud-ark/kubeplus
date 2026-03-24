@@ -289,12 +289,13 @@ class TestKubeconfigIntegration(unittest.TestCase):
         finally:
             self._delete_for_cleanup(ns)
 
-    def test_consumer_cannot_create_pod_in_other_namespace(self):
+    def test_consumer_can_create_deployment_but_not_pod(self):
         """
-        Consumer kubeconfig: verify creating a pod in another namespace is forbidden.
+        Consumer kubeconfig: verify allowed and disallowed creates:
+        - create deployment in own namespace succeeds
+        - create pod in own namespace is forbidden
         """
         ns = "kubeplus-test-restrict-" + uuid.uuid4().hex[:8]
-        other_ns = "kubeplus-test-other-" + uuid.uuid4().hex[:8]
         consumer_sa = "test-consumer-restrict"
         kubeconfig_path = os.path.join(ROOT, consumer_sa + ".json")
         api_server = self._current_cluster_server()
@@ -304,30 +305,37 @@ class TestKubeconfigIntegration(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stderr)
             self._assert_kubeconfig_valid(cfg, expected_namespace=ns, expected_user_name=consumer_sa)
 
-            # Create another namespace (as admin)
-            _run_command("kubectl create namespace " + other_ns + self.kubeconfig_flag)
+            # Verify create works in own namespace.
+            own_name = "consumer-own-" + uuid.uuid4().hex[:6]
+            own_out, own_err = _run_command(
+                "kubectl create deployment " + own_name + " --image=nginx -n " + ns
+                + " --kubeconfig=" + kubeconfig_path
+            )
+            own_conn_err = "unable to connect to the server" in own_err.lower() or "i/o timeout" in own_err.lower()
+            if own_conn_err:
+                self.skipTest("Skipping authz assertion due to transient API connectivity issue: " + own_err.strip())
+            self.assertTrue(
+                "created" in own_out.lower(),
+                "Consumer should be able to create deployment in own namespace; got out=%r err=%r"
+                % (own_out, own_err),
+            )
 
-            # Try to create pod in other namespace using consumer kubeconfig (should fail)
+            # Verify pod create is forbidden for consumer.
+            pod_name = "consumer-pod-" + uuid.uuid4().hex[:6]
             out, err = _run_command(
-                "kubectl run nginx --image=nginx -n " + other_ns
+                "kubectl run " + pod_name + " --image=nginx -n " + ns
                 + " --kubeconfig=" + kubeconfig_path
             )
             conn_err = "unable to connect to the server" in err.lower() or "i/o timeout" in err.lower()
             if conn_err:
                 self.skipTest("Skipping authz assertion due to transient API connectivity issue: " + err.strip())
-            # Expect Forbidden (authorization denial), not generic errors (DNS, image pull, etc.)
             self.assertTrue(
                 "forbidden" in err.lower(),
-                "Consumer should not be able to create pod in other namespace; got out=%r err=%r"
+                "Consumer should not be able to create pods; got out=%r err=%r"
                 % (out, err),
             )
-            self.assertIn(
-                other_ns,
-                err,
-                "Expected denial to reference the target other namespace; got err=%r" % (err,),
-            )
         finally:
-            _run_command("kubectl delete namespace " + other_ns + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete deployment --all -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
             self._delete_for_cleanup(ns, sa=consumer_sa)
 
 
