@@ -142,6 +142,27 @@ class KubeconfigGenerator(object):
                         f"Only in new: {new_only}"
                     )
 
+        def _all_resources_from_rules(self, rules, skip_wildcard=False):
+                resources = []
+                for rule in rules:
+                    for res in rule.get("resources", []):
+                        if skip_wildcard and res == "*":
+                            continue
+                        resources.append(res)
+                return sorted(set(resources))
+
+        def _assert_all_resources_parity(self, label, old_resources, new_resources):
+                old_set = set(old_resources)
+                new_set = set(new_resources)
+                if old_set != new_set:
+                    old_only = sorted(old_set - new_set)
+                    new_only = sorted(new_set - old_set)
+                    raise AssertionError(
+                        f"{label} all_resources mismatch.\n"
+                        f"Only in old: {old_only}\n"
+                        f"Only in new: {new_only}"
+                    )
+
         def _build_consumer_rules_old(self):
                 # Read all resources
                 ruleGroup1 = {}
@@ -488,10 +509,14 @@ class KubeconfigGenerator(object):
                 """Apply ClusterRole and ClusterRoleBinding for consumer (read + apps + impersonate + portforward)."""
                 old_rule_list = self._build_consumer_rules_old()
                 new_rule_list = self._build_consumer_rules_new()
+                old_all_resources = self._all_resources_from_rules(old_rule_list)
+                new_all_resources = self._all_resources_from_rules(new_rule_list)
                 if os.getenv("KUBEPLUS_RBAC_EQ_CHECK", "0") == "1":
                     self._assert_rule_parity("consumer", old_rule_list, new_rule_list)
+                    self._assert_all_resources_parity("consumer", old_all_resources, new_all_resources)
                 # Keep old path as source of truth in this PR.
                 rule_list = old_rule_list
+                all_resources = old_all_resources
                 role = {
                     "apiVersion": "rbac.authorization.k8s.io/v1",
                     "kind": "ClusterRole",
@@ -508,11 +533,9 @@ class KubeconfigGenerator(object):
                     "roleRef": {"kind": "ClusterRole", "name": sa, "apiGroup": "rbac.authorization.k8s.io"},
                 }
                 create_role_rolebinding(role_binding, sa + "-rolebinding-impersonate.yaml", kubeconfig)
-
-                all_resources = [res for r in rule_list for res in r.get("resources", [])]
                 cfg_map_filename = sa + "-perms.txt"
                 with open(cfg_map_filename, "w", encoding="utf-8") as fp:
-                    fp.write(str(sorted(set(all_resources))))
+                    fp.write(str(all_resources))
                 run_command(
                     "kubectl create configmap " + sa + "-perms -n " + namespace
                     + " --from-file=" + cfg_map_filename + kubeconfig
@@ -523,16 +546,14 @@ class KubeconfigGenerator(object):
                 """Apply ClusterRole and ClusterRoleBinding for provider (full platform operator permissions)."""
                 old_rule_list = self._build_provider_rules_old()
                 new_rule_list = self._build_provider_rules_new()
+                old_all_resources = self._all_resources_from_rules(old_rule_list, skip_wildcard=True)
+                new_all_resources = self._all_resources_from_rules(new_rule_list, skip_wildcard=True)
                 if os.getenv("KUBEPLUS_RBAC_EQ_CHECK", "0") == "1":
                     self._assert_rule_parity("provider", old_rule_list, new_rule_list)
+                    self._assert_all_resources_parity("provider", old_all_resources, new_all_resources)
                 # Keep old path as source of truth in this PR.
                 rule_list = old_rule_list
-                # Preserve master semantics: do not include wildcard resources in perms inventory.
-                all_resources = [
-                    res for r in rule_list
-                    for res in r.get("resources", [])
-                    if res != "*"
-                ]
+                all_resources = old_all_resources
 
                 role = {
                     "apiVersion": "rbac.authorization.k8s.io/v1",
@@ -553,7 +574,7 @@ class KubeconfigGenerator(object):
 
                 cfg_map_filename = sa + "-perms.txt"
                 with open(cfg_map_filename, "w", encoding="utf-8") as fp:
-                    fp.write(str(sorted(set(all_resources))))
+                    fp.write(str(all_resources))
                 run_command(
                     "kubectl create configmap " + sa + "-perms -n " + namespace
                     + " --from-file=" + cfg_map_filename + kubeconfig
