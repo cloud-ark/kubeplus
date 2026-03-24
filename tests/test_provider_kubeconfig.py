@@ -173,6 +173,8 @@ class TestKubeconfigIntegration(unittest.TestCase):
         if expected_cluster_name:
             self.assertEqual(cfg.get("current-context"), expected_cluster_name)
             self.assertEqual(ctx_entry.get("name"), expected_cluster_name)
+            self.assertEqual(cluster_entry.get("name"), expected_cluster_name)
+            self.assertEqual(ctx.get("cluster"), expected_cluster_name)
         if expected_namespace:
             self.assertEqual(ctx.get("namespace"), expected_namespace)
 
@@ -289,8 +291,7 @@ class TestKubeconfigIntegration(unittest.TestCase):
 
     def test_consumer_cannot_create_pod_in_other_namespace(self):
         """
-        Consumer kubeconfig: verify create/delete in other namespaces is forbidden.
-        Consumer RBAC should restrict operations; creating a pod in another ns should fail.
+        Consumer kubeconfig: verify creating a pod in another namespace is forbidden.
         """
         ns = "kubeplus-test-restrict-" + uuid.uuid4().hex[:8]
         other_ns = "kubeplus-test-other-" + uuid.uuid4().hex[:8]
@@ -319,6 +320,11 @@ class TestKubeconfigIntegration(unittest.TestCase):
                 "forbidden" in err.lower(),
                 "Consumer should not be able to create pod in other namespace; got out=%r err=%r"
                 % (out, err),
+            )
+            self.assertIn(
+                other_ns,
+                err,
+                "Expected denial to reference the target other namespace; got err=%r" % (err,),
             )
         finally:
             _run_command("kubectl delete namespace " + other_ns + self.kubeconfig_flag + " 2>/dev/null")
