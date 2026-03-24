@@ -105,9 +105,88 @@ class KubeconfigGenerator(object):
                                 created = True
 
 
-        def _apply_consumer_rbac(self, sa, namespace, kubeconfig):
-                """Apply ClusterRole and ClusterRoleBinding for consumer (read + apps + impersonate + portforward)."""
-                rule_list = [
+        def _normalize_rule(self, rule):
+                return {
+                    "apiGroups": tuple(sorted(rule.get("apiGroups", []))),
+                    "resources": tuple(sorted(rule.get("resources", []))),
+                    "verbs": tuple(sorted(rule.get("verbs", []))),
+                    "resourceNames": tuple(sorted(rule.get("resourceNames", []))),
+                    "nonResourceURLs": tuple(sorted(rule.get("nonResourceURLs", []))),
+                }
+
+        def _normalize_rule_list(self, rules):
+                normalized = [self._normalize_rule(r) for r in rules]
+                # Sort deterministically by all tuple fields for stable diffs.
+                return sorted(
+                    normalized,
+                    key=lambda r: (
+                        r["apiGroups"],
+                        r["resources"],
+                        r["verbs"],
+                        r["resourceNames"],
+                        r["nonResourceURLs"],
+                    ),
+                )
+
+        def _assert_rule_parity(self, label, old_rules, new_rules):
+                old_norm = self._normalize_rule_list(old_rules)
+                new_norm = self._normalize_rule_list(new_rules)
+                if old_norm != new_norm:
+                    old_set = set(tuple(sorted(r.items())) for r in old_norm)
+                    new_set = set(tuple(sorted(r.items())) for r in new_norm)
+                    old_only = sorted(old_set - new_set)
+                    new_only = sorted(new_set - old_set)
+                    raise AssertionError(
+                        f"{label} RBAC mismatch.\n"
+                        f"Only in old: {old_only}\n"
+                        f"Only in new: {new_only}"
+                    )
+
+        def _build_consumer_rules_old(self):
+                # Read all resources
+                ruleGroup1 = {}
+                apiGroup1 = ["*",""]
+                resourceGroup1 = ["*"]
+                verbsGroup1 = ["get","watch","list"]
+                ruleGroup1["apiGroups"] = apiGroup1
+                ruleGroup1["resources"] = resourceGroup1
+                ruleGroup1["verbs"] = verbsGroup1
+
+                ruleGroup8 = {}
+                apiGroup8 = ["apps"]
+                resourceGroup8 = ["deployments","daemonsets","deployments/rollback","deployments/scale","replicasets","replicasets/scale","statefulsets","statefulsets/scale"]
+                verbsGroup8 = ["get","watch","list","create","delete","update","patch","deletecollection"]
+                ruleGroup8["apiGroups"] = apiGroup8
+                ruleGroup8["resources"] = resourceGroup8
+                ruleGroup8["verbs"] = verbsGroup8
+
+                # Impersonate users, groups, serviceaccounts
+                ruleGroup9 = {}
+                apiGroup9 = [""]
+                resourceGroup9 = ["users","groups","serviceaccounts"]
+                verbsGroup9 = ["impersonate"]
+                ruleGroup9["apiGroups"] = apiGroup9
+                ruleGroup9["resources"] = resourceGroup9
+                ruleGroup9["verbs"] = verbsGroup9
+
+                # Pod/portforward to open consumerui
+                ruleGroup10 = {}
+                apiGroup10 = [""]
+                resourceGroup10 = ["pods/portforward"]
+                verbsGroup10 = ["create","get"]
+                ruleGroup10["apiGroups"] = apiGroup10
+                ruleGroup10["resources"] = resourceGroup10
+                ruleGroup10["verbs"] = verbsGroup10
+
+                ruleList = []
+                ruleList.append(ruleGroup1)
+                ruleList.append(ruleGroup9)
+                ruleList.append(ruleGroup10)
+                ruleList.append(ruleGroup8)
+                return ruleList
+
+        def _build_consumer_rules_new(self):
+                return [
                     {"apiGroups": ["*", ""], "resources": ["*"], "verbs": ["get", "watch", "list"]},
                     {
                         "apiGroups": ["apps"],
@@ -120,36 +199,237 @@ class KubeconfigGenerator(object):
                     {"apiGroups": [""], "resources": ["users", "groups", "serviceaccounts"], "verbs": ["impersonate"]},
                     {"apiGroups": [""], "resources": ["pods/portforward"], "verbs": ["create", "get"]},
                 ]
-                role = {
-                    "apiVersion": "rbac.authorization.k8s.io/v1",
-                    "kind": "ClusterRole",
-                    "metadata": {"name": sa, "namespace": namespace},
-                    "rules": rule_list,
-                }
-                create_role_rolebinding(role, sa + "-role-impersonate.yaml", kubeconfig)
 
-                role_binding = {
-                    "apiVersion": "rbac.authorization.k8s.io/v1",
-                    "kind": "ClusterRoleBinding",
-                    "metadata": {"name": sa, "namespace": namespace},
-                    "subjects": [{"kind": "ServiceAccount", "name": sa, "namespace": namespace, "apiGroup": ""}],
-                    "roleRef": {"kind": "ClusterRole", "name": sa, "apiGroup": "rbac.authorization.k8s.io"},
-                }
-                create_role_rolebinding(role_binding, sa + "-rolebinding-impersonate.yaml", kubeconfig)
+        def _build_provider_rules_old(self):
+                # Read all resources
+                ruleGroup1 = {}
+                apiGroup1 = ["*",""]
+                resourceGroup1 = ["*"]
+                verbsGroup1 = ["get","watch","list"]
+                ruleGroup1["apiGroups"] = apiGroup1
+                ruleGroup1["resources"] = resourceGroup1
+                ruleGroup1["verbs"] = verbsGroup1
 
-                all_resources = [res for r in rule_list for res in r.get("resources", [])]
-                cfg_map_filename = sa + "-perms.txt"
-                with open(cfg_map_filename, "w", encoding="utf-8") as fp:
-                    fp.write(str(sorted(set(all_resources))))
-                run_command(
-                    "kubectl create configmap " + sa + "-perms -n " + namespace
-                    + " --from-file=" + cfg_map_filename + kubeconfig
-                )
+                # CRUD on resourcecompositions et. al.
+                ruleGroup2 = {}
+                apiGroup2 = ["workflows.kubeplus"]
+                resourceGroup2 = ["resourcecompositions","resourcemonitors","resourcepolicies","resourceevents"]
+                verbsGroup2 = ["get","watch","list","create","delete","update","patch"]
+                ruleGroup2["apiGroups"] = apiGroup2
+                ruleGroup2["resources"] = resourceGroup2
+                ruleGroup2["verbs"] = verbsGroup2
 
+                # CRUD on clusterroles and clusterrolebindings
+                ruleGroup3 = {}
+                apiGroup3 = ["rbac.authorization.k8s.io"]
+                resourceGroup3 = ["clusterroles","clusterrolebindings","roles","rolebindings"]
+                verbsGroup3 = ["get","watch","list","create","delete","update","patch","deletecollection"]
+                ruleGroup3["apiGroups"] = apiGroup3
+                ruleGroup3["resources"] = resourceGroup3
+                ruleGroup3["verbs"] = verbsGroup3
 
-        def _apply_provider_rbac(self, sa, namespace, kubeconfig):
-                """Apply ClusterRole and ClusterRoleBinding for provider (full platform operator permissions)."""
-                rule_list = [
+                # CRUD on Port forward
+                ruleGroup4 = {}
+                apiGroup4 = [""]
+                resourceGroup4 = ["pods/portforward"]
+                verbsGroup4 = ["get","watch","list","create","delete","update","patch"]
+                ruleGroup4["apiGroups"] = apiGroup4
+                ruleGroup4["resources"] = resourceGroup4
+                ruleGroup4["verbs"] = verbsGroup4
+
+                # CRUD on platformapi.kubeplus
+                ruleGroup5 = {}
+                apiGroup5 = ["platformapi.kubeplus"]
+                resourceGroup5 = ["*"]
+                verbsGroup5 = ["get","watch","list","create","delete","update","patch"]
+                ruleGroup5["apiGroups"] = apiGroup5
+                ruleGroup5["resources"] = resourceGroup5
+                ruleGroup5["verbs"] = verbsGroup5
+
+                # CRUD on secrets, serviceaccounts, configmaps
+                ruleGroup6 = {}
+                apiGroup6 = [""]
+                resourceGroup6 = ["secrets","serviceaccounts","configmaps","events","persistentvolumeclaims","serviceaccounts/token","services","services/proxy","endpoints"]
+                verbsGroup6 = ["get","watch","list","create","delete","update","patch","deletecollection"]
+                ruleGroup6["apiGroups"] = apiGroup6
+                ruleGroup6["resources"] = resourceGroup6
+                ruleGroup6["verbs"] = verbsGroup6
+
+                # CRUD on namespaces
+                ruleGroup7 = {}
+                apiGroup7 = [""]
+                resourceGroup7 = ["namespaces"]
+                verbsGroup7 = ["get","watch","list","create","delete","update","patch"]
+                ruleGroup7["apiGroups"] = apiGroup7
+                ruleGroup7["resources"] = resourceGroup7
+                ruleGroup7["verbs"] = verbsGroup7
+
+                # CRUD on Deployments
+                ruleGroup8 = {}
+                apiGroup8 = ["apps"]
+                resourceGroup8 = ["deployments","daemonsets","deployments/rollback","deployments/scale","replicasets","replicasets/scale","statefulsets","statefulsets/scale"]
+                verbsGroup8 = ["get","watch","list","create","delete","update","patch","deletecollection"]
+                ruleGroup8["apiGroups"] = apiGroup8
+                ruleGroup8["resources"] = resourceGroup8
+                ruleGroup8["verbs"] = verbsGroup8
+
+                # Impersonate users, groups, serviceaccounts
+                ruleGroup9 = {}
+                apiGroup9 = [""]
+                resourceGroup9 = ["users","groups","serviceaccounts"]
+                verbsGroup9 = ["impersonate"]
+                ruleGroup9["apiGroups"] = apiGroup9
+                ruleGroup9["resources"] = resourceGroup9
+                ruleGroup9["verbs"] = verbsGroup9
+
+                # Exec into the Pods and others in the "" apiGroup
+                ruleGroup10 = {}
+                apiGroup10 = [""]
+                resourceGroup10 = ["pods","pods/attach","pods/exec","pods/portforward","pods/proxy","pods/eviction","replicationcontrollers","replicationcontrollers/scale"]
+                verbsGroup10 = ["get","list","create","update","delete","watch","patch","deletecollection"]
+                ruleGroup10["apiGroups"] = apiGroup10
+                ruleGroup10["resources"] = resourceGroup10
+                ruleGroup10["verbs"] = verbsGroup10
+
+                # AdmissionRegistration
+                ruleGroup11 = {}
+                apiGroup11 = ["admissionregistration.k8s.io"]
+                resourceGroup11 = ["mutatingwebhookconfigurations"]
+                verbsGroup11 = ["get","create","delete","update"]
+                ruleGroup11["apiGroups"] = apiGroup11
+                ruleGroup11["resources"] = resourceGroup11
+                ruleGroup11["verbs"] = verbsGroup11
+
+                # APIExtension
+                ruleGroup12 = {}
+                apiGroup12 = ["apiextensions.k8s.io"]
+                resourceGroup12 = ["customresourcedefinitions"]
+                verbsGroup12 = ["get","create","delete","update","patch"]
+                ruleGroup12["apiGroups"] = apiGroup12
+                ruleGroup12["resources"] = resourceGroup12
+                ruleGroup12["verbs"] = verbsGroup12
+
+                # Certificates
+                ruleGroup13 = {}
+                apiGroup13 = ["certificates.k8s.io"]
+                resourceGroup13 = ["signers"]
+                resourceNames13 = ["kubernetes.io/legacy-unknown","kubernetes.io/kubelet-serving","kubernetes.io/kube-apiserver-client","cloudark.io/kubeplus"]
+                verbsGroup13 = ["get","create","delete","update","patch","approve"]
+                ruleGroup13["apiGroups"] = apiGroup13
+                ruleGroup13["resources"] = resourceGroup13
+                ruleGroup13["resourceNames"] = resourceNames13
+                ruleGroup13["verbs"] = verbsGroup13
+
+                # Read all
+                ruleGroup14 = {}
+                apiGroup14 = ["*"]
+                resourceGroup14 = ["*"]
+                verbsGroup14 = ["get"]
+                ruleGroup14["apiGroups"] = apiGroup14
+                ruleGroup14["resources"] = resourceGroup14
+                ruleGroup14["verbs"] = verbsGroup14
+
+                ruleGroup15 = {}
+                apiGroup15 = ["certificates.k8s.io"]
+                resourceGroup15 = ["certificatesigningrequests","certificatesigningrequests/approval"]
+                verbsGroup15 = ["create","delete","update","patch"]
+                ruleGroup15["apiGroups"] = apiGroup15
+                ruleGroup15["resources"] = resourceGroup15
+                ruleGroup15["verbs"] = verbsGroup15
+
+                ruleGroup16 = {}
+                apiGroup16 = ["extensions"]
+                resourceGroup16 = ["deployments","daemonsets","deployments/rollback","deployments/scale","replicasets","replicasets/scale","replicationcontrollers/scale","ingresses","networkpolicies"]
+                verbsGroup16 = ["get","watch","list","create","delete","update","patch","deletecollection"]
+                ruleGroup16["apiGroups"] = apiGroup16
+                ruleGroup16["resources"] = resourceGroup16
+                ruleGroup16["verbs"] = verbsGroup16
+
+                ruleGroup17 = {}
+                apiGroup17 = ["networking.k8s.io"]
+                resourceGroup17 = ["ingresses","networkpolicies"]
+                verbsGroup17 = ["get","watch","list","create","delete","update","patch","deletecollection"]
+                ruleGroup17["apiGroups"] = apiGroup17
+                ruleGroup17["resources"] = resourceGroup17
+                ruleGroup17["verbs"] = verbsGroup17
+
+                ruleGroup18 = {}
+                apiGroup18 = ["authorization.k8s.io"]
+                resourceGroup18 = ["localsubjectaccessreviews"]
+                verbsGroup18 = ["create"]
+                ruleGroup18["apiGroups"] = apiGroup18
+                ruleGroup18["resources"] = resourceGroup18
+                ruleGroup18["verbs"] = verbsGroup18
+
+                ruleGroup19 = {}
+                apiGroup19 = ["autoscaling"]
+                resourceGroup19 = ["horizontalpodautoscalers"]
+                verbsGroup19 = ["create","delete","deletecollection","patch","update"]
+                ruleGroup19["apiGroups"] = apiGroup19
+                ruleGroup19["resources"] = resourceGroup19
+                ruleGroup19["verbs"] = verbsGroup19
+
+                ruleGroup20 = {}
+                apiGroup20 = ["batch"]
+                resourceGroup20 = ["cronjobs","jobs"]
+                verbsGroup20 = ["create","delete","deletecollection","patch","update"]
+                ruleGroup20["apiGroups"] = apiGroup20
+                ruleGroup20["resources"] = resourceGroup20
+                ruleGroup20["verbs"] = verbsGroup20
+
+                ruleGroup21 = {}
+                apiGroup21 = ["policy"]
+                resourceGroup21 = ["poddisruptionbudgets"]
+                verbsGroup21 = ["create","delete","deletecollection","patch","update"]
+                ruleGroup21["apiGroups"] = apiGroup21
+                ruleGroup21["resources"] = resourceGroup21
+                ruleGroup21["verbs"] = verbsGroup21
+
+                ruleGroup22 = {}
+                apiGroup22 = [""]
+                resourceGroup22 = ["resourcequotas"]
+                verbsGroup22 = ["create","delete","deletecollection","patch","update"]
+                ruleGroup22["apiGroups"] = apiGroup22
+                ruleGroup22["resources"] = resourceGroup22
+                ruleGroup22["verbs"] = verbsGroup22
+
+                # PersistentVolumes and PersistentVolumeClaims for charts storage in helmer container
+                ruleGroup23 = {}
+                apiGroup23 = [""]
+                resourceGroup23 = ["persistentvolumes","persistentvolumeclaims"]
+                verbsGroup23 = ["get","watch","list","create","delete","update","patch"]
+                ruleGroup23["apiGroups"] = apiGroup23
+                ruleGroup23["resources"] = resourceGroup23
+                ruleGroup23["verbs"] = verbsGroup23
+
+                ruleList = []
+                ruleList.append(ruleGroup1)
+                ruleList.append(ruleGroup2)
+                ruleList.append(ruleGroup3)
+                ruleList.append(ruleGroup4)
+                ruleList.append(ruleGroup5)
+                ruleList.append(ruleGroup6)
+                ruleList.append(ruleGroup7)
+                ruleList.append(ruleGroup8)
+                ruleList.append(ruleGroup9)
+                ruleList.append(ruleGroup10)
+                ruleList.append(ruleGroup11)
+                ruleList.append(ruleGroup12)
+                ruleList.append(ruleGroup13)
+                ruleList.append(ruleGroup14)
+                ruleList.append(ruleGroup15)
+                ruleList.append(ruleGroup16)
+                ruleList.append(ruleGroup17)
+                ruleList.append(ruleGroup18)
+                ruleList.append(ruleGroup19)
+                ruleList.append(ruleGroup20)
+                ruleList.append(ruleGroup21)
+                ruleList.append(ruleGroup22)
+                ruleList.append(ruleGroup23)
+                return ruleList
+
+        def _build_provider_rules_new(self):
+                return [
                     {"apiGroups": ["*", ""], "resources": ["*"], "verbs": ["get", "watch", "list"]},
                     {
                         "apiGroups": ["workflows.kubeplus"],
@@ -203,7 +483,51 @@ class KubeconfigGenerator(object):
                     {"apiGroups": [""], "resources": ["resourcequotas"], "verbs": ["create", "delete", "deletecollection", "patch", "update"]},
                     {"apiGroups": [""], "resources": ["persistentvolumes", "persistentvolumeclaims"], "verbs": ["get", "watch", "list", "create", "delete", "update", "patch"]},
                 ]
-                # Skip "*" wildcard resources — not meaningful in the perms inventory
+
+        def _apply_consumer_rbac(self, sa, namespace, kubeconfig):
+                """Apply ClusterRole and ClusterRoleBinding for consumer (read + apps + impersonate + portforward)."""
+                old_rule_list = self._build_consumer_rules_old()
+                new_rule_list = self._build_consumer_rules_new()
+                if os.getenv("KUBEPLUS_RBAC_EQ_CHECK", "0") == "1":
+                    self._assert_rule_parity("consumer", old_rule_list, new_rule_list)
+                # Keep old path as source of truth in this PR.
+                rule_list = old_rule_list
+                role = {
+                    "apiVersion": "rbac.authorization.k8s.io/v1",
+                    "kind": "ClusterRole",
+                    "metadata": {"name": sa, "namespace": namespace},
+                    "rules": rule_list,
+                }
+                create_role_rolebinding(role, sa + "-role-impersonate.yaml", kubeconfig)
+
+                role_binding = {
+                    "apiVersion": "rbac.authorization.k8s.io/v1",
+                    "kind": "ClusterRoleBinding",
+                    "metadata": {"name": sa, "namespace": namespace},
+                    "subjects": [{"kind": "ServiceAccount", "name": sa, "namespace": namespace, "apiGroup": ""}],
+                    "roleRef": {"kind": "ClusterRole", "name": sa, "apiGroup": "rbac.authorization.k8s.io"},
+                }
+                create_role_rolebinding(role_binding, sa + "-rolebinding-impersonate.yaml", kubeconfig)
+
+                all_resources = [res for r in rule_list for res in r.get("resources", [])]
+                cfg_map_filename = sa + "-perms.txt"
+                with open(cfg_map_filename, "w", encoding="utf-8") as fp:
+                    fp.write(str(sorted(set(all_resources))))
+                run_command(
+                    "kubectl create configmap " + sa + "-perms -n " + namespace
+                    + " --from-file=" + cfg_map_filename + kubeconfig
+                )
+
+
+        def _apply_provider_rbac(self, sa, namespace, kubeconfig):
+                """Apply ClusterRole and ClusterRoleBinding for provider (full platform operator permissions)."""
+                old_rule_list = self._build_provider_rules_old()
+                new_rule_list = self._build_provider_rules_new()
+                if os.getenv("KUBEPLUS_RBAC_EQ_CHECK", "0") == "1":
+                    self._assert_rule_parity("provider", old_rule_list, new_rule_list)
+                # Keep old path as source of truth in this PR.
+                rule_list = old_rule_list
+                # Preserve master semantics: do not include wildcard resources in perms inventory.
                 all_resources = [
                     res for r in rule_list
                     for res in r.get("resources", [])
