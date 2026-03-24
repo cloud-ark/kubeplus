@@ -514,7 +514,7 @@ class KubeconfigGenerator(object):
                 if os.getenv("KUBEPLUS_RBAC_EQ_CHECK", "0") == "1":
                     self._assert_rule_parity("consumer", old_rule_list, new_rule_list)
                     self._assert_all_resources_parity("consumer", old_all_resources, new_all_resources)
-                # Keep old path as source of truth in this PR.
+                # Keep old path as source of truth.
                 rule_list = old_rule_list
                 all_resources = old_all_resources
                 role = {
@@ -551,7 +551,7 @@ class KubeconfigGenerator(object):
                 if os.getenv("KUBEPLUS_RBAC_EQ_CHECK", "0") == "1":
                     self._assert_rule_parity("provider", old_rule_list, new_rule_list)
                     self._assert_all_resources_parity("provider", old_all_resources, new_all_resources)
-                # Keep old path as source of truth in this PR.
+                # Keep old path as source of truth.
                 rule_list = old_rule_list
                 all_resources = old_all_resources
 
