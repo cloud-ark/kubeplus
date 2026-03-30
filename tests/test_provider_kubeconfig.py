@@ -133,6 +133,21 @@ perms:
         finally:
             os.remove(path)
 
+    def test_update_old_and_new_parsers_match(self):
+        perms = {
+            "apps": [
+                {"deployments": ["get", "create"]},
+                {"deployments/resourceName::sample": ["get"]},
+            ],
+            "non-apigroup": [
+                {"nonResourceURL::/metrics": ["get"]},
+            ],
+        }
+        old_rules, old_resources = self.generator._parse_permission_rules_old(perms)
+        new_rules, new_resources = self.generator._parse_permission_rules(perms)
+        self.generator._assert_rule_parity("test-update-parser", old_rules, new_rules)
+        self.generator._assert_all_resources_parity("test-update-parser", old_resources, new_resources)
+
 
 class TestKubeconfigIntegration(unittest.TestCase):
     """
