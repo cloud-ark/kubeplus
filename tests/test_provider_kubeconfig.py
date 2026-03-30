@@ -133,6 +133,25 @@ perms:
         finally:
             os.remove(path)
 
+    def test_update_legacy_parser_matches_shared_parser(self):
+        """_parse_permission_rules must match legacy update parse (used by revoke vs update)."""
+        perms = {
+            "apps": [
+                {"deployments": ["get", "create"]},
+                {"deployments/resourceName::sample": ["get"]},
+            ],
+            "non-apigroup": [
+                {"nonResourceURL::/metrics": ["get"]},
+                {"invalid-without-nonResourceURL-marker": ["get"]},
+            ],
+        }
+        legacy_rules, legacy_resources = self.generator._parse_update_rules_legacy(perms)
+        shared_rules, shared_resources = self.generator._parse_permission_rules(perms)
+        self.generator._assert_rule_parity("update-parser", legacy_rules, shared_rules)
+        self.generator._assert_all_resources_parity(
+            "update-parser", legacy_resources, shared_resources
+        )
+
 
 class TestKubeconfigIntegration(unittest.TestCase):
     """
