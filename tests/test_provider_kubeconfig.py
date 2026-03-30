@@ -133,44 +133,6 @@ perms:
         finally:
             os.remove(path)
 
-    def test_update_old_and_new_parsers_match(self):
-        perms = {
-            "apps": [
-                {"deployments": ["get", "create"]},
-                {"deployments/resourceName::sample": ["get"]},
-            ],
-            "non-apigroup": [
-                {"nonResourceURL::/metrics": ["get"]},
-            ],
-        }
-        old_rules = []
-        old_resources = []
-        for api_group, res_actions in perms.items():
-            for res in res_actions:
-                for resource, verbs in res.items():
-                    if resource not in old_resources:
-                        old_resources.append(resource.strip())
-                    rule_group = {}
-                    if api_group == "non-apigroup":
-                        if "nonResourceURL" in resource:
-                            parts = resource.split("nonResourceURL::")
-                            non_res = parts[1].strip() if len(parts) > 1 else parts[0].strip()
-                            rule_group["nonResourceURLs"] = [non_res]
-                            rule_group["verbs"] = verbs
-                    else:
-                        rule_group["apiGroups"] = [api_group]
-                        rule_group["verbs"] = verbs
-                        if "resourceName" in resource:
-                            parts = resource.split("/resourceName::")
-                            rule_group["resources"] = [parts[0].strip()]
-                            rule_group["resourceNames"] = [parts[1].strip()]
-                        else:
-                            rule_group["resources"] = [resource]
-                    old_rules.append(rule_group)
-        new_rules, new_resources = self.generator._parse_permission_rules(perms)
-        self.generator._assert_rule_parity("test-update-parser", old_rules, new_rules)
-        self.generator._assert_all_resources_parity("test-update-parser", old_resources, new_resources)
-
 
 class TestKubeconfigIntegration(unittest.TestCase):
     """

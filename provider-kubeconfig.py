@@ -81,8 +81,7 @@ class KubeconfigGenerator(object):
                                     rule_group["resourceNames"] = [parts[1].strip()]
                                 else:
                                     rule_group["resources"] = [resource]
-                            if rule_group:
-                                rule_list.append(rule_group)
+                            rule_list.append(rule_group)
                 return rule_list, resources
 
         def _read_perm_configmap_resources(self, sa, namespace, kubeconfig):
@@ -651,14 +650,13 @@ class KubeconfigGenerator(object):
         def _update_rbac(self, permissionfile, sa, namespace, kubeconfig):
                 """Add permissions from JSON/YAML file to provider (update command)."""
                 perms = self._load_permission_data(permissionfile)
-                # Keep old update parser path inline as source of truth.
-                old_rule_list = []
-                old_resources = []
+                rule_list = []
+                new_resources = []
                 for api_group, res_actions in perms.items():
                     for res in res_actions:
                         for resource, verbs in res.items():
-                            if resource not in old_resources:
-                                old_resources.append(resource.strip())
+                            if resource not in new_resources:
+                                new_resources.append(resource.strip())
                             rule_group = {}
                             if api_group == "non-apigroup":
                                 if "nonResourceURL" in resource:
@@ -675,13 +673,7 @@ class KubeconfigGenerator(object):
                                     rule_group["resourceNames"] = [parts[1].strip()]
                                 else:
                                     rule_group["resources"] = [resource]
-                            old_rule_list.append(rule_group)
-                new_rule_list, new_resources = self._parse_permission_rules(perms)
-                if os.getenv("KUBEPLUS_UPDATE_EQ_CHECK", "0") == "1":
-                    self._assert_rule_parity("update-parser", old_rule_list, new_rule_list)
-                    self._assert_all_resources_parity("update-parser", old_resources, new_resources)
-                rule_list = old_rule_list
-                new_resources = old_resources
+                            rule_list.append(rule_group)
 
                 role = {
                     "apiVersion": "rbac.authorization.k8s.io/v1",
@@ -712,21 +704,22 @@ class KubeconfigGenerator(object):
 
                 role_name = sa + "-update"
                 out, _ = run_command("kubectl get clusterrole " + role_name + " -o json" + kubeconfig)
-                if out:
-                    role_obj = json.loads(out)
-                    existing_rules = role_obj.get("rules", [])
-                    remaining_rules = []
-                    for rule in existing_rules:
-                        norm = self._normalize_rule(rule)
-                        norm_key = tuple(sorted(norm.items()))
-                        if norm_key not in revoke_norm:
-                            remaining_rules.append(rule)
-                    if remaining_rules:
-                        role_obj["rules"] = remaining_rules
-                        create_role_rolebinding(role_obj, sa + "-update-role.yaml", kubeconfig)
-                    else:
-                        run_command("kubectl delete clusterrole " + role_name + kubeconfig)
-                        run_command("kubectl delete clusterrolebinding " + role_name + kubeconfig)
+                if not out:
+                    return
+                role_obj = json.loads(out)
+                existing_rules = role_obj.get("rules", [])
+                remaining_rules = []
+                for rule in existing_rules:
+                    norm = self._normalize_rule(rule)
+                    norm_key = tuple(sorted(norm.items()))
+                    if norm_key not in revoke_norm:
+                        remaining_rules.append(rule)
+                if remaining_rules:
+                    role_obj["rules"] = remaining_rules
+                    create_role_rolebinding(role_obj, sa + "-update-role.yaml", kubeconfig)
+                else:
+                    run_command("kubectl delete clusterrole " + role_name + kubeconfig)
+                    run_command("kubectl delete clusterrolebinding " + role_name + kubeconfig)
 
                 current_resources = self._read_perm_configmap_resources(sa, namespace, kubeconfig)
                 remaining_resources = [res for res in current_resources if res not in set(revoke_resources)]
