@@ -84,34 +84,6 @@ class KubeconfigGenerator(object):
                             rule_list.append(rule_group)
                 return rule_list, resources
 
-        def _parse_update_rules_legacy(self, perms):
-                """Legacy update permission parse; runtime source of truth for update."""
-                rule_list = []
-                resources = []
-                for api_group, res_actions in perms.items():
-                    for res in res_actions:
-                        for resource, verbs in res.items():
-                            if resource not in resources:
-                                resources.append(resource.strip())
-                            rule_group = {}
-                            if api_group == "non-apigroup":
-                                if "nonResourceURL" in resource:
-                                    parts = resource.split("nonResourceURL::")
-                                    non_res = parts[1].strip() if len(parts) > 1 else parts[0].strip()
-                                    rule_group["nonResourceURLs"] = [non_res]
-                                    rule_group["verbs"] = verbs
-                            else:
-                                rule_group["apiGroups"] = [api_group]
-                                rule_group["verbs"] = verbs
-                                if "resourceName" in resource:
-                                    parts = resource.split("/resourceName::")
-                                    rule_group["resources"] = [parts[0].strip()]
-                                    rule_group["resourceNames"] = [parts[1].strip()]
-                                else:
-                                    rule_group["resources"] = [resource]
-                            rule_list.append(rule_group)
-                return rule_list, resources
-
         def _read_perm_configmap_resources(self, sa, namespace, kubeconfig):
                 cfg_map_name = sa + "-perms"
                 cfg_map_filename = sa + "-perms.txt"
@@ -678,11 +650,7 @@ class KubeconfigGenerator(object):
         def _update_rbac(self, permissionfile, sa, namespace, kubeconfig):
                 """Add permissions from JSON/YAML file to provider (update command)."""
                 perms = self._load_permission_data(permissionfile)
-                rule_list, new_resources = self._parse_update_rules_legacy(perms)
-                if os.getenv("KUBEPLUS_UPDATE_EQ_CHECK", "0") == "1":
-                    pq_rules, pq_resources = self._parse_permission_rules(perms)
-                    self._assert_rule_parity("update-parser", rule_list, pq_rules)
-                    self._assert_all_resources_parity("update-parser", new_resources, pq_resources)
+                rule_list, new_resources = self._parse_permission_rules(perms)
 
                 role = {
                     "apiVersion": "rbac.authorization.k8s.io/v1",
