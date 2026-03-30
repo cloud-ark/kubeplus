@@ -3,9 +3,11 @@ Tests for provider-kubeconfig.py: CLI, structure validation, integration tests
 that verify non-empty fields, service account creation, and CLI flags in output.
 """
 import json
+import importlib.util
 import os
 import subprocess
 import sys
+import tempfile
 import unittest
 import uuid
 
@@ -62,6 +64,74 @@ class TestCli(unittest.TestCase):
         )
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("permission", (proc.stdout or proc.stderr or "").lower())
+
+    def test_revoke_without_permissionfile_exits_with_error(self):
+        """revoke action without -p exits with code 1."""
+        proc = subprocess.run(
+            [sys.executable, os.path.join(ROOT, SCRIPT), "revoke", "default"],
+            capture_output=True, text=True, cwd=ROOT,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("permission", (proc.stdout or proc.stderr or "").lower())
+
+
+class TestPermissionFileParsing(unittest.TestCase):
+    """Unit tests for permission file parsing (JSON/YAML)."""
+
+    @classmethod
+    def setUpClass(cls):
+        script_path = os.path.join(ROOT, SCRIPT)
+        spec = importlib.util.spec_from_file_location("provider_kubeconfig_module", script_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        cls.generator = module.KubeconfigGenerator()
+
+    def _write_temp_file(self, suffix, content):
+        fd, path = tempfile.mkstemp(suffix=suffix, dir=ROOT, text=True)
+        os.close(fd)
+        with open(path, "w", encoding="utf-8") as fp:
+            fp.write(content)
+        return path
+
+    def test_load_permission_data_accepts_json(self):
+        json_content = json.dumps(
+            {
+                "perms": {
+                    "apps": [{"deployments": ["get", "create"]}],
+                    "non-apigroup": [{"nonResourceURL::/metrics": ["get"]}],
+                }
+            }
+        )
+        path = self._write_temp_file(".json", json_content)
+        try:
+            perms = self.generator._load_permission_data(path)
+            rules, resources = self.generator._parse_permission_rules(perms)
+            self.assertIn("apps", perms)
+            self.assertIn("deployments", resources)
+            self.assertTrue(any("nonResourceURLs" in r for r in rules))
+        finally:
+            os.remove(path)
+
+    def test_load_permission_data_accepts_yaml(self):
+        yaml_content = """
+perms:
+  apps:
+    - deployments:
+      - get
+      - update
+  non-apigroup:
+    - "nonResourceURL::/healthz":
+      - get
+"""
+        path = self._write_temp_file(".yaml", yaml_content)
+        try:
+            perms = self.generator._load_permission_data(path)
+            rules, resources = self.generator._parse_permission_rules(perms)
+            self.assertIn("apps", perms)
+            self.assertIn("deployments", resources)
+            self.assertTrue(any("/healthz" in str(r.get("nonResourceURLs", [])) for r in rules))
+        finally:
+            os.remove(path)
 
 
 class TestKubeconfigIntegration(unittest.TestCase):

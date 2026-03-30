@@ -42,6 +42,74 @@ def run_command(cmd):
 
 
 class KubeconfigGenerator(object):
+        def _load_permission_data(self, permissionfile):
+                """Load permissions definition from JSON or YAML file."""
+                with open(permissionfile, "r", encoding="utf-8") as fp:
+                    contents = fp.read()
+                try:
+                    perms_data = json.loads(contents)
+                except json.JSONDecodeError:
+                    perms_data = yaml.safe_load(contents)
+                if not isinstance(perms_data, dict) or "perms" not in perms_data:
+                    raise ValueError("Permission file must define a top-level 'perms' object.")
+                if not isinstance(perms_data["perms"], dict):
+                    raise ValueError("'perms' must be a mapping of apiGroup to permission rules.")
+                return perms_data["perms"]
+
+        def _parse_permission_rules(self, perms):
+                """Convert permission mapping to k8s rule list and tracked resources list."""
+                rule_list = []
+                resources = []
+                for api_group, res_actions in perms.items():
+                    for res in res_actions:
+                        for resource, verbs in res.items():
+                            if resource not in resources:
+                                resources.append(resource.strip())
+                            rule_group = {}
+                            if api_group == "non-apigroup":
+                                if "nonResourceURL" in resource:
+                                    parts = resource.split("nonResourceURL::")
+                                    non_res = parts[1].strip() if len(parts) > 1 else parts[0].strip()
+                                    rule_group["nonResourceURLs"] = [non_res]
+                                    rule_group["verbs"] = verbs
+                            else:
+                                rule_group["apiGroups"] = [api_group]
+                                rule_group["verbs"] = verbs
+                                if "resourceName" in resource:
+                                    parts = resource.split("/resourceName::")
+                                    rule_group["resources"] = [parts[0].strip()]
+                                    rule_group["resourceNames"] = [parts[1].strip()]
+                                else:
+                                    rule_group["resources"] = [resource]
+                            if rule_group:
+                                rule_list.append(rule_group)
+                return rule_list, resources
+
+        def _read_perm_configmap_resources(self, sa, namespace, kubeconfig):
+                cfg_map_name = sa + "-perms"
+                cfg_map_filename = sa + "-perms.txt"
+                out, _ = run_command("kubectl get configmap " + cfg_map_name + " -o json -n " + namespace + kubeconfig)
+                kubeplus_perms = []
+                if out:
+                    json_op = json.loads(out)
+                    perms_str = json_op.get("data", {}).get(cfg_map_filename, "")
+                    for p in perms_str.replace("'", "").replace("[", "").replace("]", "").split(","):
+                        p = p.strip()
+                        if p:
+                            kubeplus_perms.append(p)
+                return kubeplus_perms
+
+        def _write_perm_configmap_resources(self, sa, namespace, kubeconfig, resources):
+                cfg_map_name = sa + "-perms"
+                cfg_map_filename = sa + "-perms.txt"
+                run_command("kubectl delete configmap " + cfg_map_name + " -n " + namespace + kubeconfig)
+                with open(cfg_map_filename, "w", encoding="utf-8") as fp:
+                    fp.write(str(sorted(set(resources))))
+                run_command(
+                    "kubectl create configmap " + cfg_map_name + " -n " + namespace
+                    + " --from-file=" + cfg_map_filename + kubeconfig
+                )
+
 
 
         def _create_kubecfg_file(self, sa, namespace, filename, token, ca, server, kubeconfig, cluster_name=None):
@@ -581,35 +649,9 @@ class KubeconfigGenerator(object):
                 )
 
         def _update_rbac(self, permissionfile, sa, namespace, kubeconfig):
-                """Add permissions from JSON file to provider (update command)."""
-                with open(permissionfile, "r", encoding="utf-8") as fp:
-                    perms_data = json.load(fp)
-                perms = perms_data["perms"]
-                rule_list = []
-                new_resources = []
-
-                for api_group, res_actions in perms.items():
-                    for res in res_actions:
-                        for resource, verbs in res.items():
-                            if resource not in new_resources:
-                                new_resources.append(resource.strip())
-                            rule_group = {}
-                            if api_group == "non-apigroup":
-                                if "nonResourceURL" in resource:
-                                    parts = resource.split("nonResourceURL::")
-                                    non_res = parts[1].strip() if len(parts) > 1 else parts[0].strip()
-                                    rule_group["nonResourceURLs"] = [non_res]
-                                    rule_group["verbs"] = verbs
-                            else:
-                                rule_group["apiGroups"] = [api_group]
-                                rule_group["verbs"] = verbs
-                                if "resourceName" in resource:
-                                    parts = resource.split("/resourceName::")
-                                    rule_group["resources"] = [parts[0].strip()]
-                                    rule_group["resourceNames"] = [parts[1].strip()]
-                                else:
-                                    rule_group["resources"] = [resource]
-                            rule_list.append(rule_group)
+                """Add permissions from JSON/YAML file to provider (update command)."""
+                perms = self._load_permission_data(permissionfile)
+                rule_list, new_resources = self._parse_permission_rules(perms)
 
                 role = {
                     "apiVersion": "rbac.authorization.k8s.io/v1",
@@ -628,27 +670,37 @@ class KubeconfigGenerator(object):
                 }
                 create_role_rolebinding(role_binding, sa + "-update-rolebinding.yaml", kubeconfig)
 
-                cfg_map_name = sa + "-perms"
-                cfg_map_filename = sa + "-perms.txt"
-                out, _ = run_command("kubectl get configmap " + cfg_map_name + " -o json -n " + namespace + kubeconfig)
-                kubeplus_perms = []
-                if out:
-                    json_op = json.loads(out)
-                    perms_str = json_op.get("data", {}).get(cfg_map_filename, "")
-                    for p in perms_str.replace("'", "").replace("[", "").replace("]", "").split(","):
-                        p = p.strip()
-                        if p:
-                            kubeplus_perms.append(p)
+                kubeplus_perms = self._read_perm_configmap_resources(sa, namespace, kubeconfig)
                 new_resources.extend(kubeplus_perms)
+                self._write_perm_configmap_resources(sa, namespace, kubeconfig, new_resources)
 
-                run_command("kubectl delete configmap " + cfg_map_name + " -n " + namespace + kubeconfig)
-                new_resources = sorted(set(new_resources))
-                with open(cfg_map_filename, "w", encoding="utf-8") as fp:
-                    fp.write(str(new_resources))
-                run_command(
-                    "kubectl create configmap " + cfg_map_name + " -n " + namespace
-                    + " --from-file=" + cfg_map_filename + kubeconfig
-                )
+        def _revoke_rbac(self, permissionfile, sa, namespace, kubeconfig):
+                """Revoke permissions from JSON/YAML file for provider/consumer update role."""
+                perms = self._load_permission_data(permissionfile)
+                revoke_rule_list, revoke_resources = self._parse_permission_rules(perms)
+                revoke_norm = set(tuple(sorted(r.items())) for r in self._normalize_rule_list(revoke_rule_list))
+
+                role_name = sa + "-update"
+                out, _ = run_command("kubectl get clusterrole " + role_name + " -o json" + kubeconfig)
+                if out:
+                    role_obj = json.loads(out)
+                    existing_rules = role_obj.get("rules", [])
+                    remaining_rules = []
+                    for rule in existing_rules:
+                        norm = self._normalize_rule(rule)
+                        norm_key = tuple(sorted(norm.items()))
+                        if norm_key not in revoke_norm:
+                            remaining_rules.append(rule)
+                    if remaining_rules:
+                        role_obj["rules"] = remaining_rules
+                        create_role_rolebinding(role_obj, sa + "-update-role.yaml", kubeconfig)
+                    else:
+                        run_command("kubectl delete clusterrole " + role_name + kubeconfig)
+                        run_command("kubectl delete clusterrolebinding " + role_name + kubeconfig)
+
+                current_resources = self._read_perm_configmap_resources(sa, namespace, kubeconfig)
+                remaining_resources = [res for res in current_resources if res not in set(revoke_resources)]
+                self._write_perm_configmap_resources(sa, namespace, kubeconfig, remaining_resources)
     
 
         def _apply_rbac(self, sa, namespace, entity='', kubeconfig=''):
@@ -764,7 +816,7 @@ if __name__ == "__main__":
             "The generated kubeconfig includes the namespace in the context so kubectl defaults to it; "
             "consumer RBAC restricts what operations are allowed.",
         )
-        parser.add_argument("action", help="command", choices=['create', 'delete', 'update', 'extract'])
+        parser.add_argument("action", help="command", choices=['create', 'delete', 'update', 'revoke', 'extract'])
         parser.add_argument(
             "namespace",
             help="Namespace where the ServiceAccount is created. "
@@ -788,7 +840,7 @@ if __name__ == "__main__":
             "-x", "--clustername",
             help="Cluster name for context and cluster in the generated kubeconfig file.",
         )
-        permission_help = "Permissions file - use with update command. "
+        permission_help = "Permissions file - use with update or revoke command. "
         permission_help += "JSON structure: {perms:{<apiGroup>:[{resource|resource/resourceName::<name>:[verbs]},...]}}"
         parser.add_argument("-p", "--permissionfile", help=permission_help)
         parser.add_argument(
@@ -804,7 +856,7 @@ if __name__ == "__main__":
         permission_file = pargs.permissionfile or ""
         cluster_name = pargs.clustername or ""
 
-        if action == 'update' and permission_file == '':
+        if action in ['update', 'revoke'] and permission_file == '':
             print("Permission file missing. Please provide -p/--permissionfile.")
             sys.exit(1)
 
@@ -848,6 +900,10 @@ if __name__ == "__main__":
         if action == "update":
                 kubeconfigGenerator._update_rbac(permission_file, sa, namespace, kubeconfigString)
                 print("kubeconfig permissions updated: " + filename)
+
+        if action == "revoke":
+                kubeconfigGenerator._revoke_rbac(permission_file, sa, namespace, kubeconfigString)
+                print("kubeconfig permissions revoked: " + filename)
 
 
         if action == "delete":
