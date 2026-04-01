@@ -8,22 +8,6 @@ data:
   username: YWRtaW4=
   password: MWYyZDFlMmU2N2Rm
 ---
-# No need for admin role in a namespace
-#apiVersion: rbac.authorization.k8s.io/v1
-#kind: RoleBinding
-#metadata:
-#  name: kubeplus:namespace-admin
-#  namespace: {{ .Release.Namespace }}
-#roleRef:
-#  apiGroup: rbac.authorization.k8s.io
-#  kind: ClusterRole
-#  name: admin
-#subjects:
-#- kind: ServiceAccount
-#  name: kubeplus 
-#  namespace: {{ .Release.Namespace }}
-#  apiGroup: ""
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -135,10 +119,6 @@ subjects:
   name: kubeplus 
   namespace: {{ .Release.Namespace }}
   apiGroup: ""
-#- kind: ServiceAccount
-#  name: kubeplus-saas-provider
-#  namespace: {{ .Release.Namespace }}
-#  apiGroup: ""
 - kind: ServiceAccount
   name: kubeplus-saas-consumer 
   namespace: {{ .Release.Namespace }}
@@ -169,10 +149,6 @@ subjects:
   name: kubeplus 
   namespace: {{ .Release.Namespace }}
   apiGroup: ""
-#- kind: ServiceAccount
-#  name: kubeplus-saas-provider
-#  namespace: {{ .Release.Namespace }}
-#  apiGroup: ""
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -197,9 +173,6 @@ roleRef:
   kind: Role
   name: kubeplus-saas-provider-consumer
 subjects:
-#- kind: ServiceAccount
-#  name: kubeplus-saas-provider 
-#  namespace: {{ .Release.Namespace }}
 - kind: ServiceAccount
   name: kubeplus-saas-consumer 
   namespace: {{ .Release.Namespace }}
@@ -213,12 +186,6 @@ metadata:
   name: kubeplus
   namespace: {{ .Release.Namespace }}
 ---
-#kind: ServiceAccount
-#apiVersion: v1
-#metadata:
-#  name: kubeplus-saas-provider
-#  namespace: {{ .Release.Namespace }}
-#---
 kind: ServiceAccount
 apiVersion: v1
 metadata:
@@ -331,9 +298,8 @@ spec:
     spec:
       serviceAccount: kubeplus-saas-provider
       initContainers:
-      #containers:
       - name: webhook-cert-setup
-        image: {{ .Values.WEBHOOK_INIT_CONTAINER }}  #gcr.io/cloudark-kubeplus/webhook-tls-getter:3.0.26
+        image: {{ .Values.WEBHOOK_INIT_CONTAINER }}
         imagePullPolicy: IfNotPresent 
         env:
           - name: KUBEPLUS_NAMESPACE
@@ -350,7 +316,7 @@ spec:
           - "webhook-tls-certificates"
       containers:
       - name: kubeconfiggenerator
-        image: {{ .Values.CRD_REGISTRATION_HELPER }}  #gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.27
+        image: {{ .Values.CRD_REGISTRATION_HELPER }}
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -362,7 +328,6 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-                #command: ["./root/kubeconfiggenerator.sh"]
         command: [ "python3", "/root/kubeconfiggenerator.py"]
         args:
           - "$(KUBEPLUS_NAMESPACE)"
@@ -370,7 +335,7 @@ spec:
         - name: shared-data
           mountPath: /crdinstances
       - name: crd-hook
-        image: {{ .Values.MUTATING_WEBHOOK }}    #gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:3.0.14
+        image: {{ .Values.MUTATING_WEBHOOK }}
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -393,7 +358,7 @@ spec:
         - name: shared-data
           mountPath: /crdinstances
       - name: platform-operator
-        image: {{ .Values.PLATFORM_OPERATOR }}   #gcr.io/cloudark-kubeplus/platform-operator:3.0.6
+        image: {{ .Values.PLATFORM_OPERATOR }}
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -402,7 +367,7 @@ spec:
             ephemeral-storage: "10Mi"
         command: [ "/platform-operator"]
       - name: consumerui
-        image: {{ .Values.CONSUMERUI }}   #gcr.io/cloudark-kubeplus/consumerui:0.0.6
+        image: {{ .Values.CONSUMERUI }}
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -411,7 +376,7 @@ spec:
             ephemeral-storage: "500Mi"
         command: [ "python3", "/root/consumerui.py"]
       - name: helmer
-        image: {{ .Values.HELMER  }}  #gcr.io/cloudark-kubeplus/helm-pod:3.0.17
+        image: {{ .Values.HELMER  }}
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -462,7 +427,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-        image: {{ .Values.RESOURCE_CLEANER }}  #gcr.io/cloudark-kubeplus/delete-kubeplus-resources:3.0.12
+        image: {{ .Values.RESOURCE_CLEANER }}
         imagePullPolicy: IfNotPresent
         command: ["./root/delete-kubeplus-components.sh"]
         args:
