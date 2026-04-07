@@ -288,6 +288,18 @@ class TestKubeconfigIntegration(unittest.TestCase):
         out, _ = _run_command(cmd)
         return (out or "").strip().strip("'")
 
+    def _auth_can_i(self, namespace, sa, verb, resource):
+        """Run auth can-i for an impersonated ServiceAccount and return normalized output."""
+        out, err = _run_command(
+            "kubectl auth can-i " + verb + " " + resource
+            + " -n " + namespace
+            + " --as=system:serviceaccount:" + namespace + ":" + sa
+            + self.kubeconfig_flag
+        )
+        if err and ("unable to connect to the server" in err.lower() or "i/o timeout" in err.lower()):
+            self.skipTest("Skipping authz assertion due to transient API connectivity issue: " + err.strip())
+        return (out or "").strip().lower()
+
     def test_provider_kubeconfig_all_fields_nonempty(self):
         """Provider kubeconfig: every field that should exist is non-empty."""
         ns = "kubeplus-test-prov-" + uuid.uuid4().hex[:8]
@@ -435,6 +447,74 @@ class TestKubeconfigIntegration(unittest.TestCase):
         finally:
             _run_command("kubectl delete deployment --all -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
             self._delete_for_cleanup(ns, sa=consumer_sa)
+
+    def test_update_revoke_json_yaml_have_same_auth_can_i_effect(self):
+        """
+        update/revoke with equivalent JSON and YAML permission files should yield same auth outcome:
+        baseline deny -> allow after update -> deny after revoke.
+        """
+        ns = "kubeplus-test-uprev-" + uuid.uuid4().hex[:8]
+        sa = "uprev-sa"
+        json_file = os.path.join("tests", "permission_files", "permissions-example1.json")
+        yaml_file = os.path.join("tests", "permission_files", "permissions-example1.yaml")
+        self.assertTrue(os.path.exists(os.path.join(ROOT, json_file)))
+        self.assertTrue(os.path.exists(os.path.join(ROOT, yaml_file)))
+        try:
+            _run_command("kubectl create ns " + ns + self.kubeconfig_flag)
+            _run_command("kubectl create sa " + sa + " -n " + ns + self.kubeconfig_flag)
+
+            def run_flow(permission_file):
+                baseline = self._auth_can_i(ns, sa, "create", "secrets")
+                self.assertIn(baseline, ["yes", "no"])
+                proc_update = subprocess.run(
+                    [
+                        sys.executable,
+                        os.path.join(ROOT, SCRIPT),
+                        "update",
+                        ns,
+                        "-c",
+                        sa,
+                        "-p",
+                        permission_file,
+                    ] + self.kubeconfig_arg,
+                    cwd=ROOT,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
+                self.assertEqual(proc_update.returncode, 0, proc_update.stderr)
+                after_update = self._auth_can_i(ns, sa, "create", "secrets")
+                proc_revoke = subprocess.run(
+                    [
+                        sys.executable,
+                        os.path.join(ROOT, SCRIPT),
+                        "revoke",
+                        ns,
+                        "-c",
+                        sa,
+                        "-p",
+                        permission_file,
+                    ] + self.kubeconfig_arg,
+                    cwd=ROOT,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
+                self.assertEqual(proc_revoke.returncode, 0, proc_revoke.stderr)
+                after_revoke = self._auth_can_i(ns, sa, "create", "secrets")
+                return baseline, after_update, after_revoke
+
+            json_result = run_flow(json_file)
+            yaml_result = run_flow(yaml_file)
+            self.assertEqual(json_result, yaml_result)
+            self.assertEqual(json_result[1], "yes")
+            self.assertEqual(json_result[2], "no")
+        finally:
+            _run_command("kubectl delete clusterrole " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete clusterrolebinding " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete configmap " + sa + "-perms -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete sa " + sa + " -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete namespace " + ns + " --ignore-not-found --wait=false" + self.kubeconfig_flag)
 
 
 if __name__ == "__main__":
