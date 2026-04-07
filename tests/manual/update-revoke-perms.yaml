@@ -1,5 +1,0 @@
-perms:
-  "":
-    - secrets:
-      - create
-      - update
