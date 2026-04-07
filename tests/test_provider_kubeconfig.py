@@ -141,6 +141,26 @@ perms:
         self.assertEqual(rules[0], {})
         self.assertEqual(resources, ["not-a-url"])
 
+    def test_permission_fixture_files_parse_json_and_yaml(self):
+        """Fixture files in tests/permission_files should load and parse via script helpers."""
+        fixture_dir = os.path.join(ROOT, "tests", "permission_files")
+        fixture_files = [
+            "permissions-example1.json",
+            "permissions-example1.yaml",
+            "permissions-example2.json",
+            "permissions-example2.yaml",
+            "permissions-example3.json",
+            "permissions-example3.yaml",
+        ]
+        for name in fixture_files:
+            path = os.path.join(fixture_dir, name)
+            self.assertTrue(os.path.exists(path), f"Missing fixture file: {name}")
+            perms = self.generator._load_permission_data(path)
+            rules, resources = self.generator._parse_permission_rules(perms)
+            self.assertIsInstance(perms, dict, f"{name}: perms should be dict")
+            self.assertGreater(len(rules), 0, f"{name}: expected at least one parsed rule")
+            self.assertGreater(len(resources), 0, f"{name}: expected at least one parsed resource")
+
 
 class TestKubeconfigIntegration(unittest.TestCase):
     """
