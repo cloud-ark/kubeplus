@@ -1,6 +1,6 @@
 perms:
-  ? ''
-  : - pods/log:
+  '':
+    - pods/log:
       - get
       - watch
       - list
