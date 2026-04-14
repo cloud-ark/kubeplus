@@ -52,8 +52,8 @@ perms:
     - approve
   - signers/resourceName::clusterissuers.cert-manager.io/*:
     - approve
-  ? ''
-  : - configmaps/resourceName::cert-manager-cainjector-leader-election:
+  '':
+    - configmaps/resourceName::cert-manager-cainjector-leader-election:
       - get
       - update
       - patch
