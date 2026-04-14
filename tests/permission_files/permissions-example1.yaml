@@ -8,8 +8,8 @@ perms:
   non-apigroup:
   - nonResourceURL::*:
     - '*'
-  '':
-    - pods/log:
+  ? ''
+  : - pods/log:
       - get
   argoproj.io:
   - applicationset:

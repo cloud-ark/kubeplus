@@ -46,26 +46,26 @@ perms:
     - patch
   - signers/resourceName::issuers.cert-manager.io/*:
     - approve
-    signers/resourceName::clusterissuers.cert-manager.io/*:
+  - signers/resourceName::clusterissuers.cert-manager.io/*:
     - approve
   - signers/resourceName::issuers.cert-manager.io/*:
     - approve
-    signers/resourceName::clusterissuers.cert-manager.io/*:
+  - signers/resourceName::clusterissuers.cert-manager.io/*:
     - approve
-  '':
+  ? ''
+  : - configmaps/resourceName::cert-manager-cainjector-leader-election:
+      - get
+      - update
+      - patch
+    - configmaps/resourceName::cert-manager-cainjector-leader-election-core:
+      - get
+      - update
+      - patch
     - configmaps/resourceName::cert-manager-cainjector-leader-election:
       - get
       - update
       - patch
-      configmaps/resourceName::cert-manager-cainjector-leader-election-core:
-      - get
-      - update
-      - patch
-    - configmaps/resourceName::cert-manager-cainjector-leader-election:
-      - get
-      - update
-      - patch
-      configmaps/resourceName::cert-manager-cainjector-leader-election-core:
+    - configmaps/resourceName::cert-manager-cainjector-leader-election-core:
       - get
       - update
       - patch

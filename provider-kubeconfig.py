@@ -102,6 +102,8 @@ class KubeconfigGenerator(object):
                 cfg_map_name = sa + "-perms"
                 cfg_map_filename = sa + "-perms.txt"
                 run_command("kubectl delete configmap " + cfg_map_name + " -n " + namespace + kubeconfig)
+                if not resources:
+                    return
                 with open(cfg_map_filename, "w", encoding="utf-8") as fp:
                     fp.write(str(sorted(set(resources))))
                 run_command(
@@ -680,23 +682,27 @@ class KubeconfigGenerator(object):
                 revoke_norm = set(tuple(sorted(r.items())) for r in self._normalize_rule_list(revoke_rule_list))
 
                 role_name = sa + "-update"
+                rolebinding_name = sa + "-update"
                 out, _ = run_command("kubectl get clusterrole " + role_name + " -o json" + kubeconfig)
                 if not out:
-                    return
-                role_obj = json.loads(out)
-                existing_rules = role_obj.get("rules", [])
-                remaining_rules = []
-                for rule in existing_rules:
-                    norm = self._normalize_rule(rule)
-                    norm_key = tuple(sorted(norm.items()))
-                    if norm_key not in revoke_norm:
-                        remaining_rules.append(rule)
-                if remaining_rules:
-                    role_obj["rules"] = remaining_rules
-                    create_role_rolebinding(role_obj, sa + "-update-role.yaml", kubeconfig)
-                else:
-                    run_command("kubectl delete clusterrole " + role_name + kubeconfig)
-                    run_command("kubectl delete clusterrolebinding " + role_name + kubeconfig)
+                    role_name = sa
+                    rolebinding_name = sa
+                    out, _ = run_command("kubectl get clusterrole " + role_name + " -o json" + kubeconfig)
+                if out:
+                    role_obj = json.loads(out)
+                    existing_rules = role_obj.get("rules", [])
+                    remaining_rules = []
+                    for rule in existing_rules:
+                        norm = self._normalize_rule(rule)
+                        norm_key = tuple(sorted(norm.items()))
+                        if norm_key not in revoke_norm:
+                            remaining_rules.append(rule)
+                    if remaining_rules:
+                        role_obj["rules"] = remaining_rules
+                        create_role_rolebinding(role_obj, sa + "-update-role.yaml", kubeconfig)
+                    else:
+                        run_command("kubectl delete clusterrole " + role_name + kubeconfig)
+                        run_command("kubectl delete clusterrolebinding " + rolebinding_name + kubeconfig)
 
                 current_resources = self._read_perm_configmap_resources(sa, namespace, kubeconfig)
                 remaining_resources = [res for res in current_resources if res not in set(revoke_resources)]

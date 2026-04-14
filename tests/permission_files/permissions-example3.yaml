@@ -1,6 +1,6 @@
 perms:
-  '':
-    - pods/log:
+  ? ''
+  : - pods/log:
       - get
       - watch
       - list
@@ -174,7 +174,7 @@ perms:
     - update
     - patch
     - delete
-    leases/resourceName::workflow-controller-lease:
+  - leases/resourceName::workflow-controller-lease:
     - create
     - get
     - watch
@@ -188,7 +188,7 @@ perms:
     - update
     - patch
     - delete
-    leases/resourceName::workflow-controller-lease:
+  - leases/resourceName::workflow-controller-lease:
     - create
     - get
     - watch

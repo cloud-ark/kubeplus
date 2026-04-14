@@ -265,7 +265,9 @@
           "update",
           "patch",
           "delete"
-        ],
+        ]
+      },
+      {
         "leases/resourceName::workflow-controller-lease": [
           "create",
           "get",
@@ -283,7 +285,9 @@
           "update",
           "patch",
           "delete"
-        ],
+        ]
+      },
+      {
         "leases/resourceName::workflow-controller-lease": [
           "create",
           "get",
