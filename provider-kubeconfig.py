@@ -1,4 +1,5 @@
 import argparse
+import copy
 import json
 import os
 import subprocess
@@ -39,6 +40,12 @@ def run_command(cmd):
     out = cmd_out[0].decode("utf-8") if cmd_out[0] else ""
     err = cmd_out[1].decode("utf-8") if cmd_out[1] else ""
     return out, err
+
+
+def run_command_with_code(cmd):
+    """Execute a shell command. Returns (stdout_str, stderr_str, returncode)."""
+    proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    return proc.stdout or "", proc.stderr or "", proc.returncode
 
 
 class KubeconfigGenerator(object):
@@ -679,27 +686,64 @@ class KubeconfigGenerator(object):
                 """Revoke permissions from JSON/YAML file for provider/consumer update role."""
                 perms = self._load_permission_data(permissionfile)
                 revoke_rule_list, revoke_resources = self._parse_permission_rules(perms)
-                revoke_norm = set(tuple(sorted(r.items())) for r in self._normalize_rule_list(revoke_rule_list))
+                revoke_scope_to_verbs = {}
+                for rule in revoke_rule_list:
+                    norm = self._normalize_rule(rule)
+                    scope_key = (
+                        norm["apiGroups"],
+                        norm["resources"],
+                        norm["resourceNames"],
+                        norm["nonResourceURLs"],
+                    )
+                    verbs = set(rule.get("verbs", []))
+                    revoke_scope_to_verbs.setdefault(scope_key, set()).update(verbs)
 
                 role_name = sa + "-update"
                 rolebinding_name = sa + "-update"
-                out, _ = run_command("kubectl get clusterrole " + role_name + " -o json" + kubeconfig)
-                if not out:
+                out, err, rc = run_command_with_code("kubectl get clusterrole " + role_name + " -o json" + kubeconfig)
+                if rc != 0 and "NotFound" not in err:
+                    raise RuntimeError(f"Failed to fetch clusterrole {role_name!r}: {err.strip()}")
+                if rc != 0:
+                    # If revoking without updating first, revoke against the base SA role.
                     role_name = sa
                     rolebinding_name = sa
-                    out, _ = run_command("kubectl get clusterrole " + role_name + " -o json" + kubeconfig)
+                    out, err, rc = run_command_with_code("kubectl get clusterrole " + role_name + " -o json" + kubeconfig)
+                    if rc != 0 and "NotFound" not in err:
+                        raise RuntimeError(f"Failed to fetch clusterrole {role_name!r}: {err.strip()}")
                 if out:
                     role_obj = json.loads(out)
-                    existing_rules = role_obj.get("rules", [])
+                    existing_rules = role_obj.get("rules") or []
                     remaining_rules = []
                     for rule in existing_rules:
                         norm = self._normalize_rule(rule)
-                        norm_key = tuple(sorted(norm.items()))
-                        if norm_key not in revoke_norm:
+                        scope_key = (
+                            norm["apiGroups"],
+                            norm["resources"],
+                            norm["resourceNames"],
+                            norm["nonResourceURLs"],
+                        )
+                        revoke_verbs = revoke_scope_to_verbs.get(scope_key)
+                        if not revoke_verbs:
                             remaining_rules.append(rule)
+                            continue
+                        # For matching scope, remove only requested verbs and keep the rest.
+                        existing_verbs = rule.get("verbs", [])
+                        if "*" in revoke_verbs:
+                            continue
+                        new_verbs = [verb for verb in existing_verbs if verb not in revoke_verbs]
+                        if new_verbs:
+                            updated_rule = copy.deepcopy(rule)
+                            updated_rule["verbs"] = new_verbs
+                            remaining_rules.append(updated_rule)
                     if remaining_rules:
-                        role_obj["rules"] = remaining_rules
-                        create_role_rolebinding(role_obj, sa + "-update-role.yaml", kubeconfig)
+                        # Apply a minimal object to avoid stale metadata/resourceVersion apply conflicts.
+                        role = {
+                            "apiVersion": "rbac.authorization.k8s.io/v1",
+                            "kind": "ClusterRole",
+                            "metadata": {"name": role_name, "namespace": namespace},
+                            "rules": remaining_rules,
+                        }
+                        create_role_rolebinding(role, sa + "-update-role.yaml", kubeconfig)
                     else:
                         run_command("kubectl delete clusterrole " + role_name + kubeconfig)
                         run_command("kubectl delete clusterrolebinding " + rolebinding_name + kubeconfig)
