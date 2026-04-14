@@ -582,6 +582,10 @@ class TestKubeconfigIntegration(unittest.TestCase):
         os.close(fd)
         with open(permission_file, "w", encoding="utf-8") as fp:
             json.dump(revoke_payload, fp)
+        fd_cfg, cfg_file = tempfile.mkstemp(suffix=".txt", text=True)
+        os.close(fd_cfg)
+        with open(cfg_file, "w", encoding="utf-8") as fp:
+            fp.write("['pods']")
         try:
             _run_command("kubectl create ns " + ns + self.kubeconfig_flag)
             _run_command("kubectl create sa " + sa + " -n " + ns + self.kubeconfig_flag)
@@ -593,6 +597,10 @@ class TestKubeconfigIntegration(unittest.TestCase):
                 "kubectl create clusterrolebinding " + sa
                 + " --clusterrole=" + sa
                 + " --serviceaccount=" + ns + ":" + sa + self.kubeconfig_flag
+            )
+            _run_command(
+                "kubectl create configmap " + sa + "-perms -n " + ns
+                + " --from-file=" + sa + "-perms.txt=" + cfg_file + self.kubeconfig_flag
             )
             self.assertEqual(self._auth_can_i(ns, sa, "get", "pods"), "yes")
             self.assertEqual(self._auth_can_i(ns, sa, "delete", "pods"), "yes")
@@ -615,6 +623,118 @@ class TestKubeconfigIntegration(unittest.TestCase):
             self.assertEqual(proc_revoke.returncode, 0, proc_revoke.stderr)
             self.assertEqual(self._auth_can_i(ns, sa, "get", "pods"), "yes")
             self.assertEqual(self._auth_can_i(ns, sa, "delete", "pods"), "no")
+            cfg_out, cfg_err = _run_command(
+                "kubectl get configmap " + sa + "-perms -n " + ns
+                + " -o jsonpath='{.data." + sa + "-perms\\.txt}'" + self.kubeconfig_flag
+            )
+            if cfg_err and ("unable to connect to the server" in cfg_err.lower() or "i/o timeout" in cfg_err.lower()):
+                self.skipTest("Skipping configmap assertion due to transient API connectivity issue: " + cfg_err.strip())
+            self.assertIn("pods", cfg_out)
+        finally:
+            _run_command("kubectl delete clusterrole " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete clusterrolebinding " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete clusterrole " + sa + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete clusterrolebinding " + sa + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete configmap " + sa + "-perms -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete sa " + sa + " -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete namespace " + ns + " --ignore-not-found --wait=false" + self.kubeconfig_flag)
+            if os.path.exists(permission_file):
+                os.remove(permission_file)
+            if os.path.exists(cfg_file):
+                os.remove(cfg_file)
+
+    def test_revoke_matches_rules_with_multi_resource_scope(self):
+        """Revoke should match/trim rules even when existing rule has multiple resources."""
+        ns = "kubeplus-test-revoke-multi-" + uuid.uuid4().hex[:8]
+        sa = "revoke-multi-sa"
+        revoke_payload = {"perms": {"": [{"pods": ["delete"]}]}}
+        fd, permission_file = tempfile.mkstemp(suffix=".json", text=True)
+        os.close(fd)
+        with open(permission_file, "w", encoding="utf-8") as fp:
+            json.dump(revoke_payload, fp)
+        try:
+            _run_command("kubectl create ns " + ns + self.kubeconfig_flag)
+            _run_command("kubectl create sa " + sa + " -n " + ns + self.kubeconfig_flag)
+            _run_command(
+                "kubectl create clusterrole " + sa
+                + " --verb=get,delete --resource=pods,services" + self.kubeconfig_flag
+            )
+            _run_command(
+                "kubectl create clusterrolebinding " + sa
+                + " --clusterrole=" + sa
+                + " --serviceaccount=" + ns + ":" + sa + self.kubeconfig_flag
+            )
+            self.assertEqual(self._auth_can_i(ns, sa, "delete", "pods"), "yes")
+            proc_revoke = subprocess.run(
+                [
+                    sys.executable,
+                    os.path.join(ROOT, SCRIPT),
+                    "revoke",
+                    ns,
+                    "-c",
+                    sa,
+                    "-p",
+                    permission_file,
+                ] + self.kubeconfig_arg,
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            self.assertEqual(proc_revoke.returncode, 0, proc_revoke.stderr)
+            self.assertEqual(self._auth_can_i(ns, sa, "get", "pods"), "yes")
+            self.assertEqual(self._auth_can_i(ns, sa, "delete", "pods"), "no")
+        finally:
+            _run_command("kubectl delete clusterrole " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete clusterrolebinding " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete clusterrole " + sa + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete clusterrolebinding " + sa + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete configmap " + sa + "-perms -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete sa " + sa + " -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete namespace " + ns + " --ignore-not-found --wait=false" + self.kubeconfig_flag)
+            if os.path.exists(permission_file):
+                os.remove(permission_file)
+
+    def test_revoke_on_wildcard_existing_verbs_drops_matching_scope_rule(self):
+        """If existing verbs include '*', revoking any verb on same scope drops that rule."""
+        ns = "kubeplus-test-revoke-star-" + uuid.uuid4().hex[:8]
+        sa = "revoke-star-sa"
+        revoke_payload = {"perms": {"": [{"pods": ["get"]}]}}
+        fd, permission_file = tempfile.mkstemp(suffix=".json", text=True)
+        os.close(fd)
+        with open(permission_file, "w", encoding="utf-8") as fp:
+            json.dump(revoke_payload, fp)
+        try:
+            _run_command("kubectl create ns " + ns + self.kubeconfig_flag)
+            _run_command("kubectl create sa " + sa + " -n " + ns + self.kubeconfig_flag)
+            _run_command(
+                "kubectl create clusterrole " + sa
+                + " --verb=* --resource=pods" + self.kubeconfig_flag
+            )
+            _run_command(
+                "kubectl create clusterrolebinding " + sa
+                + " --clusterrole=" + sa
+                + " --serviceaccount=" + ns + ":" + sa + self.kubeconfig_flag
+            )
+            self.assertEqual(self._auth_can_i(ns, sa, "get", "pods"), "yes")
+            proc_revoke = subprocess.run(
+                [
+                    sys.executable,
+                    os.path.join(ROOT, SCRIPT),
+                    "revoke",
+                    ns,
+                    "-c",
+                    sa,
+                    "-p",
+                    permission_file,
+                ] + self.kubeconfig_arg,
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            self.assertEqual(proc_revoke.returncode, 0, proc_revoke.stderr)
+            self.assertEqual(self._auth_can_i(ns, sa, "get", "pods"), "no")
         finally:
             _run_command("kubectl delete clusterrole " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete clusterrolebinding " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
