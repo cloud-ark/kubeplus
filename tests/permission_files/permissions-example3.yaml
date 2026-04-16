@@ -146,7 +146,7 @@ perms:
     - patch
     - update
   - certificates/status:
-    - upate
+    - update
   - issuers:
     - create
     - delete

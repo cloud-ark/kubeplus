@@ -12,6 +12,15 @@ import unittest
 import uuid
 
 
+def _cleanup_script_artifacts(sa):
+    """Remove local YAML/txt files the CLI writes into the repo root."""
+    for suffix in ("-role.yaml", "-rolebinding.yaml", "-update-role.yaml",
+                   "-update-rolebinding.yaml", "-perms.txt", ".json"):
+        path = os.path.join(ROOT, sa + suffix)
+        if os.path.exists(path):
+            os.remove(path)
+
+
 def _run_command(cmd):
     """Run shell command, return (stdout, stderr)."""
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
@@ -31,7 +40,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # All CLI elements that must appear in --help
 HELP_ELEMENTS = [
-    "create", "delete", "update", "extract",
+    "create", "delete", "update", "extract", "revoke",
     "namespace",
     "-k", "--kubeconfig",
     "-s", "--apiserverurl",
@@ -83,7 +92,15 @@ class TestPermissionFileParsing(unittest.TestCase):
         script_path = os.path.join(ROOT, SCRIPT)
         spec = importlib.util.spec_from_file_location("provider_kubeconfig_module", script_path)
         module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        # The module's top-level dictConfig creates provider-kubeconfig.log in cwd as a
+        # side effect of import. Run the import with cwd=ROOT so the file lands in the
+        # gitignored location regardless of where pytest was invoked from.
+        prev_cwd = os.getcwd()
+        os.chdir(ROOT)
+        try:
+            spec.loader.exec_module(module)
+        finally:
+            os.chdir(prev_cwd)
         cls.generator = module.KubeconfigGenerator()
 
     def _write_temp_file(self, suffix, content):
@@ -140,6 +157,69 @@ perms:
         self.assertEqual(len(rules), 1)
         self.assertEqual(rules[0], {})
         self.assertEqual(resources, ["not-a-url"])
+
+    def test_rule_matches_revoke_non_resource_url_intersection(self):
+        existing = self.generator._normalize_rule(
+            {"nonResourceURLs": ["/metrics", "/healthz"], "verbs": ["get"]}
+        )
+        revoke = self.generator._normalize_rule(
+            {"nonResourceURLs": ["/metrics"], "verbs": ["get"]}
+        )
+        self.assertTrue(self.generator._rule_matches_revoke(existing, revoke))
+        no_match = self.generator._normalize_rule(
+            {"nonResourceURLs": ["/not-present"], "verbs": ["get"]}
+        )
+        self.assertFalse(self.generator._rule_matches_revoke(existing, no_match))
+
+    def test_split_rule_partial_resource_revoke_keeps_other_resource(self):
+        """Revoke delete on pods should not remove delete on services."""
+        rule = {"apiGroups": [""], "resources": ["pods", "services"], "verbs": ["get", "delete"]}
+        matched = [self.generator._normalize_rule(
+            {"apiGroups": [""], "resources": ["pods"], "verbs": ["delete"]}
+        )]
+        retained = set()
+        result = self.generator._split_rule_after_revoke(rule, matched, retained)
+        by_resources = {tuple(r["resources"]): sorted(r["verbs"]) for r in result}
+        self.assertEqual(by_resources[("pods",)], ["get"])
+        self.assertEqual(by_resources[("services",)], ["delete", "get"])
+        self.assertEqual(retained, {"pods", "services"})
+
+    def test_split_rule_nonresource_urls_partial_revoke(self):
+        """Revoke one URL while keeping unrelated URL permissions."""
+        rule = {"nonResourceURLs": ["/metrics", "/healthz"], "verbs": ["get"]}
+        matched = [self.generator._normalize_rule(
+            {"nonResourceURLs": ["/metrics"], "verbs": ["get"]}
+        )]
+        retained = set()
+        result = self.generator._split_rule_after_revoke(rule, matched, retained)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["nonResourceURLs"], ["/healthz"])
+        self.assertEqual(retained, {"nonResourceURL::/healthz"})
+
+    def test_split_rule_wildcard_existing_verbs_drop_rule(self):
+        """If existing verbs are '*', revoking any verb drops that scope."""
+        rule = {"apiGroups": [""], "resources": ["pods"], "verbs": ["*"]}
+        matched = [self.generator._normalize_rule(
+            {"apiGroups": [""], "resources": ["pods"], "verbs": ["get"]}
+        )]
+        result = self.generator._split_rule_after_revoke(rule, matched, set())
+        self.assertEqual(result, [])
+
+    def test_parse_permission_rules_resource_name_substring_without_separator(self):
+        """A resource key containing 'resourceName' but no '/resourceName::' separator
+        must not be split — it's a literal resource name."""
+        perms = {"": [{"myresourceNames": ["get"]}]}
+        rule_list, resources = self.generator._parse_permission_rules(perms)
+        self.assertEqual(len(rule_list), 1)
+        self.assertEqual(rule_list[0]["resources"], ["myresourceNames"])
+        self.assertNotIn("resourceNames", rule_list[0])
+        self.assertEqual(resources, ["myresourceNames"])
+
+    def test_parse_permission_rules_whitespace_dedup(self):
+        """Trailing whitespace in a resource key must not create a duplicate."""
+        perms = {"": [{"pods": ["get"]}, {"pods ": ["delete"]}]}
+        _, resources = self.generator._parse_permission_rules(perms)
+        self.assertEqual(resources, ["pods"])
 
     def test_permission_fixture_files_parse_json_and_yaml(self):
         """Fixture files in tests/permission_files should load and parse via script helpers."""
@@ -515,6 +595,7 @@ class TestKubeconfigIntegration(unittest.TestCase):
             _run_command("kubectl delete configmap " + sa + "-perms -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete sa " + sa + " -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete namespace " + ns + " --ignore-not-found --wait=false" + self.kubeconfig_flag)
+            _cleanup_script_artifacts(sa)
 
     def test_revoke_without_prior_update_falls_back_to_base_role(self):
         """If <sa>-update is absent, revoke should apply against base <sa> role/binding."""
@@ -566,6 +647,7 @@ class TestKubeconfigIntegration(unittest.TestCase):
             _run_command("kubectl delete configmap " + sa + "-perms -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete sa " + sa + " -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete namespace " + ns + " --ignore-not-found --wait=false" + self.kubeconfig_flag)
+            _cleanup_script_artifacts(sa)
             if os.path.exists(permission_file):
                 os.remove(permission_file)
 
@@ -638,6 +720,7 @@ class TestKubeconfigIntegration(unittest.TestCase):
             _run_command("kubectl delete configmap " + sa + "-perms -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete sa " + sa + " -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete namespace " + ns + " --ignore-not-found --wait=false" + self.kubeconfig_flag)
+            _cleanup_script_artifacts(sa)
             if os.path.exists(permission_file):
                 os.remove(permission_file)
             if os.path.exists(cfg_file):
@@ -684,6 +767,7 @@ class TestKubeconfigIntegration(unittest.TestCase):
             self.assertEqual(proc_revoke.returncode, 0, proc_revoke.stderr)
             self.assertEqual(self._auth_can_i(ns, sa, "get", "pods"), "yes")
             self.assertEqual(self._auth_can_i(ns, sa, "delete", "pods"), "no")
+            self.assertEqual(self._auth_can_i(ns, sa, "delete", "services"), "yes")
         finally:
             _run_command("kubectl delete clusterrole " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete clusterrolebinding " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
@@ -692,6 +776,7 @@ class TestKubeconfigIntegration(unittest.TestCase):
             _run_command("kubectl delete configmap " + sa + "-perms -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete sa " + sa + " -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete namespace " + ns + " --ignore-not-found --wait=false" + self.kubeconfig_flag)
+            _cleanup_script_artifacts(sa)
             if os.path.exists(permission_file):
                 os.remove(permission_file)
 
@@ -709,7 +794,7 @@ class TestKubeconfigIntegration(unittest.TestCase):
             _run_command("kubectl create sa " + sa + " -n " + ns + self.kubeconfig_flag)
             _run_command(
                 "kubectl create clusterrole " + sa
-                + " --verb=* --resource=pods" + self.kubeconfig_flag
+                + " '--verb=*' --resource=pods" + self.kubeconfig_flag
             )
             _run_command(
                 "kubectl create clusterrolebinding " + sa
@@ -735,6 +820,7 @@ class TestKubeconfigIntegration(unittest.TestCase):
             )
             self.assertEqual(proc_revoke.returncode, 0, proc_revoke.stderr)
             self.assertEqual(self._auth_can_i(ns, sa, "get", "pods"), "no")
+            self.assertEqual(self._auth_can_i(ns, sa, "delete", "pods"), "no")
         finally:
             _run_command("kubectl delete clusterrole " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete clusterrolebinding " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
@@ -743,6 +829,72 @@ class TestKubeconfigIntegration(unittest.TestCase):
             _run_command("kubectl delete configmap " + sa + "-perms -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete sa " + sa + " -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
             _run_command("kubectl delete namespace " + ns + " --ignore-not-found --wait=false" + self.kubeconfig_flag)
+            _cleanup_script_artifacts(sa)
+            if os.path.exists(permission_file):
+                os.remove(permission_file)
+
+    def test_revoke_non_resource_url_rule_is_removed(self):
+        """Revoke should remove matching nonResourceURL permissions."""
+        ns = "kubeplus-test-revoke-nonres-" + uuid.uuid4().hex[:8]
+        sa = "revoke-nonres-sa"
+        revoke_payload = {"perms": {"non-apigroup": [{"nonResourceURL::/metrics": ["get"]}]}}
+        fd, permission_file = tempfile.mkstemp(suffix=".json", text=True)
+        os.close(fd)
+        with open(permission_file, "w", encoding="utf-8") as fp:
+            json.dump(revoke_payload, fp)
+        try:
+            _run_command("kubectl create ns " + ns + self.kubeconfig_flag)
+            _run_command("kubectl create sa " + sa + " -n " + ns + self.kubeconfig_flag)
+            _run_command(
+                "kubectl create clusterrole " + sa
+                + " --verb=get --non-resource-url=/metrics" + self.kubeconfig_flag
+            )
+            _run_command(
+                "kubectl create clusterrolebinding " + sa
+                + " --clusterrole=" + sa
+                + " --serviceaccount=" + ns + ":" + sa + self.kubeconfig_flag
+            )
+            role_out_before, _ = _run_command("kubectl get clusterrole " + sa + " -o json" + self.kubeconfig_flag)
+            role_obj_before = json.loads(role_out_before)
+            self.assertTrue(
+                any("/metrics" in rule.get("nonResourceURLs", []) for rule in role_obj_before.get("rules", []))
+            )
+            proc_revoke = subprocess.run(
+                [
+                    sys.executable,
+                    os.path.join(ROOT, SCRIPT),
+                    "revoke",
+                    ns,
+                    "-c",
+                    sa,
+                    "-p",
+                    permission_file,
+                ] + self.kubeconfig_arg,
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            self.assertEqual(proc_revoke.returncode, 0, proc_revoke.stderr)
+            role_out_after, role_err_after = _run_command("kubectl get clusterrole " + sa + " -o json" + self.kubeconfig_flag)
+            if role_err_after and "NotFound" in role_err_after:
+                pass
+            elif not role_out_after:
+                self.skipTest(f"transient kubectl error reading clusterrole: {role_err_after.strip()}")
+            else:
+                role_obj_after = json.loads(role_out_after)
+                self.assertFalse(
+                    any("/metrics" in rule.get("nonResourceURLs", []) for rule in role_obj_after.get("rules", []))
+                )
+        finally:
+            _run_command("kubectl delete clusterrole " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete clusterrolebinding " + sa + "-update" + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete clusterrole " + sa + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete clusterrolebinding " + sa + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete configmap " + sa + "-perms -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete sa " + sa + " -n " + ns + self.kubeconfig_flag + " 2>/dev/null")
+            _run_command("kubectl delete namespace " + ns + " --ignore-not-found --wait=false" + self.kubeconfig_flag)
+            _cleanup_script_artifacts(sa)
             if os.path.exists(permission_file):
                 os.remove(permission_file)
 

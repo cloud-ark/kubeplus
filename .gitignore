@@ -8,3 +8,4 @@ operator-manager/artifacts/deployment/operator-manager
 operator-manager/operator-manager
 platform-operator/platform-operator
 platform-operator/artifacts/deployment/platform-operator
+__pycache__/
