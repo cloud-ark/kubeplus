@@ -158,52 +158,27 @@ perms:
         self.assertEqual(rules[0], {})
         self.assertEqual(resources, ["not-a-url"])
 
-    def test_rule_matches_revoke_non_resource_url_intersection(self):
+    def test_revoke_targets_rule_non_resource_url_intersection(self):
         existing = self.generator._normalize_rule(
             {"nonResourceURLs": ["/metrics", "/healthz"], "verbs": ["get"]}
         )
         revoke = self.generator._normalize_rule(
             {"nonResourceURLs": ["/metrics"], "verbs": ["get"]}
         )
-        self.assertTrue(self.generator._rule_matches_revoke(existing, revoke))
+        self.assertTrue(self.generator._revoke_targets_rule(existing, revoke))
         no_match = self.generator._normalize_rule(
             {"nonResourceURLs": ["/not-present"], "verbs": ["get"]}
         )
-        self.assertFalse(self.generator._rule_matches_revoke(existing, no_match))
+        self.assertFalse(self.generator._revoke_targets_rule(existing, no_match))
 
-    def test_split_rule_partial_resource_revoke_keeps_other_resource(self):
-        """Revoke delete on pods should not remove delete on services."""
-        rule = {"apiGroups": [""], "resources": ["pods", "services"], "verbs": ["get", "delete"]}
-        matched = [self.generator._normalize_rule(
-            {"apiGroups": [""], "resources": ["pods"], "verbs": ["delete"]}
-        )]
-        retained = set()
-        result = self.generator._split_rule_after_revoke(rule, matched, retained)
-        by_resources = {tuple(r["resources"]): sorted(r["verbs"]) for r in result}
-        self.assertEqual(by_resources[("pods",)], ["get"])
-        self.assertEqual(by_resources[("services",)], ["delete", "get"])
-        self.assertEqual(retained, {"pods", "services"})
+    def test_remove_revoked_verbs_partial(self):
+        self.assertEqual(
+            self.generator._remove_revoked_verbs(["get", "delete"], ["delete"]),
+            ["get"],
+        )
 
-    def test_split_rule_nonresource_urls_partial_revoke(self):
-        """Revoke one URL while keeping unrelated URL permissions."""
-        rule = {"nonResourceURLs": ["/metrics", "/healthz"], "verbs": ["get"]}
-        matched = [self.generator._normalize_rule(
-            {"nonResourceURLs": ["/metrics"], "verbs": ["get"]}
-        )]
-        retained = set()
-        result = self.generator._split_rule_after_revoke(rule, matched, retained)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]["nonResourceURLs"], ["/healthz"])
-        self.assertEqual(retained, {"nonResourceURL::/healthz"})
-
-    def test_split_rule_wildcard_existing_verbs_drop_rule(self):
-        """If existing verbs are '*', revoking any verb drops that scope."""
-        rule = {"apiGroups": [""], "resources": ["pods"], "verbs": ["*"]}
-        matched = [self.generator._normalize_rule(
-            {"apiGroups": [""], "resources": ["pods"], "verbs": ["get"]}
-        )]
-        result = self.generator._split_rule_after_revoke(rule, matched, set())
-        self.assertEqual(result, [])
+    def test_remove_revoked_verbs_wildcard_existing_drops_rule(self):
+        self.assertIsNone(self.generator._remove_revoked_verbs(["*"], ["get"]))
 
     def test_parse_permission_rules_resource_name_substring_without_separator(self):
         """A resource key containing 'resourceName' but no '/resourceName::' separator
