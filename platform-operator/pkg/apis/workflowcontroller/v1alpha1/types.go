@@ -117,6 +117,7 @@ type ResourcePolicySpec struct {
 
 type Pol struct {
 	PolicyResources PolicyResources `json:"podconfig"`
+	Quota Quota `json:"quota"`
 }
 
 type PolicyResources struct {
@@ -125,6 +126,13 @@ type PolicyResources struct {
 	Limits Limits `json:"limits"`
 	Requests Requests `json:"requests"`
 	NodeSelector string `json:"nodeSelector"`
+}
+
+type Quota struct {
+	CPURequests string `json:"requests.cpu"`
+	MemoryRequests string `json:"requests.memory"`
+	CPULimits string `json:"limits.cpu"`
+	MemoryLimits string `json:"limits.memory"`
 }
 
 type Limits struct {
@@ -228,4 +236,3 @@ type ResourceEventSpec struct {
 type Cond struct {
 	Condition string `json:"condition"`
 }
-

@@ -1,5 +1,5 @@
 apiVersion: platformapi.kubeplus/v1alpha1
-kind: GitopsWordpressService
+kind: GitopsWPService
 metadata:
   name: wp-tenant1
 spec:

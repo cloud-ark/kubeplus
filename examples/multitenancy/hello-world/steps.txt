@@ -128,3 +128,31 @@ Clean up:
   - kubectl delete -f hello-world-service-composition.yaml --kubeconfig=provider.conf
   - kubectl get crds
     - should see that helloworldservices.platformapi.kubeplus crd is gone
+
+
+Argo CD consumer-only flow:
+---------------------------
+This is the minimum GitOps flow for the consumer side only. The provider still
+creates the HelloWorldService API manually using hello-world-service-composition.yaml.
+This flow does not use Argo CD impersonation for the consumer.
+
+1. Create the HelloWorldService API as provider:
+   - kubectl create -f hello-world-service-composition.yaml --kubeconfig=provider.conf
+   - until kubectl get crds --kubeconfig=provider.conf | grep helloworldservices.platformapi.kubeplus ; do echo "Waiting for HelloWorldService CRD..."; sleep 1; done
+
+2. Apply the consumer Application:
+   - kubectl apply -f argocd-consumer-app.yaml -n argocd
+
+3. Verify the initial sync:
+   - kubectl get applications -n argocd
+   - kubectl get helloworldservices.platformapi.kubeplus -n default
+   - kubectl get pods -n hs1
+
+4. Test GitOps update of replicas:
+   - edit hs1.yaml in the hello-world-argocd-consumer repo and change replicas from 1 to 2
+   - commit and push the change
+   - wait for Argo CD to sync
+   - kubectl get pods -n hs1
+
+5. Verify the updated custom resource:
+   - kubectl get helloworldservices.platformapi.kubeplus hs1 -n default -o yaml

@@ -1,0 +1,67 @@
+Hello World Argo CD Consumer Flow
+--------------------------------
+
+This example keeps the provider setup manual and uses Argo CD only for the
+consumer-side `HelloWorldService` instances.
+
+Important:
+- Argo CD should sync from a dedicated small consumer repo, not directly from
+  the full `kubeplus` repo.
+- The files in this folder are meant to be copied into that consumer repo.
+
+Prerequisites
+-------------
+
+- KubePlus is installed and running
+- Argo CD is installed and running
+- A valid provider kubeconfig is available at:
+  `examples/multitenancy/hello-world/provider.conf`
+
+Steps
+-----
+
+1. Register the `HelloWorldService` API as the provider:
+
+   `kubectl create -f <kubeplus-repo>/examples/multitenancy/hello-world/hello-world-service-composition.yaml --kubeconfig=<kubeplus-repo>/examples/multitenancy/hello-world/provider.conf`
+
+2. Wait for the CRD:
+
+   `until kubectl get crds --kubeconfig=<kubeplus-repo>/examples/multitenancy/hello-world/provider.conf | grep helloworldservices.platformapi.kubeplus; do echo "Waiting for HelloWorldService CRD..."; sleep 1; done`
+
+3. Create a dedicated consumer Git repo for the tenant manifests:
+
+   - copy `argocd-consumer-app.yaml` and the `tenants/` folder from this
+     example into `<hello-world-argocd-consumer-repo>`
+   - update `repoURL` in `argocd-consumer-app.yaml` so it points to that repo
+   - commit and push the repo contents
+
+4. Apply the consumer Argo CD app:
+
+   `kubectl apply -f <hello-world-argocd-example-dir>/argocd-consumer-app.yaml -n argocd`
+
+5. Verify the initial sync:
+
+   `kubectl get application kubeplus-hello-world-consumer -n argocd`
+   `kubectl get helloworldservices.platformapi.kubeplus -n default`
+   `kubectl get pods -n hs1`
+
+6. Test GitOps changes by editing the dedicated consumer repo and pushing:
+
+   `cd <hello-world-argocd-consumer-repo>`
+   `git add tenants/hs1.yaml tenants/hs2.yaml tenants/kustomization.yaml`
+   `git commit -m "Update hello world tenants"`
+   `git push`
+
+7. Watch Argo CD reconcile:
+
+   `kubectl get application kubeplus-hello-world-consumer -n argocd -w`
+   `kubectl get helloworldservices.platformapi.kubeplus -n default`
+   `kubectl get pods -n hs1`
+   `kubectl get pods -n hs2`
+
+Expected result
+---------------
+
+- `hs1` runs with 2 replicas
+- `hs2` is created as a second tenant instance
+- Argo CD shows the consumer application as `Synced`

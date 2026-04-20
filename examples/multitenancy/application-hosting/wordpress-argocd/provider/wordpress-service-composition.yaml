@@ -5,10 +5,10 @@ metadata:
 spec:
   newResource:
     resource:
-      kind: GitopsWordpressService
+      kind: GitopsWPService
       group: platformapi.kubeplus
       version: v1alpha1
-      plural: gitopswordpressservices
+      plural: gitopswpservices
     chartURL: https://github.com/cloud-ark/k8s-workshop/blob/master/wordpress-deployment-chart/wordpress-chart-0.0.3.tgz?raw=true
     chartName: wordpress-chart
   respolicy:
@@ -18,7 +18,7 @@ spec:
       name: gitops-wordpress-service-policy
     spec:
       resource:
-        kind: GitopsWordpressService
+        kind: GitopsWPService
         group: platformapi.kubeplus
         version: v1alpha1
       policy:
@@ -42,7 +42,7 @@ spec:
       name: gitops-wordpress-service-monitor
     spec:
       resource:
-        kind: GitopsWordpressService
+        kind: GitopsWPService
         group: platformapi.kubeplus
         version: v1alpha1
       monitorRelationships: all
