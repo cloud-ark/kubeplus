@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kubeplus-hello-world-consumer
+  name: kubeplus-hello-world-provider
   namespace: argocd
 spec:
-  project: kubeplus-tenants
+  project: kubeplus-provider
   source:
-    repoURL: https://github.com/PatrickBladeeman/hello-world-argocd-consumer
+    repoURL: https://github.com/PatrickBladeeman/hello-world-argocd-provider
     targetRevision: main
-    path: tenants
+    path: provider
   destination:
     server: https://kubernetes.default.svc
     namespace: default

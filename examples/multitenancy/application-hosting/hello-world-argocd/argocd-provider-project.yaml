@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: kubeplus-provider
+  namespace: argocd
+spec:
+  sourceRepos:
+    - '*'
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: default
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  destinationServiceAccounts:
+    - server: https://kubernetes.default.svc
+      namespace: default
+      defaultServiceAccount: kubeplus-saas-provider
