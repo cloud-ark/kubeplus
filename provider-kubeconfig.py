@@ -1096,9 +1096,13 @@ if __name__ == "__main__":
             "-x", "--clustername",
             help="Cluster name for context and cluster in the generated kubeconfig file.",
         )
-        permission_help = "Permissions file - use with update or revoke command. "
-        permission_help += "JSON/YAML with top-level 'perms'; revoke matches apiGroups/resources or nonResourceURLs "
-        permission_help += "(resourceNames-specific revoke matching is not supported)."
+        permission_help = (
+            "Permissions file - use with update or revoke command. "
+            "JSON/YAML with top-level 'perms'. "
+            "Revoke matches apiGroups/resources or nonResourceURLs "
+            "(resourceNames-specific revoke matching is not supported). "
+            "Syntax: {\"perms\":{\"<apigroup>\":[{\"<resourcetype>\":[\"<verb>\",\"<verb>\"]}]}}"
+        )
         parser.add_argument("-p", "--permissionfile", help=permission_help)
         parser.add_argument(
             "-c", "--consumer",
