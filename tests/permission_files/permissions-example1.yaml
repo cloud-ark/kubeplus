@@ -1,7 +1,6 @@
 perms:
   '*':
   - '*':
-    - '*'
     - delete
     - get
     - patch

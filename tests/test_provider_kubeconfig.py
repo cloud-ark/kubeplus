@@ -519,7 +519,7 @@ class TestKubeconfigIntegration(unittest.TestCase):
             _run_command("kubectl create sa " + sa + " -n " + ns + self.kubeconfig_flag)
 
             def run_flow(permission_file):
-                baseline = self._auth_can_i(ns, sa, "create", "secrets")
+                baseline = self._auth_can_i(ns, sa, "delete", "secrets")
                 self.assertIn(baseline, ["yes", "no"])
                 proc_update = subprocess.run(
                     [
@@ -538,7 +538,7 @@ class TestKubeconfigIntegration(unittest.TestCase):
                     timeout=120,
                 )
                 self.assertEqual(proc_update.returncode, 0, proc_update.stderr)
-                after_update = self._auth_can_i(ns, sa, "create", "secrets")
+                after_update = self._auth_can_i(ns, sa, "delete", "secrets")
                 proc_revoke = subprocess.run(
                     [
                         sys.executable,
@@ -556,7 +556,7 @@ class TestKubeconfigIntegration(unittest.TestCase):
                     timeout=120,
                 )
                 self.assertEqual(proc_revoke.returncode, 0, proc_revoke.stderr)
-                after_revoke = self._auth_can_i(ns, sa, "create", "secrets")
+                after_revoke = self._auth_can_i(ns, sa, "delete", "secrets")
                 return baseline, after_update, after_revoke
 
             json_result = run_flow(json_file)
