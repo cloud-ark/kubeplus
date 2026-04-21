@@ -6,7 +6,7 @@ metadata:
 spec:
   project: kubeplus-tenants
   source:
-    repoURL: https://github.com/PatrickBladeeman/hello-world-argocd-consumer
+    repoURL: https://github.com/<org>/hello-world-argocd-consumer
     targetRevision: main
     path: tenants
   destination:

@@ -6,7 +6,7 @@ metadata:
 spec:
   project: kubeplus-provider
   source:
-    repoURL: https://github.com/PatrickBladeeman/hello-world-argocd-provider
+    repoURL: https://github.com/<org>/hello-world-argocd-provider
     targetRevision: main
     path: provider
   destination:
