@@ -1,0 +1,140 @@
+Hello World Argo CD Flow
+------------------------
+
+This example uses Argo CD for both the provider-side `ResourceComposition` and
+the consumer-side `HelloWorldService` instances.
+
+Important:
+- Argo CD should sync from dedicated small repos, not directly from the full
+  `kubeplus` repo.
+- The `provider/` folder and `argocd-provider-app.yaml` are meant to be copied
+  into a small provider repo.
+- The `tenants/` folder and `argocd-consumer-app.yaml` are meant to be copied
+  into a small consumer repo.
+
+Prerequisites
+-------------
+
+- KubePlus is installed and running
+- The `kubeplus-saas-provider` and `kubeplus-saas-consumer` service accounts
+  already exist, along with working `provider.conf` and `consumer.conf`
+
+Steps
+-----
+
+1. Install Argo CD:
+
+   `kubectl get namespace argocd >/dev/null 2>&1 || kubectl create namespace argocd`
+   `kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml`
+   `kubectl rollout status deployment/argocd-server -n argocd --timeout=180s`
+   `kubectl get pods -n argocd`
+
+2. Access the Argo CD UI:
+
+   `kubectl port-forward svc/argocd-server -n argocd 8080:443`
+   `kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath='{.data.password}' | base64 -d; echo`
+
+   Open:
+
+   `https://localhost:8080`
+
+   Username:
+
+   `admin`
+
+3. Create fresh provider and consumer kubeconfigs so the provider and consumer
+   service accounts exist and can be used:
+
+   `cd <kubeplus-repo>`
+   `export KUBEPLUS_NS=default`
+   `apiserver=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')`
+   `python3 provider-kubeconfig.py -s "$apiserver" create "$KUBEPLUS_NS"`
+   `cp kubeplus-saas-provider.json <kubeplus-repo>/examples/multitenancy/hello-world/provider.conf`
+   `kubectl retrieve kubeconfig consumer -s "$apiserver" > <kubeplus-repo>/examples/multitenancy/hello-world/consumer.conf`
+
+4. Enable Argo CD sync impersonation:
+
+   `kubectl patch cm argocd-cm -n argocd --type merge -p '{"data":{"application.sync.impersonation.enabled":"true"}}'`
+   `kubectl rollout restart statefulset argocd-application-controller -n argocd`
+
+5. Apply the Argo CD projects:
+
+   `kubectl apply -f <hello-world-argocd-example-dir>/argocd-provider-project.yaml -n argocd`
+   `kubectl apply -f <hello-world-argocd-example-dir>/argocd-consumer-project.yaml -n argocd`
+
+6. Create a dedicated provider Git repo for the provider manifests:
+
+   - copy `argocd-provider-app.yaml` and the `provider/` folder from this
+     example into `<hello-world-argocd-provider-repo>`
+   - update `repoURL` in `argocd-provider-app.yaml` so it points to that repo
+   - commit and push the repo contents
+
+7. Apply the provider Argo CD app:
+
+   `kubectl apply -f <hello-world-argocd-example-dir>/argocd-provider-app.yaml -n argocd`
+
+8. Wait for the CRD:
+
+   `until kubectl get crds | grep helloworldservices.platformapi.kubeplus; do echo "Waiting for HelloWorldService CRD..."; sleep 1; done`
+
+9. Create a dedicated consumer Git repo for the tenant manifests:
+
+   - copy `argocd-consumer-app.yaml` and the `tenants/` folder from this
+     example into `<hello-world-argocd-consumer-repo>`
+   - update `repoURL` in `argocd-consumer-app.yaml` so it points to that repo
+   - commit and push the repo contents
+
+10. Apply the consumer Argo CD app:
+
+   `kubectl apply -f <hello-world-argocd-example-dir>/argocd-consumer-app.yaml -n argocd`
+
+11. Verify the initial sync:
+
+   `kubectl get application kubeplus-hello-world-provider -n argocd`
+   `kubectl get application kubeplus-hello-world-consumer -n argocd`
+   `kubectl get helloworldservices.platformapi.kubeplus -n default`
+   `kubectl get pods -n hs1`
+
+12. Test provider-side sync by modifying the `ResourceComposition` in the
+   provider repo and pushing:
+
+   `cd <hello-world-argocd-provider-repo>`
+   `python3 - <<'PY'
+from pathlib import Path
+p = Path("provider/hello-world-service-composition.yaml")
+s = p.read_text()
+old = "metadata:\\n  name: hello-world-service-composition\\n"
+new = old + "  annotations:\\n    demo.kubeplus.dev/provider-sync-test: \\"2026-04-21-a\\"\\n"
+if "demo.kubeplus.dev/provider-sync-test" not in s:
+    s = s.replace(old, new, 1)
+p.write_text(s)
+PY`
+   `git add provider/hello-world-service-composition.yaml`
+   `git commit -m "Test hello world provider Argo CD sync"`
+   `git push`
+   `kubectl annotate application kubeplus-hello-world-provider -n argocd argocd.argoproj.io/refresh=hard --overwrite`
+   `kubectl get application kubeplus-hello-world-provider -n argocd`
+   `kubectl get resourcecomposition hello-world-service-composition -n default -o yaml`
+
+13. Test GitOps changes by editing the dedicated consumer repo and pushing:
+
+   `cd <hello-world-argocd-consumer-repo>`
+   `git add tenants/hs1.yaml tenants/hs2.yaml tenants/kustomization.yaml`
+   `git commit -m "Update hello world tenants"`
+   `git push`
+
+14. Watch Argo CD reconcile:
+
+   `kubectl get application kubeplus-hello-world-provider -n argocd -w`
+   `kubectl get application kubeplus-hello-world-consumer -n argocd -w`
+   `kubectl get helloworldservices.platformapi.kubeplus -n default`
+   `kubectl get pods -n hs1`
+   `kubectl get pods -n hs2`
+
+Expected result
+---------------
+
+- The provider app syncs the updated `ResourceComposition`
+- `hs1` runs with 2 replicas
+- `hs2` is created as a second tenant instance
+- Argo CD shows both provider and consumer applications as `Synced`

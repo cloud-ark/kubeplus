@@ -1,0 +1,47 @@
+WordPress via ArgoCD + KubePlus
+-------------------------------
+This example scaffolds a GitOps flow where:
+- ArgoCD syncs KubePlus manifests from Git.
+- KubePlus creates the custom API and provisions isolated WordPress tenants.
+
+Folder layout
+-------------
+- `provider/`: KubePlus `ResourceComposition` that defines the custom API.
+- `tenants/`: Tenant instances of the custom API.
+- `argocd-provider-app.yaml`: ArgoCD `Application` for the provider layer.
+- `argocd-tenants-app.yaml`: ArgoCD `Application` for the tenant layer.
+
+Suggested flow
+--------------
+1. Install KubePlus in your target namespace, for example `default`.
+
+2. Install ArgoCD in the cluster and confirm the `argocd` namespace exists.
+
+3. Update these placeholders before applying the ArgoCD manifests:
+   - `REPLACE_WITH_GIT_REPO_URL`
+   - `REPLACE_WITH_GIT_TARGET_REVISION`
+   - `REPLACE_WITH_KUBEPLUS_NAMESPACE`
+
+4. Apply the provider ArgoCD application first:
+   $ kubectl apply -f argocd-provider-app.yaml -n argocd
+
+5. Wait for the custom API to be registered:
+   $ until kubectl get crds | grep gitopswordpressservices.platformapi.kubeplus; do echo "Waiting for CRD..."; sleep 2; done
+
+6. Apply the tenant ArgoCD application:
+   $ kubectl apply -f argocd-tenants-app.yaml -n argocd
+
+7. Verify that KubePlus created the tenant namespaces and resources:
+   $ kubectl get gitopswordpressservices -n <kubeplus-namespace>
+   $ kubectl get ns
+   $ kubectl get pods -n wp-tenant1
+
+8. Verify KubePlus resource tracking still works:
+   $ kubectl appresources GitopsWordpressService wp-tenant1 -k kubeplus-saas-provider.json
+   $ kubectl metrics GitopsWordpressService wp-tenant1 -k kubeplus-saas-provider.json
+
+Next iteration ideas
+--------------------
+- Add a Git change that creates `tenant2`.
+- Expose one or two WordPress chart values through the custom API and verify ArgoCD-driven updates.
+- Add an app-of-apps manifest if you want ArgoCD to own both `Application` resources.
