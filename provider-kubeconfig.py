@@ -8,6 +8,9 @@ import yaml
 
 from logging.config import dictConfig
 
+RESOURCE_NAME_SEP = "/resourceName::"
+NON_RESOURCE_URL_PREFIX = "nonResourceURL::"
+
 dictConfig({
     "version": 1,
     "formatters": {"default": {"format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"}},
@@ -34,14 +37,135 @@ def create_role_rolebinding(contents, name, kubeconfig):
 
 def run_command(cmd):
     """Execute a shell command. Returns (stdout_str, stderr_str)."""
-    with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) as proc:
-        cmd_out = proc.communicate()
-    out = cmd_out[0].decode("utf-8") if cmd_out[0] else ""
-    err = cmd_out[1].decode("utf-8") if cmd_out[1] else ""
-    return out, err
+    proc = subprocess.run(cmd, shell=True, capture_output=True, encoding="utf-8")
+    return proc.stdout or "", proc.stderr or ""
+
+
+def run_command_with_code(cmd):
+    """Execute a shell command. Returns (stdout_str, stderr_str, returncode)."""
+    proc = subprocess.run(cmd, shell=True, capture_output=True, encoding="utf-8")
+    return proc.stdout or "", proc.stderr or "", proc.returncode
 
 
 class KubeconfigGenerator(object):
+        def _load_permission_data(self, permissionfile):
+                """Load permissions definition from JSON or YAML file."""
+                with open(permissionfile, "r", encoding="utf-8") as fp:
+                    contents = fp.read()
+                try:
+                    perms_data = json.loads(contents)
+                except json.JSONDecodeError as json_exc:
+                    try:
+                        perms_data = yaml.safe_load(contents)
+                    except yaml.YAMLError as yaml_exc:
+                        raise ValueError(
+                            f"Permission file is neither valid JSON ({json_exc}) nor YAML ({yaml_exc})."
+                        ) from yaml_exc
+                if not isinstance(perms_data, dict) or "perms" not in perms_data:
+                    raise ValueError("Permission file must define a top-level 'perms' object.")
+                if not isinstance(perms_data["perms"], dict):
+                    raise ValueError("'perms' must be a mapping of apiGroup to permission rules.")
+                return perms_data["perms"]
+
+        def _parse_permission_rules(self, perms):
+                """Convert permission mapping to k8s rule list and tracked resources list."""
+                rule_list = []
+                resources = []
+                for api_group, res_actions in perms.items():
+                    for res in res_actions:
+                        for resource, verbs in res.items():
+                            verbs = verbs or []
+                            resource_key = resource.strip()
+                            if resource_key not in resources:
+                                resources.append(resource_key)
+                            rule_group = {}
+                            if api_group == "non-apigroup":
+                                if NON_RESOURCE_URL_PREFIX in resource:
+                                    parts = resource.split(NON_RESOURCE_URL_PREFIX)
+                                    non_res = parts[1].strip() if len(parts) > 1 else parts[0].strip()
+                                    rule_group["nonResourceURLs"] = [non_res]
+                                    rule_group["verbs"] = verbs
+                            else:
+                                rule_group["apiGroups"] = [api_group]
+                                rule_group["verbs"] = verbs
+                                if RESOURCE_NAME_SEP in resource:
+                                    parts = resource.split(RESOURCE_NAME_SEP)
+                                    rule_group["resources"] = [parts[0].strip()]
+                                    rule_group["resourceNames"] = [parts[1].strip()]
+                                else:
+                                    rule_group["resources"] = [resource_key]
+                            rule_list.append(rule_group)
+                return rule_list, resources
+
+        def _kubectl_or_raise(self, args, kubeconfig, *, ignore_not_found=True):
+                """Run a kubectl subcommand and raise on failure."""
+                _, err, rc = run_command_with_code("kubectl " + args + kubeconfig)
+                if rc == 0:
+                        return
+                if ignore_not_found and "(NotFound)" in err:
+                        return
+                raise RuntimeError(f"kubectl {args} failed: {err.strip()}")
+
+        def _fetch_clusterrole(self, name, kubeconfig):
+                """Return ClusterRole JSON dict, or None when role does not exist."""
+                out, err, rc = run_command_with_code("kubectl get clusterrole " + name + " -o json" + kubeconfig)
+                if rc == 0 and out:
+                        return json.loads(out)
+                if "(NotFound)" in err:
+                        return None
+                raise RuntimeError(f"Failed to fetch clusterrole {name!r}: {err.strip()}")
+
+        def _rules_changed(self, existing_rules, remaining_rules):
+                return self._normalize_rule_list(existing_rules) != self._normalize_rule_list(remaining_rules)
+
+        def _rebuild_perm_configmap_from_roles(self, sa, namespace, kubeconfig):
+                """Rebuild <sa>-perms from current <sa> and <sa>-update roles."""
+                resources = set()
+                for role_name in [sa, sa + "-update"]:
+                        role_obj = self._fetch_clusterrole(role_name, kubeconfig)
+                        if role_obj is None:
+                                continue
+                        for rule in role_obj.get("rules") or []:
+                                resources.update(self._configmap_keys_for_rule(rule))
+                self._write_perm_configmap_resources(sa, namespace, kubeconfig, sorted(resources))
+
+        def _read_perm_configmap_resources(self, sa, namespace, kubeconfig):
+                cfg_map_name = sa + "-perms"
+                cfg_map_filename = sa + "-perms.txt"
+                out, err, rc = run_command_with_code(
+                    "kubectl get configmap " + cfg_map_name + " -o json -n " + namespace + kubeconfig
+                )
+                if rc != 0 and "(NotFound)" not in err:
+                    raise RuntimeError(f"Failed to read configmap {cfg_map_name!r}: {err.strip()}")
+                kubeplus_perms = []
+                if out:
+                    json_op = json.loads(out)
+                    perms_str = json_op.get("data", {}).get(cfg_map_filename, "")
+                    for p in perms_str.replace("'", "").replace("[", "").replace("]", "").split(","):
+                        p = p.strip()
+                        if p:
+                            kubeplus_perms.append(p)
+                return kubeplus_perms
+
+        def _write_perm_configmap_resources(self, sa, namespace, kubeconfig, resources):
+                cfg_map_name = sa + "-perms"
+                cfg_map_filename = sa + "-perms.txt"
+                self._kubectl_or_raise(
+                    "delete configmap " + cfg_map_name
+                    + " -n " + namespace + " --ignore-not-found",
+                    kubeconfig,
+                )
+                if not resources:
+                    return
+                with open(cfg_map_filename, "w", encoding="utf-8") as fp:
+                    fp.write(str(sorted(set(resources))))
+                self._kubectl_or_raise(
+                    "create configmap " + cfg_map_name + " -n " + namespace
+                    + " --from-file=" + cfg_map_filename,
+                    kubeconfig,
+                    ignore_not_found=False,
+                )
+
 
 
         def _create_kubecfg_file(self, sa, namespace, filename, token, ca, server, kubeconfig, cluster_name=None):
@@ -107,11 +231,11 @@ class KubeconfigGenerator(object):
 
         def _normalize_rule(self, rule):
                 return {
-                    "apiGroups": tuple(sorted(rule.get("apiGroups", []))),
-                    "resources": tuple(sorted(rule.get("resources", []))),
-                    "verbs": tuple(sorted(rule.get("verbs", []))),
-                    "resourceNames": tuple(sorted(rule.get("resourceNames", []))),
-                    "nonResourceURLs": tuple(sorted(rule.get("nonResourceURLs", []))),
+                    "apiGroups": tuple(sorted(set(rule.get("apiGroups", [])))),
+                    "resources": tuple(sorted(set(rule.get("resources", [])))),
+                    "verbs": tuple(sorted(set(rule.get("verbs", [])))),
+                    "resourceNames": tuple(sorted(set(rule.get("resourceNames", [])))),
+                    "nonResourceURLs": tuple(sorted(set(rule.get("nonResourceURLs", [])))),
                 }
 
         def _normalize_rule_list(self, rules):
@@ -581,35 +705,9 @@ class KubeconfigGenerator(object):
                 )
 
         def _update_rbac(self, permissionfile, sa, namespace, kubeconfig):
-                """Add permissions from JSON file to provider (update command)."""
-                with open(permissionfile, "r", encoding="utf-8") as fp:
-                    perms_data = json.load(fp)
-                perms = perms_data["perms"]
-                rule_list = []
-                new_resources = []
-
-                for api_group, res_actions in perms.items():
-                    for res in res_actions:
-                        for resource, verbs in res.items():
-                            if resource not in new_resources:
-                                new_resources.append(resource.strip())
-                            rule_group = {}
-                            if api_group == "non-apigroup":
-                                if "nonResourceURL" in resource:
-                                    parts = resource.split("nonResourceURL::")
-                                    non_res = parts[1].strip() if len(parts) > 1 else parts[0].strip()
-                                    rule_group["nonResourceURLs"] = [non_res]
-                                    rule_group["verbs"] = verbs
-                            else:
-                                rule_group["apiGroups"] = [api_group]
-                                rule_group["verbs"] = verbs
-                                if "resourceName" in resource:
-                                    parts = resource.split("/resourceName::")
-                                    rule_group["resources"] = [parts[0].strip()]
-                                    rule_group["resourceNames"] = [parts[1].strip()]
-                                else:
-                                    rule_group["resources"] = [resource]
-                            rule_list.append(rule_group)
+                """Add permissions from JSON/YAML file to provider (update command)."""
+                perms = self._load_permission_data(permissionfile)
+                rule_list, new_resources = self._parse_permission_rules(perms)
 
                 role = {
                     "apiVersion": "rbac.authorization.k8s.io/v1",
@@ -628,28 +726,238 @@ class KubeconfigGenerator(object):
                 }
                 create_role_rolebinding(role_binding, sa + "-update-rolebinding.yaml", kubeconfig)
 
-                cfg_map_name = sa + "-perms"
-                cfg_map_filename = sa + "-perms.txt"
-                out, _ = run_command("kubectl get configmap " + cfg_map_name + " -o json -n " + namespace + kubeconfig)
-                kubeplus_perms = []
-                if out:
-                    json_op = json.loads(out)
-                    perms_str = json_op.get("data", {}).get(cfg_map_filename, "")
-                    for p in perms_str.replace("'", "").replace("[", "").replace("]", "").split(","):
-                        p = p.strip()
-                        if p:
-                            kubeplus_perms.append(p)
+                kubeplus_perms = self._read_perm_configmap_resources(sa, namespace, kubeconfig)
                 new_resources.extend(kubeplus_perms)
+                self._write_perm_configmap_resources(sa, namespace, kubeconfig, new_resources)
 
-                run_command("kubectl delete configmap " + cfg_map_name + " -n " + namespace + kubeconfig)
-                new_resources = sorted(set(new_resources))
-                with open(cfg_map_filename, "w", encoding="utf-8") as fp:
-                    fp.write(str(new_resources))
-                run_command(
-                    "kubectl create configmap " + cfg_map_name + " -n " + namespace
-                    + " --from-file=" + cfg_map_filename + kubeconfig
+        def _remove_revoked_verbs(self, existing_verbs, revoke_verbs):
+                """Remove revoked verbs from an existing verb list.
+
+                Returns None when the rule should be dropped entirely.
+                """
+                existing_list = list(existing_verbs)
+                revoke_set = set(revoke_verbs)
+                if "*" in existing_list and revoke_set:
+                        return None
+                if "*" in revoke_set:
+                        return None
+                remaining = [v for v in existing_list if v not in revoke_set]
+                return remaining or None
+
+        def _configmap_keys_for_rule(self, rule):
+                """Return configmap keys represented by a rule."""
+                keys = []
+                for url in rule.get("nonResourceURLs") or []:
+                        keys.append(NON_RESOURCE_URL_PREFIX + url)
+                for res in rule.get("resources") or []:
+                        keys.append(res)
+                return keys
+
+        def _revoke_targets_rule(self, existing_norm, revoke_norm_rule):
+                """Return True when revoke should apply to this rule.
+
+                Matching rules:
+                - For URL rules, compare only nonResourceURLs.
+                - For normal resource rules, compare apiGroups + resources.
+                - A '*' on either side means "match all" for that field.
+                """
+                def _overlaps(revoke_values, existing_values):
+                        if not revoke_values or not existing_values:
+                                return False
+                        if "*" in revoke_values or "*" in existing_values:
+                                return True
+                        return bool(set(revoke_values).intersection(existing_values))
+
+                if revoke_norm_rule["nonResourceURLs"]:
+                        return _overlaps(revoke_norm_rule["nonResourceURLs"], existing_norm["nonResourceURLs"])
+                if not _overlaps(revoke_norm_rule["apiGroups"], existing_norm["apiGroups"]):
+                        return False
+                if not _overlaps(revoke_norm_rule["resources"], existing_norm["resources"]):
+                        return False
+                return True
+
+        def _build_remaining_rules_for_role(self, role_obj, revoke_norm):
+                """Return (existing_rules, remaining_rules) for one role after revoke."""
+                existing_rules = role_obj.get("rules") or []
+                remaining_rules = []
+                for rule in existing_rules:
+                        existing_norm = self._normalize_rule(rule)
+                        matched_revoke_rules = [
+                            rule_norm for rule_norm in revoke_norm
+                            if self._revoke_targets_rule(existing_norm, rule_norm)
+                        ]
+                        # Case 1: revoke does not target this rule.
+                        if not matched_revoke_rules:
+                                remaining_rules.append(rule)
+                                continue
+
+                        existing_verbs = rule.get("verbs", [])
+                        existing_urls = rule.get("nonResourceURLs") or []
+                        if existing_urls:
+                                # Case 2: URL rules (nonResourceURLs).
+                                if "*" in existing_urls:
+                                        # URL wildcard ("*"): keep one rule and trim verbs only.
+                                        combined_revoke_verbs = [v for mr in matched_revoke_rules for v in mr["verbs"]]
+                                        stripped_verbs = self._remove_revoked_verbs(existing_verbs, combined_revoke_verbs)
+                                        if stripped_verbs:
+                                                updated_rule = dict(rule)
+                                                updated_rule["verbs"] = stripped_verbs
+                                                remaining_rules.append(updated_rule)
+                                        continue
+
+                                # Specific URL list: process each URL separately so unrelated URLs stay.
+                                remaining_by_verbs = {}
+                                for url in existing_urls:
+                                        revoke_verbs = []
+                                        for matched_rule in matched_revoke_rules:
+                                                matched_urls = set(matched_rule["nonResourceURLs"])
+                                                if not matched_urls:
+                                                        continue
+                                                url_matches = "*" in matched_urls or url in matched_urls
+                                                if not url_matches:
+                                                        continue
+                                                revoke_verbs.extend(matched_rule["verbs"])
+                                        new_verbs = self._remove_revoked_verbs(existing_verbs, revoke_verbs)
+                                        if new_verbs:
+                                                remaining_by_verbs.setdefault(tuple(new_verbs), []).append(url)
+                                for verbs_key, urls in sorted(remaining_by_verbs.items()):
+                                        updated_rule = dict(rule)
+                                        updated_rule["nonResourceURLs"] = sorted(urls)
+                                        updated_rule["verbs"] = list(verbs_key)
+                                        remaining_rules.append(updated_rule)
+                                continue
+
+                        existing_resources = rule.get("resources") or []
+                        existing_api_groups = rule.get("apiGroups") or []
+                        is_atomic_scope = (not existing_resources) or ("*" in existing_api_groups) or ("*" in existing_resources)
+                        if is_atomic_scope:
+                                # Case 3: wildcard/no-resource rule.
+                                # We cannot remove just one sub-part, so trim verbs on whole rule.
+                                combined_revoke_verbs = [v for mr in matched_revoke_rules for v in mr["verbs"]]
+                                stripped_verbs = self._remove_revoked_verbs(existing_verbs, combined_revoke_verbs)
+                                if stripped_verbs:
+                                        updated_rule = dict(rule)
+                                        updated_rule["verbs"] = stripped_verbs
+                                        remaining_rules.append(updated_rule)
+                                continue
+
+                        # Case 4: explicit resource list.
+                        # Revoke per resource so one resource change does not affect others.
+                        remaining_by_verbs = {}
+                        for resource in existing_resources:
+                                revoke_verbs = []
+                                for matched_rule in matched_revoke_rules:
+                                        matched_resources = set(matched_rule["resources"])
+                                        if not matched_resources:
+                                                continue
+                                        resource_matches = "*" in matched_resources or resource in matched_resources
+                                        if not resource_matches:
+                                                continue
+                                        if not matched_rule["apiGroups"] or not existing_api_groups:
+                                                continue
+                                        api_group_matches = (
+                                            ("*" in matched_rule["apiGroups"])
+                                            or ("*" in existing_api_groups)
+                                            or bool(set(matched_rule["apiGroups"]).intersection(existing_api_groups))
+                                        )
+                                        if not api_group_matches:
+                                                continue
+                                        revoke_verbs.extend(matched_rule["verbs"])
+                                new_verbs = self._remove_revoked_verbs(existing_verbs, revoke_verbs)
+                                if new_verbs:
+                                        remaining_by_verbs.setdefault(tuple(new_verbs), []).append(resource)
+                        for verbs_key, resources in sorted(remaining_by_verbs.items()):
+                                updated_rule = dict(rule)
+                                updated_rule["resources"] = sorted(resources)
+                                updated_rule["verbs"] = list(verbs_key)
+                                remaining_rules.append(updated_rule)
+                return existing_rules, remaining_rules
+
+        def _revoke_rbac(self, permissionfile, sa, namespace, kubeconfig):
+                """Revoke permissions from permission file.
+
+                Flow:
+                1) Select target role (<sa>-update first, then <sa> fallback).
+                2) Build rewritten rules after revoke match/removal.
+                3) Apply updated role or delete empty role/binding.
+                4) Rebuild perms configmap from live role state.
+                """
+                permission_map = self._load_permission_data(permissionfile)
+                revoke_rule_list, _ = self._parse_permission_rules(permission_map)
+                revoke_norm = self._normalize_rule_list(revoke_rule_list)
+
+                # Supported revoke behavior:
+                # - Supports resource rules (apiGroups/resources/verbs).
+                # - Supports URL rules (nonResourceURLs/verbs).
+                # - Does not do name-specific matching inside a resource type.
+                # - Partial verb revoke is supported (e.g. delete removed, get retained).
+                # - Multi-resource rules are split by resource when only a subset is revoked.
+                # - If verbs contain '*', revoking any verb drops that matched scope.
+                # - Revoke target preference: <sa>-update first, then fallback to base <sa>.
+                # - ConfigMap is rebuilt from live role state after revoke.
+
+                # Prefer revoking from <sa>-update. If that role doesn't change, try base <sa>.
+                update_role = self._fetch_clusterrole(sa + "-update", kubeconfig)
+                base_role = self._fetch_clusterrole(sa, kubeconfig)
+                if update_role is None and base_role is None:
+                        print(f"No clusterrole {sa!r} or {sa + '-update'!r} found; nothing to revoke.")
+                        return False
+
+                candidates = []
+                if update_role is not None:
+                        existing_rules, remaining_rules = self._build_remaining_rules_for_role(update_role, revoke_norm)
+                        candidates.append((sa + "-update", update_role, existing_rules, remaining_rules))
+                if base_role is not None:
+                        existing_rules, remaining_rules = self._build_remaining_rules_for_role(base_role, revoke_norm)
+                        candidates.append((sa, base_role, existing_rules, remaining_rules))
+
+                target = next(
+                    (
+                        (name, role_obj, remaining_rules)
+                        for name, role_obj, existing_rules, remaining_rules in candidates
+                        if self._rules_changed(existing_rules, remaining_rules)
+                    ),
+                    None,
                 )
-    
+                if target is None:
+                        present = [n for n, _, _, _ in candidates]
+                        # No role changed means revoke input did not remove any granted verbs.
+                        print(f"Nothing to revoke: permission file didn't strip any verbs from {' or '.join(present)}.")
+                        return False
+
+                role_name, role_obj, remaining_rules = target
+                rolebinding_name = role_name
+
+                # Rewrite target role with surviving rules, or delete role/binding if empty.
+                role_filename = role_name + "-role.yaml"
+                if remaining_rules:
+                        labels = role_obj.get("metadata", {}).get("labels")
+                        annotations = role_obj.get("metadata", {}).get("annotations") or {}
+                        annotations = {
+                                k: v for k, v in annotations.items()
+                                if k != "kubectl.kubernetes.io/last-applied-configuration"
+                        }
+                        metadata = {"name": role_name}
+                        if labels:
+                                metadata["labels"] = labels
+                        if annotations:
+                                metadata["annotations"] = annotations
+                        role = {
+                                "apiVersion": "rbac.authorization.k8s.io/v1",
+                                "kind": "ClusterRole",
+                                "metadata": metadata,
+                                "rules": remaining_rules,
+                        }
+                        with open(role_filename, "w", encoding="utf-8") as f:
+                                yaml.dump(role, f, default_flow_style=False)
+                        self._kubectl_or_raise("apply -f " + role_filename, kubeconfig)
+                else:
+                        self._kubectl_or_raise("delete clusterrole " + role_name, kubeconfig)
+                        self._kubectl_or_raise("delete clusterrolebinding " + rolebinding_name, kubeconfig)
+
+                # Keep configmap simple and authoritative: rebuild from current roles.
+                self._rebuild_perm_configmap_from_roles(sa, namespace, kubeconfig)
+                return True
 
         def _apply_rbac(self, sa, namespace, entity='', kubeconfig=''):
                 if entity == 'provider':
@@ -764,7 +1072,7 @@ if __name__ == "__main__":
             "The generated kubeconfig includes the namespace in the context so kubectl defaults to it; "
             "consumer RBAC restricts what operations are allowed.",
         )
-        parser.add_argument("action", help="command", choices=['create', 'delete', 'update', 'extract'])
+        parser.add_argument("action", help="command", choices=['create', 'delete', 'update', 'revoke', 'extract'])
         parser.add_argument(
             "namespace",
             help="Namespace where the ServiceAccount is created. "
@@ -788,8 +1096,13 @@ if __name__ == "__main__":
             "-x", "--clustername",
             help="Cluster name for context and cluster in the generated kubeconfig file.",
         )
-        permission_help = "Permissions file - use with update command. "
-        permission_help += "JSON structure: {perms:{<apiGroup>:[{resource|resource/resourceName::<name>:[verbs]},...]}}"
+        permission_help = (
+            "Permissions file - use with update or revoke command. "
+            "JSON/YAML with top-level 'perms'. "
+            "Revoke matches apiGroups/resources or nonResourceURLs "
+            "(resourceNames-specific revoke matching is not supported). "
+            "Syntax: {\"perms\":{\"<apigroup>\":[{\"<resourcetype>\":[\"<verb>\",\"<verb>\"]}]}}"
+        )
         parser.add_argument("-p", "--permissionfile", help=permission_help)
         parser.add_argument(
             "-c", "--consumer",
@@ -804,7 +1117,7 @@ if __name__ == "__main__":
         permission_file = pargs.permissionfile or ""
         cluster_name = pargs.clustername or ""
 
-        if action == 'update' and permission_file == '':
+        if action in ['update', 'revoke'] and permission_file == '':
             print("Permission file missing. Please provide -p/--permissionfile.")
             sys.exit(1)
 
@@ -820,7 +1133,7 @@ if __name__ == "__main__":
 
         if action == "create":
                 if permission_file:
-                    print("Permissions file should be used with update command.")
+                    print("Permissions file should be used with update or revoke command.")
                     sys.exit(1)
 
                 get_ns = "kubectl get ns " + namespace + kubeconfigString
@@ -848,6 +1161,10 @@ if __name__ == "__main__":
         if action == "update":
                 kubeconfigGenerator._update_rbac(permission_file, sa, namespace, kubeconfigString)
                 print("kubeconfig permissions updated: " + filename)
+
+        if action == "revoke":
+                if kubeconfigGenerator._revoke_rbac(permission_file, sa, namespace, kubeconfigString):
+                        print("kubeconfig permissions revoked: " + filename)
 
 
         if action == "delete":

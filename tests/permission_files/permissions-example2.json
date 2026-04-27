@@ -1,0 +1,268 @@
+{
+  "perms": {
+    "cert-manager.io": [
+      {
+        "issuers/status": [
+          "update"
+        ]
+      },
+      {
+        "clusterissuers/status": [
+          "update"
+        ]
+      },
+      {
+        "certificates/status": [
+          "update"
+        ]
+      },
+      {
+        "certificaterequests/status": [
+          "update"
+        ]
+      },
+      {
+        "certificates/finalizers": [
+          "update"
+        ]
+      },
+      {
+        "certificaterequests/finalizers": [
+          "update"
+        ]
+      },
+      {
+        "clusterissuers": [
+          "update",
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "certificates": [
+          "get",
+          "list",
+          "watch",
+          "update",
+          "create",
+          "delete",
+          "deletecollection",
+          "patch"
+        ]
+      },
+      {
+        "certificaterequests": [
+          "update",
+          "get",
+          "list",
+          "watch",
+          "create",
+          "delete",
+          "deletecollection",
+          "patch"
+        ]
+      },
+      {
+        "issuers": [
+          "update",
+          "get",
+          "list",
+          "watch",
+          "create",
+          "delete",
+          "deletecollection",
+          "patch"
+        ]
+      },
+      {
+        "signers/resourceName::issuers.cert-manager.io/*": [
+          "approve"
+        ]
+      },
+      {
+        "signers/resourceName::clusterissuers.cert-manager.io/*": [
+          "approve"
+        ]
+      },
+      {
+        "signers/resourceName::issuers.cert-manager.io/*": [
+          "approve"
+        ]
+      },
+      {
+        "signers/resourceName::clusterissuers.cert-manager.io/*": [
+          "approve"
+        ]
+      }
+    ],
+    "": [
+      {
+        "configmaps/resourceName::cert-manager-cainjector-leader-election": [
+          "get",
+          "update",
+          "patch"
+        ]
+      },
+      {
+        "configmaps/resourceName::cert-manager-cainjector-leader-election-core": [
+          "get",
+          "update",
+          "patch"
+        ]
+      },
+      {
+        "configmaps/resourceName::cert-manager-cainjector-leader-election": [
+          "get",
+          "update",
+          "patch"
+        ]
+      },
+      {
+        "configmaps/resourceName::cert-manager-cainjector-leader-election-core": [
+          "get",
+          "update",
+          "patch"
+        ]
+      },
+      {
+        "configmaps/resourceName::cert-manager-controller": [
+          "create",
+          "get",
+          "update",
+          "patch"
+        ]
+      },
+      {
+        "secrets/resourceName::kptc-cert-manager-webhook-ca": [
+          "get",
+          "list",
+          "watch",
+          "create",
+          "update",
+          "patch",
+          "delete"
+        ]
+      }
+    ],
+    "admissionregistration.k8s.io": [
+      {
+        "validatingwebhookconfigurations": [
+          "get",
+          "list",
+          "watch",
+          "update"
+        ]
+      }
+    ],
+    "apiregistration.k8s.io": [
+      {
+        "apiservices": [
+          "get",
+          "list",
+          "watch",
+          "update"
+        ]
+      }
+    ],
+    "auditregistration.k8s.io": [
+      {
+        "auditsinks": [
+          "get",
+          "list",
+          "watch",
+          "update"
+        ]
+      }
+    ],
+    "acme.cert-manager.io": [
+      {
+        "orders/status": [
+          "update"
+        ]
+      },
+      {
+        "orders/finalizers": [
+          "update"
+        ]
+      },
+      {
+        "challenges/status": [
+          "update"
+        ]
+      },
+      {
+        "challenges/finalizers": [
+          "update"
+        ]
+      },
+      {
+        "challenges": [
+          "get",
+          "list",
+          "watch",
+          "create",
+          "delete",
+          "update",
+          "deletecollection",
+          "patch"
+        ]
+      },
+      {
+        "orders": [
+          "create",
+          "delete",
+          "get",
+          "list",
+          "watch",
+          "update",
+          "deletecollection",
+          "patch"
+        ]
+      }
+    ],
+    "networking.k8s.io": [
+      {
+        "ingresses/finalizers": [
+          "update"
+        ]
+      }
+    ],
+    "route.openshift.io": [
+      {
+        "routes/custom-host": [
+          "create"
+        ]
+      }
+    ],
+    "authorization.k8s.io": [
+      {
+        "subjectaccessreviews": [
+          "create"
+        ]
+      }
+    ],
+    "coordination.k8s.io": [
+      {
+        "leases/resourceName::cert-manager-controller": [
+          "get",
+          "update",
+          "patch"
+        ]
+      },
+      {
+        "leases/resourceName::cert-manager-controller": [
+          "create",
+          "get",
+          "update",
+          "patch"
+        ]
+      },
+      {
+        "leases": [
+          "create"
+        ]
+      }
+    ]
+  }
+}

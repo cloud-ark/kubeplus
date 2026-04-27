@@ -1,0 +1,41 @@
+perms:
+  '*':
+  - '*':
+    - delete
+    - get
+    - patch
+  non-apigroup:
+  - nonResourceURL::*:
+    - '*'
+  '':
+    - pods/log:
+      - get
+  argoproj.io:
+  - applicationset:
+    - get
+    - list
+    - watch
+  - applications:
+    - create
+    - get
+    - list
+    - watch
+    - update
+    - patch
+    - delete
+  - applicationsets:
+    - create
+    - get
+    - list
+    - watch
+    - update
+    - delete
+    - patch
+  - appprojects:
+    - create
+    - get
+    - list
+    - watch
+    - update
+    - patch
+    - delete
