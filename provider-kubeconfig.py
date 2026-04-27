@@ -128,20 +128,6 @@ class KubeconfigGenerator(object):
                     ),
                 )
 
-        def _assert_rule_parity(self, label, old_rules, new_rules):
-                old_norm = self._normalize_rule_list(old_rules)
-                new_norm = self._normalize_rule_list(new_rules)
-                if old_norm != new_norm:
-                    old_set = set(tuple(sorted(r.items())) for r in old_norm)
-                    new_set = set(tuple(sorted(r.items())) for r in new_norm)
-                    old_only = sorted(old_set - new_set)
-                    new_only = sorted(new_set - old_set)
-                    raise AssertionError(
-                        f"{label} RBAC mismatch.\n"
-                        f"Only in old: {old_only}\n"
-                        f"Only in new: {new_only}"
-                    )
-
         def _all_resources_from_rules(self, rules, skip_wildcard=False):
                 resources = []
                 for rule in rules:
@@ -151,19 +137,7 @@ class KubeconfigGenerator(object):
                         resources.append(res)
                 return sorted(set(resources))
 
-        def _assert_all_resources_parity(self, label, old_resources, new_resources):
-                old_set = set(old_resources)
-                new_set = set(new_resources)
-                if old_set != new_set:
-                    old_only = sorted(old_set - new_set)
-                    new_only = sorted(new_set - old_set)
-                    raise AssertionError(
-                        f"{label} all_resources mismatch.\n"
-                        f"Only in old: {old_only}\n"
-                        f"Only in new: {new_only}"
-                    )
-
-        def _build_consumer_rules_old(self):
+        def _build_consumer_rules(self):
                 # Read all resources
                 ruleGroup1 = {}
                 apiGroup1 = ["*",""]
@@ -206,22 +180,7 @@ class KubeconfigGenerator(object):
                 ruleList.append(ruleGroup8)
                 return ruleList
 
-        def _build_consumer_rules_new(self):
-                return [
-                    {"apiGroups": ["*", ""], "resources": ["*"], "verbs": ["get", "watch", "list"]},
-                    {
-                        "apiGroups": ["apps"],
-                        "resources": [
-                            "deployments", "daemonsets", "deployments/rollback", "deployments/scale",
-                            "replicasets", "replicasets/scale", "statefulsets", "statefulsets/scale",
-                        ],
-                        "verbs": ["get", "watch", "list", "create", "delete", "update", "patch", "deletecollection"],
-                    },
-                    {"apiGroups": [""], "resources": ["users", "groups", "serviceaccounts"], "verbs": ["impersonate"]},
-                    {"apiGroups": [""], "resources": ["pods/portforward"], "verbs": ["create", "get"]},
-                ]
-
-        def _build_provider_rules_old(self):
+        def _build_provider_rules(self):
                 # Read all resources
                 ruleGroup1 = {}
                 apiGroup1 = ["*",""]
@@ -449,74 +408,10 @@ class KubeconfigGenerator(object):
                 ruleList.append(ruleGroup23)
                 return ruleList
 
-        def _build_provider_rules_new(self):
-                return [
-                    {"apiGroups": ["*", ""], "resources": ["*"], "verbs": ["get", "watch", "list"]},
-                    {
-                        "apiGroups": ["workflows.kubeplus"],
-                        "resources": ["resourcecompositions", "resourcemonitors", "resourcepolicies", "resourceevents"],
-                        "verbs": ["get", "watch", "list", "create", "delete", "update", "patch"],
-                    },
-                    {
-                        "apiGroups": ["rbac.authorization.k8s.io"],
-                        "resources": ["clusterroles", "clusterrolebindings", "roles", "rolebindings"],
-                        "verbs": ["get", "watch", "list", "create", "delete", "update", "patch", "deletecollection"],
-                    },
-                    {"apiGroups": [""], "resources": ["pods/portforward"], "verbs": ["get", "watch", "list", "create", "delete", "update", "patch"]},
-                    {"apiGroups": ["platformapi.kubeplus"], "resources": ["*"], "verbs": ["get", "watch", "list", "create", "delete", "update", "patch"]},
-                    {
-                        "apiGroups": [""],
-                        "resources": ["secrets", "serviceaccounts", "configmaps", "events", "persistentvolumeclaims", "serviceaccounts/token", "services", "services/proxy", "endpoints"],
-                        "verbs": ["get", "watch", "list", "create", "delete", "update", "patch", "deletecollection"],
-                    },
-                    {"apiGroups": [""], "resources": ["namespaces"], "verbs": ["get", "watch", "list", "create", "delete", "update", "patch"]},
-                    {
-                        "apiGroups": ["apps"],
-                        "resources": ["deployments", "daemonsets", "deployments/rollback", "deployments/scale", "replicasets", "replicasets/scale", "statefulsets", "statefulsets/scale"],
-                        "verbs": ["get", "watch", "list", "create", "delete", "update", "patch", "deletecollection"],
-                    },
-                    {"apiGroups": [""], "resources": ["users", "groups", "serviceaccounts"], "verbs": ["impersonate"]},
-                    {
-                        "apiGroups": [""],
-                        "resources": ["pods", "pods/attach", "pods/exec", "pods/portforward", "pods/proxy", "pods/eviction", "replicationcontrollers", "replicationcontrollers/scale"],
-                        "verbs": ["get", "list", "create", "update", "delete", "watch", "patch", "deletecollection"],
-                    },
-                    {"apiGroups": ["admissionregistration.k8s.io"], "resources": ["mutatingwebhookconfigurations"], "verbs": ["get", "create", "delete", "update"]},
-                    {"apiGroups": ["apiextensions.k8s.io"], "resources": ["customresourcedefinitions"], "verbs": ["get", "create", "delete", "update", "patch"]},
-                    {
-                        "apiGroups": ["certificates.k8s.io"],
-                        "resources": ["signers"],
-                        "resourceNames": ["kubernetes.io/legacy-unknown", "kubernetes.io/kubelet-serving", "kubernetes.io/kube-apiserver-client", "cloudark.io/kubeplus"],
-                        "verbs": ["get", "create", "delete", "update", "patch", "approve"],
-                    },
-                    {"apiGroups": ["*"], "resources": ["*"], "verbs": ["get"]},
-                    {"apiGroups": ["certificates.k8s.io"], "resources": ["certificatesigningrequests", "certificatesigningrequests/approval"], "verbs": ["create", "delete", "update", "patch"]},
-                    {
-                        "apiGroups": ["extensions"],
-                        "resources": ["deployments", "daemonsets", "deployments/rollback", "deployments/scale", "replicasets", "replicasets/scale", "replicationcontrollers/scale", "ingresses", "networkpolicies"],
-                        "verbs": ["get", "watch", "list", "create", "delete", "update", "patch", "deletecollection"],
-                    },
-                    {"apiGroups": ["networking.k8s.io"], "resources": ["ingresses", "networkpolicies"], "verbs": ["get", "watch", "list", "create", "delete", "update", "patch", "deletecollection"]},
-                    {"apiGroups": ["authorization.k8s.io"], "resources": ["localsubjectaccessreviews"], "verbs": ["create"]},
-                    {"apiGroups": ["autoscaling"], "resources": ["horizontalpodautoscalers"], "verbs": ["create", "delete", "deletecollection", "patch", "update"]},
-                    {"apiGroups": ["batch"], "resources": ["cronjobs", "jobs"], "verbs": ["create", "delete", "deletecollection", "patch", "update"]},
-                    {"apiGroups": ["policy"], "resources": ["poddisruptionbudgets"], "verbs": ["create", "delete", "deletecollection", "patch", "update"]},
-                    {"apiGroups": [""], "resources": ["resourcequotas"], "verbs": ["create", "delete", "deletecollection", "patch", "update"]},
-                    {"apiGroups": [""], "resources": ["persistentvolumes", "persistentvolumeclaims"], "verbs": ["get", "watch", "list", "create", "delete", "update", "patch"]},
-                ]
-
         def _apply_consumer_rbac(self, sa, namespace, kubeconfig):
                 """Apply ClusterRole and ClusterRoleBinding for consumer (read + apps + impersonate + portforward)."""
-                old_rule_list = self._build_consumer_rules_old()
-                new_rule_list = self._build_consumer_rules_new()
-                old_all_resources = self._all_resources_from_rules(old_rule_list)
-                new_all_resources = self._all_resources_from_rules(new_rule_list)
-                if os.getenv("KUBEPLUS_RBAC_EQ_CHECK", "0") == "1":
-                    self._assert_rule_parity("consumer", old_rule_list, new_rule_list)
-                    self._assert_all_resources_parity("consumer", old_all_resources, new_all_resources)
-                # Keep old path as source of truth.
-                rule_list = old_rule_list
-                all_resources = old_all_resources
+                rule_list = self._build_consumer_rules()
+                all_resources = self._all_resources_from_rules(rule_list)
                 role = {
                     "apiVersion": "rbac.authorization.k8s.io/v1",
                     "kind": "ClusterRole",
@@ -544,16 +439,8 @@ class KubeconfigGenerator(object):
 
         def _apply_provider_rbac(self, sa, namespace, kubeconfig):
                 """Apply ClusterRole and ClusterRoleBinding for provider (full platform operator permissions)."""
-                old_rule_list = self._build_provider_rules_old()
-                new_rule_list = self._build_provider_rules_new()
-                old_all_resources = self._all_resources_from_rules(old_rule_list, skip_wildcard=True)
-                new_all_resources = self._all_resources_from_rules(new_rule_list, skip_wildcard=True)
-                if os.getenv("KUBEPLUS_RBAC_EQ_CHECK", "0") == "1":
-                    self._assert_rule_parity("provider", old_rule_list, new_rule_list)
-                    self._assert_all_resources_parity("provider", old_all_resources, new_all_resources)
-                # Keep old path as source of truth.
-                rule_list = old_rule_list
-                all_resources = old_all_resources
+                rule_list = self._build_provider_rules()
+                all_resources = self._all_resources_from_rules(rule_list, skip_wildcard=True)
 
                 role = {
                     "apiVersion": "rbac.authorization.k8s.io/v1",
