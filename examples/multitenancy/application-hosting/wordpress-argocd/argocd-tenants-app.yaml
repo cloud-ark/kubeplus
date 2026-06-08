@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubeplus-wordpress-tenants
+  namespace: argocd
+spec:
+  project: wordpress-tenants
+  source:
+    repoURL: https://github.com/cloud-ark/kubeplus-examples
+    targetRevision: main
+    path: multitenancy/application-hosting/wordpress-argocd/tenants
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

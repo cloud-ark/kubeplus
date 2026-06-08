@@ -1,0 +1,34 @@
+apiVersion: workflows.kubeplus/v1alpha1
+kind: ResourceComposition
+metadata:
+  name: hello-world-service-composition
+spec:
+  newResource:
+    resource:
+      kind: HelloWorldService
+      group: platformapi.kubeplus
+      version: v1alpha1
+      plural: helloworldservices
+    chartURL: https://github.com/cloud-ark/kubeplus/blob/master/examples/multitenancy/hello-world/hello-world-chart-0.0.3.tgz?raw=true
+    chartName: hello-world-chart
+  respolicy:
+    apiVersion: workflows.kubeplus/v1alpha1
+    kind: ResourcePolicy
+    metadata:
+      name: hello-world-service-policy
+    spec:
+      resource:
+        kind: HelloWorldService
+        group: platformapi.kubeplus
+        version: v1alpha1
+  resmonitor:
+    apiVersion: workflows.kubeplus/v1alpha1
+    kind: ResourceMonitor
+    metadata:
+      name: hello-world-service-monitor
+    spec:
+      resource:
+        kind: HelloWorldService
+        group: platformapi.kubeplus
+        version: v1alpha1
+      monitorRelationships: all
