@@ -1,7 +1,7 @@
 apiVersion: workflows.kubeplus/v1alpha1
 kind: ResourceComposition
 metadata:
-  name: wordpress-service-composition
+  name: {{ name }}
 spec:
   # newResource defines the new CRD to be installed define a workflow.
   newResource:
