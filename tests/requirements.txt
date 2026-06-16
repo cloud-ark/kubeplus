@@ -2,3 +2,4 @@ pyyaml
 kubernetes
 bs4
 lxml
+Jinja2
