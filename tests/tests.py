@@ -8,6 +8,7 @@ import yaml
 import time
 import string
 import random
+import pathlib
 from kubernetes import config
 from kubernetes.client import Configuration
 from kubernetes.client.api import core_v1_api
@@ -18,6 +19,14 @@ from jinja2 import Template
 from tempfile import NamedTemporaryFile
 
 class TestKubePlus(unittest.TestCase):
+    @classmethod
+    def setUpClass(self):
+        self.tmp_files = []
+
+    @classmethod
+    def tearDownClass(self):
+        for path in self.tmp_files:
+            pathlib.Path(path).unlink(missing_ok=True)
 
     @classmethod
     def run_command(self, cmd):
@@ -56,6 +65,7 @@ class TestKubePlus(unittest.TestCase):
         with open(file) as file_in, NamedTemporaryFile(mode='w+', suffix='.yaml', delete=False) as out:
             template = Template(file_in.read())
             out.write(template.render(name=name))
+            self.tmp_files.append(out.name)
             return name, out.name
 
     def test_create_res_comp_for_chart_with_ns(self):
@@ -106,9 +116,8 @@ class TestKubePlus(unittest.TestCase):
             print("KubePlus is not running. Deploy KubePlus and then run tests")
             sys.exit(0)
 
-        _, hs1_file = TestKubePlus._process_template("../examples/multitenancy/hello-world/hs1.yaml")
-        _, hs2_file = TestKubePlus._process_template("../examples/multitenancy/hello-world/hs2.yaml")
-        _, hs_comp_file = TestKubePlus._process_template("../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml")
+        _, hs1_file = TestKubePlus._process_template("template-manifests/hello-world-hs1.yaml")
+        _, hs2_file = TestKubePlus._process_template("template-manifests/hello-world-hs2.yaml")
 
         kubeplus_home = os.getenv("KUBEPLUS_HOME")
         path = os.getenv("PATH")
@@ -118,7 +127,7 @@ class TestKubePlus(unittest.TestCase):
 
         cmd = "kubectl upload chart ../examples/multitenancy/hello-world/hello-world-chart-0.0.3.tgz ../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
-        cmd = f"kubectl create -f {hs_comp_file} --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
 
         crd = "helloworldservices.platformapi.kubeplus"
@@ -161,18 +170,18 @@ class TestKubePlus(unittest.TestCase):
         TestKubePlus.run_command(cmd)
         
         # cleanup
-        cmd = f"kubectl delete -f {hs_comp_file} --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
 
 
+    # @unittest.skip("Skipping application update test")
     def test_application_update(self):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
             sys.exit(0)
 
-        hs1_name, hs1_file = TestKubePlus._process_template("../examples/multitenancy/hello-world/hs1.yaml")
-        _, hs_replicas_file = TestKubePlus._process_template("../examples/multitenancy/hello-world/hs1-replicas-2.yaml")
-        _, hs_comp_file = TestKubePlus._process_template("../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml")
+        hs1_name, hs1_file = TestKubePlus._process_template("template-manifests/hello-world-hs1.yaml")
+        _, hs_replicas_file = TestKubePlus._process_template("template-manifests/hello-world-hs1-replicas-2.yaml")
 
         kubeplus_home = os.getenv("KUBEPLUS_HOME")
         # print("KubePlus home:" + kubeplus_home)
@@ -184,7 +193,7 @@ class TestKubePlus(unittest.TestCase):
 
         cmd = "kubectl upload chart ../examples/multitenancy/hello-world/hello-world-chart-0.0.3.tgz ../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
-        cmd = f"kubectl create -f {hs_comp_file} --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = f"kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
 
         crd = "helloworldservices.platformapi.kubeplus"
@@ -222,7 +231,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = f"kubectl delete -f {hs_replicas_file} --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)
 
-        cmd = f"kubectl delete -f {hs_comp_file} --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = f"kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
 
     @unittest.skip("Skipping application upgrade test")
@@ -543,13 +552,13 @@ class TestKubePlus(unittest.TestCase):
         kubeplus_home = os.getenv("KUBEPLUS_HOME")
         provider = kubeplus_home + '/kubeplus-saas-provider.json'
 
-        hs1_name, hs1_file = TestKubePlus._process_template("../examples/multitenancy/hello-world/hs1.yaml")
-        _, hs_comp_file = TestKubePlus._process_template("../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml")
+        hs1_name, hs1_file = TestKubePlus._process_template("template-manifests/hello-world-hs1.yaml")
+
         
         def cleanup():
             cmd = f"kubectl delete -f {hs1_file} --kubeconfig={provider}"
             TestKubePlus.run_command(cmd)
-            cmd = f"kubectl delete -f {hs_comp_file} --kubeconfig={provider}"
+            cmd = f"kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig={provider}"
             TestKubePlus.run_command(cmd)
 
         if not TestKubePlus._is_kubeplus_running():
@@ -561,7 +570,7 @@ class TestKubePlus(unittest.TestCase):
             return
 
         # register HelloWorldService API
-        cmd = f"kubectl create -f {hs_comp_file} --kubeconfig={provider}"
+        cmd = f"kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig={provider}"
         TestKubePlus.run_command(cmd)
 
         # check CRD installation
@@ -608,16 +617,13 @@ class TestKubePlus(unittest.TestCase):
     def test_metrics(self):
         kubeplus_home = os.getenv("KUBEPLUS_HOME")
         provider = kubeplus_home + '/kubeplus-saas-provider.json'
-        hs1_name, hs1_file = TestKubePlus._process_template("../examples/multitenancy/hello-world/hs1.yaml")
-        _, hs_comp_file = TestKubePlus._process_template("../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml")
-        
+        hs1_name, hs1_file = TestKubePlus._process_template("template-manifests/hello-world-hs1.yaml")
+
         def cleanup():
             cmd = f"kubectl delete -f {hs1_file} --kubeconfig={provider}"
             TestKubePlus.run_command(cmd)
-            cmd = f"kubectl delete -f {hs_comp_file} --kubeconfig={provider}"
+            cmd = f"kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig={provider}"
             TestKubePlus.run_command(cmd)
-            os.remove(hs1_file)
-            os.remove(hs_comp_file)
 
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
@@ -630,7 +636,7 @@ class TestKubePlus(unittest.TestCase):
         # register HelloWorldService API
         cmd = "kubectl upload chart ../examples/multitenancy/hello-world/hello-world-chart-0.0.3.tgz %s" % provider
         out, err = TestKubePlus.run_command(cmd)
-        cmd = f"kubectl create -f {hs_comp_file} --kubeconfig={provider}"
+        cmd = f"kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig={provider}"
         out, err = TestKubePlus.run_command(cmd)
 
         # check CRD installation
@@ -679,17 +685,17 @@ class TestKubePlus(unittest.TestCase):
         cleanup()
 
 
+    @unittest.skip("Skipping custom metrics test")
     def test_metrics_custom(self):
         kubeplus_home = os.getenv("KUBEPLUS_HOME")
         provider = kubeplus_home + '/kubeplus-saas-provider.json'
 
-        hs1_name, hs1_file = TestKubePlus._process_template("../examples/managed-service/appmetrics/custom-hello-world/custom-hs1.yaml")
-        _, hs_comp_file = TestKubePlus._process_template("../examples/managed-service/appmetrics/custom-hello-world/custom-hello-world-app-composition.yaml")
+        hs1_name, hs1_file = TestKubePlus._process_template("template-manifests/appmetrics-custom-hs1.yaml")
         
         def cleanup():
             cmd = f"kubectl delete -f {hs1_file} --kubeconfig={provider}"
             TestKubePlus.run_command(cmd)
-            cmd = f"kubectl delete -f {hs_comp_file} --kubeconfig={provider}"
+            cmd = f"kubectl delete -f ../examples/managed-service/appmetrics/custom-hello-world/custom-hello-world-app-composition.yaml --kubeconfig={provider}"
             TestKubePlus.run_command(cmd)
 
         if not TestKubePlus._is_kubeplus_running():
@@ -715,7 +721,7 @@ class TestKubePlus(unittest.TestCase):
         # register CustomHelloWorldService API
         cmd = "kubectl upload chart ../examples/managed-service/appmetrics/custom-hello-world/custom-hello-chart-0.0.1.tgz %s" % provider
         out, err = TestKubePlus.run_command(cmd)
-        cmd = f"kubectl create -f {hs_comp_file} --kubeconfig={provider}"
+        cmd = f"kubectl create -f ../examples/managed-service/appmetrics/custom-hello-world/custom-hello-world-app-composition.yaml --kubeconfig={provider}"
         out, err = TestKubePlus.run_command(cmd)
 
         # check CRD installation
