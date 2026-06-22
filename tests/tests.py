@@ -455,6 +455,9 @@ class TestKubePlus(unittest.TestCase):
 
         tenant_name, tenant_file = TestKubePlus._process_template("tenant1.yaml")
 
+        create_ns = f"kubectl create ns {tenant_name}"
+        TestKubePlus.run_command(create_ns)
+
         cmd1 = "kubectl create -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd1)
 
