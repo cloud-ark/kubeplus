@@ -65,16 +65,16 @@ class TestKubePlus(unittest.TestCase):
         with open(file) as file_in, NamedTemporaryFile(mode='w+', suffix='.yaml', delete=False) as out:
             template = Template(file_in.read())
             out.write(template.render(name=name))
-            self.tmp_files.append(out.name)
-            return name, out.name
+            file_path = out.name
+            self.tmp_files.append(file_path)
+            return name, file_path
 
     def test_create_res_comp_for_chart_with_ns(self):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
             sys.exit(0)
 
-        _, file = TestKubePlus._process_template("wordpress-service-composition-chart-withns.yaml")
-        cmd = f"kubectl create -f {file} --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = "kubectl create -f wordpress-service-composition-chart-withns.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
         # print("Out:" + out)
         # print("Err:" + err)
@@ -88,8 +88,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = "kubectl create -f storage-class-fast.yaml"
         TestKubePlus.run_command(cmd)
 
-        _, file = TestKubePlus._process_template("storage-isolation/wordpress-service-composition.yaml")
-        cmd = f"kubectl create -f {file} --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = "kubectl create -f storage-isolation/wordpress-service-composition.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
         # print("Out:" + out)
         # print("Err:" + err)
@@ -103,8 +102,7 @@ class TestKubePlus(unittest.TestCase):
             print("KubePlus is not running. Deploy KubePlus and then run tests")
             sys.exit(0)
 
-        _, file = TestKubePlus._process_template("resource-quota/wordpress-service-composition-1.yaml")
-        cmd = f"kubectl create -f {file} --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = "kubectl create -f resource-quota/wordpress-service-composition-1.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
         # print("Out:" + out)
         # print("Err:" + err)
@@ -174,7 +172,6 @@ class TestKubePlus(unittest.TestCase):
         out, err = TestKubePlus.run_command(cmd)
 
 
-    # @unittest.skip("Skipping application update test")
     def test_application_update(self):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
@@ -193,7 +190,7 @@ class TestKubePlus(unittest.TestCase):
 
         cmd = "kubectl upload chart ../examples/multitenancy/hello-world/hello-world-chart-0.0.3.tgz ../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
-        cmd = f"kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
 
         crd = "helloworldservices.platformapi.kubeplus"
@@ -231,7 +228,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = f"kubectl delete -f {hs_replicas_file} --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)
 
-        cmd = f"kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
 
     @unittest.skip("Skipping application upgrade test")
@@ -313,9 +310,8 @@ class TestKubePlus(unittest.TestCase):
         TestKubePlus.run_command(cmd)
 
         # create API
-        _, file = TestKubePlus._process_template("application-upgrade/resource-composition-localchart.yaml")
         namespace, tenant_file = TestKubePlus._process_template("application-upgrade/tenant1.yaml")
-        cmd = f"kubectl create -f {file} --kubeconfig=./application-upgrade/provider.conf"
+        cmd = "kubectl create -f application-upgrade/resource-composition-localchart.yaml --kubeconfig=./application-upgrade/provider.conf"
         TestKubePlus.run_command(cmd)
 
         # CRDs check
@@ -377,15 +373,15 @@ class TestKubePlus(unittest.TestCase):
         
         # upgrade to version 2
         data = None
-        with open(file, 'r') as f:
+        with open('./application-upgrade/resource-composition-localchart.yaml', 'r') as f:
             data = yaml.safe_load(f)
         
         data['spec']['newResource']['chartURL'] = 'file:///resource-composition-0.0.2.tgz'
 
-        with open(file, 'w') as f:   
+        with open('./application-upgrade/resource-composition-localchart.yaml', 'w') as f:   
             yaml.safe_dump(data, f, default_flow_style=False)
 
-        cmd = f'kubectl apply -f {file} --kubeconfig=./application-upgrade/provider.conf'
+        cmd = 'kubectl apply -f ./application-upgrade/resource-composition-localchart.yaml --kubeconfig=./application-upgrade/provider.conf'
         out, err = TestKubePlus.run_command(cmd)
 
         # sleep to let the pods run
@@ -457,10 +453,9 @@ class TestKubePlus(unittest.TestCase):
             print("KubePlus is not running. Deploy KubePlus and then run tests")
             sys.exit(0)
 
-        _, file = TestKubePlus._process_template("wordpress-service-composition-chart-nopodpolicies.yaml")
         tenant_name, tenant_file = TestKubePlus._process_template("tenant1.yaml")
 
-        cmd1 = f"kubectl create -f {file} --kubeconfig=../kubeplus-saas-provider.json"
+        cmd1 = "kubectl create -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd1)
 
         crd = "wordpressservices.platformapi.kubeplus"
@@ -479,7 +474,7 @@ class TestKubePlus(unittest.TestCase):
         out, err = TestKubePlus.run_command(cmd)
         self.assertTrue(err == "")
 
-        cmd = f"kubectl delete -f {file} --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = "kubectl delete -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
         self.assertTrue(err == "")
 
@@ -491,10 +486,9 @@ class TestKubePlus(unittest.TestCase):
             print("KubePlus is not running. Deploy KubePlus and then run tests")
             sys.exit(0)
 
-        _, file = TestKubePlus._process_template("wordpress-service-composition-chart-nopodpolicies.yaml")
         tenant_name, tenant_file = TestKubePlus._process_template("tenant1.yaml")
 
-        cmd = f"kubectl create -f {file} --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = "kubectl create -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)
         crd = "wordpressservices.platformapi.kubeplus"
         crd_installed = self._check_crd_installed(crd)
@@ -534,7 +528,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = f"kubectl delete -f {tenant_file} --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)
 
-        cmd = f"kubectl delete -f {file} --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = "kubectl delete -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)
 
         removed = False
@@ -804,9 +798,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = "kubectl create -f block-stale-images.yaml"
         TestKubePlus.run_command(cmd)
 
-        _, file = TestKubePlus._process_template("resource-quota/wordpress-service-composition.yaml")
-
-        cmd = f"kubectl create -f {file} --kubeconfig=../kubeplus-saas-provider.json"
+        cmd = "kubectl create -f resource-quota/wordpress-service-composition.yaml --kubeconfig=../kubeplus-saas-provider.json"
         out, err = TestKubePlus.run_command(cmd)
         # print("Out:" + out)
         # print("Err:" + err)

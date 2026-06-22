@@ -1,7 +1,7 @@
 apiVersion: workflows.kubeplus/v1alpha1
 kind: ResourceComposition
 metadata:
-  name: {{ name }}
+  name: basic-web-app-service-composition
 spec:
   newResource:
     chartName: basicwebapp

@@ -1,7 +1,7 @@
 apiVersion: platformapi.kubeplus/v1alpha1
 kind: HelloWorldService
 metadata:
-  name: hs1
+  name: {{ name }}
 spec:
   greeting: Hello hello hello
   replicas: 2 
