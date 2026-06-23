@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubeplus-hello-world-provider
+  namespace: argocd
+spec:
+  project: helloworld-provider
+  source:
+    repoURL: https://github.com/cloud-ark/kubeplus-examples
+    targetRevision: main
+    path: multitenancy/application-hosting/hello-world-argocd/provider
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

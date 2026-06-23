@@ -1,0 +1,131 @@
+WordPress via ArgoCD + KubePlus
+-------------------------------
+This example scaffolds a GitOps flow where:
+- ArgoCD syncs the provider-side `ResourceComposition` from this
+  `kubeplus-examples` repo.
+- ArgoCD syncs tenant instances of that custom API from this same repo using a
+  different subpath.
+- KubePlus provisions isolated WordPress tenants from those tenant objects.
+
+Folder layout
+-------------
+- `provider/`: KubePlus `ResourceComposition` that defines the custom API.
+- `tenants/`: Tenant instances of the custom API.
+- `argocd-provider-project.yaml`: ArgoCD `AppProject` that syncs as `kubeplus-saas-provider`.
+- `argocd-tenants-project.yaml`: ArgoCD `AppProject` that syncs as `kubeplus-saas-consumer`.
+- `argocd-provider-app.yaml`: ArgoCD `Application` for the provider layer.
+- `argocd-tenants-app.yaml`: ArgoCD `Application` for the tenant layer.
+
+Suggested flow
+--------------
+1. Install KubePlus in your target namespace, for example `default`.
+
+2. Install ArgoCD:
+
+   kubectl get namespace argocd >/dev/null 2>&1 || kubectl create namespace argocd
+   kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   kubectl rollout status deployment/argocd-server -n argocd --timeout=180s
+   kubectl get pods -n argocd
+
+3. Access the ArgoCD UI:
+
+   kubectl port-forward svc/argocd-server -n argocd 8080:443
+   kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath='{.data.password}' | base64 -d; echo
+
+   Open:
+
+   https://localhost:8080
+
+   Username:
+
+   admin
+
+4. Enable ArgoCD sync impersonation:
+
+   kubectl patch cm argocd-cm -n argocd --type merge -p '{"data":{"application.sync.impersonation.enabled":"true"}}'
+   kubectl rollout restart statefulset argocd-application-controller -n argocd
+
+5. Apply the ArgoCD projects:
+
+   kubectl apply -f <wordpress-argocd-example-dir>/argocd-provider-project.yaml -n argocd
+   kubectl apply -f <wordpress-argocd-example-dir>/argocd-tenants-project.yaml -n argocd
+
+6. Clone or fork the `kubeplus-examples` repo:
+
+   git clone https://github.com/cloud-ark/kubeplus-examples.git
+
+7. Apply the provider ArgoCD application:
+
+   kubectl apply -f <wordpress-argocd-example-dir>/argocd-provider-app.yaml -n argocd
+
+8. Wait for the custom API to exist:
+
+   until kubectl get crds | grep gitopswpservices.platformapi.kubeplus; do echo "Waiting for CRD..."; sleep 2; done
+
+9. Apply the tenant ArgoCD application:
+
+   kubectl apply -f <wordpress-argocd-example-dir>/argocd-tenants-app.yaml -n argocd
+
+10. Verify that KubePlus created the tenant namespaces and resources:
+
+   kubectl get application kubeplus-wordpress-provider -n argocd
+   kubectl get application kubeplus-wordpress-tenants -n argocd
+   kubectl get gitopswpservices -n default
+   kubectl get ns | grep wp-
+   kubectl get pods -n wp-tenant1
+
+11. Test provider-side sync by modifying the provider `ResourceComposition` in
+    `kubeplus-examples` and pushing:
+
+   cd <kubeplus-examples-repo>
+
+   Edit:
+
+   multitenancy/application-hosting/wordpress-argocd/provider/wordpress-service-composition.yaml
+
+   Add this annotation under `metadata`:
+
+   annotations:
+     demo.kubeplus.dev/provider-sync-test: "2026-05-04-a"
+
+   git add multitenancy/application-hosting/wordpress-argocd/provider/wordpress-service-composition.yaml
+   git commit -m "Test wordpress provider Argo CD sync"
+   git push
+
+   The hard refresh tells Argo CD to invalidate its cached Git and manifest
+   state so the provider application immediately reconciles the pushed
+   `ResourceComposition` change during this test.
+
+   kubectl annotate application kubeplus-wordpress-provider -n argocd argocd.argoproj.io/refresh=hard --overwrite
+   kubectl get application kubeplus-wordpress-provider -n argocd
+   kubectl get resourcecomposition gitops-wordpress-service-composition -n default -o yaml
+
+12. Test tenant-side GitOps changes by editing the tenant manifests in
+    `kubeplus-examples` and pushing:
+
+   cd <kubeplus-examples-repo>
+   git add multitenancy/application-hosting/wordpress-argocd/tenants/tenant1.yaml multitenancy/application-hosting/wordpress-argocd/tenants/tenant2.yaml multitenancy/application-hosting/wordpress-argocd/tenants/kustomization.yaml
+   git commit -m "Update wordpress tenants"
+   git push
+
+13. Watch ArgoCD reconcile:
+
+   kubectl get application kubeplus-wordpress-provider -n argocd -w
+   kubectl get application kubeplus-wordpress-tenants -n argocd -w
+   kubectl get gitopswpservices -n default
+   kubectl get pods -n wp-tenant1
+   kubectl get pods -n wp-tenant2
+
+Notes
+-----
+- KubePlus enforces that only a Provider can create a `ResourceComposition`, so the provider ArgoCD app must sync as `kubeplus-saas-provider`.
+- Tenant apps can sync as `kubeplus-saas-consumer`, which can create `GitopsWPService` instances but cannot create `ResourceComposition`.
+- Both ArgoCD applications point at `cloud-ark/kubeplus-examples`, but
+  use different subpaths under `multitenancy/application-hosting/wordpress-argocd/`.
+- The shorter custom kind `GitopsWPService` avoids KubePlus's Helm release-name length limit and allows tenant names like `wp-tenant1`.
+
+Next iteration ideas
+--------------------
+- Add a Git change that creates `tenant2`.
+- Expose one or two WordPress chart values through the custom API and verify ArgoCD-driven updates.
+- Add a provider-side ArgoCD flow only after configuring ArgoCD to authenticate as a KubePlus Provider.

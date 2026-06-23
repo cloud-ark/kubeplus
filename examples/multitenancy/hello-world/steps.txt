@@ -128,3 +128,12 @@ Clean up:
   - kubectl delete -f hello-world-service-composition.yaml --kubeconfig=provider.conf
   - kubectl get crds
     - should see that helloworldservices.platformapi.kubeplus crd is gone
+
+
+Argo CD GitOps flow:
+--------------------
+The Argo CD examples are maintained in the kubeplus-examples repository:
+https://github.com/cloud-ark/kubeplus-examples
+
+See:
+multitenancy/application-hosting/hello-world-argocd
