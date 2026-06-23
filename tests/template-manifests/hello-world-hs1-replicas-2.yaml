@@ -1,6 +1,8 @@
 apiVersion: platformapi.kubeplus/v1alpha1
-kind: WordpressService 
+kind: HelloWorldService
 metadata:
   name: {{ name }}
 spec:
-  resourceName: wp-for-tenant1
+  greeting: Hello hello hello
+  replicas: 2 
+
