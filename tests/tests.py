@@ -20,16 +20,16 @@ from tempfile import NamedTemporaryFile
 
 class TestKubePlus(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
-        self.tmp_files = []
+    def setUpClass(cls):
+        cls.tmp_files = []
 
     @classmethod
-    def tearDownClass(self):
-        for path in self.tmp_files:
+    def tearDownClass(cls):
+        for path in cls.tmp_files:
             pathlib.Path(path).unlink(missing_ok=True)
 
     @classmethod
-    def run_command(self, cmd):
+    def run_command(cls, cmd):
         cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
         out = cmdOut[0].decode('utf-8')
         err = cmdOut[1].decode('utf-8')
@@ -42,7 +42,7 @@ class TestKubePlus(unittest.TestCase):
         return out, err
 
     @classmethod
-    def _is_kubeplus_running(self):
+    def _is_kubeplus_running(cls):
         cmd = 'kubectl get pods -A'
         out, err = TestKubePlus.run_command(cmd)
         for line in out.split("\n"):
@@ -51,7 +51,7 @@ class TestKubePlus(unittest.TestCase):
         return False
 
     @classmethod
-    def _is_kyverno_running(self):
+    def _is_kyverno_running(cls):
         cmd = 'kubectl get pods -A'
         out, err = TestKubePlus.run_command(cmd)
         for line in out.split("\n"):
@@ -60,13 +60,13 @@ class TestKubePlus(unittest.TestCase):
         return False
 
     @classmethod
-    def _process_template(self, file):
+    def _process_template(cls, file):
         name = "kp-" + "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
         with open(file) as file_in, NamedTemporaryFile(mode='w+', suffix='.yaml', delete=False) as out:
             template = Template(file_in.read())
             out.write(template.render(name=name))
             file_path = out.name
-            self.tmp_files.append(file_path)
+            cls.tmp_files.append(file_path)
             return name, file_path
 
     def test_create_res_comp_for_chart_with_ns(self):
@@ -348,7 +348,7 @@ class TestKubePlus(unittest.TestCase):
             print("Skipping rest of the test.")
             cmd = f"kubectl label WebAppService {namespace} delete=true"
             TestKubePlus.run_command(cmd)
-            cmd1 = f"kubectl delete -f {tenant_file} --kubeconfig=./application-upgrade/provider.conf"
+            cmd = f"kubectl delete -f {tenant_file} --kubeconfig=./application-upgrade/provider.conf"
             TestKubePlus.run_command(cmd)
             cleanup()
             return
