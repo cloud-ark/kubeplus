@@ -617,7 +617,7 @@ class TestKubePlus(unittest.TestCase):
 
         self.setup_example_hello_world(hs1_file, provider)
 
-        cmd = "kubectl appresources HelloWorldService hs1 -k %s" % provider
+        cmd = f"kubectl appresources HelloWorldService {hs1_name} -k {provider}"
         out, err = TestKubePlus.run_command(cmd)
 
         if err != '':
