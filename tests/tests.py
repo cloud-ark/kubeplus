@@ -70,7 +70,7 @@ class TestKubePlus(unittest.TestCase):
             return name, file_path
 
 
-    def setup_example_hello_world(self, provider):
+    def setup_example_hello_world(self, hs1_file, provider):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
             sys.exit(0)
@@ -93,13 +93,12 @@ class TestKubePlus(unittest.TestCase):
             return
         
         # create app instance
-        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hs1.yaml --kubeconfig=%s" % provider
+        cmd = f"kubectl create -f {hs1_file} --kubeconfig={provider}"
         out, err = TestKubePlus.run_command(cmd)
         time.sleep(10)
 
-
-    def cleanup_example_hello_world(self, provider):
-        cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hs1.yaml --kubeconfig=%s" % provider
+    def cleanup_example_hello_world(self, hs1_file, provider):
+        cmd = f"kubectl delete -f {hs1_file} --kubeconfig={provider}"
         TestKubePlus.run_command(cmd)
         cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=%s" % provider
         TestKubePlus.run_command(cmd)
@@ -585,9 +584,8 @@ class TestKubePlus(unittest.TestCase):
         provider = kubeplus_home + '/kubeplus-saas-provider.json'
 
         hs1_name, hs1_file = TestKubePlus._process_template("template-manifests/hello-world-hs1.yaml")
-
         
-        self.setup_example_hello_world(provider)
+        self.setup_example_hello_world(hs1_file, provider)
         # test plugin
         cmd = f"kubectl appstatus HelloWorldService {hs1_name} -k {provider}"
         out, err = TestKubePlus.run_command(cmd)
@@ -595,7 +593,7 @@ class TestKubePlus(unittest.TestCase):
         if err != '':
             print("Something went wrong with the plugin.")
             print(err)
-            self.cleanup_example_hello_world(provider)
+            self.cleanup_example_hello_world(hs1_file, provider)
             sys.exit(1)
        
         print("Output of kubectl appstatus")
@@ -609,13 +607,14 @@ class TestKubePlus(unittest.TestCase):
         #self.assertTrue('Deployed' in lines[1])
         #self.assertTrue('Running' in lines[2] or 'Pending' in lines[2] or 'ContainerCreating' in lines[2])
 
-        self.cleanup_example_hello_world(provider)
+        self.cleanup_example_hello_world(hs1_file, provider)
 
     def test_appresources_plugin(self):
         kubeplus_home = os.getenv("KUBEPLUS_HOME")
         provider = kubeplus_home + '/kubeplus-saas-provider.json'
+        hs1_name, hs1_file = TestKubePlus._process_template("template-manifests/hello-world-hs1.yaml")
 
-        self.setup_example_hello_world(provider)
+        self.setup_example_hello_world(hs1_file, provider)
 
         cmd = "kubectl appresources HelloWorldService hs1 -k %s" % provider
         out, err = TestKubePlus.run_command(cmd)
@@ -635,7 +634,7 @@ class TestKubePlus(unittest.TestCase):
         self.assertTrue(deployment[1] == 'Deployment' and 'helloworldservice' in deployment[2])
         self.assertTrue(pod[1] == 'Pod' and 'helloworldservice' in pod[2])
         
-        self.cleanup_example_hello_world(provider)
+        self.cleanup_example_hello_world(hs1_file, provider)
 
     # TODO: Add tests for
     # kubectl connections
