@@ -69,8 +69,8 @@ class TestKubePlus(unittest.TestCase):
             cls.tmp_files.append(file_path)
             return name, file_path
 
-
-    def setup_example_hello_world(self, hs1_file, provider):
+    @classmethod
+    def setup_example_hello_world(cls, hs1_file, provider):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
             sys.exit(0)
@@ -87,7 +87,7 @@ class TestKubePlus(unittest.TestCase):
 
         # check CRD installation
         crd = "helloworldservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -163,7 +163,7 @@ class TestKubePlus(unittest.TestCase):
         out, err = TestKubePlus.run_command(cmd)
 
         crd = "helloworldservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -228,7 +228,7 @@ class TestKubePlus(unittest.TestCase):
         out, err = TestKubePlus.run_command(cmd)
 
         crd = "helloworldservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -239,7 +239,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = f"kubectl get pods -n {hs1_name}"
 
         target_pod_count = 1
-        pods, count, all_running = self._check_pod_status(cmd, target_pod_count)
+        pods, count, all_running = TestKubePlus._check_pod_status(cmd, target_pod_count)
         if count == target_pod_count:
             self.assertTrue(True)
         else:
@@ -252,7 +252,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = f"kubectl get pods -n {hs1_name}"
 
         target_pod_count = 2
-        pods, count, all_running = self._check_pod_status(cmd, target_pod_count)
+        pods, count, all_running = TestKubePlus._check_pod_status(cmd, target_pod_count)
         if count == target_pod_count:
             self.assertTrue(True)
         else:
@@ -350,7 +350,7 @@ class TestKubePlus(unittest.TestCase):
 
         # CRDs check
         crd = "webappservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -446,8 +446,8 @@ class TestKubePlus(unittest.TestCase):
         # check if upgrade worked
         self.assertTrue(num_users_second > num_users_first)
         
-
-    def _check_pod_status(self, cmd, num_of_pods):
+    @classmethod
+    def _check_pod_status(cls, cmd, num_of_pods):
         all_running = False
         pods = []
         timer = 0
@@ -469,7 +469,8 @@ class TestKubePlus(unittest.TestCase):
 
         return pods, count, all_running
 
-    def _check_crd_installed(self, crd):
+    @classmethod
+    def _check_crd_installed(cls, crd):
         installed = False
         cmd = "kubectl get crds"
         timer = 0
@@ -496,7 +497,7 @@ class TestKubePlus(unittest.TestCase):
         TestKubePlus.run_command(cmd1)
 
         crd = "wordpressservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -528,7 +529,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = "kubectl create -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)
         crd = "wordpressservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -540,7 +541,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = f"kubectl get pods -n {tenant_name}"
 
         target_pod_count = 2
-        pods, count, all_running = self._check_pod_status(cmd, target_pod_count)
+        pods, count, all_running = TestKubePlus._check_pod_status(cmd, target_pod_count)
 
         if count < target_pod_count:
             print("Application Pod not started..")
@@ -668,7 +669,7 @@ class TestKubePlus(unittest.TestCase):
 
         # check CRD installation
         crd = "helloworldservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -753,7 +754,7 @@ class TestKubePlus(unittest.TestCase):
 
         # check CRD installation
         crd = "customhelloworldapps.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
