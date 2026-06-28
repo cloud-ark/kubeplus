@@ -81,6 +81,7 @@ class TestKubePlus(unittest.TestCase):
         
         # upload chart -- sanity check
         cmd = "kubectl upload chart ../examples/multitenancy/hello-world/hello-world-chart-0.0.3.tgz %s" % provider
+        TestKubePlus.run_command(cmd)
         # register HelloWorldService API
         cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=%s" % provider
         TestKubePlus.run_command(cmd)
