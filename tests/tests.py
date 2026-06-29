@@ -69,6 +69,41 @@ class TestKubePlus(unittest.TestCase):
             cls.tmp_files.append(file_path)
             return name, file_path
 
+    @classmethod
+    def setup_example_hello_world(cls, hs1_file, provider):
+        if not TestKubePlus._is_kubeplus_running():
+            print("KubePlus is not running. Deploy KubePlus and then run tests")
+            sys.exit(0)
+
+        if os.getenv("KUBEPLUS_HOME") == '':
+            print("Skipping test as KUBEPLUS_HOME is not set.")
+            return
+        
+        # upload chart -- sanity check
+        cmd = "kubectl upload chart ../examples/multitenancy/hello-world/hello-world-chart-0.0.3.tgz %s" % provider
+        TestKubePlus.run_command(cmd)
+        # register HelloWorldService API
+        cmd = "kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=%s" % provider
+        TestKubePlus.run_command(cmd)
+
+        # check CRD installation
+        crd = "helloworldservices.platformapi.kubeplus"
+        crd_installed = TestKubePlus._check_crd_installed(crd)
+        if not crd_installed:
+            print("CRD " + crd + " not installed. Exiting this test.")
+            return
+        
+        # create app instance
+        cmd = f"kubectl create -f {hs1_file} --kubeconfig={provider}"
+        out, err = TestKubePlus.run_command(cmd)
+        time.sleep(10)
+
+    def cleanup_example_hello_world(self, hs1_file, provider):
+        cmd = f"kubectl delete -f {hs1_file} --kubeconfig={provider}"
+        TestKubePlus.run_command(cmd)
+        cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=%s" % provider
+        TestKubePlus.run_command(cmd)
+
     def test_create_res_comp_for_chart_with_ns(self):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
@@ -129,7 +164,7 @@ class TestKubePlus(unittest.TestCase):
         out, err = TestKubePlus.run_command(cmd)
 
         crd = "helloworldservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -194,7 +229,7 @@ class TestKubePlus(unittest.TestCase):
         out, err = TestKubePlus.run_command(cmd)
 
         crd = "helloworldservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -205,7 +240,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = f"kubectl get pods -n {hs1_name}"
 
         target_pod_count = 1
-        pods, count, all_running = self._check_pod_status(cmd, target_pod_count)
+        pods, count, all_running = TestKubePlus._check_pod_status(cmd, target_pod_count)
         if count == target_pod_count:
             self.assertTrue(True)
         else:
@@ -218,7 +253,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = f"kubectl get pods -n {hs1_name}"
 
         target_pod_count = 2
-        pods, count, all_running = self._check_pod_status(cmd, target_pod_count)
+        pods, count, all_running = TestKubePlus._check_pod_status(cmd, target_pod_count)
         if count == target_pod_count:
             self.assertTrue(True)
         else:
@@ -316,7 +351,7 @@ class TestKubePlus(unittest.TestCase):
 
         # CRDs check
         crd = "webappservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -412,8 +447,8 @@ class TestKubePlus(unittest.TestCase):
         # check if upgrade worked
         self.assertTrue(num_users_second > num_users_first)
         
-
-    def _check_pod_status(self, cmd, num_of_pods):
+    @classmethod
+    def _check_pod_status(cls, cmd, num_of_pods):
         all_running = False
         pods = []
         timer = 0
@@ -435,7 +470,8 @@ class TestKubePlus(unittest.TestCase):
 
         return pods, count, all_running
 
-    def _check_crd_installed(self, crd):
+    @classmethod
+    def _check_crd_installed(cls, crd):
         installed = False
         cmd = "kubectl get crds"
         timer = 0
@@ -462,7 +498,7 @@ class TestKubePlus(unittest.TestCase):
         TestKubePlus.run_command(cmd1)
 
         crd = "wordpressservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -494,7 +530,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = "kubectl create -f wordpress-service-composition-chart-nopodpolicies.yaml --kubeconfig=../kubeplus-saas-provider.json"
         TestKubePlus.run_command(cmd)
         crd = "wordpressservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -506,7 +542,7 @@ class TestKubePlus(unittest.TestCase):
         cmd = f"kubectl get pods -n {tenant_name}"
 
         target_pod_count = 2
-        pods, count, all_running = self._check_pod_status(cmd, target_pod_count)
+        pods, count, all_running = TestKubePlus._check_pod_status(cmd, target_pod_count)
 
         if count < target_pod_count:
             print("Application Pod not started..")
@@ -550,38 +586,8 @@ class TestKubePlus(unittest.TestCase):
         provider = kubeplus_home + '/kubeplus-saas-provider.json'
 
         hs1_name, hs1_file = TestKubePlus._process_template("template-manifests/hello-world-hs1.yaml")
-
         
-        def cleanup():
-            cmd = f"kubectl delete -f {hs1_file} --kubeconfig={provider}"
-            TestKubePlus.run_command(cmd)
-            cmd = f"kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig={provider}"
-            TestKubePlus.run_command(cmd)
-
-        if not TestKubePlus._is_kubeplus_running():
-            print("KubePlus is not running. Deploy KubePlus and then run tests")
-            sys.exit(0)
-
-        if os.getenv("KUBEPLUS_HOME") == '':
-            print("Skipping test as KUBEPLUS_HOME is not set.")
-            return
-
-        # register HelloWorldService API
-        cmd = f"kubectl create -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig={provider}"
-        TestKubePlus.run_command(cmd)
-
-        # check CRD installation
-        crd = "helloworldservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
-        if not crd_installed:
-            print("CRD " + crd + " not installed. Exiting this test.")
-            return
-        
-        # create app instance
-        cmd = f"kubectl create -f {hs1_file} --kubeconfig={provider}"
-        out, err = TestKubePlus.run_command(cmd)
-
-        time.sleep(10)
+        self.setup_example_hello_world(hs1_file, provider)
         # test plugin
         cmd = f"kubectl appstatus HelloWorldService {hs1_name} -k {provider}"
         out, err = TestKubePlus.run_command(cmd)
@@ -589,7 +595,7 @@ class TestKubePlus(unittest.TestCase):
         if err != '':
             print("Something went wrong with the plugin.")
             print(err)
-            cleanup()
+            self.cleanup_example_hello_world(hs1_file, provider)
             sys.exit(1)
        
         print("Output of kubectl appstatus")
@@ -603,13 +609,39 @@ class TestKubePlus(unittest.TestCase):
         #self.assertTrue('Deployed' in lines[1])
         #self.assertTrue('Running' in lines[2] or 'Pending' in lines[2] or 'ContainerCreating' in lines[2])
 
-        cleanup()
+        self.cleanup_example_hello_world(hs1_file, provider)
+
+    def test_appresources_plugin(self):
+        kubeplus_home = os.getenv("KUBEPLUS_HOME")
+        provider = kubeplus_home + '/kubeplus-saas-provider.json'
+        hs1_name, hs1_file = TestKubePlus._process_template("template-manifests/hello-world-hs1.yaml")
+
+        self.setup_example_hello_world(hs1_file, provider)
+
+        cmd = f"kubectl appresources HelloWorldService {hs1_name} -k {provider}"
+        out, err = TestKubePlus.run_command(cmd)
+
+        if err != '':
+            print("An error occurred when running the plugin.")
+            print(err)
+            sys.exit(1)
+        
+        # there should be HelloWorldService hs1, Service, Deployment, and Pod in 2, 3, and 4
+        lines = out.split('\n')
+        service = lines[2].split()
+        deployment = lines[3].split()
+        pod = lines[4].split()
+
+        self.assertTrue(service[1] == 'Service' and 'helloworldservice' in service[2])
+        self.assertTrue(deployment[1] == 'Deployment' and 'helloworldservice' in deployment[2])
+        self.assertTrue(pod[1] == 'Pod' and 'helloworldservice' in pod[2])
+        
+        self.cleanup_example_hello_world(hs1_file, provider)
+
     # TODO: Add tests for
     # kubectl connections
-    # kubectl appresources
     # kubectl appurl
     # kubectl applogs
-
 
     def test_metrics(self):
         kubeplus_home = os.getenv("KUBEPLUS_HOME")
@@ -638,7 +670,7 @@ class TestKubePlus(unittest.TestCase):
 
         # check CRD installation
         crd = "helloworldservices.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
@@ -723,7 +755,7 @@ class TestKubePlus(unittest.TestCase):
 
         # check CRD installation
         crd = "customhelloworldapps.platformapi.kubeplus"
-        crd_installed = self._check_crd_installed(crd)
+        crd_installed = TestKubePlus._check_crd_installed(crd)
         if not crd_installed:
             print("CRD " + crd + " not installed. Exiting this test.")
             return
