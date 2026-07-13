@@ -32,7 +32,9 @@ def create_role_rolebinding(contents, name, kubeconfig):
     file_path = os.path.join(os.getcwd(), name)
     with open(file_path, "w", encoding="utf-8") as fp:
         fp.write(yaml.dump(contents))
-    run_command(" kubectl apply -f " + file_path + kubeconfig)
+    _, err, rc = run_command_with_code(" kubectl apply -f " + file_path + kubeconfig)
+    if rc != 0:
+        raise RuntimeError(f"Failed to apply RBAC manifest {file_path!r}: {err.strip()}")
 
 
 def run_command(cmd):
@@ -533,7 +535,7 @@ class KubeconfigGenerator(object):
                 return ruleList
 
         def _apply_consumer_rbac(self, sa, namespace, kubeconfig):
-                """Apply ClusterRole and ClusterRoleBinding for consumer (read + apps + impersonate + portforward)."""
+                """Apply ClusterRole and RoleBinding for consumer (read + apps + impersonate + portforward)."""
                 rule_list = self._build_consumer_rules()
                 all_resources = self._all_resources_from_rules(rule_list)
                 role = {
@@ -546,7 +548,7 @@ class KubeconfigGenerator(object):
 
                 role_binding = {
                     "apiVersion": "rbac.authorization.k8s.io/v1",
-                    "kind": "ClusterRoleBinding",
+                    "kind": "RoleBinding",
                     "metadata": {"name": sa, "namespace": namespace},
                     "subjects": [{"kind": "ServiceAccount", "name": sa, "namespace": namespace, "apiGroup": ""}],
                     "roleRef": {"kind": "ClusterRole", "name": sa, "apiGroup": "rbac.authorization.k8s.io"},
@@ -591,8 +593,8 @@ class KubeconfigGenerator(object):
                     + " --from-file=" + cfg_map_filename + kubeconfig
                 )
 
-        def _update_rbac(self, permissionfile, sa, namespace, kubeconfig):
-                """Add permissions from JSON/YAML file to provider (update command)."""
+        def _update_rbac(self, permissionfile, sa, namespace, kubeconfig, entity):
+                """Add permissions from JSON/YAML file using requested binding scope (update command)."""
                 perms = self._load_permission_data(permissionfile)
                 rule_list, new_resources = self._parse_permission_rules(perms)
 
@@ -606,7 +608,7 @@ class KubeconfigGenerator(object):
 
                 role_binding = {
                     "apiVersion": "rbac.authorization.k8s.io/v1",
-                    "kind": "ClusterRoleBinding",
+                    "kind": "ClusterRoleBinding" if entity == "provider" else "RoleBinding",
                     "metadata": {"name": sa + "-update", "namespace": namespace},
                     "subjects": [{"kind": "ServiceAccount", "name": sa, "namespace": namespace, "apiGroup": ""}],
                     "roleRef": {"kind": "ClusterRole", "name": sa + "-update", "apiGroup": "rbac.authorization.k8s.io"},
@@ -760,7 +762,7 @@ class KubeconfigGenerator(object):
                                 remaining_rules.append(updated_rule)
                 return existing_rules, remaining_rules
 
-        def _revoke_rbac(self, permissionfile, sa, namespace, kubeconfig):
+        def _revoke_rbac(self, permissionfile, sa, namespace, kubeconfig, entity):
                 """Revoke permissions from permission file.
 
                 Flow:
@@ -840,7 +842,10 @@ class KubeconfigGenerator(object):
                         self._kubectl_or_raise("apply -f " + role_filename, kubeconfig)
                 else:
                         self._kubectl_or_raise("delete clusterrole " + role_name, kubeconfig)
-                        self._kubectl_or_raise("delete clusterrolebinding " + rolebinding_name, kubeconfig)
+                        if entity == "consumer":
+                            self._kubectl_or_raise("delete rolebinding " + rolebinding_name + " -n " + namespace, kubeconfig)
+                        else:
+                            self._kubectl_or_raise("delete clusterrolebinding " + rolebinding_name, kubeconfig)
 
                 # Keep configmap simple and authoritative: rebuild from current roles.
                 self._rebuild_perm_configmap_from_roles(sa, namespace, kubeconfig)
@@ -1013,6 +1018,7 @@ if __name__ == "__main__":
         sa = 'kubeplus-saas-provider'
         if pargs.consumer:
             sa = pargs.consumer
+        entity = "provider" if sa == "kubeplus-saas-provider" else "consumer"
 
         filename = pargs.filename or sa
         if not filename.endswith(".json"):
@@ -1032,25 +1038,20 @@ if __name__ == "__main__":
                 run_command(cmd)
 
                 # 1. Generate Provider kubeconfig
-                if sa == "kubeplus-saas-provider":
-                    kubeconfigGenerator._generate_kubeconfig(sa, namespace, filename, api_server_ip=api_s_ip, kubeconfig=kubeconfigString, cluster_name=cluster_name)
-                    kubeconfigGenerator._apply_rbac(sa, namespace, entity='provider', kubeconfig=kubeconfigString)
-                    print("Provider kubeconfig created: " + filename)
-                else:
-                    kubeconfigGenerator._generate_kubeconfig(sa, namespace, filename, api_server_ip=api_s_ip, kubeconfig=kubeconfigString, cluster_name=cluster_name)
-                    kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer', kubeconfig=kubeconfigString)
-                    print("Consumer kubeconfig created: " + filename)
+                kubeconfigGenerator._generate_kubeconfig(sa, namespace, filename, api_server_ip=api_s_ip, kubeconfig=kubeconfigString, cluster_name=cluster_name)
+                kubeconfigGenerator._apply_rbac(sa, namespace, entity=entity, kubeconfig=kubeconfigString)
+                print(entity.capitalize() + " kubeconfig created: " + filename)
 
         if action == "extract":
                 kubeconfigGenerator._extract_kubeconfig(sa, namespace, filename, serverip=api_s_ip, kubecfg=kubeconfigString)
                 print("Provider kubeconfig created: " + filename)
 
         if action == "update":
-                kubeconfigGenerator._update_rbac(permission_file, sa, namespace, kubeconfigString)
+                kubeconfigGenerator._update_rbac(permission_file, sa, namespace, kubeconfigString, entity=entity)
                 print("kubeconfig permissions updated: " + filename)
 
         if action == "revoke":
-                if kubeconfigGenerator._revoke_rbac(permission_file, sa, namespace, kubeconfigString):
+                if kubeconfigGenerator._revoke_rbac(permission_file, sa, namespace, kubeconfigString, entity=entity):
                         print("kubeconfig permissions revoked: " + filename)
 
 
@@ -1058,9 +1059,22 @@ if __name__ == "__main__":
                 run_command("kubectl delete sa " + sa + " -n " + namespace + kubeconfigString)
                 run_command("kubectl delete configmap " + sa + " -n " + namespace + kubeconfigString)
                 run_command("kubectl delete clusterrole " + sa + kubeconfigString)
-                run_command("kubectl delete clusterrolebinding " + sa + kubeconfigString)
+                if entity == "consumer":
+                    # consumer binding
+                    run_command("kubectl delete rolebinding " + sa + " -n " + namespace + " --ignore-not-found" + kubeconfigString)
+                    # legacy consumer binding
+                    run_command("kubectl delete clusterrolebinding " + sa + " --ignore-not-found" + kubeconfigString) # backwards-compatible
+                else:
+                    # provider binding
+                    run_command("kubectl delete clusterrolebinding " + sa + kubeconfigString)
                 run_command("kubectl delete clusterrole " + sa + "-update" + kubeconfigString)
-                run_command("kubectl delete clusterrolebinding " + sa + "-update" + kubeconfigString)
+                if entity == "consumer":
+                    # consumer binding
+                    run_command( "kubectl delete rolebinding " + sa + "-update" + " -n " + namespace + " --ignore-not-found" + kubeconfigString)
+                    # legacy consumer binding
+                    run_command( "kubectl delete clusterrolebinding " + sa + "-update" + " --ignore-not-found" + kubeconfigString)
+                else:
+                    run_command( "kubectl delete clusterrolebinding " + sa + "-update" + kubeconfigString)
                 run_command("kubectl delete configmap " + sa + "-perms -n " + namespace + kubeconfigString)
                 cwd = os.getcwd()
                 for f in [
