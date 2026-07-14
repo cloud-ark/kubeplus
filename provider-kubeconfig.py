@@ -32,9 +32,7 @@ def create_role_rolebinding(contents, name, kubeconfig):
     file_path = os.path.join(os.getcwd(), name)
     with open(file_path, "w", encoding="utf-8") as fp:
         fp.write(yaml.dump(contents))
-    _, err, rc = run_command_with_code(" kubectl apply -f " + file_path + kubeconfig)
-    if rc != 0:
-        raise RuntimeError(f"Failed to apply RBAC manifest {file_path!r}: {err.strip()}")
+    run_command(" kubectl apply -f " + file_path + kubeconfig)
 
 
 def run_command(cmd):
@@ -1059,23 +1057,20 @@ if __name__ == "__main__":
                 run_command("kubectl delete sa " + sa + " -n " + namespace + kubeconfigString)
                 run_command("kubectl delete configmap " + sa + " -n " + namespace + kubeconfigString)
                 run_command("kubectl delete clusterrole " + sa + kubeconfigString)
-                if entity == "consumer":
-                    # consumer binding
-                    run_command("kubectl delete rolebinding " + sa + " -n " + namespace + " --ignore-not-found" + kubeconfigString)
-                    # legacy consumer binding
-                    run_command("kubectl delete clusterrolebinding " + sa + " --ignore-not-found" + kubeconfigString) # backwards-compatible
-                else:
-                    # provider binding
-                    run_command("kubectl delete clusterrolebinding " + sa + kubeconfigString)
                 run_command("kubectl delete clusterrole " + sa + "-update" + kubeconfigString)
                 if entity == "consumer":
-                    # consumer binding
+                    # consumer bindings
+                    run_command("kubectl delete rolebinding " + sa + " -n " + namespace + " --ignore-not-found" + kubeconfigString)
                     run_command( "kubectl delete rolebinding " + sa + "-update" + " -n " + namespace + " --ignore-not-found" + kubeconfigString)
-                    # legacy consumer binding
+                    # legacy consumer bindings
+                    run_command("kubectl delete clusterrolebinding " + sa + " --ignore-not-found" + kubeconfigString) # backwards-compatible
                     run_command( "kubectl delete clusterrolebinding " + sa + "-update" + " --ignore-not-found" + kubeconfigString)
                 else:
+                    # provider bindings
+                    run_command("kubectl delete clusterrolebinding " + sa + kubeconfigString)
                     run_command( "kubectl delete clusterrolebinding " + sa + "-update" + kubeconfigString)
                 run_command("kubectl delete configmap " + sa + "-perms -n " + namespace + kubeconfigString)
+
                 cwd = os.getcwd()
                 for f in [
                     sa + "-secret.yaml", filename, sa + "-role.yaml", sa + "-update-role.yaml",
