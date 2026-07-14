@@ -1,6 +1,5 @@
 name: CI-Minikube
 on:
-        #  workflow_dispatch:
   pull_request:
 env:
   ACTIONS_RUNNER_DEBUG: true
