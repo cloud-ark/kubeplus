@@ -54,17 +54,6 @@ jobs:
         export PATH=$KUBEPLUS_HOME/plugins:$PATH
         echo "PATH=$PATH" >> $GITHUB_ENV
 
-    - name: Generate Provider Kubeconfig
-      run: |
-        cd $KUBEPLUS_HOME
-        python3 -m venv venv
-        source venv/bin/activate
-        pip3 install -r requirements.txt
-        apiserver=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
-        echo "API_SERVER_URL: $apiserver"
-        python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
-        deactivate
-
     - name: Build Mutating Webhook
       run: |
         echo "KUBEPLUS_HOME:$KUBEPLUS_HOME"
