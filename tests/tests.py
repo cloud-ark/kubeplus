@@ -104,6 +104,55 @@ class TestKubePlus(unittest.TestCase):
         cmd = "kubectl delete -f ../examples/multitenancy/hello-world/hello-world-service-composition-localchart.yaml --kubeconfig=%s" % provider
         TestKubePlus.run_command(cmd)
 
+    def test_consumer_cannot_create_deployment_in_another_namespace(self):
+        """Consumers must not create deployments outside their own namespace."""
+        out, err = TestKubePlus.run_command("kubectl get ns default")
+        if "default" not in out or "unable to connect" in err.lower():
+            self.skipTest("No cluster reachable for consumer RBAC test.")
+
+        out, err = TestKubePlus.run_command("kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'")
+        api_server = out.strip().strip("'")
+        if api_server == "":
+            self.skipTest("Could not determine current cluster API server.")
+
+        suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
+        ns1, ns2 = f"kp-ns1-{suffix}", f"kp-ns2-{suffix}"
+        consumer1, consumer2 = f"kp-cons1-{suffix}", f"kp-cons2-{suffix}"
+        script = pathlib.Path(__file__).resolve().parents[1] / "provider-kubeconfig.py"
+        consumer2_kubeconfig = pathlib.Path.cwd() / (consumer2 + ".json")
+
+        def skip_on_connection_error(err):
+            lowered = err.lower()
+            if "unable to connect to the server" in lowered or "i/o timeout" in lowered:
+                self.skipTest("Skipping authz assertion due to transient API connectivity issue: " + err.strip())
+
+        try:
+            for namespace, consumer in ((ns1, consumer1), (ns2, consumer2)):
+                cmd = f"{sys.executable} {script} create {namespace} -c {consumer} -s {api_server}"
+                out, err = TestKubePlus.run_command(cmd)
+                skip_on_connection_error(err)
+                self.assertTrue(
+                    pathlib.Path(consumer + ".json").exists(),
+                    "Consumer kubeconfig should be created for %s; got out=%r err=%r"
+                    % (consumer, out, err),
+                )
+
+            cmd = f"kubectl auth can-i create deployments.apps -n {ns2} --kubeconfig={consumer2_kubeconfig}"
+            out, err = TestKubePlus.run_command(cmd)
+            skip_on_connection_error(err)
+            self.assertEqual(out.strip(), "yes")
+
+            cmd = f"kubectl auth can-i create deployments.apps -n {ns1} --kubeconfig={consumer2_kubeconfig}"
+            out, err = TestKubePlus.run_command(cmd)
+            skip_on_connection_error(err)
+            self.assertEqual(out.strip(), "no")
+        finally:
+            for namespace, consumer in ((ns1, consumer1), (ns2, consumer2)):
+                TestKubePlus.run_command(f"{sys.executable} {script} delete {namespace} -c {consumer}")
+                TestKubePlus.run_command(f"kubectl delete namespace {namespace} --ignore-not-found --wait=false")
+                for file in pathlib.Path.cwd().glob(consumer + "*"):
+                    file.unlink(missing_ok=True)
+
     def test_create_res_comp_for_chart_with_ns(self):
         if not TestKubePlus._is_kubeplus_running():
             print("KubePlus is not running. Deploy KubePlus and then run tests")
