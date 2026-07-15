@@ -582,8 +582,7 @@ class TestKubePlus(unittest.TestCase):
                 time.sleep(1)
     
     def test_appstatus_plugin(self):
-        kubeplus_home = os.getenv("KUBEPLUS_HOME")
-        provider = kubeplus_home + '/kubeplus-saas-provider.json'
+        provider = '../kubeplus-saas-provider.json'
 
         hs1_name, hs1_file = TestKubePlus._process_template("template-manifests/hello-world-hs1.yaml")
         
@@ -612,8 +611,7 @@ class TestKubePlus(unittest.TestCase):
         self.cleanup_example_hello_world(hs1_file, provider)
 
     def test_appresources_plugin(self):
-        kubeplus_home = os.getenv("KUBEPLUS_HOME")
-        provider = kubeplus_home + '/kubeplus-saas-provider.json'
+        provider = '../kubeplus-saas-provider.json'
         hs1_name, hs1_file = TestKubePlus._process_template("template-manifests/hello-world-hs1.yaml")
 
         self.setup_example_hello_world(hs1_file, provider)
@@ -644,8 +642,7 @@ class TestKubePlus(unittest.TestCase):
     # kubectl applogs
 
     def test_metrics(self):
-        kubeplus_home = os.getenv("KUBEPLUS_HOME")
-        provider = kubeplus_home + '/kubeplus-saas-provider.json'
+        provider = '../kubeplus-saas-provider.json'
         hs1_name, hs1_file = TestKubePlus._process_template("template-manifests/hello-world-hs1.yaml")
 
         def cleanup():
@@ -716,8 +713,7 @@ class TestKubePlus(unittest.TestCase):
 
     @unittest.skip("Skipping custom metrics test")
     def test_metrics_custom(self):
-        kubeplus_home = os.getenv("KUBEPLUS_HOME")
-        provider = kubeplus_home + '/kubeplus-saas-provider.json'
+        provider = '../kubeplus-saas-provider.json'
 
         hs1_name, hs1_file = TestKubePlus._process_template("template-manifests/appmetrics-custom-hs1.yaml")
         
@@ -816,7 +812,7 @@ class TestKubePlus(unittest.TestCase):
         instance = ""
         kind = "wp"
         ns = "default"
-        kubeplus_saas_provider = kubeplus_home + "/kubeplus-saas-provider.json"
+        kubeplus_saas_provider = "../kubeplus-saas-provider.json"
         cmdsuffix = kind + " " + instance + " " + ns + " -k " + kubeplus_saas_provider
         cmd = "kubectl connections " + cmdsuffix
 

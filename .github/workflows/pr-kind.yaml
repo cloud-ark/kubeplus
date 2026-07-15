@@ -1,10 +1,6 @@
 name: CI
 on:
-  workflow_dispatch:
-          #  pull_request:
-  push:
-    branches:
-    - master
+  pull_request:
 env:
   ACTIONS_RUNNER_DEBUG: true
   KUBEPLUS_TEST_OUTPUT: yes
@@ -57,17 +53,6 @@ jobs:
         echo "KUBEPLUS_HOME=$KUBEPLUS_HOME" >> $GITHUB_ENV
         export PATH=$KUBEPLUS_HOME/plugins:$PATH
         echo "PATH=$PATH" >> $GITHUB_ENV
-
-    - name: Generate Provider Kubeconfig
-      run: |
-        cd $KUBEPLUS_HOME
-        python3 -m venv venv
-        source venv/bin/activate
-        pip3 install -r requirements.txt
-        apiserver=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
-        echo "API_SERVER_URL: $apiserver"
-        python3 provider-kubeconfig.py -s $apiserver create $KUBEPLUS_NS
-        deactivate
 
     - name: Build Mutating Webhook
       run: |
