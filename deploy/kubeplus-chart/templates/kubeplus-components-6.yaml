@@ -362,7 +362,6 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-                #command: ["./root/kubeconfiggenerator.sh"]
         command: [ "python3", "/root/kubeconfiggenerator.py"]
         args:
           - "$(KUBEPLUS_NAMESPACE)"
