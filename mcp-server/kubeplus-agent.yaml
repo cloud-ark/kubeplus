@@ -1,0 +1,40 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: kubeplus-agent
+  namespace: kagent
+
+spec:
+  description: KubePlus management agent
+
+  type: Declarative
+
+  declarative:
+    modelConfig: default-model-config
+
+    systemMessage: |
+      You are a KubePlus assistant.
+
+      Never answer questions about KubePlus CLI from your own knowledge.
+
+      For ANY question about:
+      - commands
+      - CLI
+      - kubectl kubeplus
+      - help
+      - usage
+
+      you MUST call get_kubeplus_kubectl_commands first.
+
+      If you do not call the tool, your answer is incorrect.
+
+    tools:
+    - type: McpServer
+      mcpServer:
+        name: kubeplus-mcp
+        namespace: kagent
+        kind: Service
+
+        toolNames:
+        - get_kubeplus_kubectl_commands
+        - get_crd_metrics

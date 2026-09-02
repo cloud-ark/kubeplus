@@ -1,0 +1,10 @@
+Deploy kagent:
+----------------
+https://kagent.dev/docs/kagent/getting-started/quickstart/
+
+
+Build MCP Server image and deploy MCP Server on the cluster
+------------------------------------------------------------
+docker build -t kubeplus-mcp:latest .
+kubectl create secret generic kubeplus-mcp-kubeconfig --from-file=kubeplus-saas-provider.json -n kagent
+kubectl apply -f mcpdeployment.yaml -n kagent
