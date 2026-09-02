@@ -57,6 +57,17 @@ wp-tenant2   26s
 ```sh
 kubectl describe wordpressservices wp-tenant1 -n $KUBEPLUS_NS
 ```
+**Note: Before running commands 6 and 7**
+
+Set `KUBEPLUS_HOME` to the top-level directory where KubePlus is cloned or where the KubePlus kubectl plugins are downloaded. Do **not** include the `plugins` directory in `KUBEPLUS_HOME`.
+
+For example:
+
+```sh
+export KUBEPLUS_HOME=<path-where-you-have-cloned-kubeplus-or-where-you-have-downloaded-plugins>
+export PATH=$KUBEPLUS_HOME/plugins:$PATH
+```
+
 
 ### 6. Check Created Application Resources
 
