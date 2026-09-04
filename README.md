@@ -205,13 +205,11 @@ We have developed the [Operator Maturity Model](https://github.com/cloud-ark/kub
 
 ## Community Meetings
 
-We meet every Tuesday at 11.30 a.m. US CST. We use Slack huddle in `#kubeplus` channel on CNCF workspace
+We meet every Monday at 10.00 a.m. US CST. We use Slack huddle in `#kubeplus` channel on CNCF workspace
 The meeting agenda is [here](https://docs.google.com/document/d/18PDo2XtvspP__3EemADyHh94O1-yActrLMCOntOiv1Y/edit?usp=sharing).
 Please join us in our meetings. Your participation is welcome.
 
 ## Contact
-
-Subscribe to [KubePlus mailing list](https://groups.google.com/g/kubeplus).
 
 Join #kubeplus channel on [CNCF Slack](https://cloud-native.slack.com/archives/C06U6MP24PN).
 If you don't have an account on the CNCF workspace, get your invitation [here](https://communityinviter.com/apps/cloud-native/cncf). You can join the `#kubeplus` channel once your invitation is active.
