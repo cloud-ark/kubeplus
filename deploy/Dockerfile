@@ -8,7 +8,7 @@ RUN cp bin/kubectl /root/kubectl
 COPY kubeplus-non-pod-resources.yaml /root/.
 COPY mutatingwebhook.yaml /root/.
 #COPY webhook-patch-ca-bundle-new.sh /root/.
-COPY kubeconfiggenerator.py /root/.
+COPY crd_registration_helper.py /root/.
 #COPY kubectl /root/
 #RUN cp /root/kubectl bin/.  
 RUN chmod +x /root/kubectl && chmod +x bin/kubectl 

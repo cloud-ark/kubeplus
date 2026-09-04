@@ -346,8 +346,8 @@ spec:
           - "--secret"
           - "webhook-tls-certificates"
       containers:
-      - name: kubeconfiggenerator
-        image: {{ .Values.CRD_REGISTRATION_HELPER }}  #gcr.io/cloudark-kubeplus/kubeconfiggenerator:3.0.27
+      - name: crd-registration-helper
+        image: {{ .Values.CRD_REGISTRATION_HELPER }}  #gcr.io/cloudark-kubeplus/crd-registration-helper:3.0.27
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -359,7 +359,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-        command: [ "python3", "/root/kubeconfiggenerator.py"]
+        command: [ "python3", "/root/crd_registration_helper.py"]
         args:
           - "$(KUBEPLUS_NAMESPACE)"
         volumeMounts:

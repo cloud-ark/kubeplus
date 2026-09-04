@@ -140,6 +140,6 @@ kubectl apply -f ./root/mutatingwebhook-ca-bundle.yaml 2>/dev/null || true
 kubectl delete -f /root/kubeplus-non-pod-resources.yaml 2>/dev/null || true
 kubectl create -f /root/kubeplus-non-pod-resources.yaml 2>/dev/null || true
 
-python3 /root/kubeconfiggenerator.py $namespace
+python3 /root/crd_registration_helper.py $namespace
 
 kubectl label --overwrite=true ns $namespace managedby=kubeplus

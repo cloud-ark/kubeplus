@@ -28,7 +28,7 @@ dictConfig({
     },
      'file.handler': {
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/root/kubeconfiggenerator.log',
+            'filename': '/root/crd-registration-helper.log',
             'maxBytes': 10000000,
             'backupCount': 5,
             'level': 'DEBUG',
@@ -53,14 +53,14 @@ def create_role_rolebinding(contents, name):
     print("---")
     print(yaml_content)
     print("---")
-    cmd = " kubectl create -f " + filePath
+    cmd = ["kubectl", "create", "-f", filePath]
     run_command(cmd)
 
 
 def run_command(cmd):
     #print("Inside run_command")
     print(cmd)
-    cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
+    cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     out = cmdOut[0].decode('utf-8')
     err = cmdOut[1].decode('utf-8')
     #print(out)
@@ -74,12 +74,12 @@ def run_command(cmd):
     #    return err.decode('utf-8')
 
 
-class KubeconfigGenerator(object):
+class CRDRegistrationHelper(object):
 
         def run_command(self, cmd):
                 #print("Inside run_command")
                 print(cmd)
-                cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
+                cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
                 out = cmdOut[0].decode('utf-8')
                 err = cmdOut[1].decode('utf-8')
                 #print(out)
@@ -148,9 +148,9 @@ class KubeconfigGenerator(object):
                 configmapName = sa + "-kubeconfig"
                 created = False 
                 while not created:        
-                        cmd = "kubectl create configmap " + configmapName + " -n " + namespace + " --from-file=" + os.getenv("HOME") + "/" + fileName
+                        cmd = ["kubectl", "create", "configmap", configmapName, "-n", namespace, "--from-file=" + os.getenv("HOME") + "/" + fileName]
                         self.run_command(cmd)
-                        get_cmd = "kubectl get configmap " + configmapName + " -n "  + namespace
+                        get_cmd = ["kubectl", "get", "configmap", configmapName, "-n", namespace]
                         output, error = self.run_command(get_cmd)
                         if 'Error from server (NotFound)' in output:
                                 time.sleep(2)
@@ -401,7 +401,7 @@ class KubeconfigGenerator(object):
                 print("---")
                 created = False
                 while not created:
-                    cmd = " kubectl create -f " + filePath
+                    cmd = ["kubectl", "create", "-f", filePath]
                     out, err = self.run_command(cmd)
                     if 'created' in out or 'AlreadyExists' in err:
                         created = True
@@ -431,9 +431,8 @@ class KubeconfigGenerator(object):
 
                         tokenFound = False
                         while not tokenFound:
-                                cmd1 = " kubectl describe secret " + secretName + " -n " + namespace
-                                cmdToRun = cmdprefix + " " + cmd1
-                                out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+                                cmd1 = ["kubectl", "describe", "secret", secretName, "-n", namespace]
+                                out1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
                                 out1 = out1.decode('utf-8')
                                 print(out1)
                                 token = ''
@@ -447,25 +446,24 @@ class KubeconfigGenerator(object):
                                         time.sleep(2)
 
                         print("Got secret token")
-                        cmd1 = " kubectl get secret " + secretName + " -n " + namespace + " -o json "
-                        cmdToRun = cmdprefix + " " + cmd1
-                        out1 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+                        cmd1 = ["kubectl", "get", "secret", secretName, "-n", namespace, "-o", "json"]
+                        out1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
                         out1 = out1.decode('utf-8')
                         json_output1 = json.loads(out1)
                         ca_cert = json_output1["data"]["ca.crt"].strip()
                         #print("CA Cert:" + ca_cert)
 
                         #cmd2 = " kubectl config view --minify -o json "
-                        cmd2 = "kubectl -n default get endpoints kubernetes | awk '{print $2}' | grep -v ENDPOINTS"
-                        cmdToRun = cmdprefix + " " + cmd2
-                        out2 = subprocess.Popen(cmdToRun, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+                        cmd2 = ["kubectl", "-n", "default", "get", "endpoints", "kubernetes", "-o", "json"]
+                        out2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
                         #print("Config view Minify:")
                         print(out2)
-                        out2 = out2.decode('utf-8')
+                        json_output2 = json.loads(out2.decode('utf-8'))
                         #json_output2 = json.loads(out2)
                         #server = json_output2["clusters"][0]["cluster"]["server"].strip()
-                        server = out2.strip()
-                        server = "https://" + server
+                        address = json_output2["subsets"][0]["addresses"][0]["ip"]
+                        port = json_output2["subsets"][0]["ports"][0]["port"]
+                        server = "https://" + address + ":" + str(port)
                         print("Kube API Server:" + server)
                         self._create_kubecfg_file(sa, namespace, token, ca_cert, server)
 
@@ -551,21 +549,21 @@ def download_and_untar_chart(chartLoc, chartName):
 
     if chartLoc.startswith("https"):
         charttgz = chartName + ".tgz"
-        wget = "wget -O /" + charttgz + " --no-check-certificate " + chartLoc
-        app.logger.info("wget command:" + wget)
+        wget = ["wget", "-O", "/" + charttgz, "--no-check-certificate", chartLoc]
+        app.logger.info("wget command: %s", wget)
         out, err = run_command(wget)
         app.logger.info("wget output:" + out)
         app.logger.info("wget error:" + err)
 
     
     # delete the previous chart folder
-    cmd = "rm -rf /" + chartName
+    cmd = ["rm", "-rf", "/" + chartName]
     app.logger.info("Deleting the previous chart folder:" + chartName)
     out, err = run_command(cmd)
     app.logger.info("Delete previous chart o/p:" + str(out))
     app.logger.info("Delete previous chart err:" + str(err))
 
-    cmd = "tar -xvzf /" + charttgz
+    cmd = ["tar", "-xvzf", "/" + charttgz]
     out, err = run_command(cmd)
 
     app.logger.info("Output:" + out)
@@ -600,7 +598,7 @@ def check_and_install_crds(chartLoc, chartName=''):
     for path, dirs, files in os.walk(chartPath):
         if 'crds' in dirs:
             app.logger.info("CRDs exist in this chart. Installing them")
-            cmd = 'kubectl create -f ' + os.path.join(path, 'crds')
+            cmd = ["kubectl", "create", "-f", os.path.join(path, "crds")]
             out, err = run_command(cmd)
             found = True
     return found
@@ -610,7 +608,7 @@ def delete_chart_crds(chartName=''):
     crdLoc = '/' + chartName + '/crds'
     if os.path.exists(crdLoc):
         app.logger.info("CRDs exist in this chart. Installing them")
-        cmd = 'kubectl create -f ' + crdLoc
+        cmd = ["kubectl", "create", "-f", crdLoc]
         out, err = run_command(cmd)
 
 @app.route("/overrides")
@@ -703,7 +701,7 @@ def registercrd():
     fp.write(crd_json)
     fp.close()
 
-    cmd = "kubectl create -f /" + crd_file_name
+    cmd = ["kubectl", "create", "-f", "/" + crd_file_name]
     out, err = run_command(cmd)
     app.logger.info("Output:" + out)
     app.logger.info("Error:" + err)
@@ -717,7 +715,7 @@ def registercrd():
 
 @app.route("/nodes")
 def get_nodes():
-    cmd = "kubectl get nodes "
+    cmd = ["kubectl", "get", "nodes"]
     out, err = run_command(cmd)
     app.logger.info("Nodes: " + out)
     lines = out.split("\n")
@@ -754,7 +752,7 @@ def testchart():
 
     #testChartName = "kubeplus-customerapi-reg-testchart"
     testChartName = "kptc"
-    cmd = "helm install kptc " + chartLoc
+    cmd = ["helm", "install", "kptc", chartLoc]
     out, err = run_command(cmd)
     print(out)
     for line in out.split("\n"):
@@ -772,7 +770,7 @@ def testchart():
     else:
         chartStatus = 'Chart is good.'
 
-    cmd = "helm delete " + testChartName
+    cmd = ["helm", "delete", testChartName]
     run_command(cmd)
     return chartStatus
 
@@ -852,7 +850,7 @@ def dryrunchart():
     chart_perms = {}
     chart_perms_list = []
     while not dryRunSuccess and count < 1:
-        cmd = "helm template kptc " + chartLoc 
+        cmd = ["helm", "template", "kptc", chartLoc]
         app.logger.info(cmd)
         out, err = run_command(cmd)
 
@@ -935,7 +933,7 @@ def dryrunchart():
     app.logger.info("Chart perms:" + json.dumps(str(chart_perms_dict)))
 
     # Check permissions
-    cmd = "kubectl get configmap kubeplus-saas-provider-perms -o json -n " + namespace
+    cmd = ["kubectl", "get", "configmap", "kubeplus-saas-provider-perms", "-o", "json", "-n", namespace]
     out1, err1 = run_command(cmd)
     app.logger.info("Perms Out:" + str(out1))
     app.logger.info("Perms Err:" + str(err1))
@@ -1005,7 +1003,7 @@ def dryrunchart():
     app.logger.info("Kinds:" + str(kinds))
 
     for storageClass in storage_classes:
-        cmd = "kubectl get storageclass " + storageClass + " -o json "
+        cmd = ["kubectl", "get", "storageclass", storageClass, "-o", "json"]
         out, err = run_command(cmd)
         try:
             json_obj = json.loads(out)
@@ -1065,7 +1063,7 @@ def get_memory_bytes(memory):
 
 @app.route("/cluster_capacity")
 def get_cluster_capacity():
-    cmd = 'kubectl get nodes -o json '
+    cmd = ["kubectl", "get", "nodes", "-o", "json"]
     out, err = run_command(cmd)
 
     node_info = []
@@ -1145,7 +1143,7 @@ def create_network_policy():
     fp.write(json_file)
     fp.close()
 
-    cmd = "kubectl create -f " + os.getenv("HOME") + "/" + fileName
+    cmd = ["kubectl", "create", "-f", os.getenv("HOME") + "/" + fileName]
     out, err = run_command(cmd)
     app.logger.info("Output of create network policy:")
     app.logger.info("Output:" + out)
@@ -1177,7 +1175,7 @@ def create_network_policy():
     fp.write(json_file)
     fp.close()
 
-    cmd = "kubectl create -f " + os.getenv("HOME") + "/" + fileName
+    cmd = ["kubectl", "create", "-f", os.getenv("HOME") + "/" + fileName]
     out, err = run_command(cmd)
 
     err_string = str(err)
@@ -1192,7 +1190,7 @@ def check_license():
     app.logger.info("Namespace:" + namespace + " kind:" + kind)
     license_cfgmap = kind.lower() + "-license"
     app.logger.info("License configmap:" + license_cfgmap)
-    cmd = "kubectl get configmap " + license_cfgmap + " -n " + namespace + " -o json "
+    cmd = ["kubectl", "get", "configmap", license_cfgmap, "-n", namespace, "-o", "json"]
     out, err = run_command(cmd)
     if "NotFound" in err:
         app.logger.info(str(err))
@@ -1212,7 +1210,7 @@ def check_license():
     msg = ""
 
     if allowed_instances != "":
-        cmd1 = "kubectl get " + kind
+        cmd1 = ["kubectl", "get", kind]
         out1, err1 = run_command(cmd1)
         created_instances = 0
         for line in out1.split("\n"):
@@ -1281,7 +1279,7 @@ def create_resource_quota():
     fp.write(json_file)
     fp.close()
 
-    cmd = "kubectl create -f " + os.getenv("HOME") + "/" + fileName
+    cmd = ["kubectl", "create", "-f", os.getenv("HOME") + "/" + fileName]
     out, err = run_command(cmd)
     app.logger.info("Output of create quota:")
     app.logger.info("Output:" + out)
@@ -1294,7 +1292,7 @@ def create_resource_quota():
 @app.route("/resourcecompositions")
 def kp_state_restore():
     app.logger.info("Inside kp_state_restore...")
-    cmd = "kubectl get resourcecompositions -A"
+    cmd = ["kubectl", "get", "resourcecompositions", "-A"]
     out, err = run_command(cmd)
     app.logger.info(out)
     res_compositions = []
@@ -1308,7 +1306,7 @@ def kp_state_restore():
                 ns = parts[0].strip()
                 name = parts[1].strip()
 
-                cmd1 = "kubectl get resourcecomposition " + name + " -n " + ns + " -o json"
+                cmd1 = ["kubectl", "get", "resourcecomposition", name, "-n", ns, "-o", "json"]
                 out1, err1 = run_command(cmd1)
                 json_op = json.loads(out1)
                 chartName = json_op['spec']['newResource']['chartName']
@@ -1354,14 +1352,14 @@ def apply_rbac():
     resourceComposition = request.args.get('resourceComposition')
     targetNS = request.args.get('targetNS')
 
-    cmd = '/root/kubectl get resourcecomposition ' + resourceComposition + " -n " + namespace + " -o json"
+    cmd = ["kubectl", "get", "resourcecomposition", resourceComposition, "-n", namespace, "-o", "json"]
     out, _ = run_command(cmd)
     json_obj = json.loads(out)
     helm_chart = json_obj['spec']['newResource']['chartURL']
     print("Helm chart:" + helm_chart)
     app.logger.info("Helm chart:" + helm_chart)
 
-    cmd = 'helm template kptc ' + helm_chart 
+    cmd = ["helm", "template", "kptc", helm_chart]
     out1, _ = run_command(cmd)
     kinds = []
     for line in out1.split("\n"):
@@ -1373,7 +1371,7 @@ def apply_rbac():
     print("Kinds in chart:" + str(kinds))
     app.logger.info("Kinds in chart:" + str(kinds))
 
-    cmd = 'kubectl api-resources'
+    cmd = ["kubectl", "api-resources"]
     out2, _ = run_command(cmd)
     kind_version_list = []
     for line in out2.split("\n"):
@@ -1472,7 +1470,7 @@ def apply_rbac():
     return "abc"
 
 if __name__ == '__main__':
-        kubeconfigGenerator = KubeconfigGenerator()
+        crdRegistrationHelper = CRDRegistrationHelper()
         namespace = sys.argv[1]
 
         # Note that the reason we are not applying RBAC to consumer and provider
@@ -1481,7 +1479,7 @@ if __name__ == '__main__':
 
         # 2. Generate/Retrieve Consumer kubeconfig
         sa = 'kubeplus-saas-consumer'
-        kubeconfigGenerator._generate_kubeconfig(sa, namespace)
+        crdRegistrationHelper._generate_kubeconfig(sa, namespace)
         #kubeconfigGenerator._apply_rbac(sa, namespace, entity='consumer')
         
         # We are commenting out retrieval of Provider kubeconfig here as we have

@@ -39,7 +39,7 @@ File an Issue with following information:
     - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c platform-operator
     - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c webhook-cert-setup
     - kubectl logs <kubeplus-pod> -n $KUBEPLUS_NS -c consumerui
-    - kubectl exec -it <kubeplus-pod> -n $KUBELUS_NS -c kubeconfiggenerator /bin/bash; tail -100 /root/kubeconfiggenerator.log
+    - kubectl exec -it <kubeplus-pod> -n $KUBELUS_NS -c crd-registration-helper /bin/bash; tail -100 /root/crd-registration-helper.log
   ```
 
   * Cluster details

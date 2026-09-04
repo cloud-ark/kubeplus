@@ -5,6 +5,7 @@ env:
   ACTIONS_RUNNER_DEBUG: true
   KUBEPLUS_TEST_OUTPUT: yes
   KUBEPLUS_CI: true
+  DOCKER_BUILDKIT: 0
 jobs:
   job1:
     runs-on: ubuntu-22.04
@@ -73,10 +74,10 @@ jobs:
         cd $KUBEPLUS_HOME/platform-operator
         ./build-artifact.sh latest
 
-    - name: Build KubeConfig Generator
+    - name: Build CRD Registration Helper
       run: |
         cd $KUBEPLUS_HOME/deploy
-        ./build-artifact-kubeconfiggenerator.sh latest
+        ./build-artifact-crd-registration-helper.sh latest
 
     - name: Load Docker Images to Kind cluster
       run: |

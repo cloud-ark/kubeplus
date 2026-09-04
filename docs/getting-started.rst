@@ -46,7 +46,7 @@ Examples
     $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c platform-operator
     $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c webhook-cert-setup
     $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c consumerui
-    $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c kubeconfiggenerator
+    $ kubectl logs $KUBEPLUS -n $KUBEPLUS_NS -c crd-registration-helper
     $ kubectl get configmaps kubeplus-saas-provider -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-provider\.json}" > provider-kubeconfig.json
     $ kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n $KUBEPLUS_NS -o jsonpath="{.data.kubeplus-saas-consumer\.json}" > consumer-kubeconfig.json
     $ kubectl auth can-i --list --as=system:serviceaccount:$KUBEPLUS_NS:kubeplus-saas-provider

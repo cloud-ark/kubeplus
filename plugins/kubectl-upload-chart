@@ -12,4 +12,4 @@ kubeconfig=$2
 kubeplusNamespace=`kubectl get pods -A --kubeconfig=$kubeconfig | grep kubeplus-deployment | awk '{print $1}'`
 kubeplusPod=`kubectl get pods -A --kubeconfig=$kubeconfig | grep kubeplus-deployment | awk '{print $2}'`
 kubectl cp $charttgz $kubeplusNamespace/$kubeplusPod:/. -c helmer --kubeconfig=$kubeconfig
-kubectl cp $charttgz $kubeplusNamespace/$kubeplusPod:/. -c kubeconfiggenerator --kubeconfig=$kubeconfig
+kubectl cp $charttgz $kubeplusNamespace/$kubeplusPod:/. -c crd-registration-helper --kubeconfig=$kubeconfig

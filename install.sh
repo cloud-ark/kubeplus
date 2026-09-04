@@ -87,7 +87,7 @@ if $INSTALL_KUBEPLUS; then
         --set MUTATING_WEBHOOK=gcr.io/cloudark-kubeplus/pac-mutating-admission-webhook:latest \
         --set PLATFORM_OPERATOR=gcr.io/cloudark-kubeplus/platform-operator:latest \
         --set HELMER=gcr.io/cloudark-kubeplus/helm-pod:latest \
-        --set CRD_REGISTRATION_HELPER=gcr.io/cloudark-kubeplus/kubeconfiggenerator:latest \
+        --set CRD_REGISTRATION_HELPER=gcr.io/cloudark-kubeplus/crd-registration-helper:latest \
         -n $KUBEPLUS_NAMESPACE
     fi
 

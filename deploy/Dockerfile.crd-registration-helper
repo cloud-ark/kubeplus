@@ -12,7 +12,7 @@ RUN rm -rf /var/lib/apt/lists/*
 RUN pip3 install pyyaml
 
 # Copy files to the image
-COPY kubeconfiggenerator.py /root/.
+COPY crd_registration_helper.py /root/.
 ADD requirements.txt /root/requirements.txt
 
 # Install Python dependencies
@@ -24,7 +24,7 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
     rm kubectl
 
 # Set executable permissions for scripts
-RUN chmod +x /root/kubeconfiggenerator.py
+RUN chmod +x /root/crd_registration_helper.py
 
 # Install Helm, clean up tar files
 RUN wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz && \
@@ -34,4 +34,4 @@ RUN wget https://get.helm.sh/helm-v3.12.1-linux-amd64.tar.gz && \
 
 # Set default command to run the Python script
 EXPOSE 5005
-CMD ["python3", "/root/kubeconfiggenerator.py"]
+CMD ["python3", "/root/crd_registration_helper.py"]
