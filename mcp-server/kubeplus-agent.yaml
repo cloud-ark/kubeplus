@@ -38,3 +38,9 @@ spec:
         toolNames:
         - get_kubeplus_kubectl_commands
         - get_crd_metrics
+        - get_crd_info
+        - list_instances
+        - describe_instance
+        - get_application_resources
+        - get_related_resources
+        - get_license_status

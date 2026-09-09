@@ -1,2 +1,4 @@
-mcp
+mcp<2
 uvicorn
+PyYAML
+requests
