@@ -25,9 +25,9 @@ jobs:
       - name: Log in to GAR
         uses: docker/login-action@v3
         with:
-          registry: us-central1-docker.pkg.dev
+          registry: us-docker.pkg.dev
           username: _json_key
-          password: ${{ secrets.GCP_SA_KEY }}
+          password: ${{ secrets.GCP_SA_KEY }} # secret name may need to be changed
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
@@ -37,5 +37,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            us-central1-docker.pkg.dev/titanium-gadget-502516-g3/my-repo/consumerui:${{ env.latest_version }}
-            us-central1-docker.pkg.dev/titanium-gadget-502516-g3/my-repo/consumerui:latest
+            us-docker.pkg.dev/cloudark-kubeplus/kubeplus/consumerui:${{ env.latest_version }}
+            us-docker.pkg.dev/cloudark-kubeplus/kubeplus/consumerui:latest
