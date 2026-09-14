@@ -20,7 +20,7 @@ jobs:
         id: file_reader
         run: |
           LAST_LINE=$(tail -n 1 consumerui/versions.txt | tr -d '\r')
-          echo "latest_version=\(LAST_LINE" >>\)GITHUB_ENV
+          echo "latest_version=${LAST_LINE}" >> $GITHUB_ENV
 
       - name: Log in to GAR
         uses: docker/login-action@v3
