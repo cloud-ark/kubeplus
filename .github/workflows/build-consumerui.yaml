@@ -25,9 +25,9 @@ jobs:
       - name: Log in to GAR
         uses: docker/login-action@v3
         with:
-          registry: us-docker.pkg.dev
+          registry: us-central1-docker.pkg.dev
           username: _json_key
-          password: ${{ secrets.GCP_SA_KEY }} #secret may need to be renamed
+          password: ${{ secrets.GCP_SA_KEY }}
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
