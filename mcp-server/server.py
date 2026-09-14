@@ -16,8 +16,8 @@ mcp.settings.transport_security.allowed_hosts = [
 
 mcp.settings.transport_security.enable_dns_rebinding_protection = False
 
-KUBECONFIG_PATH = os.environ.get(
-    "KUBEPLUS_KUBECONFIG_PATH", "/etc/kubeplus/kubeconfig/config"
+KUBEPLUS_KUBECONFIG_PATH = os.getenv(
+    "KUBEPLUS_KUBECONFIG_PATH", "/etc/kubeplus/kubeconfig/config.json",
 )
 
 @mcp.tool()
@@ -63,12 +63,12 @@ def get_crd_metrics(kind: str, instance_name: str) -> str:
         kind: The Kubernetes Kind of the Custom Resource (e.g. 'MySQL')
         instance_name: The specific instance name of that CRD
     """
-    if not os.path.isfile(KUBECONFIG_PATH):
-        return f"Server misconfiguration: kubeconfig not found at {KUBECONFIG_PATH}"
+    if not os.path.isfile(KUBEPLUS_KUBECONFIG_PATH):
+        return f"Server misconfiguration: kubeconfig not found at {KUBEPLUS_KUBECONFIG_PATH}. Please ensure the KUBEPLUS_KUBECONFIG_PATH environment variable is set correctly."
 
     try:
         result = subprocess.run(
-            ["kubectl", "metrics", kind, instance_name, "-k", KUBECONFIG_PATH],
+            ["kubectl", "metrics", kind, instance_name, "-k", KUBEPLUS_KUBECONFIG_PATH],
             capture_output=True,
             text=True,
             timeout=60,
@@ -90,12 +90,12 @@ def get_crd_info(kind: str) -> str:
     Args:
         kind: The Kubernetes Kind of the Custom Resource (e.g. 'mysql')
     """
-    if not os.path.isfile(KUBECONFIG_PATH):
-        return f"Server misconfiguration: kubeconfig not found at {KUBECONFIG_PATH}"
+    if not os.path.isfile(KUBEPLUS_KUBECONFIG_PATH):
+        return f"Server misconfiguration: kubeconfig not found at {KUBEPLUS_KUBECONFIG_PATH}. Please ensure the KUBEPLUS_KUBECONFIG_PATH environment variable is set correctly."
 
     try:
         result = subprocess.run(
-            ["kubectl", "man", kind, "-k", KUBECONFIG_PATH],
+            ["kubectl", "man", kind, "-k", KUBEPLUS_KUBECONFIG_PATH],
             capture_output=True,
             text=True,
             timeout=60,
@@ -119,11 +119,11 @@ def list_instances(kind: str, namespace: str = "") -> str:
         namespace: Optional Kubernetes namespace. If omitted, instances
         are listed across all namespaces.
     """
-    if not os.path.isfile(KUBECONFIG_PATH):
-        return f"Server misconfiguration: kubeconfig not found at {KUBECONFIG_PATH}"
+    if not os.path.isfile(KUBEPLUS_KUBECONFIG_PATH):
+        return f"Server misconfiguration: kubeconfig not found at {KUBEPLUS_KUBECONFIG_PATH}. Please ensure the KUBEPLUS_KUBECONFIG_PATH environment variable is set correctly."
 
     try:
-        cmd = ["kubectl", "get", kind, "-o", "json", "--kubeconfig", KUBECONFIG_PATH]
+        cmd = ["kubectl", "get", kind, "-o", "json", "--kubeconfig", KUBEPLUS_KUBECONFIG_PATH]
         if namespace:
             cmd.extend(["-n", namespace])
         else:
@@ -154,12 +154,12 @@ def describe_instance(kind: str, instance_name: str, namespace: str) -> str:
         instance_name: The specific instance name of that CRD
         namespace: The namespace where the instance resides
     """
-    if not os.path.isfile(KUBECONFIG_PATH):
-        return f"Server misconfiguration: kubeconfig not found at {KUBECONFIG_PATH}"
+    if not os.path.isfile(KUBEPLUS_KUBECONFIG_PATH):
+        return f"Server misconfiguration: kubeconfig not found at {KUBEPLUS_KUBECONFIG_PATH}. Please ensure the KUBEPLUS_KUBECONFIG_PATH environment variable is set correctly."
 
     try:
         result = subprocess.run(
-            ["kubectl", "describe", kind, instance_name, "-n", namespace, "--kubeconfig", KUBECONFIG_PATH],
+            ["kubectl", "describe", kind, instance_name, "-n", namespace, "--kubeconfig", KUBEPLUS_KUBECONFIG_PATH],
             capture_output=True,
             text=True,
             timeout=60,
@@ -182,12 +182,12 @@ def get_application_resources(kind: str, instance_name: str) -> str:
         kind: The Kubernetes Kind of the application instance.
         instance_name: The name of the application instance.
     """
-    if not os.path.isfile(KUBECONFIG_PATH):
-        return f"Server misconfiguration: kubeconfig not found at {KUBECONFIG_PATH}"
+    if not os.path.isfile(KUBEPLUS_KUBECONFIG_PATH):
+        return f"Server misconfiguration: kubeconfig not found at {KUBEPLUS_KUBECONFIG_PATH}. Please ensure the KUBEPLUS_KUBECONFIG_PATH environment variable is set correctly."
 
     try:
         result = subprocess.run(
-            ["kubectl", "appresources", kind, instance_name, "-k", KUBECONFIG_PATH],
+            ["kubectl", "appresources", kind, instance_name, "-k", KUBEPLUS_KUBECONFIG_PATH],
             capture_output=True,
             text=True,
             timeout=60,
@@ -211,12 +211,12 @@ def get_related_resources(kind: str, instance_name: str, namespace: str) -> str:
         instance_name: The name of the application instance.
         namespace: The namespace containing the application instance.
     """
-    if not os.path.isfile(KUBECONFIG_PATH):
-        return f"Server misconfiguration: kubeconfig not found at {KUBECONFIG_PATH}"
+    if not os.path.isfile(KUBEPLUS_KUBECONFIG_PATH):
+        return f"Server misconfiguration: kubeconfig not found at {KUBEPLUS_KUBECONFIG_PATH}. Please ensure the KUBEPLUS_KUBECONFIG_PATH environment variable is set correctly."
 
     try:
         result = subprocess.run(
-            ["kubectl", "connections", kind, instance_name, namespace, "-k", KUBECONFIG_PATH, "-o", "json"],
+            ["kubectl", "connections", kind, instance_name, namespace, "-k", KUBEPLUS_KUBECONFIG_PATH, "-o", "json"],
             capture_output=True,
             text=True,
             timeout=60,
@@ -238,12 +238,12 @@ def get_license_status(kind: str) -> str:
     Args:
         kind: The Kubernetes Kind of the Custom Resource.
     """
-    if not os.path.isfile(KUBECONFIG_PATH):
-        return f"Server misconfiguration: kubeconfig not found at {KUBECONFIG_PATH}"
+    if not os.path.isfile(KUBEPLUS_KUBECONFIG_PATH):
+        return f"Server misconfiguration: kubeconfig not found at {KUBEPLUS_KUBECONFIG_PATH}. Please ensure the KUBEPLUS_KUBECONFIG_PATH environment variable is set correctly."
 
     try:
         result = subprocess.run(
-            ["kubectl", "license", "get", kind, "-k", KUBECONFIG_PATH],
+            ["kubectl", "license", "get", kind, "-k", KUBEPLUS_KUBECONFIG_PATH],
             capture_output=True,
             text=True,
             timeout=60,
