@@ -27,7 +27,7 @@ jobs:
         with:
           registry: us-docker.pkg.dev
           username: _json_key
-          password: ${{secrets.GCP_SA_KEY}} #key will need to be added to secret for proper function
+          password: ${{secrets.GCP_SA_KEY}} #secret name may need to be altered for proper function
 
       - name: Push Docker Image
         uses: docker/build-push-action@v6
