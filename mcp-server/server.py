@@ -88,7 +88,7 @@ def get_crd_info(kind: str) -> str:
     Retrieves detailed information about a specific KubePlus CRD kind.
 
     Args:
-        kind: The Kubernetes Kind of the Custom Resource (e.g. 'mysql')
+        kind: The Kubernetes Kind of the Custom Resource (e.g. 'MySQL')
     """
     if not os.path.isfile(KUBEPLUS_KUBECONFIG_PATH):
         return f"Server misconfiguration: kubeconfig not found at {KUBEPLUS_KUBECONFIG_PATH}. Please ensure the KUBEPLUS_KUBECONFIG_PATH environment variable is set correctly."
@@ -115,7 +115,7 @@ def list_instances(kind: str, namespace: str = "") -> str:
     Lists all instances of a given KubePlus CRD kind.
 
     Args:
-        kind: The Kubernetes Kind of the Custom Resource (e.g. 'mysql')
+        kind: The Kubernetes Kind of the Custom Resource (e.g. 'MySQL')
         namespace: Optional Kubernetes namespace. If omitted, instances
         are listed across all namespaces.
     """
@@ -150,7 +150,7 @@ def describe_instance(kind: str, instance_name: str, namespace: str) -> str:
     Get detailed information about a KubePlus CRD instance.
 
     Args:
-        kind: The Kubernetes Kind of the Custom Resource (e.g. 'mysql')
+        kind: The Kubernetes Kind of the Custom Resource (e.g. 'MySQL')
         instance_name: The specific instance name of that CRD
         namespace: The namespace where the instance resides
     """
