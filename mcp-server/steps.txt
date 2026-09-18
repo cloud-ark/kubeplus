@@ -1,15 +1,42 @@
 Deploy kagent:
 ----------------
-https://kagent.dev/docs/kagent/getting-started/quickstart/
+
+$ helm install kagent-crds oci://ghcr.io/kagent-dev/kagent/helm/kagent-crds \
+      --version 0.10.1 \
+      --namespace kagent \
+      --create-namespace \
+      --wait
+
+$ export OPENAI_API_KEY="your-api-key-here"
+
+Kagent can be used with OpenAI, Anthropic, Gemini, Azure OpenAI API keys or Ollama on local.
+Refer to the official documentation for more details: https://kagent.dev/docs/kagent/0.x/introduction/installation/
+
+$ helm install kagent oci://ghcr.io/kagent-dev/kagent/helm/kagent \
+      --version 0.10.0 \
+      --namespace kagent \
+      --set providers.default=openAI \
+      --set providers.openAI.apiKey=$OPENAI_API_KEY \
+      --wait
 
 
 Build MCP Server image and deploy MCP Server on the cluster
 ------------------------------------------------------------
-docker build -t kubeplus-mcp:latest .
-kubectl apply -f mcp-rbac.yaml -n kagent
+$ docker build -t kubeplus-mcp:latest .
+$ kubectl apply -f mcp-rbac.yaml -n kagent
 
-export KUBEPLUS_NS="<kubeplus namespace>"
-envsubst '$KUBEPLUS_NS' < mcpdeployment.yaml | kubectl apply -n kagent -f -
-kubectl apply -f kubeplus-agent.yaml
+$ export KUBEPLUS_NS="<kubeplus namespace>"
+$ envsubst '$KUBEPLUS_NS' < mcpdeployment.yaml | kubectl apply -n kagent -f -
+$ kubectl apply -f kubeplus-agent.yaml
 
-kagent dashboard -> Start port forwarding
+
+Access the kagent dashboard:
+----------------------------
+
+$ kagent dashboard
+
+Use the port-forwarding command provided by kagent dashboard:
+$ kubectl port-forward -n kagent svc/kagent-ui 8080:8080
+
+Open the dashboard UI in the browser:
+http://localhost:8080/
