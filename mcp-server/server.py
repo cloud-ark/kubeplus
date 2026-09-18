@@ -202,6 +202,87 @@ def get_application_resources(kind: str, instance_name: str) -> str:
 
 
 @mcp.tool()
+def get_app_url(kind: str, instance_name: str) -> str:
+    """
+    Get the URL(s) for a KubePlus application instance.
+
+    Args:
+        kind: The Kubernetes Kind of the application instance.
+        instance_name: The name of the application instance.
+    """
+    if not os.path.isfile(KUBEPLUS_KUBECONFIG_PATH):
+        return f"Server misconfiguration: kubeconfig not found at {KUBEPLUS_KUBECONFIG_PATH}. Please ensure the KUBEPLUS_KUBECONFIG_PATH environment variable is set correctly."
+    try:
+        result = subprocess.run(
+            ["kubectl", "appurl", kind, instance_name, "-k", KUBEPLUS_KUBECONFIG_PATH],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            return f"Error running kubectl appurl: {result.stderr}"
+        return result.stdout
+    except subprocess.TimeoutExpired:
+        return "kubectl appurl command timed out after 60s"
+    except Exception as e:
+        return f"Unexpected error: {str(e)}"
+
+
+@mcp.tool()
+def get_app_logs(kind: str, instance_name: str) -> str:
+    """
+    Get container logs for all Pods related to a KubePlus application instance.
+
+    Args:
+        kind: The Kubernetes Kind of the application instance.
+        instance_name: The name of the application instance.
+    """
+    if not os.path.isfile(KUBEPLUS_KUBECONFIG_PATH):
+        return f"Server misconfiguration: kubeconfig not found at {KUBEPLUS_KUBECONFIG_PATH}. Please ensure the KUBEPLUS_KUBECONFIG_PATH environment variable is set correctly."
+    try:
+        result = subprocess.run(
+            ["kubectl", "applogs", kind, instance_name, "-k", KUBEPLUS_KUBECONFIG_PATH],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            return f"Error running kubectl applogs: {result.stderr}"
+        return result.stdout
+    except subprocess.TimeoutExpired:
+        return "kubectl applogs command timed out after 60s"
+    except Exception as e:
+        return f"Unexpected error: {str(e)}"
+
+
+@mcp.tool()
+def get_app_status(kind: str, instance_name: str) -> str:
+    """
+    Get the status of a KubePlus application instance and its Pods.
+
+    Args:
+        kind: The Kubernetes Kind of the application instance.
+        instance_name: The name of the application instance.
+    """
+    if not os.path.isfile(KUBEPLUS_KUBECONFIG_PATH):
+        return f"Server misconfiguration: kubeconfig not found at {KUBEPLUS_KUBECONFIG_PATH}. Please ensure the KUBEPLUS_KUBECONFIG_PATH environment variable is set correctly."
+    try:
+        result = subprocess.run(
+            ["kubectl", "appstatus", kind, instance_name, "-k", KUBEPLUS_KUBECONFIG_PATH],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            return f"Error running kubectl appstatus: {result.stderr}"
+        return result.stdout
+    except subprocess.TimeoutExpired:
+        return "kubectl appstatus command timed out after 60s"
+    except Exception as e:
+        return f"Unexpected error: {str(e)}"
+
+
+@mcp.tool()
 def get_related_resources(kind: str, instance_name: str, namespace: str) -> str:
     """
     Get resources related to a KubePlus application instance.

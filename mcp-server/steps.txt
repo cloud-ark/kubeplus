@@ -7,6 +7,9 @@ Build MCP Server image and deploy MCP Server on the cluster
 ------------------------------------------------------------
 docker build -t kubeplus-mcp:latest .
 kubectl apply -f mcp-rbac.yaml -n kagent
-kubectl apply -f mcpdeployment.yaml -n kagent
+
+export KUBEPLUS_NS="<kubeplus namespace>"
+envsubst '$KUBEPLUS_NS' < mcpdeployment.yaml | kubectl apply -n kagent -f -
+kubectl apply -f kubeplus-agent.yaml
 
 kagent dashboard -> Start port forwarding

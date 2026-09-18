@@ -42,5 +42,8 @@ spec:
         - list_instances
         - describe_instance
         - get_application_resources
+        - get_app_url
+        - get_app_logs
+        - get_app_status
         - get_related_resources
         - get_license_status
