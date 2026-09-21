@@ -1,4 +1,4 @@
-name: Build and Push Consumer UI
+name: Build and Push KubePlus containers
 
 on:
   workflow_dispatch:
@@ -25,11 +25,11 @@ jobs:
       - name: Log in to GAR
         uses: docker/login-action@v3
         with:
-          registry: us-docker.pkg.dev
+          registry: gcr.io
           username: _json_key
           password: ${{ secrets.GCP_SA_KEY }} # secret name may need to be changed
 
-      - name: Build and Push Docker Image
+      - name: Build and Push Consumer UI Image
         uses: docker/build-push-action@v6
         with:
           context: ./consumerui
@@ -37,5 +37,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            us-docker.pkg.dev/cloudark-kubeplus/kubeplus/consumerui:${{ env.latest_version }}
-            us-docker.pkg.dev/cloudark-kubeplus/kubeplus/consumerui:latest
+            gcr.io/cloudark-kubeplus/kubeplus/consumerui:${{ env.latest_version }}
+            gcr.io/cloudark-kubeplus/kubeplus/consumerui:latest
