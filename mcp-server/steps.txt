@@ -47,9 +47,6 @@ $ minikube image load kubeplus-rag:latest
 Deploy the RAG MCP server:
 $ kubectl apply -f kubeplus-rag/kubeplus-rag.yaml -n kagent
 
-Register the RAG MCP server with Kagent:
-$ kubectl apply -f kubeplus-rag/kubeplus-rag-mcp.yaml -n kagent
-
 
 Configure the KubePlus agent
 ----------------------------
