@@ -20,6 +20,8 @@ $ helm install kagent oci://ghcr.io/kagent-dev/kagent/helm/kagent \
       --wait
 
 
+Note: Run the following commands from the mcp-server directory.
+
 Build MCP Server image and deploy MCP Server on the cluster
 ------------------------------------------------------------
 $ docker build -t kubeplus-mcp:latest .
@@ -27,6 +29,29 @@ $ kubectl apply -f mcp-rbac.yaml -n kagent
 
 $ export KUBEPLUS_NS="<kubeplus namespace>"
 $ envsubst '$KUBEPLUS_NS' < mcpdeployment.yaml | kubectl apply -n kagent -f -
+
+
+Build and deploy the KubePlus RAG MCP server
+---------------------------------------------
+The KubePlus RAG MCP server provides documentation retrieval over KubePlus documentation and example manifests.
+
+Build the documentation index:
+$ python3 kubeplus-rag/ingest.py
+
+Build the RAG MCP server image:
+$ docker build -t kubeplus-rag:latest ./kubeplus-rag
+
+If using Minikube, load the image into Minikube:
+$ minikube image load kubeplus-rag:latest
+
+Deploy the RAG MCP server:
+$ kubectl apply -f kubeplus-rag/kubeplus-rag.yaml -n kagent
+
+
+Configure the KubePlus agent
+----------------------------
+The KubePlus agent uses both the KubePlus MCP server and the KubePlus RAG MCP server.
+
 $ kubectl apply -f kubeplus-agent.yaml
 
 
@@ -36,7 +61,7 @@ Access the kagent dashboard:
 $ kagent dashboard
 
 Use the port-forwarding command provided by kagent dashboard:
-$ kubectl port-forward -n kagent svc/kagent-ui 8080:8080
+$ kubectl port-forward -n kagent svc/kagent-ui 8082:8080
 
 Open the dashboard UI in the browser:
-http://localhost:8080/
+http://localhost:8082/
