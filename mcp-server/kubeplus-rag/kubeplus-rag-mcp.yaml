@@ -1,0 +1,12 @@
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: kubeplus-rag
+  namespace: kagent
+spec:
+  description: KubePlus documentation retrieval tools
+  protocol: STREAMABLE_HTTP
+  timeout: 30s
+  sseReadTimeout: 5m0s
+  terminateOnClose: true
+  url: http://kubeplus-rag.kagent:8000/mcp

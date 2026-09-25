@@ -47,3 +47,12 @@ spec:
         - get_app_status
         - get_related_resources
         - get_license_status
+
+    - type: McpServer
+      mcpServer:
+        name: kubeplus-rag
+        namespace: kagent
+        kind: Service
+
+        toolNames:
+        - search_kubeplus_docs
