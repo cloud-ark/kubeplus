@@ -61,18 +61,18 @@ jobs:
         cd $KUBEPLUS_HOME/mutating-webhook
         export GO111MODULE=on
         go get github.com/googleapis/gnostic@v0.4.0
-        ./build-artifact.sh latest
+        make latest
 
     - name: Build Helmer
       run: |
         cd $KUBEPLUS_HOME/platform-operator/helm-pod/
         go mod vendor
-        ./build-artifact.sh latest
+        make latest
 
     - name: Build Platform Operator
       run: |
         cd $KUBEPLUS_HOME/platform-operator
-        ./build-artifact.sh latest
+        make latest
 
     - name: Build CRD Registration Helper
       run: |

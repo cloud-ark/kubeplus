@@ -60,28 +60,28 @@ jobs:
         echo "Building mutating-webhook..."
         cd $KUBEPLUS_HOME/mutating-webhook
         export GO111MODULE=on; go get github.com/googleapis/gnostic@v0.4.0
-        ./build-artifact.sh latest
+        make latest
 
         echo "Building helmer..."
         cd $KUBEPLUS_HOME/platform-operator/helm-pod/
         go mod vendor
-        ./build-artifact.sh latest
+        make latest
 
         echo "Building platform-operator..."
         cd $KUBEPLUS_HOME/platform-operator
-        ./build-artifact.sh latest
+        make latest
 
         echo "Building crd-registration-helper..."
         cd $KUBEPLUS_HOME/deploy
         ./build-artifact-crd-registration-helper.sh latest
         #echo "Building webhook_init_container..."
-        #./build-artifact.sh latest
+        #make latest
         #echo "Building resource cleaner..."
         #./build-artifact-clean.sh latest
 
         #cd $KUBEPLUS_HOME/consumerui
         #echo "Building consumer ui..."
-        #./build-artifact.sh latest
+        #make latest
 
         cd $KUBEPLUS_HOME
         ls
