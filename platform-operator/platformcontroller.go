@@ -21,7 +21,6 @@ import (
 
 	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -66,9 +65,6 @@ const (
 	CREATED_BY_VALUE = "kubeplus"
 	HELMER_HOST      = "localhost"
 	HELMER_PORT      = "8090"
-
-	resourceCompositionQueuePrefix = "composition:"
-	resourcePolicyQueuePrefix      = "resourcepolicy:"
 )
 
 // Controller is the controller implementation for Foo resources
@@ -78,12 +74,10 @@ type Controller struct {
 	// sampleclientset is a clientset for our own API group
 	platformStackclientset clientset.Interface
 
-	deploymentsLister      appslisters.DeploymentLister
-	deploymentsSynced      cache.InformerSynced
-	platformStacksLister   listers.ResourceCompositionLister
-	platformStacksSynced   cache.InformerSynced
-	resourcePoliciesLister listers.ResourcePolicyLister
-	resourcePoliciesSynced cache.InformerSynced
+	deploymentsLister    appslisters.DeploymentLister
+	deploymentsSynced    cache.InformerSynced
+	platformStacksLister listers.ResourceCompositionLister
+	platformStacksSynced cache.InformerSynced
 
 	// workqueue is a rate limited work queue. This is used to queue work to be
 	// processed instead of performing it as soon as a change happens. This
@@ -107,7 +101,6 @@ func NewPlatformController(
 	// types.
 	deploymentInformer := kubeInformerFactory.Apps().V1().Deployments()
 	platformStackInformer := platformstackInformerFactory.Workflows().V1alpha1().ResourceCompositions()
-	resourcePolicyInformer := platformstackInformerFactory.Workflows().V1alpha1().ResourcePolicies()
 
 	// Create event broadcaster
 	// Add platformstack-controller types to the default Kubernetes Scheme so Events can be
@@ -126,8 +119,6 @@ func NewPlatformController(
 		deploymentsSynced:      deploymentInformer.Informer().HasSynced,
 		platformStacksLister:   platformStackInformer.Lister(),
 		platformStacksSynced:   platformStackInformer.Informer().HasSynced,
-		resourcePoliciesLister: resourcePolicyInformer.Lister(),
-		resourcePoliciesSynced: resourcePolicyInformer.Informer().HasSynced,
 		workqueue:              workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "PlatformStacks"),
 		recorder:               recorder,
 	}
@@ -155,20 +146,6 @@ func NewPlatformController(
 			}
 		},
 	})
-	// ponytail: ResourcePolicy events are the MVP trigger; add dependency watches if drift repair is needed.
-	resourcePolicyInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: controller.enqueueResourcePolicy,
-		UpdateFunc: func(old, new interface{}) {
-			oldPolicy := old.(*platformworkflowv1alpha1.ResourcePolicy)
-			newPolicy := new.(*platformworkflowv1alpha1.ResourcePolicy)
-			if newPolicy.ResourceVersion == oldPolicy.ResourceVersion {
-				return
-			}
-			controller.enqueueResourcePolicy(newPolicy)
-		},
-		// queue deletes now; ownership-aware stale-policy cleanup is deferred.
-		DeleteFunc: controller.enqueueResourcePolicy,
-	})
 	return controller
 }
 
@@ -185,7 +162,7 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 
 	// Wait for the caches to be synced before starting workers
 	glog.Info("Waiting for informer caches to sync")
-	if ok := cache.WaitForCacheSync(stopCh, c.deploymentsSynced, c.platformStacksSynced, c.resourcePoliciesSynced); !ok {
+	if ok := cache.WaitForCacheSync(stopCh, c.deploymentsSynced, c.platformStacksSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
 
@@ -230,8 +207,8 @@ func (c *Controller) processNextWorkItem() bool {
 		defer c.workqueue.Done(obj)
 		var key string
 		var ok bool
-		// We expect prefixed strings to come off the workqueue. They are of the
-		// form resource-type:namespace/name. We do this as the delayed nature of the
+		// We expect strings to come off the workqueue. These are of the
+		// form namespace/name. We do this as the delayed nature of the
 		// workqueue means the items in the informer cache may actually be
 		// more up to date that when the item was initially put onto the
 		// workqueue.
@@ -243,7 +220,8 @@ func (c *Controller) processNextWorkItem() bool {
 			runtime.HandleError(fmt.Errorf("expected string in workqueue but got %#v", obj))
 			return nil
 		}
-		// Run syncHandler with the queued resource key.
+		// Run the syncHandler, passing it the namespace/name string of the
+		// Foo resource to be synced.
 		if err := c.syncHandler(key); err != nil {
 			return fmt.Errorf("error syncing '%s': %s", key, err.Error())
 		}
@@ -256,30 +234,23 @@ func (c *Controller) processNextWorkItem() bool {
 
 	if err != nil {
 		runtime.HandleError(err)
-		c.workqueue.AddRateLimited(obj)
 		return true
 	}
 
 	return true
 }
 
-// enqueueFoo takes a ResourceComposition and puts its key onto the work queue.
+// enqueueFoo takes a Foo resource and converts it into a namespace/name
+// string which is then put onto the work queue. This method should *not* be
+// passed resources of any type other than Foo.
 func (c *Controller) enqueueFoo(obj interface{}) {
-	c.enqueueWithPrefix(resourceCompositionQueuePrefix, obj)
-}
-
-func (c *Controller) enqueueResourcePolicy(obj interface{}) {
-	c.enqueueWithPrefix(resourcePolicyQueuePrefix, obj)
-}
-
-func (c *Controller) enqueueWithPrefix(prefix string, obj interface{}) {
 	var key string
 	var err error
-	if key, err = cache.DeletionHandlingMetaNamespaceKeyFunc(obj); err != nil {
+	if key, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
 		runtime.HandleError(err)
 		return
 	}
-	c.workqueue.AddRateLimited(prefix + key)
+	c.workqueue.AddRateLimited(key)
 }
 
 // handleObject will take any resource implementing metav1.Object and attempt
@@ -410,106 +381,10 @@ func (c *Controller) updateFoo(oldObj, newObj interface{}) {
 	c.recorder.Event(newFoo, corev1.EventTypeNormal, SuccessSynced, MessageResourceSynced)
 }
 
-func (c *Controller) syncResourcePolicy(key string) error {
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
-	if err != nil {
-		return fmt.Errorf("invalid resource policy key %q: %w", key, err)
-	}
-	if namespace == "" {
-		namespace = "default"
-	}
-
-	policy, err := c.resourcePoliciesLister.ResourcePolicies(namespace).Get(name)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return c.deleteResourcePolicyNetworkPolicies(namespace, name)
-		}
-		return err
-	}
-
-	desiredPolicies := make(map[string]struct{}, len(policy.Spec.Policy.Network.Access))
-	for _, rule := range policy.Spec.Policy.Network.Access {
-		serviceNamespace := rule.ServiceRef.Namespace
-		if serviceNamespace == "" {
-			serviceNamespace = namespace
-		}
-		service, err := c.kubeclientset.CoreV1().Services(serviceNamespace).Get(context.Background(), rule.ServiceRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return fmt.Errorf("get service %s/%s for resource policy %s/%s: %w", serviceNamespace, rule.ServiceRef.Name, namespace, name, err)
-		}
-
-		desired, err := buildNetworkPolicy(rule, *service)
-		if err != nil {
-			return fmt.Errorf("build network policy for resource policy %s/%s: %w", namespace, name, err)
-		}
-		if desired.Annotations == nil {
-			desired.Annotations = map[string]string{}
-		}
-		desired.Annotations[networkPolicyResourcePolicyAnnotation] = namespace + "/" + name
-		if err := c.upsertNetworkPolicy(desired); err != nil {
-			return fmt.Errorf("apply network policy %s/%s: %w", desired.Namespace, desired.Name, err)
-		}
-		desiredPolicies[desired.Namespace+"/"+desired.Name] = struct{}{}
-	}
-
-	return c.pruneResourcePolicyNetworkPolicies(namespace+"/"+name, desiredPolicies)
-}
-
-func (c *Controller) deleteResourcePolicyNetworkPolicies(namespace, name string) error {
-	return c.pruneResourcePolicyNetworkPolicies(namespace+"/"+name, nil)
-}
-
-func (c *Controller) pruneResourcePolicyNetworkPolicies(resourcePolicyRef string, desired map[string]struct{}) error {
-	policies, err := c.kubeclientset.NetworkingV1().NetworkPolicies("").List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		return err
-	}
-	for i := range policies.Items {
-		policy := &policies.Items[i]
-		if policy.Labels[CREATED_BY_KEY] != CREATED_BY_VALUE || policy.Annotations[networkPolicyResourcePolicyAnnotation] != resourcePolicyRef {
-			continue
-		}
-		if _, ok := desired[policy.Namespace+"/"+policy.Name]; ok {
-			continue
-		}
-		if err := c.kubeclientset.NetworkingV1().NetworkPolicies(policy.Namespace).Delete(context.Background(), policy.Name, metav1.DeleteOptions{}); err != nil && !errors.IsNotFound(err) {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *Controller) upsertNetworkPolicy(desired *networkingv1.NetworkPolicy) error {
-	policies := c.kubeclientset.NetworkingV1().NetworkPolicies(desired.Namespace)
-	existing, err := policies.Get(context.Background(), desired.Name, metav1.GetOptions{})
-	if errors.IsNotFound(err) {
-		_, err = policies.Create(context.Background(), desired, metav1.CreateOptions{})
-		return err
-	}
-	if err != nil {
-		return err
-	}
-	if existing.Labels[CREATED_BY_KEY] != CREATED_BY_VALUE {
-		return fmt.Errorf("existing network policy is not managed by KubePlus")
-	}
-	if owner := existing.Annotations[networkPolicyResourcePolicyAnnotation]; owner != "" && owner != desired.Annotations[networkPolicyResourcePolicyAnnotation] {
-		return fmt.Errorf("existing network policy is owned by resource policy %q", owner)
-	}
-
-	desired.ResourceVersion = existing.ResourceVersion
-	_, err = policies.Update(context.Background(), desired, metav1.UpdateOptions{})
-	return err
-}
-
 // syncHandler compares the actual state with the desired, and attempts to
 // converge the two. It then updates the Status block of the Foo resource
 // with the current status of the resource.
 func (c *Controller) syncHandler(key string) error {
-	if strings.HasPrefix(key, resourcePolicyQueuePrefix) {
-		return c.syncResourcePolicy(strings.TrimPrefix(key, resourcePolicyQueuePrefix))
-	}
-	key = strings.TrimPrefix(key, resourceCompositionQueuePrefix)
-
 	// Convert the namespace/name string into a distinct namespace and name
 	fmt.Printf("Inside syncHandler...key:%s\n", key)
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)

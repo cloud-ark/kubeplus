@@ -97,12 +97,12 @@ func TestSyncResourcePolicyUpsertsNetworkPolicy(t *testing.T) {
 	if err := indexer.Add(policy); err != nil {
 		t.Fatal(err)
 	}
-	controller := &Controller{
+	controller := &ResourcePolicyController{
 		kubeclientset:          fake.NewSimpleClientset(service),
 		resourcePoliciesLister: platformlisters.NewResourcePolicyLister(indexer),
 	}
 
-	if err := controller.syncHandler(resourcePolicyQueuePrefix + "provider/rag-access"); err != nil {
+	if err := controller.syncResourcePolicy("provider/rag-access"); err != nil {
 		t.Fatal(err)
 	}
 	policies := controller.kubeclientset.NetworkingV1().NetworkPolicies("rag-services")
@@ -121,7 +121,7 @@ func TestSyncResourcePolicyUpsertsNetworkPolicy(t *testing.T) {
 	if err := indexer.Update(policy); err != nil {
 		t.Fatal(err)
 	}
-	if err := controller.syncHandler(resourcePolicyQueuePrefix + "provider/rag-access"); err != nil {
+	if err := controller.syncResourcePolicy("provider/rag-access"); err != nil {
 		t.Fatal(err)
 	}
 	updated, err := policies.Get(context.Background(), "chatbot-to-rag", metav1.GetOptions{})
@@ -160,11 +160,11 @@ func TestSyncResourcePolicyPrunesRemovedNetworkPolicy(t *testing.T) {
 	if err := indexer.Add(policy); err != nil {
 		t.Fatal(err)
 	}
-	controller := &Controller{
+	controller := &ResourcePolicyController{
 		kubeclientset:          fake.NewSimpleClientset(service),
 		resourcePoliciesLister: platformlisters.NewResourcePolicyLister(indexer),
 	}
-	if err := controller.syncHandler(resourcePolicyQueuePrefix + "provider/rag-access"); err != nil {
+	if err := controller.syncResourcePolicy("provider/rag-access"); err != nil {
 		t.Fatal(err)
 	}
 	oldName := "chatbot-to-rag-old"
@@ -173,7 +173,7 @@ func TestSyncResourcePolicyPrunesRemovedNetworkPolicy(t *testing.T) {
 	if err := indexer.Update(updatedPolicy); err != nil {
 		t.Fatal(err)
 	}
-	if err := controller.syncHandler(resourcePolicyQueuePrefix + "provider/rag-access"); err != nil {
+	if err := controller.syncResourcePolicy("provider/rag-access"); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := controller.kubeclientset.NetworkingV1().NetworkPolicies("rag-services").Get(context.Background(), oldName, metav1.GetOptions{}); !errors.IsNotFound(err) {
@@ -190,12 +190,12 @@ func TestSyncResourcePolicyDeleteCleansOwnedPoliciesOnly(t *testing.T) {
 		Namespace: "rag-services", Name: "other", Labels: map[string]string{CREATED_BY_KEY: CREATED_BY_VALUE},
 		Annotations: map[string]string{networkPolicyResourcePolicyAnnotation: "provider/other"},
 	}}
-	controller := &Controller{
+	controller := &ResourcePolicyController{
 		kubeclientset: fake.NewSimpleClientset(owned, other),
 		resourcePoliciesLister: platformlisters.NewResourcePolicyLister(
 			cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})),
 	}
-	if err := controller.syncHandler(resourcePolicyQueuePrefix + "provider/rag-access"); err != nil {
+	if err := controller.syncResourcePolicy("provider/rag-access"); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := controller.kubeclientset.NetworkingV1().NetworkPolicies("rag-services").Get(context.Background(), "owned", metav1.GetOptions{}); !errors.IsNotFound(err) {
@@ -214,7 +214,7 @@ func TestUpsertNetworkPolicyRejectsAnotherResourcePolicyOwner(t *testing.T) {
 	}}
 	existing := desired.DeepCopy()
 	existing.Annotations[networkPolicyResourcePolicyAnnotation] = "provider/other"
-	controller := &Controller{kubeclientset: fake.NewSimpleClientset(existing)}
+	controller := &ResourcePolicyController{kubeclientset: fake.NewSimpleClientset(existing)}
 	if err := controller.upsertNetworkPolicy(desired); err == nil {
 		t.Fatal("expected an ownership conflict")
 	}
