@@ -10,8 +10,8 @@ class ConnectionsGraph(object):
 
 	def draw(self, connections_json, output_folder, relsToHide):
 		#print(connections_json)
-		cmd = "ls -ltr /root/"
-		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+		cmd = ["ls", "-ltr", "/root/"]
+		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
 		#print(out)
 		fp = open(output_folder + "/" + connections_json, "r")
 		json_data = fp.read()
