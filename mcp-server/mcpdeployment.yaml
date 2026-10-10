@@ -30,7 +30,53 @@ spec:
       labels:
         app: kubeplus-mcp
     spec:
+      serviceAccountName: kubeplus-mcp
+
       initContainers:
+        - name: create-kubeconfig
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              cat > /kubeconfig/config.json <<EOF
+              {
+                "apiVersion": "v1",
+                "kind": "Config",
+                "clusters": [
+                  {
+                    "name": "in-cluster",
+                    "cluster": {
+                      "server": "https://kubernetes.default.svc",
+                      "certificate-authority": "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+                    }
+                  }
+                ],
+                "users": [
+                  {
+                    "name": "kubeplus-mcp",
+                    "user": {
+                      "tokenFile": "/var/run/secrets/kubernetes.io/serviceaccount/token"
+                    }
+                  }
+                ],
+                "contexts": [
+                  {
+                    "name": "kubeplus-mcp",
+                    "context": {
+                      "cluster": "in-cluster",
+                      "user": "kubeplus-mcp",
+                      "namespace": "$KUBEPLUS_NS"
+                    }
+                  }
+                ],
+                "current-context": "kubeplus-mcp"
+              }
+              EOF
+          volumeMounts:
+            - name: kubeconfig
+              mountPath: /kubeconfig
+
         - name: fetch-kubeplus-plugins
           image: curlimages/curl:8.11.0
           env:
@@ -43,12 +89,12 @@ spec:
               set -e
               curl -L "https://github.com/cloud-ark/kubeplus/releases/download/kubectl-plugins-${KUBEPLUS_PLUGINS_VERSION}/kubectl-plugins-${KUBEPLUS_PLUGINS_VERSION}.tar.gz" \
                 -o /tmp/plugins.tar.gz
-
               tar -xzf /tmp/plugins.tar.gz -C /.
               chmod +x /plugins/*
           volumeMounts:
             - name: kubeplus-plugins
               mountPath: /plugins
+
       containers:
         - name: kubeplus-mcp
           image: kubeplus-mcp:latest
@@ -57,7 +103,7 @@ spec:
             - containerPort: 8000
           env:
             - name: KUBEPLUS_KUBECONFIG_PATH
-              value: /etc/kubeplus/kubeconfig/kubeplus-saas-provider.json
+              value: /etc/kubeplus/kubeconfig/config.json
             - name: PATH
               value: "/plugins:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
             - name: MCP_DISABLE_DNS_REBINDING_PROTECTION
@@ -75,9 +121,9 @@ spec:
             - name: kubeconfig
               mountPath: /etc/kubeplus/kubeconfig
               readOnly: true
+
       volumes:
         - name: kubeplus-plugins
           emptyDir: {}
         - name: kubeconfig
-          secret:
-            secretName: kubeplus-mcp-kubeconfig
+          emptyDir: {}
