@@ -6,9 +6,15 @@ on:
 jobs:
   build-and-push-containers:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -56,12 +62,22 @@ jobs:
           tags: us-central1-docker.pkg.dev/titanium-gadget-502516-g3/my-repo/webhook-tls-getter:${{ env.webhook_tls_getter_version }}
 
             
-
+#       Mutating webhook
       - name: Get latest version of mutating-webhook
         run: |
           LAST_LINE=$(tail -n 1 mutating-webhook/versions.txt | tr -d '\r')
           echo "mutating_webhook_version=${LAST_LINE}" >> $GITHUB_ENV
-            
+ 
+
+      - name: Compile Go binaries
+        env:
+          GO111MODULE: "on"
+          CGO_ENABLED: "0"
+          GOOS: linux
+        run: |
+          GOARCH=amd64 go build -a -installsuffix cgo -o mutating-webhook/crd-hook-amd64 .
+          GOARCH=arm64 go build -a -installsuffix cgo -o mutating-webhook/crd-hook-arm64 .
+ 
       - name: Build and Push mutating-webhook
         uses: docker/build-push-action@v6
         with:
@@ -72,7 +88,7 @@ jobs:
           tags: us-central1-docker.pkg.dev/titanium-gadget-502516-g3/my-repo/mutating-webhook:${{ env.mutating_webhook_version }}
 
 
-
+#       platform operator
       - name: Get latest version of platform-operator
         run: |
           LAST_LINE=$(tail -n 1 platform-operator/versions.txt | tr -d '\r')
