@@ -10,7 +10,7 @@ class LicenseManager(CRBase):
         kubeplus_ns = self.get_kubeplus_namespace(kubeconfig)
         kind_lower = kind.lower()
         license_configmap = kind_lower + "-license"
-        cmd = "kubectl create configmap " + license_configmap + " --from-file=license_file=" + license_file + " -n " + kubeplus_ns + " --kubeconfig=" + kubeconfig
+        cmd = ["kubectl", "create", "configmap", license_configmap, "--from-file=license_file=" + license_file, "-n", kubeplus_ns, "--kubeconfig=" + kubeconfig]
         out, err = self.run_command(cmd)
         if out != '':
             msg = "License for Kind {kind} created.".format(kind=kind)
@@ -20,11 +20,11 @@ class LicenseManager(CRBase):
             print(msg)
 
         if expiry != "":
-            cmd = "kubectl annotate configmap " + license_configmap + " expiry=" + expiry + " -n " + kubeplus_ns + " --kubeconfig=" + kubeconfig
+            cmd = ["kubectl", "annotate", "configmap", license_configmap, "expiry=" + expiry, "-n", kubeplus_ns, "--kubeconfig=" + kubeconfig]
             self.run_command(cmd)
 
         if num_of_instances != "":
-            cmd = "kubectl annotate configmap " + license_configmap + " allowed_instances=" + num_of_instances + " -n " + kubeplus_ns + " --kubeconfig=" + kubeconfig
+            cmd = ["kubectl", "annotate", "configmap", license_configmap, "allowed_instances=" + num_of_instances, "-n", kubeplus_ns, "--kubeconfig=" + kubeconfig]
             self.run_command(cmd)
 
 
