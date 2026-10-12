@@ -1,16 +1,27 @@
 # ResourcePolicy network-policy test
 
-These commands assume the `kubeplus-netpol` context and an updated KubePlus
+This walkthrough tests a standalone ResourcePolicy. It assumes KubePlus is
+installed in `default`, including the ResourcePolicy CRD, and uses an updated
 platform-operator image.
+
+Run the walkthrough from the KubePlus repository root directory.
+
+Start the test profile with Calico, which enforces NetworkPolicies, and select
+its context before running the commands below:
+
+```bash
+minikube start -p kubeplus-netpol --cni=calico
+kubectl config use-context kubeplus-netpol
+```
 
 ## Optional local image update
 
 ```bash
-minikube start -p kubeplus-netpol
 eval "$(minikube docker-env -p kubeplus-netpol)"
 
-cd /home/pat_bladeeman/go/src/github.com/cloud-ark/kubeplus/platform-operator
-./build-artifact.sh latest
+cd platform-operator
+GOFLAGS=-mod=readonly ./build-artifact.sh latest
+cd ..
 
 kubectl -n default set image deployment/kubeplus-deployment \
   platform-operator=gcr.io/cloudark-kubeplus/platform-operator:latest
@@ -29,7 +40,7 @@ kubectl delete namespace rag-services team-a --ignore-not-found --wait=true
 ## Create and inspect
 
 ```bash
-cd /home/pat_bladeeman/go/src/github.com/cloud-ark/kubeplus/tests/test_resource_policy
+cd tests/test_resource_policy
 
 kubectl apply -f rag-network-test.yaml
 kubectl -n rag-services rollout status deployment/rag-api --timeout=120s
@@ -63,6 +74,9 @@ kubectl -n team-a exec chatbot -- \
 kubectl -n default patch resourcepolicy rag-access --type=json \
   -p='[{"op":"replace","path":"/spec/policy/network/access/0/ports/0/port","value":8080}]'
 
+kubectl -n rag-services wait \
+  --for=jsonpath='{.spec.ingress[0].ports[0].port}'=8080 \
+  networkpolicy/chatbot-to-rag --timeout=30s
 kubectl -n rag-services get networkpolicy chatbot-to-rag \
   -o jsonpath='{.spec.ingress[0].ports[0].port}{"\n"}'
 ```
@@ -72,6 +86,9 @@ The output should be `8080`. Restore the fixture value:
 ```bash
 kubectl -n default patch resourcepolicy rag-access --type=json \
   -p='[{"op":"replace","path":"/spec/policy/network/access/0/ports/0/port","value":80}]'
+kubectl -n rag-services wait \
+  --for=jsonpath='{.spec.ingress[0].ports[0].port}'=80 \
+  networkpolicy/chatbot-to-rag --timeout=30s
 ```
 
 ## Delete and recreate
@@ -86,6 +103,8 @@ done
 kubectl -n rag-services get networkpolicy chatbot-to-rag --ignore-not-found
 
 kubectl apply -f ResourcePolicy.yaml
+kubectl -n rag-services wait --for=create \
+  networkpolicy/chatbot-to-rag --timeout=30s
 kubectl -n rag-services get networkpolicy chatbot-to-rag -o yaml
 ```
 
@@ -93,10 +112,10 @@ For plugin CRUD checks, add the local plugin directory to `PATH` and replace
 the native `kubectl apply/get/delete resourcepolicy` commands with:
 
 ```bash
-export PATH=/home/pat_bladeeman/go/src/github.com/cloud-ark/kubeplus/plugins:$PATH
-kubectl resource-policy apply -f ResourcePolicy.yaml
-kubectl resource-policy get rag-access -n default -o yaml
-kubectl resource-policy delete rag-access -n default
+export PATH="$(pwd)/../../plugins:$PATH"
+kubectl resource policy apply -f ResourcePolicy.yaml
+kubectl resource policy get rag-access -n default -o yaml
+kubectl resource policy delete rag-access -n default
 ```
 
 If reconciliation fails, inspect the controller:

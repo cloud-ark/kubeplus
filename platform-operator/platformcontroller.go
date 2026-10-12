@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/json"
 	gerrors "errors"
 	"fmt"
 	"io/ioutil"
@@ -45,6 +47,8 @@ import (
 )
 
 const controllerAgentName = "platformstack-controller"
+
+const resourcePolicyTemplateHashAnnotation = "kubeplus.io/policy-template-hash"
 
 const (
 	// SuccessSynced is used as part of the Event 'reason' when PlatformStack is synced
@@ -146,6 +150,9 @@ func NewPlatformController(
 			}
 		},
 	})
+	platformstackInformerFactory.Workflows().V1alpha1().ResourcePolicies().Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		DeleteFunc: controller.handleObject,
+	})
 	return controller
 }
 
@@ -234,6 +241,7 @@ func (c *Controller) processNextWorkItem() bool {
 
 	if err != nil {
 		runtime.HandleError(err)
+		c.workqueue.AddRateLimited(obj)
 		return true
 	}
 
@@ -254,9 +262,9 @@ func (c *Controller) enqueueFoo(obj interface{}) {
 }
 
 // handleObject will take any resource implementing metav1.Object and attempt
-// to find the Foo resource that 'owns' it. It does this by looking at the
+// to find the ResourceComposition that 'owns' it. It does this by looking at the
 // objects metadata.ownerReferences field for an appropriate OwnerReference.
-// It then enqueues that Foo resource to be processed. If the object does not
+// It then enqueues that ResourceComposition. If the object does not
 // have an appropriate OwnerReference, it will simply be skipped.
 func (c *Controller) handleObject(obj interface{}) {
 	var object metav1.Object
@@ -276,15 +284,16 @@ func (c *Controller) handleObject(obj interface{}) {
 	}
 	glog.V(4).Infof("Processing object: %s", object.GetName())
 	if ownerRef := metav1.GetControllerOf(object); ownerRef != nil {
-		// If this object is not owned by a Foo, we should not do anything more
-		// with it.
-		if ownerRef.Kind != "Foo" {
+		if ownerRef.Kind != "ResourceComposition" || ownerRef.APIVersion != platformworkflowv1alpha1.SchemeGroupVersion.String() {
 			return
 		}
 
 		foo, err := c.platformStacksLister.ResourceCompositions(object.GetNamespace()).Get(ownerRef.Name)
 		if err != nil {
 			glog.V(4).Infof("ignoring orphaned object '%s' of foo '%s'", object.GetSelfLink(), ownerRef.Name)
+			return
+		}
+		if foo.UID != ownerRef.UID || foo.DeletionTimestamp != nil {
 			return
 		}
 
@@ -328,9 +337,7 @@ func (c *Controller) deleteFoo(obj interface{}) {
 	action := "delete"
 	handleCRD(foo.Name, kind, version, group, plural, action, namespace, chartURL, chartName)
 
-	resPolicySpec := foo.Spec.ResPolicy
-
-	deleteResourcePolicy(resPolicySpec, namespace)
+	// Kubernetes garbage collection deletes ResourcePolicies owned by this composition.
 
 	resMonitorSpec := foo.Spec.ResMonitor
 
@@ -409,6 +416,9 @@ func (c *Controller) syncHandler(key string) error {
 		}
 		return err
 	}
+	if foo.DeletionTimestamp != nil {
+		return nil
+	}
 
 	fmt.Printf("ABC\n")
 	fmt.Printf("%v\n", foo.Spec)
@@ -435,11 +445,9 @@ func (c *Controller) syncHandler(key string) error {
 		return nil
 	}
 
-	resPolicySpec := foo.Spec.ResPolicy
-	fmt.Printf("ResPolicySpec:%v\n", resPolicySpec)
-
-	// Instantiate ResourcePolicy object
-	createResourcePolicy(resPolicySpec, namespace)
+	if err := c.syncCompositionResourcePolicy(foo); err != nil {
+		return fmt.Errorf("sync nested resource policy: %w", err)
+	}
 
 	resMonitorSpec := foo.Spec.ResMonitor
 	fmt.Printf("ResMonitorSpec:%v\n", resMonitorSpec)
@@ -533,56 +541,65 @@ func deleteResourceMonitor(resMonitorSpec interface{}, namespace string) {
 	}
 }
 
-func createResourcePolicy(resPolicySpec interface{}, namespace string) {
-	fmt.Println("Inside createResourcePolicy")
-	resPolicyObject := resPolicySpec.(platformworkflowv1alpha1.ResourcePolicy)
-	//resPolicySpecMap := resPolicySpec.(map[string]interface{})
-
-	// Using Typed client
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		panic(err.Error())
+func (c *Controller) syncCompositionResourcePolicy(foo *platformworkflowv1alpha1.ResourceComposition) error {
+	if foo.DeletionTimestamp != nil || foo.Spec.ResPolicy.Name == "" {
+		return nil
 	}
-
-	var sampleclientset clientset.Interface
-	sampleclientset = clientset.NewForConfigOrDie(config)
-
-	resPolicy, err := sampleclientset.WorkflowsV1alpha1().ResourcePolicies(namespace).Create(context.Background(), &resPolicyObject, metav1.CreateOptions{})
-	fmt.Printf("ResourcePolicy:%v\n", resPolicy)
-	if err != nil {
-		fmt.Errorf("Error:%s\n", err)
+	namespace := foo.Namespace
+	if namespace == "" {
+		namespace = "default"
 	}
-}
-
-func deleteResourcePolicy(resPolicySpec interface{}, namespace string) {
-	fmt.Println("Inside deleteResourcePolicy.")
-	resPolicyObject := resPolicySpec.(platformworkflowv1alpha1.ResourcePolicy)
-	inputResPolicyName := resPolicyObject.ObjectMeta.Name
-	fmt.Printf("ResPolicy:%s, Namespace:%s\n", inputResPolicyName, namespace)
-
-	// Using Typed client
-	config, err := rest.InClusterConfig()
+	template := foo.Spec.ResPolicy.DeepCopy()
+	data, err := json.Marshal(template.Spec)
 	if err != nil {
-		panic(err.Error())
+		return err
 	}
-
-	var sampleclientset clientset.Interface
-	sampleclientset = clientset.NewForConfigOrDie(config)
-
-	resPolicyList, err := sampleclientset.WorkflowsV1alpha1().ResourcePolicies(namespace).List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		fmt.Errorf("Error:%s\n", err)
-	}
-	for _, resPolicy := range resPolicyList.Items {
-		resPolicyName := resPolicy.ObjectMeta.Name
-		if inputResPolicyName == resPolicyName {
-			fmt.Printf("Deleting ResPolicy object %s\n", resPolicyName)
-			err := sampleclientset.WorkflowsV1alpha1().ResourcePolicies(namespace).Delete(context.Background(), resPolicyName, metav1.DeleteOptions{})
-			if err != nil {
-				fmt.Errorf("Error:%s\n", err)
-			}
+	hash := fmt.Sprintf("%x", sha256.Sum256(data))
+	owner := metav1.NewControllerRef(foo, platformworkflowv1alpha1.SchemeGroupVersion.WithKind("ResourceComposition"))
+	policies := c.platformStackclientset.WorkflowsV1alpha1().ResourcePolicies(namespace)
+	policy, err := policies.Get(context.Background(), template.Name, metav1.GetOptions{})
+	if errors.IsNotFound(err) {
+		template.ObjectMeta = metav1.ObjectMeta{
+			Name: template.Name, Namespace: namespace,
+			Labels: template.Labels, Annotations: template.Annotations,
+			OwnerReferences: []metav1.OwnerReference{*owner},
 		}
+		template.Status = platformworkflowv1alpha1.ResourcePolicyStatus{}
+		if template.Annotations == nil {
+			template.Annotations = map[string]string{}
+		}
+		template.Annotations[resourcePolicyTemplateHashAnnotation] = hash
+		_, err = policies.Create(context.Background(), template, metav1.CreateOptions{})
+		return err
 	}
+	if err != nil {
+		return err
+	}
+	existingOwner := metav1.GetControllerOf(policy)
+	if existingOwner != nil && (existingOwner.UID != owner.UID || existingOwner.Kind != owner.Kind || existingOwner.APIVersion != owner.APIVersion) {
+		return fmt.Errorf("resource policy %s/%s is owned by another controller", namespace, template.Name)
+	}
+	if policy.DeletionTimestamp != nil {
+		return nil
+	}
+	previousHash := policy.Annotations[resourcePolicyTemplateHashAnnotation]
+	if existingOwner != nil && previousHash == hash {
+		return nil
+	}
+	updated := policy.DeepCopy()
+	// Legacy policies have no checkpoint; preserve their current spec on first adoption.
+	if previousHash != "" && previousHash != hash {
+		updated.Spec = template.Spec
+	}
+	if existingOwner == nil {
+		updated.OwnerReferences = append(updated.OwnerReferences, *owner)
+	}
+	if updated.Annotations == nil {
+		updated.Annotations = map[string]string{}
+	}
+	updated.Annotations[resourcePolicyTemplateHashAnnotation] = hash
+	_, err = policies.Update(context.Background(), updated, metav1.UpdateOptions{})
+	return err
 }
 
 func handleCRD(rescomposition, kind, version, group, plural, action, namespace, chartURL, chartName string) error {

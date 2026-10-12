@@ -5,6 +5,19 @@
 Platform Workflow Operator enables publishing new Services in a cluster. Cluster Admins use this Operator to govern their cluster usage by defining and registering opinionated Services with appropriate guard rails. The new Services are registered
 as new Custom Resources. Application development teams consume the Services by creating instances of these Custom Resources.
 
+## Nested ResourcePolicy lifecycle
+
+The platform controller creates the named `spec.respolicy` in the composition's
+namespace and makes the composition its owner. Direct edits to that policy stay
+active until the nested policy spec changes, which replaces the standalone
+policy's entire spec. A persisted template hash preserves direct edits across
+ordinary reconciliation and controller restarts. Deleting the owned policy
+recreates it from the current nested spec; deleting the composition lets Kubernetes
+garbage collection delete its owned policy. Other standalone policies stay independent.
+
+On first reconciliation, existing policies without a template hash are adopted
+by name without changing their spec. Policies controlled by another owner are rejected.
+
 ## Development steps
 
 1. Setup:
