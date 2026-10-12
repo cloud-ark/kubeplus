@@ -116,8 +116,33 @@ type ResourcePolicySpec struct {
 }
 
 type Pol struct {
-	PolicyResources PolicyResources `json:"podconfig"`
-	Quota Quota `json:"quota"`
+	PolicyResources PolicyResources     `json:"podconfig,omitempty"`
+	Quota           Quota               `json:"quota,omitempty"`
+	Network         NetworkAccessPolicy `json:"network,omitempty"`
+}
+
+type NetworkAccessPolicy struct {
+	Access []NetworkAccessRule `json:"access,omitempty"`
+}
+
+type NetworkAccessRule struct {
+	Name        string              `json:"name,omitempty"`
+	ProviderRef ResourceReference   `json:"providerRef"`
+	ServiceRef  ResourceReference   `json:"serviceRef"`
+	Consumers   []ResourceReference `json:"consumers,omitempty"`
+	Ports       []NetworkPort       `json:"ports,omitempty"`
+}
+
+type ResourceReference struct {
+	APIVersion string `json:"apiVersion,omitempty"`
+	Kind       string `json:"kind,omitempty"`
+	Namespace  string `json:"namespace,omitempty"`
+	Name       string `json:"name"`
+}
+
+type NetworkPort struct {
+	Protocol string `json:"protocol,omitempty"`
+	Port     int32  `json:"port"`
 }
 
 type PolicyResources struct {

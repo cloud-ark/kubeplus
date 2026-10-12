@@ -47,6 +47,7 @@ func main() {
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 	platformInformerFactory := informers.NewSharedInformerFactory(platformOperatorClient, time.Second*30)
 	platformController := NewPlatformController(kubeClient, platformOperatorClient, kubeInformerFactory, platformInformerFactory)
+	resourcePolicyController := NewResourcePolicyController(kubeClient, platformInformerFactory.Workflows().V1alpha1().ResourcePolicies())
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -55,6 +56,7 @@ func main() {
 		defer wg.Done()
 		platformController.Run(1, ctx.Done())
 	}()
+	go resourcePolicyController.Run(1, ctx.Done())
 
 	go kubeInformerFactory.Start(ctx.Done())
 	go platformInformerFactory.Start(ctx.Done())

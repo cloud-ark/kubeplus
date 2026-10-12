@@ -1,0 +1,48 @@
+#!/bin/bash
+
+usage() {
+    cat >&2 <<'EOF'
+Usage:
+  kubectl resource-policy create -f FILE
+  kubectl resource-policy apply -f FILE
+  kubectl resource-policy get [NAME] [flags]
+  kubectl resource-policy list [flags]
+  kubectl resource-policy edit NAME [flags]
+  kubectl resource-policy delete NAME [flags]
+EOF
+}
+
+if (( $# == 0 )); then
+    usage
+    exit 1
+fi
+
+command=$1
+shift
+
+case "$command" in
+    create)
+        exec kubectl create "$@"
+        ;;
+    apply)
+        exec kubectl apply "$@"
+        ;;
+    get|list)
+        exec kubectl get resourcepolicies "$@"
+        ;;
+    edit)
+        exec kubectl edit resourcepolicies "$@"
+        ;;
+    delete)
+        exec kubectl delete resourcepolicies "$@"
+        ;;
+    -h|--help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo "Unknown resource-policy command: $command" >&2
+        usage
+        exit 2
+        ;;
+esac

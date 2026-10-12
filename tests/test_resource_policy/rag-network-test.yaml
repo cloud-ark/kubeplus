@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rag-services
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-a
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-api
+  namespace: rag-services
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      partof: ragservice-shared-rag
+  template:
+    metadata:
+      labels:
+        partof: ragservice-shared-rag
+    spec:
+      containers:
+        - name: rag-api
+          image: nginx:1.27
+          ports:
+            - name: http
+              containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-api
+  namespace: rag-services
+spec:
+  selector:
+    partof: ragservice-shared-rag
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: chatbot
+  namespace: team-a
+  labels:
+    partof: chatbot-chatbot
+spec:
+  containers:
+    - name: curl
+      image: curlimages/curl:8.10.1
+      command: ["/bin/sh", "-c"]
+      args: ["sleep 3600"]

@@ -1,0 +1,31 @@
+apiVersion: workflows.kubeplus/v1alpha1
+kind: ResourcePolicy
+metadata:
+  name: rag-access
+  namespace: default
+spec:
+  resource:
+    kind: RAGService
+    group: platformapi.kubeplus
+    version: v1alpha1
+  policy:
+    network:
+      access:
+        - name: chatbot-to-rag
+          providerRef:
+            kind: RAGService
+            namespace: default
+            name: shared-rag
+          serviceRef:
+            apiVersion: v1
+            kind: Service
+            namespace: rag-services
+            name: rag-api
+          consumers:
+            - apiVersion: platformapi.kubeplus/v1alpha1
+              kind: Chatbot
+              namespace: team-a
+              name: chatbot
+          ports:
+            - protocol: TCP
+              port: 80

@@ -169,6 +169,63 @@ spec:
                                   type: string
                                 limits.memory:
                                   type: string
+                            network:
+                              type: object
+                              properties:
+                                access:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      name:
+                                        type: string
+                                      providerRef:
+                                        type: object
+                                        properties:
+                                          apiVersion:
+                                            type: string
+                                          kind:
+                                            type: string
+                                          namespace:
+                                            type: string
+                                          name:
+                                            type: string
+                                      serviceRef:
+                                        type: object
+                                        properties:
+                                          apiVersion:
+                                            type: string
+                                          kind:
+                                            type: string
+                                          namespace:
+                                            type: string
+                                          name:
+                                            type: string
+                                      consumers:
+                                        type: array
+                                        items:
+                                          type: object
+                                          properties:
+                                            apiVersion:
+                                              type: string
+                                            kind:
+                                              type: string
+                                            namespace:
+                                              type: string
+                                            name:
+                                              type: string
+                                      ports:
+                                        type: array
+                                        items:
+                                          type: object
+                                          properties:
+                                            protocol:
+                                              type: string
+                                            port:
+                                              type: integer
+                                              format: int32
+                                              minimum: 1
+                                              maximum: 65535
                 resmonitor:
                   type: object
                   properties:
@@ -261,6 +318,63 @@ spec:
                               type: string
                         nodeSelector:
                           type: string
+                    network:
+                      type: object
+                      properties:
+                        access:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              providerRef:
+                                type: object
+                                properties:
+                                  apiVersion:
+                                    type: string
+                                  kind:
+                                    type: string
+                                  namespace:
+                                    type: string
+                                  name:
+                                    type: string
+                              serviceRef:
+                                type: object
+                                properties:
+                                  apiVersion:
+                                    type: string
+                                  kind:
+                                    type: string
+                                  namespace:
+                                    type: string
+                                  name:
+                                    type: string
+                              consumers:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    apiVersion:
+                                      type: string
+                                    kind:
+                                      type: string
+                                    namespace:
+                                      type: string
+                                    name:
+                                      type: string
+                              ports:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    protocol:
+                                      type: string
+                                    port:
+                                      type: integer
+                                      format: int32
+                                      minimum: 1
+                                      maximum: 65535
   names:
     kind: ResourcePolicy 
     plural: resourcepolicies 

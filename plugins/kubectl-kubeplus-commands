@@ -62,6 +62,12 @@ print_help () {
     echo "        - kubectl license create - creates license for a Kind"
     echo "        - kubectl license get    - gets license for a Kind"
     echo "        - kubectl license delete - deletes license for a Kind"
+    echo "        - kubectl resource-policy create -f FILE"
+    echo "        - kubectl resource-policy apply -f FILE"
+    echo "        - kubectl resource-policy get [NAME]"
+    echo "        - kubectl resource-policy list"
+    echo "        - kubectl resource-policy edit NAME"
+    echo "        - kubectl resource-policy delete NAME"
     exit 0
 }
 
