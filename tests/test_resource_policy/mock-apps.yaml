@@ -1,0 +1,97 @@
+# Two BusyBox HTTP apps: chatbot in chatbot-a and rag-api in rag-a.
+# Each has a Service on port 8080 and returns its namespace name.
+# Baseline NetworkPolicies allow local traffic and block cross-namespace ingress.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: chatbot-a
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rag-a
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: chatbot
+  namespace: chatbot-a
+  labels:
+    app: chatbot
+spec:
+  containers:
+    - name: http
+      image: busybox:1.36.1
+      command: [sh, -c]
+      args:
+        - mkdir -p /www; echo chatbot-a > /www/index.html; exec httpd -f -p 8080 -h /www
+      readinessProbe:
+        httpGet:
+          path: /
+          port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chatbot
+  namespace: chatbot-a
+spec:
+  selector:
+    app: chatbot
+  ports:
+    - port: 8080
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rag-api
+  namespace: rag-a
+  labels:
+    app: rag-api
+spec:
+  containers:
+    - name: http
+      image: busybox:1.36.1
+      command: [sh, -c]
+      args:
+        - mkdir -p /www; echo rag-a > /www/index.html; exec httpd -f -p 8080 -h /www
+      readinessProbe:
+        httpGet:
+          path: /
+          port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-api
+  namespace: rag-a
+spec:
+  selector:
+    app: rag-api
+  ports:
+    - port: 8080
+---
+# These existing policies are the controller's prerequisites. Each permits local traffic.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: restrict-cross-ns-traffic
+  namespace: chatbot-a
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: restrict-cross-ns-traffic
+  namespace: rag-a
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {}

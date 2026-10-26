@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+"""Edit the ResourcePolicy whitelist; the controller updates NetworkPolicies."""
+import argparse
+import json
+import subprocess
+import sys
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="kubectl resource-policy", description=__doc__)
+    parser.add_argument("action", choices=["allow-traffic", "deny-traffic"])
+    parser.add_argument("namespace1")
+    parser.add_argument("namespace2")
+    parser.add_argument("-n", "--namespace", help="ResourcePolicy storage namespace; defaults to the kubectl context")
+    parser.add_argument("-k", "--kubeconfig")
+    args = parser.parse_args()
+
+    namespace1, namespace2 = sorted([args.namespace1, args.namespace2])
+    # Namespace names cannot contain dots, so this name is unique even with hyphens.
+    name = f"network-access.{namespace1}.{namespace2}"
+    command = ["kubectl"]
+    if args.namespace:
+        command.extend(["--namespace", args.namespace])
+    if args.kubeconfig:
+        command.extend(["--kubeconfig", args.kubeconfig])
+
+    payload = None
+    if args.action == "allow-traffic":
+        payload = json.dumps({
+            "apiVersion": "workflows.kubeplus/v1alpha1",
+            "kind": "ResourcePolicy",
+            "metadata": {"name": name},
+            "spec": {"policy": {"network": {"allowedPairs": [
+                {"namespace1": namespace1, "namespace2": namespace2}
+            ]}}},
+        })
+        command.extend(["apply", "-f", "-"])
+    else:
+        command.extend(["delete", "resourcepolicy", name, "--ignore-not-found"])
+    return subprocess.run(command, input=payload, text=True).returncode
+
+
+if __name__ == "__main__":
+    sys.exit(main())
