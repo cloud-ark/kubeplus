@@ -57,12 +57,15 @@ echo $secret
 echo $service
 csrName=${service}.${namespace}
 
-# Check if mutatingwebhookconfiguration object is present; if so, we can assume that the webhook has been installed;
+# Webhook config is cluster-scoped and can outlive the secret.
 op=$(kubectl get mutatingwebhookconfigurations platform-as-code.crd-binding 2>&1 || true) 
-if [[ $op == *"AGE"* ]]; then
+if [[ $op == *"AGE"* ]] && kubectl get secret ${secret} -n ${namespace} -o jsonpath='{.data}' 2>/dev/null | grep -q cert.pem; then
    echo "Mutating webhook is already configured."
    exit
 fi
+
+# The SA can't patch this object, so recreate it below with the new CA.
+kubectl delete mutatingwebhookconfigurations platform-as-code.crd-binding --ignore-not-found
 
 # Source: https://www.funkypenguin.co.nz/blog/self-signed-certificate-on-mutating-webhook-requires-double-encryption/
 # 1. Create CA key and CA cert
