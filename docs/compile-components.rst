@@ -158,7 +158,7 @@ In each of the above component folders a build script is provided (``./build-art
 
 .. code-block:: bash
 
-	$ ./build-artifact.sh latest
+	$ make latest
 
 
 Following components are written in Golang. If you run into any issues with building them then use the following commands to separately try the build steps to debug the issue. 
@@ -168,7 +168,7 @@ Following components are written in Golang. If you run into any issues with buil
 .. code-block:: bash
 
 	$ cd deploy
-	$ ./build-artifact.sh latest
+	$ make latest
 	$ go build .
 	$ cd ..
 
@@ -177,7 +177,7 @@ Following components are written in Golang. If you run into any issues with buil
 .. code-block:: bash
 
 	$ cd platform-operator
-	$ ./build-artifact.sh latest
+	$ make latest
 	$ export GO111MODULE=off
 	$ go build .
 	$ cd ..

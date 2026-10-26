@@ -20,7 +20,7 @@ as new Custom Resources. Application development teams consume the Services by c
 3. Build:
    Update versions.txt before creating new versioned artifact.
 
-  ./build-artifact.sh <latest | versioned>
+  make <latest | versioned>
 
    Follow semver for tagging Docker images
 
