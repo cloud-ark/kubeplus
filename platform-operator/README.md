@@ -5,6 +5,14 @@
 Platform Workflow Operator enables publishing new Services in a cluster. Cluster Admins use this Operator to govern their cluster usage by defining and registering opinionated Services with appropriate guard rails. The new Services are registered
 as new Custom Resources. Application development teams consume the Services by creating instances of these Custom Resources.
 
+### Resource Policy Controller
+
+The ResourcePolicyController keeps cross-namespace access in sync with the namespace
+pairs declared in `spec.policy.network.allowedPairs`. It updates existing
+`restrict-cross-ns-traffic` NetworkPolicies to allow each pair in both directions,
+across all Pods and ports, and removes withdrawn allowances while preserving local rules.
+It runs independently of ResourceComposition and instance provisioning.
+
 ## Development steps
 
 1. Setup:
