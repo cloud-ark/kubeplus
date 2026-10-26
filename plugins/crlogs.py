@@ -10,13 +10,13 @@ class CRLogs(CRBase):
 	def _get_container_logs(self, pod, namespace, containers, kubeconfig):
 		for c in containers:
 			container = c['name']
-			cmd = 'kubectl logs ' + pod + ' -n ' + namespace + ' -c ' + container + ' ' + kubeconfig
+			cmd = ["kubectl", "logs", pod, "-n", namespace, "-c", container] + ([kubeconfig] if kubeconfig else [])
 			#print(cmd)
 
 			print("======== Pod::" + pod + "/container::" + container + " ===========")
 			try:
 				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-										stderr=subprocess.PIPE, shell=True).communicate()[0]
+										stderr=subprocess.PIPE).communicate()[0]
 				if out:
 					print(out)
 					print("================================================\n\n")
@@ -24,10 +24,10 @@ class CRLogs(CRBase):
 				print(e)
 
 	def get_logs(self, pod, namespace, kubeconfig):
-		cmd = 'kubectl get pods ' + pod + ' -n ' + namespace + ' -o json ' + kubeconfig
+		cmd = ["kubectl", "get", "pods", pod, "-n", namespace, "-o", "json"] + ([kubeconfig] if kubeconfig else [])
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-									stderr=subprocess.PIPE, shell=True).communicate()[0]
+									stderr=subprocess.PIPE).communicate()[0]
 
 			if out:
 				json_output = json.loads(out)
