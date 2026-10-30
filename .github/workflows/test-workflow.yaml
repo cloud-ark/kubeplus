@@ -95,6 +95,16 @@ jobs:
         run: |
           LAST_LINE=$(tail -n 1 platform-operator/versions.txt | tr -d '\r')
           echo "platform_operator_version=${LAST_LINE}" >> $GITHUB_ENV
+
+      - name: Compile platform-operator binaries
+        working-directory: ./platform-operator
+        env:
+          GO111MODULE: "on"
+          CGO_ENABLED: "0"
+          GOOS: linux
+        run: |
+          GOARCH=amd64 go build -a -installsuffix cgo -o platform-operator-amd64 .
+          GOARCH=arm64 go build -a -installsuffix cgo -o platform-operator-arm64 .
             
       - name: Build and Push platform-operator
         uses: docker/build-push-action@v6
