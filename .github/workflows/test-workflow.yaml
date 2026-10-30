@@ -37,13 +37,14 @@ jobs:
  
 
       - name: Compile Go binaries
+        working-directory: ./mutating-webhook
         env:
           GO111MODULE: "on"
           CGO_ENABLED: "0"
           GOOS: linux
         run: |
-          GOARCH=amd64 go build -a -installsuffix cgo -o mutating-webhook/crd-hook-amd64 .
-          GOARCH=arm64 go build -a -installsuffix cgo -o mutating-webhook/crd-hook-arm64 .
+          GOARCH=amd64 go build -a -installsuffix cgo -o crd-hook-amd64 .
+          GOARCH=arm64 go build -a -installsuffix cgo -o crd-hook-arm64 .
  
       - name: Build and Push mutating-webhook
         uses: docker/build-push-action@v6
@@ -53,7 +54,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: us-central1-docker.pkg.dev/titanium-gadget-502516-g3/my-repo/mutating-webhook:${{ env.mutating_webhook_version }}
-          
+
 
       - name: Get latest version of consumerui
         run: |
