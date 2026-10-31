@@ -1,4 +1,4 @@
-name: Test Build and Push KubePlus containers
+name: Build and Push KubePlus containers
 
 on:
   workflow_dispatch:
