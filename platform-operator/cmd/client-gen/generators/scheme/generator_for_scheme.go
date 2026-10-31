@@ -23,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"k8s.io/code-generator/cmd/client-gen/path"
 	clientgentypes "k8s.io/code-generator/cmd/client-gen/types"
 	"k8s.io/gengo/generator"
 	"k8s.io/gengo/namer"
@@ -63,16 +62,20 @@ func (g *GenScheme) Imports(c *generator.Context) (imports []string) {
 		for _, version := range group.Versions {
 			packagePath := g.InputPackages[clientgentypes.GroupVersion{Group: group.Group, Version: version.Version}]
 			groupAlias := strings.ToLower(g.GroupGoNames[clientgentypes.GroupVersion{group.Group, version.Version}])
+			packagePathVendorless := packagePath
+			if i := strings.Index(packagePathVendorless, "/vendor/"); i != -1 {
+				packagePathVendorless = packagePathVendorless[i+len("/vendor/"):]
+			}
 			if g.CreateRegistry {
 				// import the install package for internal clientsets instead of the type package with register.go
 				if version.Version != "" {
 					packagePath = filepath.Dir(packagePath)
 				}
 				packagePath = filepath.Join(packagePath, "install")
-				imports = append(imports, strings.ToLower(fmt.Sprintf("%s \"%s\"", groupAlias, path.Vendorless(packagePath))))
+				imports = append(imports, strings.ToLower(fmt.Sprintf("%s \"%s\"", groupAlias, packagePathVendorless)))
 				break
 			} else {
-				imports = append(imports, strings.ToLower(fmt.Sprintf("%s%s \"%s\"", groupAlias, version.Version.NonEmpty(), path.Vendorless(packagePath))))
+				imports = append(imports, strings.ToLower(fmt.Sprintf("%s%s \"%s\"", groupAlias, version.Version.NonEmpty(), packagePathVendorless)))
 			}
 		}
 	}
