@@ -29,6 +29,20 @@ jobs:
           username: _json_key
           password: ${{ secrets.GCP_SA_KEY }} # secret name may need to be changed
 
+#     delete kubeplus resources
+      - name: get latest version of delete kubeplus resources
+        run: |
+          LAST_LINE=$(tail -n 1 deploy/versions.txt | tr -d '\r')
+          echo "cleanup_version=${LAST_LINE}" >> $GITHUB_ENV
+      
+      - name: Build and Push cleanup
+        uses: docker/build-push-action@v6
+        with:
+          context: ./deploy
+          file: ./deploy/Dockerfile.cleanup
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: us-central1-docker.pkg.dev/titanium-gadget-502516-g3/my-repo/delete-kubeplus-resources:${{ env.cleanup_version }}
 
 #     helm pod
       - name: get latest version of helm-pod
@@ -55,7 +69,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: us-central1-docker.pkg.dev/titanium-gadget-502516-g3/my-repo/helm-pod:${{ env.helm_pod_version }}
-
 
 #     Mutating webhook
       - name: Get latest version of mutating-webhook
@@ -124,9 +137,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: us-central1-docker.pkg.dev/titanium-gadget-502516-g3/my-repo/consumerui:${{ env.consumerui_version }}
-
             
-            
+#     webhook tls getter
       - name: Get latest version of webhook-tls-getter
         run: |
           LAST_LINE=$(tail -n 1 deploy/versions.txt | tr -d '\r')
