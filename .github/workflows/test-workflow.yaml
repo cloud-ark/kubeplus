@@ -29,14 +29,41 @@ jobs:
           username: _json_key
           password: ${{ secrets.GCP_SA_KEY }} # secret name may need to be changed
 
-#       Mutating webhook
+
+#     helm pod
+      - name: get latest version of helm-pod
+        run: |
+          LAST_LINE=$(tail -n 1 platform-operator/helm-pod/versions.txt | tr -d '\r')
+          echo "helm_pod_version=${LAST_LINE}" >> $GITHUB_ENV
+
+      - name: Compile GO binaries (helm-pod)
+        working-directory: ./platform-operator/helm-pod
+        env:
+          GO111MODULE: "on"
+          CGO_ENABLED: "0"
+          GOOS: linux
+        run: |
+          GOARCH=amd64 go build -a -installsuffix cgo -o helm-pod-amd64 .
+          GOARCH=arm64 go build -a -installsuffix cgo -o helm-pod-arm64 .
+
+      - name: Build and Push helm-pod
+        uses: docker/build-push-action@v6
+        with:
+          context: ./platform-operator/helm-pod
+          file: ./platform-operator/helm-pod/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: us-central1-docker.pkg.dev/titanium-gadget-502516-g3/my-repo/helm-pod:${{ env.helm_pod_version }}
+
+
+#     Mutating webhook
       - name: Get latest version of mutating-webhook
         run: |
           LAST_LINE=$(tail -n 1 mutating-webhook/versions.txt | tr -d '\r')
           echo "mutating_webhook_version=${LAST_LINE}" >> $GITHUB_ENV
  
 
-      - name: Compile Go binaries
+      - name: Compile Go binaries (mutating-webhook)
         working-directory: ./mutating-webhook
         env:
           GO111MODULE: "on"
@@ -55,7 +82,7 @@ jobs:
           push: true
           tags: us-central1-docker.pkg.dev/titanium-gadget-502516-g3/my-repo/mutating-webhook:${{ env.mutating_webhook_version }}
 
-#       platform operator
+#     platform operator
       - name: Get latest version of platform-operator
         run: |
           LAST_LINE=$(tail -n 1 platform-operator/versions.txt | tr -d '\r')
@@ -80,7 +107,7 @@ jobs:
           push: true
           tags: us-central1-docker.pkg.dev/titanium-gadget-502516-g3/my-repo/platform-operator:${{ env.platform_operator_version }}
 
-
+#     consumerui
       - name: Get latest version of consumerui
         run: |
           LAST_LINE=$(tail -n 1 consumerui/versions.txt | tr -d '\r')
