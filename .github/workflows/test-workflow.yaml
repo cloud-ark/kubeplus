@@ -42,6 +42,7 @@ jobs:
           GO111MODULE: "on"
           CGO_ENABLED: "0"
           GOOS: linux
+          GOFLAGS: "-mod=mod"
         run: |
           GOARCH=amd64 go build -a -installsuffix cgo -o helm-pod-amd64 .
           GOARCH=arm64 go build -a -installsuffix cgo -o helm-pod-arm64 .
@@ -69,6 +70,7 @@ jobs:
           GO111MODULE: "on"
           CGO_ENABLED: "0"
           GOOS: linux
+          GOFLAGS: "-mod=mod"
         run: |
           GOARCH=amd64 go build -a -installsuffix cgo -o crd-hook-amd64 .
           GOARCH=arm64 go build -a -installsuffix cgo -o crd-hook-arm64 .
@@ -94,6 +96,7 @@ jobs:
           GO111MODULE: "on"
           CGO_ENABLED: "0"
           GOOS: linux
+          GOFLAGS: "-mod=mod"
         run: |
           GOARCH=amd64 go build -a -installsuffix cgo -o platform-operator-amd64 .
           GOARCH=arm64 go build -a -installsuffix cgo -o platform-operator-arm64 .
