@@ -240,6 +240,41 @@ kubectl exec -it $HELLOWORLD_POD_HS2 -n hs2 --kubeconfig=kubeplus-saas-provider.
 
 
 
+#### Using ResourcePolicy
+
+With the updated ResourcePolicy CRD and controller installed, save this as
+`resource-policy.yaml`:
+
+```yaml
+apiVersion: workflows.kubeplus/v1alpha1
+kind: ResourcePolicy
+metadata:
+  name: hs1-hs2-access
+spec:
+  policy:
+    network:
+      allowedPairs:
+        - namespace1: hs1
+          namespace2: hs2
+```
+
+Apply it in the KubePlus namespace:
+
+```sh
+kubectl apply -f resource-policy.yaml --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+```
+
+The controller updates the existing `restrict-cross-ns-traffic` policies in
+`hs1` and `hs2` to allow traffic in both directions across all Pods and ports.
+It keeps the rules in sync with the whitelist. Give it a moment to apply the
+changes, then rerun the HTTP checks above.
+
+To remove this allowance, delete the ResourcePolicy:
+
+```sh
+kubectl delete -f resource-policy.yaml --kubeconfig=kubeplus-saas-provider.json -n $KUBEPLUS_NS
+```
+
 ## Clean Up
 
 ```sh

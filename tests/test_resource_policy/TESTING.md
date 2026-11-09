@@ -1,4 +1,4 @@
-# ResourcePolicy CLI demo
+# ResourcePolicy network demo
 
 Run from the repository root in Bash. Assume KubePlus is already installed in
 `default` on the `kubeplus-netpol` Minikube profile, with Calico enforcing
@@ -56,21 +56,21 @@ kubectl deny network traffic chatbot-a rag-a
 probe  # Both time out.
 ```
 
-## ResourcePolicy CLI
+## ResourcePolicy
 
 ```bash
-kubectl resource-policy allow-traffic chatbot-a rag-a
-kubectl -n default get resourcepolicy network-access.chatbot-a.rag-a -o yaml
+kubectl apply -f tests/test_resource_policy/resource-policy-network-access.yaml
+kubectl -n default get resourcepolicy cross-namespace-access -o yaml
 probe  # Both succeed.
-kubectl resource-policy deny-traffic chatbot-a rag-a
+kubectl -n default delete resourcepolicy cross-namespace-access
 probe  # Both time out.
 ```
 
-Allow stores one ResourcePolicy for the pair; the controller updates
-`restrict-cross-ns-traffic` in both namespaces. Deny deletes that object and the
-controller removes its allowances. Local traffic rules remain. Reversed namespace
-arguments select the same object. Another ResourcePolicy listing this pair can
-still keep traffic allowed, so run the Python comparison first on a clean setup.
+Applying the YAML declares the allowed pair; the controller updates
+`restrict-cross-ns-traffic` in both namespaces. Deleting the ResourcePolicy
+removes its allowances while preserving local traffic rules. Another ResourcePolicy
+listing the pair can still keep traffic allowed, so run the Python comparison
+first on a clean setup.
 
 Inspect the result or controller logs with:
 
@@ -84,6 +84,6 @@ The mock setup omits `allow-external-traffic`: other allow policies can mask a
 denied pair. To remove the mock apps after the demo:
 
 ```bash
-kubectl resource-policy deny-traffic chatbot-a rag-a
+kubectl -n default delete resourcepolicy cross-namespace-access --ignore-not-found
 kubectl delete namespace chatbot-a rag-a
 ```
