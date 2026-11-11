@@ -194,7 +194,6 @@ def get_all_resources(resource):
                         json_output = json.loads(out)
                 except Exception as e:
                         app.logger.info(str(e))
-                app.logger.info(json_output)
                 for instance in json_output['items']:
                         out_dict = {}
                         out_dict['name'] = instance['metadata']['name']
@@ -250,11 +249,12 @@ def create_instance():
         kind, apiVersion, fields = get_input_fields(serviceName);
 
         form = request.form
-        app.logger.info(form)
+        # Log the field names only: the instance spec carries Helm values (passwords, keys).
+        app.logger.info("Form fields:" + str(list(form.keys())))
 
         resSpec = request.form["instanceSpec"]
         resSpecObj = json.loads(resSpec, strict=False)
-        app.logger.info("Res spec dict:" + str(resSpecObj))
+        app.logger.info("Res kind:" + str(resSpecObj.get('kind')))
         instance_name = resSpecObj['metadata']['name']
         app.logger.info("Resource name:" + instance_name)
 
@@ -292,6 +292,11 @@ def create_instance():
 
         cmd = ["kubectl", "create", "-f", "./resource.json"]
         out, err = run_command(cmd)
+        # Do not leave the spec on disk after the create call.
+        try:
+                os.remove("resource.json")
+        except OSError:
+                pass
         create_status = ""
         if err == "":
                 create_status = "Resource " + instance_name + " created successfully."
