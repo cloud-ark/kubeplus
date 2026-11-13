@@ -194,7 +194,6 @@ def get_all_resources(resource):
                         json_output = json.loads(out)
                 except Exception as e:
                         app.logger.info(str(e))
-                app.logger.info(json_output)
                 for instance in json_output['items']:
                         out_dict = {}
                         out_dict['name'] = instance['metadata']['name']
@@ -250,11 +249,12 @@ def create_instance():
         kind, apiVersion, fields = get_input_fields(serviceName);
 
         form = request.form
-        app.logger.info(form)
+        # Log the field names only: the instance spec carries Helm values (passwords, keys).
+        app.logger.info("Form fields:" + str(list(form.keys())))
 
         resSpec = request.form["instanceSpec"]
         resSpecObj = json.loads(resSpec, strict=False)
-        app.logger.info("Res spec dict:" + str(resSpecObj))
+        app.logger.info("Res kind:" + str(resSpecObj.get('kind')))
         instance_name = resSpecObj['metadata']['name']
         app.logger.info("Resource name:" + instance_name)
 
@@ -292,6 +292,11 @@ def create_instance():
 
         cmd = ["kubectl", "create", "-f", "./resource.json"]
         out, err = run_command(cmd)
+        # Do not leave the spec on disk after the create call.
+        try:
+                os.remove("resource.json")
+        except OSError:
+                pass
         create_status = ""
         if err == "":
                 create_status = "Resource " + instance_name + " created successfully."
@@ -425,7 +430,8 @@ def get_instance_status():
 @app.route("/create_service_instance", methods=['POST'])
 def create_service_instance():
         app.logger.info("Inside create_service_instance.")
-        app.logger.info(request.form)
+        # Field names only: service_instance is the instance yaml (Helm values).
+        app.logger.info("Form fields:" + str(list(request.form.keys())))
         service_instance = request.form["service_instance"]
         fp = open("/root/service_instance.yaml","w")
         fp.write(service_instance)
@@ -440,7 +446,8 @@ def create_service_instance():
 @app.route("/register_kubeconfig", methods=['POST'])
 def register_kubeconfig():
         app.logger.info("Inside register_kubeconfig.")
-        app.logger.info(request.form)
+        # Field names only: the kubeconfig field carries the cluster credentials.
+        app.logger.info("Form fields:" + str(list(request.form.keys())))
         kubeconfig = request.form["kubeconfig"]
         fp = open("/root/.kube/config","w")
         fp.write(kubeconfig)
@@ -450,8 +457,8 @@ def register_kubeconfig():
 #@app.route("/")
 def index1():
     app.logger.info("Inside hello")
-    app.logger.info("Printing available environment variables")
-    app.logger.info(os.environ)
+    # Variable names only: the values can hold tokens and passwords.
+    app.logger.info("Available environment variables:" + str(sorted(os.environ.keys())))
     return render_template('consumeruiack.html',get_all_error_message='',instance_status='')
 
 @app.route("/service/<service>/namespace/<namespace>/instance/<instance>")
@@ -548,8 +555,8 @@ def download_consumer_kubeconfig():
             if err == '':
                 found = True
                 consumer_kubeconfig = out.strip()
-                app.logger.info("Consumer kubeconfig")
-                app.logger.info(consumer_kubeconfig)
+                # Do not log the kubeconfig itself: it holds the consumer token.
+                app.logger.info("Consumer kubeconfig received")
                 kubeconfig_path = os.getenv("HOME") + "/.kube/"
                 #kubeconfig_path = "/root/.kube/"
                 if os.path.exists(kubeconfig_path):
