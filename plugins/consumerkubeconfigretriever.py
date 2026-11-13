@@ -10,9 +10,9 @@ from crmetrics import CRBase
 class ConsumerKubeconfigRetriever(CRBase):
 
 	def _get_kubeplus_ns(self):
-		cmd = " kubectl get deployments -A "
+		cmd = ["kubectl", "get", "deployments", "-A"]
 		#print(cmd)
-		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
 		#print(out)
 		out = out.decode('utf-8')
 		kubeplusNamespace = ''
@@ -95,9 +95,9 @@ class ConsumerKubeconfigRetriever(CRBase):
 		fp.write(role_json)
 		fp.close()
 
-		cmd = " kubectl apply -f ./kubeplus-consumer-role.yaml --kubeconfig=" + providerkubeconfig
+		cmd = ["kubectl", "apply", "-f", "./kubeplus-consumer-role.yaml", "--kubeconfig=" + providerkubeconfig]
 
-		cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+		cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
 		#print(cmdOut)
 
 		roleBinding = {}
@@ -128,8 +128,8 @@ class ConsumerKubeconfigRetriever(CRBase):
 		fp.write(rolebinding_json)
 		fp.close()
 
-		cmd = " kubectl apply -f ./kubeplus-consumer-rolebinding.yaml --kubeconfig=" + providerkubeconfig
-		cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]	
+		cmd = ["kubectl", "apply", "-f", "./kubeplus-consumer-rolebinding.yaml", "--kubeconfig=" + providerkubeconfig]
+		cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
 
 
 if __name__ == '__main__':

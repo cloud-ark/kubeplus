@@ -7,7 +7,7 @@ from crmetrics import CRBase
 class AppStatusFinder(CRBase):
 
     def get_app_instance_status(self, kind, instance, kubeconfig):
-        cmd = 'kubectl get %s %s -o json %s' % (kind, instance, kubeconfig)
+        cmd = ["kubectl", "get", kind, instance, "-o", "json"] + ([kubeconfig] if kubeconfig else [])
         out, err = self.run_command(cmd)
         if err != "":
             print("Something went wrong while getting app instance status.")
@@ -33,7 +33,7 @@ class AppStatusFinder(CRBase):
 
 
     def get_app_pods(self, namespace, kubeconfig):
-        cmd = 'kubectl get pods -n %s %s -o json' % (namespace, kubeconfig)
+        cmd = ["kubectl", "get", "pods", "-n", namespace] + ([kubeconfig] if kubeconfig else []) + ["-o", "json"]
         out, err = self.run_command(cmd)
         # format?
         response = json.loads(out)

@@ -10,16 +10,22 @@ import yaml
 import utils
 import requests
 
+def _kubeconfig_args(kubeconfig):
+	return [kubeconfig] if kubeconfig else []
+
+def _table_rows(output):
+	return [line.split() for line in output.splitlines() if line.strip() and "NAME" not in line]
+
 class CRBase(object):
 	
 	def run_command(self, cmd):
-		cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
+		cmdOut = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 		out = cmdOut[0].decode('utf-8')
 		err = cmdOut[1].decode('utf-8')
 		return out, err
 
 	def check_kind(self, kind, kubeconfigfile):
-		cmd = "kubectl api-resources --api-group='platformapi.kubeplus' --no-headers --kubeconfig=" + kubeconfigfile
+		cmd = ["kubectl", "api-resources", "--api-group=platformapi.kubeplus", "--no-headers", "--kubeconfig=" + kubeconfigfile]
 		out, err = self.run_command(cmd)
 		if out != "":
 			available_kinds = []
@@ -49,7 +55,7 @@ class CRBase(object):
 
 	def get_service_name_from_ns(self, instanceName, orgPath):
 		service_name_in_annotation = ""
-		get_ns_cm = "kubectl get ns " + instanceName + " " + orgPath + " -o json "
+		get_ns_cm = ["kubectl", "get", "ns", instanceName] + _kubeconfig_args(orgPath) + ["-o", "json"]
 		out_a, err_a = self.run_command(get_ns_cm)
 		out_a = out_a.strip()
 		err_a = err_a.strip()
@@ -69,11 +75,11 @@ class CRBase(object):
 		service_name_in_annotation = service_name_in_annotation.lower()
 		if service_name_in_annotation != kind.lower():
 			return pod_list
-		cmd = "kubectl get pods -n  " + instance + " " + kubeconfig
+		cmd = ["kubectl", "get", "pods", "-n", instance] + _kubeconfig_args(kubeconfig)
 		#print(cmd)
 		out = ''
 		try:
-			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE, shell=True).communicate()[0]
+			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE).communicate()[0]
 			out = out.decode('utf-8')
 		except Exception as e:
 			print(e)
@@ -89,11 +95,11 @@ class CRBase(object):
 		pod_list = []
 		labelSelector = "partof=" + kind + "-" + instance
 		labelSelector = labelSelector.lower()
-		cmd = "kubectl get pods -A -l " + labelSelector + " " + kubeconfig
+		cmd = ["kubectl", "get", "pods", "-A", "-l", labelSelector] + _kubeconfig_args(kubeconfig)
 		#print(cmd)
 		out = ''
 		try:
-			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE, shell=True).communicate()[0]
+			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE).communicate()[0]
 			out = out.decode('utf-8')
 		except Exception as e:
 			print(e)
@@ -115,12 +121,13 @@ class CRBase(object):
 
 	def get_kubeplus_namespace(self, kubeconfig):
 		kb_namespace = 'default'
-		cmd = "kubectl get pods -A --kubeconfig=" + kubeconfig + " | grep kubeplus-deployment | awk '{print $1}'"
+		cmd = ["kubectl", "get", "pods", "-A", kubeconfig]
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-									stderr=subprocess.PIPE, shell=True).communicate()[0]
+								stderr=subprocess.PIPE).communicate()[0]
 			out = out.decode('utf-8')
-			kb_namespace = out.strip()
+			namespaces = [line.split()[0] for line in out.splitlines() if "kubeplus-deployment" in line and line.split()]
+			kb_namespace = "\n".join(namespaces)
 			#print("KubePlus NS:" + kb_namespace)
 		except Exception as e:
 			print(e)
@@ -129,22 +136,22 @@ class CRBase(object):
 	def get_resources_connections(self, kind, instance, namespace, kubeconfig):
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
-		cmd = ''
+		cmd = []
 		json_output = {}
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' 
+			cmd = [kubeplus_home + '/plugins/kubediscovery-macos', "connections"]
 		elif platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections '
+			cmd = [kubeplus_home + '/plugins/kubediscovery-linux', "connections"]
 		else:
 			print("OS not supported:" + platf)
 			return json_output
 		kb_ns = self.get_kubeplus_namespace(kubeconfig)
-		cmd = cmd + kind + ' ' + instance + ' ' + namespace + ' --output=json ' + kubeconfig + ' --ignore=ServiceAccount:default,Namespace:' + kb_ns
+		cmd += [kind, instance, namespace, "--output=json"] + _kubeconfig_args(kubeconfig) + ["--ignore=ServiceAccount:default,Namespace:" + kb_ns]
 		#print(cmd)
 		out = ''
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-								   stderr=subprocess.PIPE, shell=True).communicate()[0]
+								   stderr=subprocess.PIPE).communicate()[0]
 			out = out.decode('utf-8').strip()
 		except Exception as e:
 			print(e)
@@ -157,7 +164,7 @@ class CRBase(object):
 		return json_output
 
 	def _get_resources(self, kind, plural, targetNS, kubeconfig):
-		cmd = "kubectl get " + plural + " -n " + targetNS + " " + kubeconfig
+		cmd = ["kubectl", "get", plural, "-n", targetNS] + _kubeconfig_args(kubeconfig)
 		out, err = self._run_command(cmd)
 		resources = []
 		for line in out.split("\n"):
@@ -174,7 +181,7 @@ class CRBase(object):
 		return resources
 
 	def check_res_exists(self, kind, instance, kubeconfig):
-		cmd = 'kubectl get ' + kind + ' -A ' + kubeconfig
+		cmd = ["kubectl", "get", kind, "-A"] + _kubeconfig_args(kubeconfig)
 		out, err = self.run_command(cmd)
 		for line in out.split("\n"):
 			if instance in line:
@@ -188,7 +195,7 @@ class CRBase(object):
 		if kind.lower() in 'resourcecompositions':
 			return False
 
-		cmd = 'kubectl get crds ' + kubeconfig
+		cmd = ["kubectl", "get", "crds"] + _kubeconfig_args(kubeconfig)
 		out, err = self.run_command(cmd)
 		for line in out.split("\n"):
 			parts = line.split(" ")
@@ -202,7 +209,7 @@ class CRBase(object):
 	
 
 	def validate_kind_and_instance(self, kind, instance, namespace):
-		cmd = 'kubectl get %s %s -n %s' % (kind, instance, namespace)
+		cmd = ["kubectl", "get", kind, instance, "-n", namespace]
 		_, err = self.run_command(cmd)
 		if err == '': # or None?
 			return True, None
@@ -212,11 +219,11 @@ class CRBase(object):
 class CRMetrics(CRBase):
 
 	def _get_identity(self, custom_resource, custom_res_instance, namespace):
-		cmd = 'kubectl get ' + custom_resource + ' ' + custom_res_instance + ' -n ' + namespace + ' -o json'
+		cmd = ["kubectl", "get", custom_resource, custom_res_instance, "-n", namespace, "-o", "json"]
 		accountidentity = ''
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-									stderr=subprocess.PIPE, shell=True).communicate()[0]
+									stderr=subprocess.PIPE).communicate()[0]
 			out = out.decode('utf-8')
 			if out:
 				json_output = json.loads(out)
@@ -233,15 +240,15 @@ class CRMetrics(CRBase):
 	def _get_composition(self, custom_resource, custom_res_instance, namespace):
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
-		cmd = ''
+		cmd = []
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos composition ' + custom_resource + ' ' + custom_res_instance + ' ' + namespace
+			cmd = [kubeplus_home + '/plugins/kubediscovery-macos', "composition", custom_resource, custom_res_instance, namespace]
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux composition ' + custom_resource + ' ' + custom_res_instance + ' ' + namespace
+			cmd = [kubeplus_home + '/plugins/kubediscovery-linux', "composition", custom_resource, custom_res_instance, namespace]
 		out = ''
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-								   stderr=subprocess.PIPE, shell=True).communicate()[0]
+								   stderr=subprocess.PIPE).communicate()[0]
 			out = out.decode('utf-8')
 		except Exception as e:
 			print(e)
@@ -290,12 +297,12 @@ class CRMetrics(CRBase):
 		return pod_list
 
 	def _get_pod(self, pod, kubeconfig=''):
-		cmd = 'kubectl get pods ' + pod['Name'] + ' -n ' + pod['Namespace'] + ' -o json' + ' ' + kubeconfig
+		cmd = ["kubectl", "get", "pods", pod['Name'], "-n", pod['Namespace'], "-o", "json"] + _kubeconfig_args(kubeconfig)
 		out = ''
 		#print(cmd)
 		try:
 			out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-								   stderr=subprocess.PIPE, shell=True).communicate()[0]
+								   stderr=subprocess.PIPE).communicate()[0]
 			out = out.decode('utf-8')
 		except Exception as e:
 			print(e)
@@ -360,11 +367,11 @@ class CRMetrics(CRBase):
 			for pvc in pvc_details:
 				pvc_name = pvc_details['name']
 				pvc_ns = pvc_details['namespace']
-				cmd = "kubectl get pvc " + pvc_name + ' -n ' + pvc_ns + " -o json"
+				cmd = ["kubectl", "get", "pvc", pvc_name, "-n", pvc_ns, "-o", "json"]
 				out = ''
 				try:
 					out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-										   stderr=subprocess.PIPE, shell=True).communicate()[0]
+										   stderr=subprocess.PIPE).communicate()[0]
 					out = out.decode('utf-8')
 					out = out.strip("\n")
 				except Exception as e:
@@ -391,11 +398,11 @@ class CRMetrics(CRBase):
 
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
-		cmd = ''
+		cmd = []
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos podmetrics '
+			cmd = [kubeplus_home + '/plugins/kubediscovery-macos', "podmetrics"]
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux podmetrics '
+			cmd = [kubeplus_home + '/plugins/kubediscovery-linux', "podmetrics"]
 
 		#print("POD LIST:")
 		#print(pod_list)
@@ -415,11 +422,11 @@ class CRMetrics(CRBase):
 			#print("PodName:" + podName)
 			#print("NodeName:" + nodeName)
 			#print("PodNS:" + podNS)
-			podMetricsCmd = cmd + " " + nodeName + " " + kubeconfig
+			podMetricsCmd = cmd + [nodeName] + _kubeconfig_args(kubeconfig)
 			#print(podMetricsCmd)
 			try:
 				output = subprocess.Popen(podMetricsCmd, stdout=subprocess.PIPE,
-										  stderr=subprocess.PIPE, shell=True).communicate()[0]
+										  stderr=subprocess.PIPE).communicate()[0]
 				output = output.decode('utf-8')
 				output = output.strip("\n")
 			except Exception as e:
@@ -462,22 +469,19 @@ class CRMetrics(CRBase):
 		total_cpu = 0
 		total_mem = 0
 		for pod in pod_list:
-			cmd = "kubectl top pods " +  pod['Name'] + ' -n ' + pod['Namespace'] + " | grep -v NAME"
+			cmd = ["kubectl", "top", "pods", pod['Name'], "-n", pod['Namespace']]
 			out = ''
 			try:
 				#print(cmd)
 				out = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-									   stderr=subprocess.PIPE, shell=True).communicate()[0]
+									   stderr=subprocess.PIPE).communicate()[0]
 				out = out.decode('utf-8')
 				out = out.strip("\n")
 			except Exception as e:
 				print(e)
 			parts_trimmed = []
-			for line in out.split('\n'):
-				parts = line.split(" ")
-				for x in parts: 
-					if x != "":
-						parts_trimmed.append(x)
+			for row in _table_rows(out):
+				parts_trimmed.extend(row)
 			if parts_trimmed:
 				temp = re.findall(r'\d+', parts_trimmed[1]) 
 				cpu_nums = list(map(int, temp))
@@ -495,7 +499,7 @@ class CRMetrics(CRBase):
 		count = 0
 		try:
 			out1 = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-									stderr=subprocess.PIPE, shell=True).communicate()[0]
+									stderr=subprocess.PIPE).communicate()[0]
 			out1 = out1.decode('utf-8')
 			json_output = json.loads(out1)
 			kind = json_output['kind']
@@ -517,45 +521,41 @@ class CRMetrics(CRBase):
 		total_cpu = 0
 		total_mem = 0
 		total_count = 0
-		cmd = 'kubectl get crds | grep -v NAME | awk \'{print $1}\''
+		cmd = ["kubectl", "get", "crds"]
 		crds = ''
 		try:
 			crds = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-									stderr=subprocess.PIPE, shell=True).communicate()[0]
+									stderr=subprocess.PIPE).communicate()[0]
 			crds = crds.decode('utf-8')
 			crds = crds.strip("\n")
 		except Exception as e:
 			print(e)
 
-		for crd in crds.split('\n'):
-			cmd = 'kubectl get ' + crd + " --all-namespaces | grep -v NAME"
+		for crd_row in _table_rows(crds):
+			crd = crd_row[0]
+			cmd = ["kubectl", "get", crd, "--all-namespaces"]
 			out = ''
 			err = ''
 			try:
 				out, err = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-										stderr=subprocess.PIPE, shell=True).communicate()
+										stderr=subprocess.PIPE).communicate()
 				out = out.decode('utf-8')
 			except Exception as e:
 				print(e)
 
-			for line in out.split("\n"):
-				if line != 'No resources found.':
-					if line == '':
-						continue
-					parts = line.split(" ")
-					parts_trimmed = []
-					for x in parts: 
-						if x != "":
-							parts_trimmed.append(x)
-					if parts_trimmed:
-						namespace = parts_trimmed[0]
-						instance = parts_trimmed[1]
-						cmd1 = 'kubectl get ' + crd + ' ' + instance + ' -n ' + namespace + ' -o json'
-						cpu, memory, count = self._get_cpu_memory_usage_rootres(crd, cmd1, instance, namespace, account)
+			if out.strip() == 'No resources found.':
+				continue
+			for parts_trimmed in _table_rows(out):
+				if len(parts_trimmed) < 2:
+					continue
+				namespace = parts_trimmed[0]
+				instance = parts_trimmed[1]
+				cmd1 = ["kubectl", "get", crd, instance, "-n", namespace, "-o", "json"]
+				cpu, memory, count = self._get_cpu_memory_usage_rootres(crd, cmd1, instance, namespace, account)
 
-						total_cpu = total_cpu + cpu
-						total_mem = total_mem + memory
-						total_count = total_count + count
+				total_cpu = total_cpu + cpu
+				total_mem = total_mem + memory
+				total_count = total_count + count
 
 		return total_cpu, total_mem, total_count
 
@@ -592,12 +592,12 @@ class CRMetrics(CRBase):
 	def _get_pods_for_account(self, account):
 		pod_list = []
 
-		cmd = 'kubectl get pods --all-namespaces | grep -v NAME | awk \'{print $1 \" \" $2}\''
+		cmd = ["kubectl", "get", "pods", "--all-namespaces"]
 		out = ''
 		#print(cmd)
 		try:
 			out, _ = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-									stderr=subprocess.PIPE, shell=True).communicate()
+									stderr=subprocess.PIPE).communicate()
 			out = out.decode('utf-8')
 			out = out.strip()
 		except Exception as e:
@@ -606,20 +606,19 @@ class CRMetrics(CRBase):
 		#print("----")
 		#print(out)
 		#print("----")
-		for p in out.split("\n"):
-			parts = p.split(" ")
+		for parts in _table_rows(out):
+			if len(parts) < 2:
+				continue
 			pod = {}
-			if len(parts) > 0:
-				pod['Namespace'] = parts[0]
-				pod['Name'] = parts[1]
-				json_output = self._get_pod(pod)
-				if 'metadata' in json_output:
-					if 'annotations' in json_output['metadata']:
-						if 'accountidentity' in json_output['metadata']['annotations']:
-							account_identity = json_output['metadata']['annotations']['accountidentity']
-							if account_identity == account:
-								pod_list.append(pod)
-							#count = count + 1
+			pod['Namespace'] = parts[0]
+			pod['Name'] = parts[1]
+			json_output = self._get_pod(pod)
+			if 'metadata' in json_output:
+				if 'annotations' in json_output['metadata']:
+					if 'accountidentity' in json_output['metadata']['annotations']:
+						account_identity = json_output['metadata']['annotations']['accountidentity']
+						if account_identity == account:
+							pod_list.append(pod)
 		return pod_list
 
 	def _get_metrics_pods(self, account):
@@ -637,12 +636,12 @@ class CRMetrics(CRBase):
 		total_cpu = 0
 		total_count = 0
 
-		cmd = 'kubectl get ' + kind + ' --all-namespaces | grep -v NAME | awk \'{print $1 \" \" $2}\''
+		cmd = ["kubectl", "get", kind, "--all-namespaces"]
 
 		instances = ''
 		try:
 			instances = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-									stderr=subprocess.PIPE, shell=True).communicate()[0]
+									stderr=subprocess.PIPE).communicate()[0]
 			instances = instances.decode('utf-8')
 			instances = instances.strip("\n")
 		except Exception as e:
@@ -651,18 +650,18 @@ class CRMetrics(CRBase):
 		if instances == 'No resources found.':
 			return total_cpu, total_mem, total_count
 
-		for line in instances.split("\n"):
-			if line != '':
-				parts = line.split(" ")
-				namespace = parts[0]
-				instance = parts[1]
+		for parts in _table_rows(instances):
+			if len(parts) < 2:
+				continue
+			namespace = parts[0]
+			instance = parts[1]
 
-				cmd1 = 'kubectl get ' + kind + ' ' + instance + ' -n ' + namespace + ' -o json'
-				cpu, memory, count = self._get_cpu_memory_usage_rootres(kind, cmd1, instance, namespace, account)
+			cmd1 = ["kubectl", "get", kind, instance, "-n", namespace, "-o", "json"]
+			cpu, memory, count = self._get_cpu_memory_usage_rootres(kind, cmd1, instance, namespace, account)
 
-				total_cpu = total_cpu + cpu
-				total_mem = total_mem + memory
-				total_count = total_count + count
+			total_cpu = total_cpu + cpu
+			total_mem = total_mem + memory
+			total_count = total_count + count
 
 		return total_cpu, total_mem, total_count
 
@@ -670,20 +669,19 @@ class CRMetrics(CRBase):
 		pod_list = []
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
-		cmd = ''
+		cmd = []
 		kb_ns = self.get_kubeplus_namespace(kubeconfig)
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' --output=' + conn_op_format + ' --ignore=ServiceAccount:default,Namespace:' + kb_ns
+			cmd = [kubeplus_home + '/plugins/kubediscovery-macos', "connections", cr, cr_instance, namespace, "--output=" + conn_op_format, "--ignore=ServiceAccount:default,Namespace:" + kb_ns]
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections ' + cr + ' ' + cr_instance + ' ' + namespace + ' --output=' + conn_op_format + ' --ignore=Namespace:'+ kb_ns
-		parts = kubeconfig.split("=")
-		cmd = cmd + " " + kubeconfig
+			cmd = [kubeplus_home + '/plugins/kubediscovery-linux', "connections", cr, cr_instance, namespace, "--output=" + conn_op_format, "--ignore=Namespace:" + kb_ns]
+		cmd += _kubeconfig_args(kubeconfig)
 		if cmd:
 			#print(cmd)
 			output = ''
 			try:
 				output = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-										  stderr=subprocess.PIPE, shell=True).communicate()[0]
+										  stderr=subprocess.PIPE).communicate()[0]
 				output = output.decode('utf-8')
 				output = output.strip("\n")
 				#print(output)
@@ -705,17 +703,17 @@ class CRMetrics(CRBase):
 		pod_list = []
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
-		cmd = ''
+		cmd = []
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Service ' + service_name + ' ' + namespace + ' --output=json'
+			cmd = [kubeplus_home + '/plugins/kubediscovery-macos', "connections", "Service", service_name, namespace, "--output=json"]
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections Service ' + service_name + ' ' + namespace + ' --output=json'
+			cmd = [kubeplus_home + '/plugins/kubediscovery-linux', "connections", "Service", service_name, namespace, "--output=json"]
 
 		if cmd:
 			output = ''
 			try:
 				output = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-										  stderr=subprocess.PIPE, shell=True).communicate()[0]
+										  stderr=subprocess.PIPE).communicate()[0]
 				output = output.decode('utf-8')
 			except Exception as e:
 				print(e)
@@ -767,12 +765,11 @@ class CRMetrics(CRBase):
 
 
 	def _get_pods_for_helmrelease(self, release_name):
-		cmd = "helm get manifest " + release_name
+		cmd = ["helm", "get", "manifest", release_name]
 		try:
 			output = subprocess.Popen(cmd,
 									  stdout=subprocess.PIPE,
-									  stderr=subprocess.PIPE,
-									  shell=True).communicate()[0]
+									  stderr=subprocess.PIPE).communicate()[0]
 			output = output.decode('utf-8')
 			output = output.strip("\n")
 		except Exception as e:
@@ -834,18 +831,18 @@ class CRMetrics(CRBase):
 		pod_list = []
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
-		cmd = ''
+		cmd = []
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos connections Pod ' + ' ' + pod_name + ' ' + namespace + ' --output=json'
+			cmd = [kubeplus_home + '/plugins/kubediscovery-macos', "connections", "Pod", pod_name, namespace, "--output=json"]
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux connections Pod ' + ' ' + pod_name + ' ' + namespace + ' --output=json'
+			cmd = [kubeplus_home + '/plugins/kubediscovery-linux', "connections", "Pod", pod_name, namespace, "--output=json"]
 
 		#print(cmd)
 		if cmd:
 			output = ''
 			try:
 				output = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-										  stderr=subprocess.PIPE, shell=True).communicate()[0]
+										  stderr=subprocess.PIPE).communicate()[0]
 				output = output.decode('utf-8')
 				output = output.strip("\n")
 			except Exception as e:
@@ -887,11 +884,11 @@ class CRMetrics(CRBase):
 		#print(pod_list)
 		platf = platform.system()
 		kubeplus_home = os.getenv('KUBEPLUS_HOME', '/')
-		cmd = ''
+		cmd = []
 		if platf == "Darwin":
-			cmd = kubeplus_home + '/plugins/kubediscovery-macos networkmetrics ' 
+			cmd = [kubeplus_home + '/plugins/kubediscovery-macos', "networkmetrics"]
 		if platf == "Linux":
-			cmd = kubeplus_home + '/plugins/kubediscovery-linux networkmetrics '
+			cmd = [kubeplus_home + '/plugins/kubediscovery-linux', "networkmetrics"]
 
 		for pod in pod_list:
 			pod_json = self._get_pod(pod, kubeconfig=kubecfg)
@@ -907,10 +904,10 @@ class CRMetrics(CRBase):
 			#print("PodName:" + podName)
 			#print("NodeName:" + nodeName)
 			#print("PodNS:" + podNS)
-			networkMetricsCmd = cmd + " " + nodeName + " " + kubeconfig
+			networkMetricsCmd = cmd + [nodeName] + _kubeconfig_args(kubeconfig)
 			try:
 				output = subprocess.Popen(networkMetricsCmd, stdout=subprocess.PIPE,
-										  stderr=subprocess.PIPE, shell=True).communicate()[0]
+										  stderr=subprocess.PIPE).communicate()[0]
 				output = output.decode('utf-8')
 				output = output.strip("\n")
 			except Exception as e:
@@ -1006,7 +1003,7 @@ class CRMetrics(CRBase):
 		metrics_descriptions = {}
 
 		# Get all ResourceCompositions
-		rc_list_raw, err = self.run_command("kubectl get resourcecompositions -o json")
+		rc_list_raw, err = self.run_command(["kubectl", "get", "resourcecompositions", "-o", "json"])
 		if not rc_list_raw:
 			return metrics_data, metrics_descriptions
 
@@ -1015,7 +1012,7 @@ class CRMetrics(CRBase):
 			rc_name = item["metadata"]["name"]
 
 			# Get full ResourceComposition
-			rc_json_raw, err = self.run_command(f"kubectl get resourcecomposition {rc_name} -o json")
+			rc_json_raw, err = self.run_command(["kubectl", "get", "resourcecomposition", rc_name, "-o", "json"])
 			if not rc_json_raw:
 				continue
 			resource_composition = json.loads(rc_json_raw)
@@ -1039,7 +1036,7 @@ class CRMetrics(CRBase):
 				continue
 
 			# Find pods matching the label
-			pods_raw, err = self.run_command(f"kubectl get pods -n {custom_res_instance} -l {label_selector} -o json")
+			pods_raw, err = self.run_command(["kubectl", "get", "pods", "-n", custom_res_instance, "-l", label_selector, "-o", "json"])
 			if not pods_raw:
 				print(err)
 				continue
@@ -1051,7 +1048,7 @@ class CRMetrics(CRBase):
 				if not host_ip:
 					continue
 
-				svc_raw, err = self.run_command(f"kubectl get svc -n {custom_res_instance} -l {label_selector} -o json")
+				svc_raw, err = self.run_command(["kubectl", "get", "svc", "-n", custom_res_instance, "-l", label_selector, "-o", "json"])
 				svc_json = json.loads(svc_raw)
 				try:
 					node_port = svc_json["items"][0]["spec"]["ports"][0]["nodePort"]

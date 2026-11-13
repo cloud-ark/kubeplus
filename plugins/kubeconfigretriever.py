@@ -11,12 +11,14 @@ class KubeconfigRetriever(CRBase):
 
 		kubeplusNS = self.get_kubeplus_namespace(kubeconfig)
 		if kubeconfigFor == 'provider':
-			cmd = "kubectl get configmaps kubeplus-saas-provider -n " + kubeplusNS + r" -o jsonpath='{.data.kubeplus-saas-provider\.json}'"
+			jsonpath = r"jsonpath={.data.kubeplus-saas-provider\.json}"
+			configmap = "kubeplus-saas-provider"
 		if kubeconfigFor == 'consumer':
-			cmd = "kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n " + kubeplusNS + r" -o jsonpath='{.data.kubeplus-saas-consumer\.json}'"
+			jsonpath = r"jsonpath={.data.kubeplus-saas-consumer\.json}"
+			configmap = "kubeplus-saas-consumer-kubeconfig"
 
-		cmd = cmd + " --kubeconfig=" + kubeconfig
-		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+		cmd = ["kubectl", "get", "configmaps", configmap, "-n", kubeplusNS, "-o", jsonpath, "--kubeconfig=" + kubeconfig]
+		out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
 		out = out.decode('utf-8')
 		json_output = {}
 		try:

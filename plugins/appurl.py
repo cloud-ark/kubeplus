@@ -14,7 +14,7 @@ class AppURLFinder(CRBase):
         node_list = []
 
         # get all the nodes
-        get_nodes = "kubectl get nodes " + kubeconfig
+        get_nodes = ["kubectl", "get", "nodes"] + ([kubeconfig] if kubeconfig else [])
         out, err = self.run_command(get_nodes)
         for line in out.split("\n"):
             line1 = ' '.join(line.split())
@@ -25,7 +25,7 @@ class AppURLFinder(CRBase):
 
         # for each node, build list of external and internal ips
         for node in node_list:
-            describe_node = "kubectl describe node " + node + " " + kubeconfig
+            describe_node = ["kubectl", "describe", "node", node] + ([kubeconfig] if kubeconfig else [])
             out1, err1 = self.run_command(describe_node)
             ip_types = {}
             for line in out1.split("\n"):
@@ -58,7 +58,7 @@ class AppURLFinder(CRBase):
             print("Instance does not belong to the Service:" + kind)
             sys.exit(1)
 
-        ingress_cmd = "kubectl get ingress -n " + service_instance_name + " " + kubeconfig
+        ingress_cmd = ["kubectl", "get", "ingress", "-n", service_instance_name] + ([kubeconfig] if kubeconfig else [])
 
         out, err = self.run_command(ingress_cmd)
         if "No resources found" not in err:
@@ -71,7 +71,7 @@ class AppURLFinder(CRBase):
                     endpoint = protocol + hostname
                     endpoints.append(endpoint)
         else:
-            service_cmd = "kubectl get service -n " + service_instance_name + " " + kubeconfig
+            service_cmd = ["kubectl", "get", "service", "-n", service_instance_name] + ([kubeconfig] if kubeconfig else [])
             out1, err1 = self.run_command(service_cmd)
             for line in out1.split("\n"):
                 line1 = ' '.join(line.split())

@@ -8,13 +8,13 @@ import os
 POLICY_NAME = "restrict-cross-ns-traffic"
 
 def run_command(cmd):
-    """Run a shell command and return stdout and stderr as strings."""
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    """Run a command argument list and return stdout and stderr as strings."""
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc.communicate()
     return out.decode('utf-8'), err.decode('utf-8')
 
 def networkpolicy_exists(policy_name, namespace, kubeconfig):
-    cmd = f"kubectl get networkpolicy {policy_name} -n {namespace} {kubeconfig}"
+    cmd = ["kubectl", "get", "networkpolicy", policy_name, "-n", namespace] + ([kubeconfig] if kubeconfig else [])
     out, err = run_command(cmd)
     if "NotFound" in err or out.strip() == "":
         return False
@@ -26,7 +26,7 @@ def add_namespace_to_networkpolicy(policy_name, namespace, allowed_namespace, ku
     preserving any existing ingress rules.
     """
     # Retrieve the current network policy as JSON.
-    cmd = f"kubectl get networkpolicy {policy_name} -n {namespace} {kubeconfig} -o json"
+    cmd = ["kubectl", "get", "networkpolicy", policy_name, "-n", namespace] + ([kubeconfig] if kubeconfig else []) + ["-o", "json"]
     out, err = run_command(cmd)
     if err and not out:
         return "", f"Error retrieving network policy: {err}"
@@ -71,7 +71,7 @@ def add_namespace_to_networkpolicy(policy_name, namespace, allowed_namespace, ku
 
     patch = {"spec": {"ingress": ingress}}
     patch_str = json.dumps(patch)
-    patch_cmd = f"kubectl patch networkpolicy {policy_name} -n {namespace} {kubeconfig} --type merge -p '{patch_str}'"
+    patch_cmd = ["kubectl", "patch", "networkpolicy", policy_name, "-n", namespace] + ([kubeconfig] if kubeconfig else []) + ["--type", "merge", "-p", patch_str]
     return run_command(patch_cmd)
 
 def remove_namespace_from_networkpolicy(policy_name, namespace, deny_namespace, kubeconfig):
@@ -79,7 +79,7 @@ def remove_namespace_from_networkpolicy(policy_name, namespace, deny_namespace, 
     Remove any ingress rule that allows traffic from deny_namespace while leaving other rules intact.
     """
     # Retrieve the current network policy as JSON.
-    cmd = f"kubectl get networkpolicy {policy_name} -n {namespace} {kubeconfig} -o json"
+    cmd = ["kubectl", "get", "networkpolicy", policy_name, "-n", namespace] + ([kubeconfig] if kubeconfig else []) + ["-o", "json"]
     out, err = run_command(cmd)
     if err and not out:
         return "", f"Error retrieving network policy: {err}"
@@ -119,7 +119,7 @@ def remove_namespace_from_networkpolicy(policy_name, namespace, deny_namespace, 
 
     patch = {"spec": {"ingress": new_ingress}}
     patch_str = json.dumps(patch)
-    patch_cmd = f"kubectl patch networkpolicy {policy_name} -n {namespace} {kubeconfig} --type merge -p '{patch_str}'"
+    patch_cmd = ["kubectl", "patch", "networkpolicy", policy_name, "-n", namespace] + ([kubeconfig] if kubeconfig else []) + ["--type", "merge", "-p", patch_str]
     return run_command(patch_cmd)
 
 def do_allow(ns1, ns2, kubeconfig):
