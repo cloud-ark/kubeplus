@@ -215,6 +215,19 @@ spec:
                               type: string
                         nodeSelector:
                           type: string
+                    network:
+                      type: object
+                      properties:
+                        allowedPairs:
+                          type: array
+                          items:
+                            type: object
+                            required: [namespace1, namespace2]
+                            properties:
+                              namespace1:
+                                type: string
+                              namespace2:
+                                type: string
   names:
     kind: ResourcePolicy 
     plural: resourcepolicies 

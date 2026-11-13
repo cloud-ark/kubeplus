@@ -118,6 +118,16 @@ type ResourcePolicySpec struct {
 type Pol struct {
 	PolicyResources PolicyResources `json:"podconfig"`
 	Quota Quota `json:"quota"`
+	Network *NetworkAccessPolicy `json:"network,omitempty"`
+}
+
+type NetworkAccessPolicy struct {
+	AllowedPairs []NamespacePair `json:"allowedPairs,omitempty"`
+}
+
+type NamespacePair struct {
+	Namespace1 string `json:"namespace1"`
+	Namespace2 string `json:"namespace2"`
 }
 
 type PolicyResources struct {

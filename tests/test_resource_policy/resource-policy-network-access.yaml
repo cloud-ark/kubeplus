@@ -1,0 +1,11 @@
+apiVersion: workflows.kubeplus/v1alpha1
+kind: ResourcePolicy
+metadata:
+  name: cross-namespace-access
+  namespace: default
+spec:
+  policy:
+    network:
+      allowedPairs:
+        - namespace1: chatbot-a
+          namespace2: rag-a
