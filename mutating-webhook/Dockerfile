@@ -1,5 +1,4 @@
-#FROM alpine:latest
-FROM ubuntu:22.04 
-ADD crd-hook /crd-hook
-ENTRYPOINT ["./crd-hook"]
-
+FROM ubuntu:22.04
+ARG TARGETARCH
+COPY crd-hook-${TARGETARCH} /crd-hook
+ENTRYPOINT ["/crd-hook"]
