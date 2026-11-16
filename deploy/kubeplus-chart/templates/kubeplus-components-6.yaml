@@ -315,6 +315,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
+  # RWO volume: old pod must release it before the new pod starts
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: kubeplus
