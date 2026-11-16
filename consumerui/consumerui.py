@@ -47,7 +47,7 @@ app = application
 def run_command(cmd):
         app.logger.info("Inside run_command")
         app.logger.info(cmd)
-        proc_out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
+        proc_out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
         out = proc_out[0]
         err = proc_out[1]
         out = out.decode('utf-8')
@@ -61,7 +61,7 @@ def get_metrics(service, res, namespace):
         nwTransmitBytes = 0
         nwReceiveBytes = 0
         kubecfg_path = os.getenv("HOME") + "/.kube/config"
-        cmd = 'kubectl metrics ' + service + ' ' + res + ' ' + namespace + ' -o json -k ' + kubecfg_path 
+        cmd = ["kubectl", "metrics", service, res, namespace, "-o", "json", "-k", kubecfg_path]
         out, err = run_command(cmd)
         if out != '':
                 json_output = ''
@@ -81,7 +81,7 @@ def get_metrics(service, res, namespace):
 
 def get_connections_op(resource, instance, namespace):
         kubecfg_path = os.getenv("HOME") + "/.kube/config"
-        cmd = 'kubectl connections ' + resource + ' ' + instance + ' ' + namespace + ' -o html -i Namespace:default,ServiceAccount:default -n label,specproperty,envvariable,annotation -k ' + kubecfg_path #/root/.kube/config'
+        cmd = ["kubectl", "connections", resource, instance, namespace, "-o", "html", "-i", "Namespace:default,ServiceAccount:default", "-n", "label,specproperty,envvariable,annotation", "-k", kubecfg_path] #/root/.kube/config'
         out, err = run_command(cmd)
         data = ''
         if out != '' and err == '':
@@ -95,7 +95,7 @@ def get_connections_op(resource, instance, namespace):
 
 def get_app_url(resource, instance, namespace):
         kubecfg_path = os.getenv("HOME") + "/.kube/config"
-        cmd = 'kubectl appurl ' + resource + ' ' + instance + ' ' + namespace + ' -k ' + kubecfg_path #/root/.kube/config '
+        cmd = ["kubectl", "appurl", resource, instance, namespace, "-k", kubecfg_path] #/root/.kube/config '
         out, err = run_command(cmd)
         data = ''
         if out != '' and err == '':
@@ -105,7 +105,7 @@ def get_app_url(resource, instance, namespace):
 
 def get_logs(resource, instance, namespace):
         kubecfg_path = os.getenv("HOME") + "/.kube/config"
-        cmd = 'kubectl applogs ' + resource + ' ' + instance + ' ' + namespace + ' -k ' + kubecfg_path #/root/.kube/config '
+        cmd = ["kubectl", "applogs", resource, instance, namespace, "-k", kubecfg_path] #/root/.kube/config '
         out, err = run_command(cmd)
         data = ''
         if out != '' and err == '':
@@ -144,7 +144,7 @@ def process_manpage_line(line):
 
 def get_input_fields(serviceName):
         kubecfg_path = os.getenv("HOME") + "/.kube/config"
-        cmd = 'kubectl man ' + serviceName + " -k " + kubecfg_path #/root/.kube/config"
+        cmd = ["kubectl", "man", serviceName, "-k", kubecfg_path] #/root/.kube/config"
         out, err = run_command(cmd)
 
         kind = ""
@@ -181,7 +181,7 @@ def get_input_fields(serviceName):
         return kind, apiVersion, fieldList
 
 def get_all_resources(resource):
-        cmd = 'kubectl get ' + resource + " -A -o json"
+        cmd = ["kubectl", "get", resource, "-A", "-o", "json"]
         out, err = run_command(cmd)
         service_instance_out_list = []
         instances = {}
@@ -194,7 +194,6 @@ def get_all_resources(resource):
                         json_output = json.loads(out)
                 except Exception as e:
                         app.logger.info(str(e))
-                app.logger.info(json_output)
                 for instance in json_output['items']:
                         out_dict = {}
                         out_dict['name'] = instance['metadata']['name']
@@ -228,7 +227,7 @@ def get_field_names(service):
 def get_resource_manpage():
         resource = request.args.get('resource')
         kubecfg_path = os.getenv("HOME") + "/.kube/config"
-        cmd = 'kubectl man ' + resource + " -k " + kubecfg_path #/root/.kube/config"
+        cmd = ["kubectl", "man", resource, "-k", kubecfg_path] #/root/.kube/config"
         out, err = run_command(cmd)
 
         manPage = {}
@@ -250,11 +249,12 @@ def create_instance():
         kind, apiVersion, fields = get_input_fields(serviceName);
 
         form = request.form
-        app.logger.info(form)
+        # Log the field names only: the instance spec carries Helm values (passwords, keys).
+        app.logger.info("Form fields:" + str(list(form.keys())))
 
         resSpec = request.form["instanceSpec"]
         resSpecObj = json.loads(resSpec, strict=False)
-        app.logger.info("Res spec dict:" + str(resSpecObj))
+        app.logger.info("Res kind:" + str(resSpecObj.get('kind')))
         instance_name = resSpecObj['metadata']['name']
         app.logger.info("Resource name:" + instance_name)
 
@@ -290,8 +290,13 @@ def create_instance():
         fp.write(json.dumps(resSpecObj))
         fp.close()
 
-        cmd = "kubectl create -f ./resource.json "
+        cmd = ["kubectl", "create", "-f", "./resource.json"]
         out, err = run_command(cmd)
+        # Do not leave the spec on disk after the create call.
+        try:
+                os.remove("resource.json")
+        except OSError:
+                pass
         create_status = ""
         if err == "":
                 create_status = "Resource " + instance_name + " created successfully."
@@ -326,7 +331,7 @@ def getAllResources():
 def get_all_service_instances():
         app.logger.info("Inside get_all_service_instances.")
         service = request.form["service"]
-        cmd = 'kubectl get ' + service + " -A -o json"
+        cmd = ["kubectl", "get", service, "-A", "-o", "json"]
         out, err = run_command(cmd)
         if err != '':
                 return render_template('consumeruiack.html',get_all_error_message=err)
@@ -361,7 +366,7 @@ def delete_instance():
         instance = request.args.get('instance').strip()
         namespace = request.args.get('namespace').strip()
 
-        cmd = "kubectl delete " + resource + " " + instance 
+        cmd = ["kubectl", "delete", resource, instance]
         run_command(cmd)
 
         instance_delete_status = {}
@@ -413,7 +418,7 @@ def get_instance_status():
         service = request.form["service"]
         instance = request.form["instance"]
         namespace = request.form["namespace"]
-        cmd = 'kubectl get ' + service + " " + instance + " -n " + namespace
+        cmd = ["kubectl", "get", service, instance, "-n", namespace]
         out, err = run_command(cmd)
         lines = []
         if err != '':
@@ -425,12 +430,13 @@ def get_instance_status():
 @app.route("/create_service_instance", methods=['POST'])
 def create_service_instance():
         app.logger.info("Inside create_service_instance.")
-        app.logger.info(request.form)
+        # Field names only: service_instance is the instance yaml (Helm values).
+        app.logger.info("Form fields:" + str(list(request.form.keys())))
         service_instance = request.form["service_instance"]
         fp = open("/root/service_instance.yaml","w")
         fp.write(service_instance)
         fp.close()
-        cmd = 'kubectl create -f /root/service_instance.yaml '
+        cmd = ["kubectl", "create", "-f", "/root/service_instance.yaml"]
         out, err = run_command(cmd)
         instance_creation_status = out
         if err != '':
@@ -440,7 +446,8 @@ def create_service_instance():
 @app.route("/register_kubeconfig", methods=['POST'])
 def register_kubeconfig():
         app.logger.info("Inside register_kubeconfig.")
-        app.logger.info(request.form)
+        # Field names only: the kubeconfig field carries the cluster credentials.
+        app.logger.info("Form fields:" + str(list(request.form.keys())))
         kubeconfig = request.form["kubeconfig"]
         fp = open("/root/.kube/config","w")
         fp.write(kubeconfig)
@@ -450,8 +457,8 @@ def register_kubeconfig():
 #@app.route("/")
 def index1():
     app.logger.info("Inside hello")
-    app.logger.info("Printing available environment variables")
-    app.logger.info(os.environ)
+    # Variable names only: the values can hold tokens and passwords.
+    app.logger.info("Available environment variables:" + str(sorted(os.environ.keys())))
     return render_template('consumeruiack.html',get_all_error_message='',instance_status='')
 
 @app.route("/service/<service>/namespace/<namespace>/instance/<instance>")
@@ -485,9 +492,9 @@ def service_index(service):
                                                         num_of_instances_string=num_of_instances_string)
 
 def get_kubeplus_namespace():
-        cmd = " kubectl get deployments -A "
+        cmd = ["kubectl", "get", "deployments", "-A"]
         #print(cmd)
-        out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()[0]
+        out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
         #print(out)
         out = out.decode('utf-8')
         kubeplusNamespace = ''
@@ -522,7 +529,7 @@ def get_chart_values_yaml(serviceName):
     home = os.getenv("HOME")
     kubecfgPath = home + "/.kube/config"
 
-    cmd = 'kubectl man ' + serviceName + ' -k ' + kubecfgPath
+    cmd = ["kubectl", "man", serviceName, "-k", kubecfgPath]
     out, err = run_command(cmd)
     app.logger.info("Out")
     app.logger.info(out)
@@ -541,15 +548,15 @@ def download_consumer_kubeconfig():
         app.logger.info("KubePlus NS:" + kubeplusNS)
         found = False
         while not found:
-            cmd = "kubectl get configmaps kubeplus-saas-consumer-kubeconfig -n " + kubeplusNS + " -o jsonpath=\"{.data.kubeplus-saas-consumer\\.json}\""
+            cmd = ["kubectl", "get", "configmaps", "kubeplus-saas-consumer-kubeconfig", "-n", kubeplusNS, "-o", r"jsonpath={.data.kubeplus-saas-consumer\.json}"]
             out, err = run_command(cmd)
             #print("Out:" + out)
             #print("Err:" + err)
             if err == '':
                 found = True
                 consumer_kubeconfig = out.strip()
-                app.logger.info("Consumer kubeconfig")
-                app.logger.info(consumer_kubeconfig)
+                # Do not log the kubeconfig itself: it holds the consumer token.
+                app.logger.info("Consumer kubeconfig received")
                 kubeconfig_path = os.getenv("HOME") + "/.kube/"
                 #kubeconfig_path = "/root/.kube/"
                 if os.path.exists(kubeconfig_path):

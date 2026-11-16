@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubeplus-rag
+  namespace: kagent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubeplus-rag
+  template:
+    metadata:
+      labels:
+        app: kubeplus-rag
+    spec:
+      containers:
+        - name: kubeplus-rag
+          image: kubeplus-rag:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubeplus-rag
+  namespace: kagent
+spec:
+  selector:
+    app: kubeplus-rag
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# DEPRECATED - Replaced by Makefile
+
 if (( $# < 1 )); then
     echo "./build-artifact.sh <latest | versioned>"
 fi
