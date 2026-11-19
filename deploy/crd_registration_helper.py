@@ -488,6 +488,12 @@ def flatten(yaml_contents, flattened, types_dict, prefix=''):
         elif isinstance(value, float):
             flattened[prefix + key] = value
             types_dict[key] = {'type': 'number'}
+        elif value is None:
+            # A null default (e.g. "key: null" or "key:") carries no type
+            # information. Register it as a nullable string so that the
+            # property is not rejected as unknown, and null stays valid.
+            flattened[prefix + key] = None
+            types_dict[key] = {'type': 'string', 'nullable': True}
         if isinstance(value, dict):
             prop_dict = {'type': 'object'}
             types_dict[key] = prop_dict

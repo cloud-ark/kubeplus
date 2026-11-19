@@ -5,6 +5,8 @@ import unittest
 import uuid
 from unittest.mock import patch
 
+import yaml
+
 from kubernetes import config
 from kubernetes.client import Configuration
 from kubernetes.client.api import core_v1_api
@@ -30,6 +32,21 @@ crd_registration_helper = _load_helper()
 
 
 class TestCRDRegistrationHelper(unittest.TestCase):
+
+    def test_flatten_null_value_is_nullable_string(self):
+        """Properties whose default is null are registered as nullable strings."""
+        values = yaml.safe_load("image: nginx\nstorageClass: null\nempty:\nnested:\n  token: null\n")
+        flattened = {}
+        types_dict = {}
+        crd_registration_helper.flatten(values, flattened, types_dict)
+
+        nullable_string = {"type": "string", "nullable": True}
+        self.assertEqual(types_dict["image"], {"type": "string"})
+        self.assertEqual(types_dict["storageClass"], nullable_string)
+        self.assertEqual(types_dict["empty"], nullable_string)
+        self.assertEqual(types_dict["nested"]["properties"]["token"], nullable_string)
+        self.assertIsNone(flattened["storageClass"])
+        self.assertIsNone(flattened["nested.token"])
 
     @patch.object(crd_registration_helper, "run_command")
     def test_download_and_untar_chart_uses_argument_lists(self, mock_run_command):
